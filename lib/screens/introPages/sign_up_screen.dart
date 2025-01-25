@@ -25,7 +25,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
         child: Column(
           children: [
             // 뒤로가기 버튼, 제목
-            initPageHeader(),
+            introPageHeader(
+              title: '회원가입',
+            ),
             // 나머지 입력 폼
             Expanded(
               child: Center(
