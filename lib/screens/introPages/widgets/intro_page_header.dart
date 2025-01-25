@@ -2,9 +2,9 @@ import 'package:capstone_2025/screens/introPages/sign_up_screen.dart';
 import 'package:flutter/material.dart';
 
 class introPageHeader extends StatelessWidget {
-  const introPageHeader({
-    super.key,
-  });
+  final String title;
+
+  introPageHeader({required this.title});
 
   @override
   Widget build(BuildContext context) {
@@ -20,7 +20,7 @@ class introPageHeader extends StatelessWidget {
               onPressed: goToMain,
               icon: Icon(
                 Icons.arrow_back_sharp,
-                size: 40,
+                size: 65,
                 color: Colors.black,
               ),
             ),
@@ -31,10 +31,10 @@ class introPageHeader extends StatelessWidget {
           flex: 1,
           child: Center(
             child: Text(
-              "회원가입",
+              title,
               style: TextStyle(
                 fontSize: 30,
-                fontWeight: FontWeight.bold,
+                fontWeight: FontWeight.w900,
               ),
             ),
           ),
