@@ -1,6 +1,8 @@
 import 'package:capstone_2025/screens/introPages/sign_up_screen.dart';
 import 'package:flutter/material.dart';
 
+// intro 페이지 헤더 : 뒤로가기 버튼 + 제목
+// 제목을 인자로 받음
 class introPageHeader extends StatelessWidget {
   final String title;
 
