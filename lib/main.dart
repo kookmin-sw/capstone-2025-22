@@ -1,4 +1,5 @@
 import 'package:capstone_2025/screens/login_screen.dart';
+import 'package:capstone_2025/screens/sign_up_screen.dart';
 import 'package:flutter/material.dart';
 
 void main() {
@@ -12,7 +13,9 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      home: LoginScreen(),
+      // 페이지 공통 백그라운드 컬러 지정
+      theme: ThemeData(scaffoldBackgroundColor: Color(0xFFF2F1F3)),
+      home: SignUpScreen(),
     );
   }
 }
