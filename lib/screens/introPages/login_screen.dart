@@ -1,3 +1,4 @@
+import 'package:capstone_2025/screens/introPages/widgets/build_text_field.dart';
 import 'package:flutter/material.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -34,31 +35,27 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                   SizedBox(height: 20),
-                  _buildTextField(
-                    hint: '아이디(이메일)',
-                    obscureText: false,
-                    suffixIcon: null,
-                  ),
+                  buildTextField(
+                      hint: '아이디(이메일)', obscureText: false, suffixIcon: null),
                   SizedBox(height: 10),
-                  _buildTextField(
-                    hint: '비밀번호',
-                    obscureText: !_isPasswordVisible,
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _isPasswordVisible
-                            ? Icons.visibility
-                            : Icons.visibility_off,
-                      ),
-                      onPressed: () {
-                        setState(
-                          () {
-                            _isPasswordVisible =
-                                !_isPasswordVisible; // 비밀번호 보기 상태 변경
-                          },
-                        );
-                      },
-                    ),
-                  ),
+                  buildTextField(
+                      hint: '비밀번호',
+                      obscureText: !_isPasswordVisible,
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _isPasswordVisible
+                              ? Icons.visibility
+                              : Icons.visibility_off,
+                        ),
+                        onPressed: () {
+                          setState(
+                            () {
+                              _isPasswordVisible =
+                                  !_isPasswordVisible; // 비밀번호 보기 상태 변경
+                            },
+                          );
+                        },
+                      )),
                   SizedBox(height: 10),
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
@@ -109,32 +106,4 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   // 입력 칸
-  Widget _buildTextField({
-    required String hint,
-    required bool obscureText,
-    Widget? suffixIcon,
-  }) {
-    return TextField(
-      obscureText: obscureText,
-      decoration: InputDecoration(
-        hintText: hint,
-        hintStyle: TextStyle(fontSize: 15),
-        filled: true,
-        fillColor: Colors.white, // 배경색
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12.0), // 테두리를 둥글게 설정
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12.0),
-          borderSide: BorderSide(color: Colors.grey.shade400), // 기본 테두리 색
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12.0),
-          borderSide:
-              BorderSide(color: Color(0xFF424242), width: 2.0), // 포커스 시 테두리 색
-        ),
-        suffixIcon: suffixIcon, // 비밀번호 보기/숨기기 아이콘 추가
-      ),
-    );
-  }
 }
