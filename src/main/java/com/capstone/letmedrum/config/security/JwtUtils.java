@@ -14,6 +14,7 @@ import java.security.Key;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Date;
+import java.util.Enumeration;
 
 @Component
 @Slf4j
@@ -23,7 +24,7 @@ public class JwtUtils {
     private Long ACCESS_TOKEN_EXP_TIME;
     @Value("${env.jwt.refresh-token-exp}")
     private Long REFRESH_TOKEN_EXP_TIME;
-    public static final String ACCESS_TOKEN_HEADER_KEY = "Authorization";
+    public static final String ACCESS_TOKEN_HEADER_KEY = "authorization";
     public static final String ACCESS_TOKEN_PREFIX = "Bearer ";
     public JwtUtils(@Value("${env.jwt.secret-key}") String secret_key){
         byte[] keyBytes = Decoders.BASE64.decode(secret_key);
@@ -120,11 +121,23 @@ public class JwtUtils {
      * @param request HttpServletRequest
      * @return accessToken - String, nullable */
     public String getTokenFromRequest(HttpServletRequest request){
-        String authentication = request.getHeader(ACCESS_TOKEN_HEADER_KEY);
-        if(authentication==null || !authentication.startsWith(ACCESS_TOKEN_PREFIX)){
-            log.info(String.format("JwtUtils : authentication is null or invalid prefix : %s", authentication));
+        String authorization = request.getHeader(ACCESS_TOKEN_HEADER_KEY);
+        if(authorization==null || !authorization.startsWith(ACCESS_TOKEN_PREFIX)){
+            log.info(String.format("JwtUtils : authentication is null or invalid prefix : %s", authorization));
+            logRequestHeader(request);
             return null;
         }
-        return authentication;
+        return authorization.substring(ACCESS_TOKEN_PREFIX.length());
+    }
+
+    public void logRequestHeader(HttpServletRequest request){
+        Enumeration<String> headerNames = request.getHeaderNames();
+        if (headerNames != null) {
+            while (headerNames.hasMoreElements()) {
+                String headerName = headerNames.nextElement();
+                String headerValue = request.getHeader(headerName);
+                log.info("header => " + headerName + ": " + headerValue);
+            }
+        }
     }
 }

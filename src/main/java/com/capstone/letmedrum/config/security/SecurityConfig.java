@@ -38,6 +38,7 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable())
                 .cors(Customizer.withDefaults()) // use corsConfigurationSource
+                .sessionManagement(session -> session.disable())
                 .addFilterBefore(
                         jwtAuthFilter,
                         UsernamePasswordAuthenticationFilter.class

@@ -27,7 +27,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     /*
     * 여기서 예외를 던져버리면 permitAll()로 허용해준 경로에서도 예외가 발생할 수 있음
     * => 따라서, Authentication 을 설정하지 않고 넘어가고(미인증 상태로 pass),
-    * 인증여부에 따라서 AuthenticationFilter 에서 추후 인증 실패 예외를 처리해줌
+    * 인증여부에 따라서 추후 인증 실패 예외를 처리해줌
     * */
     @Override
     protected void doFilterInternal(
