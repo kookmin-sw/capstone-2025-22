@@ -1,3 +1,5 @@
+import 'package:capstone_2025/screens/introPages/find_pw_screen.dart';
+import 'package:capstone_2025/screens/introPages/sign_up_screen.dart';
 import 'package:capstone_2025/screens/introPages/widgets/build_text_field.dart';
 import 'package:flutter/material.dart';
 
@@ -83,14 +85,22 @@ class _LoginScreenState extends State<LoginScreen> {
                     children: [
                       TextButton(
                         onPressed: () {
-                          // 비밀번호 찾기
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => const FindPwScreen()),
+                          );
                         },
                         child: Text('비밀번호 찾기', style: TextStyle(fontSize: 13)),
                       ),
                       Text('|'),
                       TextButton(
                         onPressed: () {
-                          // 회원가입
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => const SignUpScreen()),
+                          );
                         },
                         child: Text('회원가입', style: TextStyle(fontSize: 13)),
                       ),
