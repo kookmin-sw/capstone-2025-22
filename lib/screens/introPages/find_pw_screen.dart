@@ -97,7 +97,13 @@ class _FindPwScreenState extends State<FindPwScreen> {
                       backgroundColor: Color(0xFF424242),
                     ),
                     onPressed: () {
-                      // 다음 버튼 로직
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              const FindPwScreen(), // '다음' 버튼 클릭하면 페이지 이동. 수정하기!
+                        ),
+                      );
                     },
                     child: Center(
                       child: Text(
