@@ -8,6 +8,8 @@ class introPageHeader extends StatelessWidget {
 
   const introPageHeader({super.key, required this.title});
 
+  void goToMain() {}
+
   @override
   Widget build(BuildContext context) {
     return Row(
