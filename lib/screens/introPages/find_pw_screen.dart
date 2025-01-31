@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'package:capstone_2025/screens/introPages/widgets/intro_page_header.dart';
 import 'package:flutter/material.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 
 class FindPwScreen extends StatefulWidget {
   const FindPwScreen({super.key});
@@ -11,29 +13,52 @@ class FindPwScreen extends StatefulWidget {
 
 class _FindPwScreenState extends State<FindPwScreen> {
   late Timer _timer;
-  int _timeRemaining = 180; // 3분 (초 단위)
-
-  @override
-  void initState() {
-    super.initState();
-    _startTimer(); // 타이머 시작
-  }
+  int _timeRemaining = 180; // 남은 시간 3분 (초 단위)
+  bool _isTimerRunning = false; // 타이머가 실행 중인지 여부
+  final bool _isEmailValid = false; // 입력한 이메일이 유효한지 여부
+  bool _isEmailSent = false; // 이메일이 전송되었는지 여부
+  bool _isCodeValid = false; // 입력한 인증번호가 유효한지 여부
+  final TextEditingController _emailController =
+      TextEditingController(); // 이메일 입력 필드 제어하는 컨트롤러
+  final TextEditingController _codeController =
+      TextEditingController(); // 인증번호 입력 필드 제어하는 컨트롤러
 
   @override
   void dispose() {
+    // 위젯 종료 시 실행
+    // 화면이 닫힐 때 호출: 타이머 종료, 메모리 해제
     _timer.cancel(); // 타이머 종료
+    _emailController.dispose(); // 이메일 입력 컨트롤러 해제
+    _codeController.dispose(); // 인증번호 입력 컨트롤러 해제
     super.dispose();
   }
 
-  // 타이머 시작 함수
+  // 이메일 유효성 검사
+  bool _validateEmail(String email) {
+    final emailRegex = RegExp(
+        r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'); // 이메일 형식 확인
+    return emailRegex.hasMatch(email);
+  }
+
+  // 타이머 시작 함수: 이메일 전송 후 자동으로 타이머 시작
   void _startTimer() {
-    _timer = Timer.periodic(Duration(seconds: 1), (timer) {
+    setState(() {
+      _isTimerRunning = true;
+      _timeRemaining = 180; // 3분으로 초기화
+    });
+
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (_timeRemaining > 0) {
+        // 1초마다 _timeRemaining 값을 1씩 감소
         setState(() {
           _timeRemaining--;
         });
       } else {
-        _timer.cancel(); // 타이머 종료
+        // 시간이 0이 되면 _isTimerRunning을 false로 변경
+        _timer.cancel();
+        setState(() {
+          _isTimerRunning = false;
+        });
       }
     });
   }
@@ -43,6 +68,47 @@ class _FindPwScreenState extends State<FindPwScreen> {
     final minutes = (seconds ~/ 60).toString().padLeft(2, '0');
     final secs = (seconds % 60).toString().padLeft(2, '0');
     return '$minutes:$secs';
+  }
+
+  // 이메일 인증 요청
+  Future<void> _sendEmailVerification() async {
+    final email = _emailController.text.trim();
+    if (!_validateEmail(email)) return; // 이메일 형식이 맞지 않으면 실행하지 않음
+
+    setState(() {
+      // 이메일 전송되었음 표시
+      _isEmailSent = true;
+    });
+
+    _startTimer(); // 이메일 전송되면 타이머 시작
+  }
+
+  // 인증번호 확인 요청
+  Future<void> _verifyCode() async {
+    final response = await http.get(
+      // 서버에 인증번호 확인 요청
+      Uri.parse('https://example.com/auth/email-confirm'), // API 변경하기!
+    );
+
+    if (response.statusCode == 200) {
+      // 서버 응답이 정상(200)일 경우만 처리
+      final data = jsonDecode(response.body);
+      if (data['body']['status'] == "??") {
+        // status로 뭐가 전달되지?
+        // 응답 데이터가 ??이면 인증 성공
+        setState(() {
+          _isCodeValid = true;
+        });
+      } else {
+        setState(() {
+          _isCodeValid = false; // 인증 실패
+        });
+      }
+    } else {
+      setState(() {
+        _isCodeValid = false;
+      });
+    }
   }
 
   @override
@@ -67,25 +133,31 @@ class _FindPwScreenState extends State<FindPwScreen> {
                   child: Column(
                     children: [
                       _buildTextFieldWithButton(
+                        controller: _emailController,
                         hint: '이메일',
                         buttonText: '전송',
-                        onButtonPressed: () {
-                          // 이메일 전송 로직
-                        },
+                        isButtonEnabled: _validateEmail(_emailController.text),
+                        onButtonPressed: _sendEmailVerification,
                       ),
                       SizedBox(height: 10),
                       _buildTextFieldWithTimerAndButton(
+                        controller: _codeController,
                         hint: '인증번호',
                         timerText: _formatTime(_timeRemaining),
                         buttonText: '확인',
-                        onButtonPressed: () {
-                          // 인증번호 확인 로직
-                        },
+                        isButtonEnabled: _isEmailSent,
+                        onButtonPressed: _verifyCode,
                       ),
                     ],
                   ),
                 ),
                 SizedBox(height: 10),
+                if (!_isTimerRunning && _isEmailSent) // 타이머가 종료되고 이메일이 전송되었을 경우
+                  Text(
+                    "인증번호 시간이 만료되었습니다. 이메일을 다시 전송해주세요.",
+                    style: TextStyle(color: Colors.red),
+                  ),
+                const SizedBox(height: 20),
                 SizedBox(
                   width: 400,
                   child: ElevatedButton(
@@ -96,15 +168,17 @@ class _FindPwScreenState extends State<FindPwScreen> {
                       padding: EdgeInsets.symmetric(vertical: 16.0),
                       backgroundColor: Color(0xFF424242),
                     ),
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) =>
-                              const FindPwScreen(), // '다음' 버튼 클릭하면 페이지 이동. 수정하기!
-                        ),
-                      );
-                    },
+                    onPressed: _isCodeValid // 인증번호가 유효해서 다음 버튼 활성화
+                        ? () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    const FindPwScreen(), // '다음' 버튼 클릭하면 페이지 이동. 수정하기!
+                              ),
+                            );
+                          }
+                        : null,
                     child: Center(
                       child: Text(
                         '다음',
@@ -124,16 +198,23 @@ class _FindPwScreenState extends State<FindPwScreen> {
     );
   }
 
-  // 입력 칸 오른쪽에 버튼 추가
+  // 입력 칸 오른쪽에 버튼 추가 - 이메일 입력 필드
   Widget _buildTextFieldWithButton({
+    required TextEditingController controller,
     required String hint,
     required String buttonText,
     required VoidCallback onButtonPressed,
+    required bool isButtonEnabled,
   }) {
     return Row(
       children: [
         Expanded(
           child: TextField(
+            controller: controller,
+            onChanged: (value) {
+              // 입력 값이 변경될 때마다 버튼 상태 변경
+              setState(() {});
+            },
             decoration: InputDecoration(
               hintText: hint,
               hintStyle: TextStyle(fontSize: 15),
@@ -155,14 +236,15 @@ class _FindPwScreenState extends State<FindPwScreen> {
         ),
         SizedBox(width: 10),
         ElevatedButton(
+          onPressed:
+              isButtonEnabled ? onButtonPressed : null, // 이메일이 유효할 때만 버튼 활성화
           style: ElevatedButton.styleFrom(
-            backgroundColor: Color(0xFFCF8A7A),
+            backgroundColor: isButtonEnabled ? Color(0xFFCF8A7A) : Colors.grey,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12.0),
             ),
             padding: EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
           ),
-          onPressed: onButtonPressed,
           child: Text(
             buttonText,
             style: TextStyle(color: Colors.white),
@@ -172,17 +254,20 @@ class _FindPwScreenState extends State<FindPwScreen> {
     );
   }
 
-  // 입력 칸 내부에 타이머와 오른쪽에 버튼 추가
+  // 입력 칸 내부에 타이머와 오른쪽에 버튼 추가 - 인증번호 입력 필드
   Widget _buildTextFieldWithTimerAndButton({
+    required TextEditingController controller,
     required String hint,
     required String timerText,
     required String buttonText,
     required VoidCallback onButtonPressed,
+    required bool isButtonEnabled,
   }) {
     return Row(
       children: [
         Expanded(
           child: TextField(
+            controller: controller,
             decoration: InputDecoration(
               hintText: hint,
               hintStyle: TextStyle(fontSize: 15),
@@ -200,6 +285,7 @@ class _FindPwScreenState extends State<FindPwScreen> {
                 borderSide: BorderSide(color: Color(0xFF424242), width: 2.0),
               ),
               suffix: Text(
+                // 입력 필드 내부에 타이머 표시
                 timerText,
                 style: TextStyle(
                     fontSize: 15,
@@ -211,14 +297,14 @@ class _FindPwScreenState extends State<FindPwScreen> {
         ),
         SizedBox(width: 10),
         ElevatedButton(
+          onPressed: isButtonEnabled ? onButtonPressed : null,
           style: ElevatedButton.styleFrom(
-            backgroundColor: Color(0xFFCF8A7A),
+            backgroundColor: isButtonEnabled ? Color(0xFFCF8A7A) : Colors.grey,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12.0),
             ),
             padding: EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
           ),
-          onPressed: onButtonPressed,
           child: Text(
             buttonText,
             style: TextStyle(color: Colors.white),
