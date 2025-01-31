@@ -1,4 +1,4 @@
-import 'package:capstone_2025/screens/introPages/sign_up_screen.dart';
+import 'package:capstone_2025/screens/introPages/login_screen.dart';
 import 'package:flutter/material.dart';
 
 // intro 페이지 헤더 : 뒤로가기 버튼 + 제목
@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 class introPageHeader extends StatelessWidget {
   final String title;
 
-  introPageHeader({required this.title});
+  const introPageHeader({super.key, required this.title});
 
   @override
   Widget build(BuildContext context) {
@@ -19,7 +19,12 @@ class introPageHeader extends StatelessWidget {
           child: Align(
             alignment: Alignment.centerLeft,
             child: IconButton(
-              onPressed: goToMain,
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const LoginScreen()),
+                );
+              },
               icon: Icon(
                 Icons.arrow_back_sharp,
                 size: 65,
