@@ -1,77 +1,126 @@
 package com.capstone.letmedrum.user.service;
 
+import com.capstone.letmedrum.config.security.JwtUtils;
 import com.capstone.letmedrum.user.dto.UserAuthInfoDto;
 import com.capstone.letmedrum.user.dto.UserAuthResponseDto;
 import com.capstone.letmedrum.user.dto.UserCreateDto;
 import com.capstone.letmedrum.user.entity.User;
 import com.capstone.letmedrum.user.entity.UserRole;
 import com.capstone.letmedrum.user.repository.UserRepository;
-import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
-@SpringBootTest
+@ExtendWith(MockitoExtension.class)
 class UserAuthServiceTest {
-    @Autowired
+    @InjectMocks
     private UserAuthService userAuthService;
-    @Autowired
+    @Mock
     private UserRepository userRepository;
-    public void init(){
-        userRepository.deleteAll();
+    @Mock
+    private PasswordEncoder passwordEncoder;
+    @Mock
+    private JwtUtils jwtUtils;
+    @Test
+    @DisplayName("회원가입 성공 테스트")
+    void testSignUpUserSuccess() {
+        // given
+        String email = "email";
+        UserCreateDto userCreateDto = UserCreateDto
+                .builder()
+                .email(email)
+                .nickname("nickname")
+                .password("password")
+                .role(UserRole.ROLE_GUEST)
+                .build();
+        // stub
+        when(userRepository.findByEmail(any(String.class)))
+                .thenReturn(Optional.empty());
+        when(userRepository.save(any(User.class)))
+                .thenReturn(userCreateDto.toEntity());
+        // when
+        UserAuthResponseDto res = userAuthService.signUpUser(userCreateDto);
+        // then
+        assert (res.getEmail().equals(email));
     }
     @Test
-    void TestSignInUser() {
+    @DisplayName("회원가입 실패 테스트")
+    void testSignUpUserFailure(){
         // given
-        init();
+        String email = "email", password = "password";
+        UserCreateDto userCreateDto = UserCreateDto.builder()
+                .email(email)
+                .password(password)
+                .role(UserRole.ROLE_USER)
+                .build();
+        // stub
+        when(userRepository.findByEmail(anyString()))
+                .thenReturn(Optional.of(userCreateDto.toEntityWithEncodedPassword(new BCryptPasswordEncoder())));
+        // when
+        // then
+        assertThrows(RuntimeException.class, () -> userAuthService.signUpUser(userCreateDto));
+    }
+    @Test
+    @DisplayName("로그인 성공 테스트")
+    void testSignInUserSuccess() {
+        // given
         String email = "email";
         String password = "password";
         UserAuthInfoDto userAuthInfoDto = UserAuthInfoDto
                 .builder()
                 .email(email)
                 .password(password)
-                .role(UserRole.ROLE_GUEST)
+                .role(UserRole.ROLE_USER)
                 .build();
         UserCreateDto userCreateDto = UserCreateDto
                 .builder()
                 .email(email)
                 .nickname("")
                 .password(password)
-                .role(UserRole.ROLE_GUEST)
+                .role(UserRole.ROLE_USER)
                 .build();
+        // stub
+        when(passwordEncoder.matches(anyString(), anyString()))
+                .thenReturn(true);
+        when(userRepository.findByEmail(anyString()))
+                .thenReturn(Optional.of(userCreateDto.toEntityWithEncodedPassword(new BCryptPasswordEncoder())));
         // when
-        UserAuthResponseDto signUpRes = userAuthService.signUpUser(userCreateDto);
         UserAuthResponseDto signInRes = userAuthService.signInUser(userAuthInfoDto);
         // then
-        assert (signInRes!=null && signUpRes!=null);
         assert (signInRes.getEmail().equals(email));
     }
     @Test
-    void TestSignUpUser() {
+    @DisplayName("로그인 실패 테스트")
+    void testSignInUserFailure(){
         // given
-        init();
-        String email = "email";
-        UserCreateDto userCreateDto1 = UserCreateDto
-                .builder()
+        String email = "email", password = "password";
+        String wrongEmail = "wrongEmail", wrongPassword = "wrongPassword";
+        UserCreateDto userCreateDto = UserCreateDto.builder()
                 .email(email)
-                .nickname("nickname")
-                .password("password")
-                .role(UserRole.ROLE_GUEST)
-                .build();
-        UserCreateDto userCreateDto2 = UserCreateDto
-                .builder()
-                .email(email)
-                .nickname("nickname")
-                .password("password")
-                .role(UserRole.ROLE_GUEST)
-                .build();
+                .password(password)
+                .nickname("")
+                .role(UserRole.ROLE_USER).build();
+        UserAuthInfoDto wrongEmailPasswordUser = UserAuthInfoDto.builder()
+                .email(wrongEmail)
+                .password(wrongPassword)
+                .role(UserRole.ROLE_USER).build();
+        // stub
+        when(userRepository.findByEmail(anyString()))
+                .thenReturn(Optional.of(userCreateDto.toEntityWithEncodedPassword(new BCryptPasswordEncoder())));
+        when(passwordEncoder.matches(anyString(), anyString()))
+                .thenReturn(false);
         // when
-        UserAuthResponseDto res1 = userAuthService.signUpUser(userCreateDto1);
-        UserAuthResponseDto res2 = userAuthService.signUpUser(userCreateDto2);
         // then
-        assert (res1.getEmail().equals(email));
-        assert (res2==null);
+        assertThrows(RuntimeException.class, () -> userAuthService.signInUser(wrongEmailPasswordUser));
     }
 }
