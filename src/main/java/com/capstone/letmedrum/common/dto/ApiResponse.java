@@ -1,4 +1,4 @@
-package com.capstone.letmedrum.common;
+package com.capstone.letmedrum.common.dto;
 
 import lombok.Builder;
 import lombok.Getter;

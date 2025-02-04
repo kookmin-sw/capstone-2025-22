@@ -1,6 +1,6 @@
 package com.capstone.letmedrum.user.controller;
 
-import com.capstone.letmedrum.common.ApiResponse;
+import com.capstone.letmedrum.common.dto.ApiResponse;
 import com.capstone.letmedrum.user.dto.UserAuthInfoDto;
 import com.capstone.letmedrum.user.dto.UserAuthResponseDto;
 import com.capstone.letmedrum.user.dto.UserCreateDto;
