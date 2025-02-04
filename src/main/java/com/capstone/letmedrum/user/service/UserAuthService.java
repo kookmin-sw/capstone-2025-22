@@ -20,10 +20,18 @@ public class UserAuthService {
         this.jwtUtils = jwtUtils;
         this.passwordEncoder = passwordEncoder;
     }
+    /**
+     * Check user's id and password and return auth info
+     * @param userAuthInfoDto UserAuthInfoDto, not-null
+     * @return UserAuthResponseDto - not null
+     * @throws RuntimeException If user info is not valid
+    * */
     public UserAuthResponseDto signInUser(UserAuthInfoDto userAuthInfoDto){
-        User existUser = userRepository.findByEmail(userAuthInfoDto.getEmail()).orElse(null);
-        if(existUser==null) return null;
-        if(!passwordEncoder.matches(userAuthInfoDto.getPassword(), existUser.getPassword())) return null;
+        User existUser = userRepository.findByEmail(userAuthInfoDto.getEmail())
+                .orElseThrow(() -> new RuntimeException("sign in error : invalid email"));
+        if(!passwordEncoder.matches(userAuthInfoDto.getPassword(), existUser.getPassword())){
+            throw new RuntimeException("sign in error : invalid password");
+        }
         return UserAuthResponseDto
                 .builder()
                 .accessToken(jwtUtils.generateAccessToken(userAuthInfoDto))
@@ -31,22 +39,30 @@ public class UserAuthService {
                 .email(userAuthInfoDto.getEmail())
                 .build();
     }
+    /**
+     * Sign up the user if a user with that email does not exist.
+     * @param userCreateDto UserCreateDto not-null
+     * @return UserAuthResponseDto - not null
+     * @throws RuntimeException If user already exists
+    * */
     @Transactional
     public UserAuthResponseDto signUpUser(UserCreateDto userCreateDto){
+        userRepository.findByEmail(userCreateDto.getEmail())
+                .ifPresent(user -> {
+                    throw new RuntimeException("sign up error : user already exists : " + userCreateDto.getEmail());
+                });
+        User user = userRepository.save(userCreateDto.toEntityWithEncodedPassword(passwordEncoder));
         UserAuthInfoDto userAuthInfoDto = UserAuthInfoDto
                 .builder()
-                .email(userCreateDto.getEmail())
-                .password(userCreateDto.getPassword())
-                .role(userCreateDto.getRole())
+                .email(user.getEmail())
+                .password(user.getPassword())
+                .role(user.getRole())
                 .build();
-        User existUser = userRepository.findByEmail(userCreateDto.getEmail()).orElse(null);
-        if(existUser!=null) return null;
-        userRepository.save(userCreateDto.toEntityWithEncodedPassword(passwordEncoder));
         return UserAuthResponseDto
                 .builder()
                 .accessToken(jwtUtils.generateAccessToken(userAuthInfoDto))
                 .refreshToken(jwtUtils.generateRefreshToken(userAuthInfoDto))
-                .email(userAuthInfoDto.getEmail())
+                .email(user.getEmail())
                 .build();
     }
 }
