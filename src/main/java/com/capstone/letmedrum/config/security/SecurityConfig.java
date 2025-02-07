@@ -22,6 +22,7 @@ import java.util.List;
 public class SecurityConfig {
     private final String[] WHITE_LIST = {
             "/auth/**",
+            "/verification/**",
             "/h2-console/**",
             "/favicon.ico",
             "/error",

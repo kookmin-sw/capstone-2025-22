@@ -5,9 +5,9 @@ import com.capstone.letmedrum.user.repository.UserRepository;
 import org.springframework.stereotype.Service;
 
 @Service
-public class UserService {
+public class UserRetrieveService {
     private final UserRepository userRepository;
-    public UserService(UserRepository userRepository){
+    public UserRetrieveService(UserRepository userRepository){
         this.userRepository = userRepository;
     }
     /**
