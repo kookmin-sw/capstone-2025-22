@@ -1,3 +1,4 @@
+import 'package:capstone_2025/screens/introPages/login_screen_google.dart';
 import 'package:capstone_2025/screens/introPages/sign_up_screen.dart';
 import 'package:flutter/material.dart';
 
@@ -19,7 +20,13 @@ class introPageHeader extends StatelessWidget {
           child: Align(
             alignment: Alignment.centerLeft,
             child: IconButton(
-              onPressed: goToMain,
+              onPressed: () {
+                Navigator.of(context).pushReplacement(
+                  MaterialPageRoute(
+                    builder: (_) => LoginScreenGoogle(),
+                  ),
+                );
+              },
               icon: Icon(
                 Icons.arrow_back_sharp,
                 size: 65,
