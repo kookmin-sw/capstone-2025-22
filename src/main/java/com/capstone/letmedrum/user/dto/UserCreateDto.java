@@ -13,22 +13,35 @@ public class UserCreateDto {
     private String email;
     private String password;
     private String nickname;
-    private UserRole role;
     @Builder
-    public UserCreateDto(String email, String password, String nickname, UserRole role) {
+    public UserCreateDto(String email, String password, String nickname) {
         this.email = email;
         this.password = password;
         this.nickname = nickname;
-        this.role = role;
     }
-    public UserCreateDto(String email, String password, String name){
-        this(email, password, name, UserRole.ROLE_USER);
+    /**
+     * if object is valid, return true
+     * get access token from HttpServletRequest object
+     * @return isValid - boolean, not-null */
+    public boolean validate(){
+        return email!=null && password!=null && nickname!=null;
     }
-
-    public boolean validateUserCreateDto(){
-        return email!=null && password!=null && nickname!=null && role!=null;
-    }
+    /**
+     * convert UserCreateDto to User Entity with default role (ROLE_USER)l
+     * @return User - User, not-null */
     public User toEntity(){
+        return User.builder()
+                .email(email)
+                .password(password)
+                .nickname(nickname)
+                .role(UserRole.ROLE_USER)
+                .build();
+    }
+    /**
+     * convert UserCreateDto to User Entity with custom role
+     * @param role - UserRole, not-null
+     * @return User - User, not-null */
+    public User toEntity(UserRole role){
         return User.builder()
                 .email(email)
                 .password(password)
@@ -36,7 +49,10 @@ public class UserCreateDto {
                 .role(role)
                 .build();
     }
-
+    /**
+     * convert UserCreateDto to User Entity with encoded password and default role(ROLE_USER)
+     * @param passwordEncoder - PasswordEncoder, not-null
+     * @return User - User, not-null */
     public User toEntityWithEncodedPassword(PasswordEncoder passwordEncoder){
         this.password = passwordEncoder.encode(this.password);
         return toEntity();
