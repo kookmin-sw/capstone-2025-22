@@ -1,12 +1,16 @@
 package com.capstone.letmedrum.user.service;
 
+import com.capstone.letmedrum.common.service.RedisService;
+import com.capstone.letmedrum.common.service.RedisSingleDataService;
 import com.capstone.letmedrum.config.security.JwtUtils;
 import com.capstone.letmedrum.user.dto.UserAuthInfoDto;
 import com.capstone.letmedrum.user.dto.UserAuthResponseDto;
 import com.capstone.letmedrum.user.dto.UserCreateDto;
+import com.capstone.letmedrum.user.dto.UserSignInDto;
 import com.capstone.letmedrum.user.entity.User;
 import com.capstone.letmedrum.user.entity.UserRole;
 import com.capstone.letmedrum.user.repository.UserRepository;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -31,41 +35,49 @@ class UserAuthServiceTest {
     private PasswordEncoder passwordEncoder;
     @Mock
     private JwtUtils jwtUtils;
+    @Mock
+    private RedisSingleDataService redisSingleDataService;
+
+    private static final String email = "email";
+    private static final String nickname = "username";
+    private static final String password = "password";
+    private static final String secret_key = "abcdefgjijklmnopqrstuvwxyzabcdefgjijklmnopqrstuvwxyz";
+    private static String refresh_token;
+    @BeforeAll
+    static void setUp() {
+        refresh_token = new JwtUtils(secret_key).generateRefreshToken(
+                new UserAuthInfoDto("email", UserRole.ROLE_USER)
+        );
+    }
     @Test
     @DisplayName("회원가입 성공 테스트")
     void testSignUpUserSuccess() {
         // given
-        String email = "email";
-        UserCreateDto userCreateDto = UserCreateDto
-                .builder()
+        UserCreateDto userCreateDto = UserCreateDto.builder()
                 .email(email)
-                .nickname("nickname")
-                .password("password")
-                .role(UserRole.ROLE_GUEST)
-                .build();
+                .nickname(nickname)
+                .password(password).build();
         // stub
-        when(userRepository.findByEmail(any(String.class)))
-                .thenReturn(Optional.empty());
-        when(userRepository.save(any(User.class)))
-                .thenReturn(userCreateDto.toEntity());
+        when(userRepository.findByEmail(anyString())).thenReturn(Optional.empty());
+        when(userRepository.save(any(User.class))).thenReturn(userCreateDto.toEntity());
+        when(jwtUtils.generateAccessToken(any())).thenReturn("token");
+        when(jwtUtils.generateRefreshToken(any())).thenReturn("token");
+        when(redisSingleDataService.setValue(anyString(), anyString(), anyInt())).thenReturn(1);
         // when
         UserAuthResponseDto res = userAuthService.signUpUser(userCreateDto);
         // then
         assert (res.getEmail().equals(email));
     }
     @Test
-    @DisplayName("회원가입 실패 테스트")
+    @DisplayName("회원가입 실패 테스트 : 이미 가입된 사용자")
     void testSignUpUserFailure(){
         // given
-        String email = "email", password = "password";
         UserCreateDto userCreateDto = UserCreateDto.builder()
                 .email(email)
                 .password(password)
-                .role(UserRole.ROLE_USER)
                 .build();
         // stub
-        when(userRepository.findByEmail(anyString()))
-                .thenReturn(Optional.of(userCreateDto.toEntityWithEncodedPassword(new BCryptPasswordEncoder())));
+        when(userRepository.findByEmail(anyString())).thenReturn(Optional.of(userCreateDto.toEntityWithEncodedPassword(new BCryptPasswordEncoder())));
         // when
         // then
         assertThrows(RuntimeException.class, () -> userAuthService.signUpUser(userCreateDto));
@@ -74,53 +86,110 @@ class UserAuthServiceTest {
     @DisplayName("로그인 성공 테스트")
     void testSignInUserSuccess() {
         // given
-        String email = "email";
-        String password = "password";
-        UserAuthInfoDto userAuthInfoDto = UserAuthInfoDto
-                .builder()
-                .email(email)
-                .password(password)
-                .role(UserRole.ROLE_USER)
-                .build();
+        UserSignInDto userSignInDto = new UserSignInDto(email, password);
         UserCreateDto userCreateDto = UserCreateDto
                 .builder()
                 .email(email)
-                .nickname("")
                 .password(password)
-                .role(UserRole.ROLE_USER)
                 .build();
         // stub
-        when(passwordEncoder.matches(anyString(), anyString()))
-                .thenReturn(true);
-        when(userRepository.findByEmail(anyString()))
-                .thenReturn(Optional.of(userCreateDto.toEntityWithEncodedPassword(new BCryptPasswordEncoder())));
+        when(passwordEncoder.matches(anyString(), anyString())).thenReturn(true);
+        when(userRepository.findByEmail(anyString())).thenReturn(Optional.of(userCreateDto.toEntityWithEncodedPassword(new BCryptPasswordEncoder())));
+        when(jwtUtils.generateAccessToken(any())).thenReturn("token");
+        when(jwtUtils.generateRefreshToken(any())).thenReturn("token");
+        when(redisSingleDataService.setValue(anyString(), anyString(), anyInt())).thenReturn(1);
         // when
-        UserAuthResponseDto signInRes = userAuthService.signInUser(userAuthInfoDto);
+        UserAuthResponseDto signInRes = userAuthService.signInUser(userSignInDto);
         // then
         assert (signInRes.getEmail().equals(email));
     }
     @Test
-    @DisplayName("로그인 실패 테스트")
+    @DisplayName("로그인 실패 테스트 : 정보 불일치")
     void testSignInUserFailure(){
         // given
-        String email = "email", password = "password";
         String wrongEmail = "wrongEmail", wrongPassword = "wrongPassword";
-        UserCreateDto userCreateDto = UserCreateDto.builder()
-                .email(email)
-                .password(password)
-                .nickname("")
-                .role(UserRole.ROLE_USER).build();
-        UserAuthInfoDto wrongEmailPasswordUser = UserAuthInfoDto.builder()
-                .email(wrongEmail)
-                .password(wrongPassword)
-                .role(UserRole.ROLE_USER).build();
+        UserSignInDto wrongEmailPasswordUser = new UserSignInDto(wrongEmail, wrongPassword);
         // stub
-        when(userRepository.findByEmail(anyString()))
-                .thenReturn(Optional.of(userCreateDto.toEntityWithEncodedPassword(new BCryptPasswordEncoder())));
-        when(passwordEncoder.matches(anyString(), anyString()))
-                .thenReturn(false);
+        when(userRepository.findByEmail(anyString())).thenReturn(Optional.empty());
         // when
         // then
         assertThrows(RuntimeException.class, () -> userAuthService.signInUser(wrongEmailPasswordUser));
+    }
+    @Test
+    @DisplayName("로그아웃 성공 테스트")
+    void testSignOutUserSuccess() {
+        // given
+        User savedUser = new User();
+        savedUser.setEmail(email);
+        // stub
+        when(jwtUtils.validateToken(refresh_token)).thenReturn(true);
+        when(jwtUtils.getUserEmail(anyString())).thenReturn(email);
+        when(redisSingleDataService.deleteValue(anyString())).thenReturn(1);
+        // when
+        boolean res = userAuthService.signOutUser(refresh_token);
+        // then
+        assertTrue(res);
+    }
+    @Test
+    @DisplayName("로그아웃 실패 테스트 : 토큰 만료")
+    void testSignOutUserFailureInvalidToken() {
+        // given
+        // stub
+        when(jwtUtils.validateToken(refresh_token)).thenReturn(false);
+        // when
+        // then
+        assertThrows(RuntimeException.class, () -> userAuthService.signOutUser(refresh_token));
+    }
+    @Test
+    @DisplayName("로그아웃 실패 테스트 : 사용자 없음")
+    void testSignOutUserFailureInvalidUser() {
+        // given
+        // stub
+        when(jwtUtils.validateToken(refresh_token)).thenReturn(true);
+        when(jwtUtils.getUserEmail(anyString())).thenReturn(email);
+        // when
+        // then
+        assertThrows(RuntimeException.class, () -> userAuthService.signOutUser(refresh_token));
+    }
+    @Test
+    @DisplayName("토큰 재발급 성공 테스트")
+    void refreshTokenSuccess(){
+        // given
+        User savedUser = new User();
+        savedUser.setEmail(email);
+        String newToken = new JwtUtils(secret_key).generateRefreshToken(
+                new UserAuthInfoDto("new email", UserRole.ROLE_USER)
+        );
+        // stub
+        when(jwtUtils.validateToken(refresh_token)).thenReturn(true);
+        when(jwtUtils.getUserEmail(anyString())).thenReturn(email);
+        when(jwtUtils.generateRefreshToken(any())).thenReturn(newToken);
+        when(jwtUtils.generateAccessToken(any())).thenReturn(newToken);
+        when(redisSingleDataService.getValue(anyString())).thenReturn(refresh_token);
+        when(redisSingleDataService.setValue(anyString(), anyString(), anyInt())).thenReturn(1);
+        when(userRepository.findByEmail(anyString())).thenReturn(Optional.of(savedUser));
+        // when
+        UserAuthResponseDto res = userAuthService.doRefreshTokenRotation(refresh_token);
+        // then
+        assert (res.getEmail().equals(email));
+        assert (!res.getRefreshToken().equals(refresh_token));
+    }
+    @Test
+    @DisplayName("토큰 재발급 실패 테스트 : 이전 버전 토큰")
+    void refreshTokenFailure(){
+        // given
+        String prevRefreshToken = new JwtUtils(secret_key).generateRefreshToken(
+                new UserAuthInfoDto("new email", UserRole.ROLE_USER)
+        );
+        String currentRefreshToken = refresh_token;
+        User savedUser = new User();
+        savedUser.setEmail(email);
+        // stub
+        when(jwtUtils.validateToken(refresh_token)).thenReturn(true);
+        when(userRepository.findByEmail(anyString())).thenReturn(Optional.of(savedUser));
+        when(redisSingleDataService.getValue(anyString())).thenReturn(currentRefreshToken);
+        // when
+        // then
+        assertThrows(RuntimeException.class, () -> userAuthService.doRefreshTokenRotation(prevRefreshToken));
     }
 }
