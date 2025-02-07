@@ -18,7 +18,6 @@ class JwtUtilsTest {
     public static void init(){
         userAuthInfoDto = UserAuthInfoDto.builder()
                 .email("email")
-                .password("password")
                 .role(UserRole.ROLE_ADMIN)
                 .build();
     }

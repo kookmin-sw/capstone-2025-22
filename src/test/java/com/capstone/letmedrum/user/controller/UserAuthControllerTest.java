@@ -38,7 +38,6 @@ class UserAuthControllerTest {
         // given
         UserAuthInfoDto userAuthInfoDto = UserAuthInfoDto.builder()
                 .email("email")
-                .password("password")
                 .role(UserRole.ROLE_GUEST)
                 .build();
         String content = new ObjectMapper().writeValueAsString(userAuthInfoDto);
@@ -61,7 +60,6 @@ class UserAuthControllerTest {
                 .email("email")
                 .password("password")
                 .nickname("nickname")
-                .role(UserRole.ROLE_USER)
                 .build();
         String content = new ObjectMapper().writeValueAsString(userCreateDto);
         // when

@@ -20,20 +20,17 @@ import java.util.Enumeration;
 @Slf4j
 public class JwtUtils {
     private final Key SECRET_KEY;
-    @Value("${env.jwt.access-token-exp}")
-    private Long ACCESS_TOKEN_EXP_TIME;
-    @Value("${env.jwt.refresh-token-exp}")
-    private Long REFRESH_TOKEN_EXP_TIME;
+    public static final Long ACCESS_TOKEN_EXP_TIME = 1000000L;
+    public static final Long REFRESH_TOKEN_EXP_TIME = 1000000000L;
     public static final String ACCESS_TOKEN_HEADER_KEY = "authorization";
     public static final String ACCESS_TOKEN_PREFIX = "Bearer ";
     public JwtUtils(@Value("${env.jwt.secret-key}") String secret_key){
         byte[] keyBytes = Decoders.BASE64.decode(secret_key);
         this.SECRET_KEY = Keys.hmacShaKeyFor(keyBytes);
     }
-
     /**
      * generate jwt token
-     * @param dto UserAuthInfoDto(email, password, role)
+     * @param dto UserAuthInfoDto(email, role)
      * @param zoneId timeZone ZoneId
      * @return JwtToken - String, not-null
      */
@@ -51,24 +48,25 @@ public class JwtUtils {
                 .compact();
     }
     /**
-     * @param dto UserAuthInfoDto(email, password, role)
+     * generate access token
+     * @param dto UserAuthInfoDto(email, role)
      * @return accessToken - String, not-null
     */
     public String generateAccessToken(UserAuthInfoDto dto){
         ZoneId zoneId = ZoneId.systemDefault();
-        return this.generateJwtToken(dto, zoneId, this.ACCESS_TOKEN_EXP_TIME);
+        return this.generateJwtToken(dto, zoneId, ACCESS_TOKEN_EXP_TIME);
     }
-
     /**
-     * @param dto UserAuthInfoDto(email, password, role)
+     * generate refresh token
+     * @param dto UserAuthInfoDto(email, role)
      * @return refreshToken - String, not-null
      * */
     public String generateRefreshToken(UserAuthInfoDto dto){
         ZoneId zoneId = ZoneId.systemDefault();
-        return this.generateJwtToken(dto, zoneId, this.REFRESH_TOKEN_EXP_TIME);
+        return this.generateJwtToken(dto, zoneId, REFRESH_TOKEN_EXP_TIME);
     }
-
     /**
+     * validate token
      * @param token jwtToken String
      * @return isValidate - boolean
      * */
@@ -85,7 +83,6 @@ public class JwtUtils {
         }
         return false;
     }
-
     /**
      * @param token jwtToken String
      * @return JwtToken's Claims - Claims, nullable
@@ -102,7 +99,6 @@ public class JwtUtils {
             return null;
         }
     }
-
     /**
      * @param token jwtToken String
      * @return userEmail - String, nullable
@@ -115,7 +111,6 @@ public class JwtUtils {
         }
         return claims.get("email", String.class);
     }
-
     /**
      * get access token from HttpServletRequest object
      * @param request HttpServletRequest
@@ -129,7 +124,9 @@ public class JwtUtils {
         }
         return authorization.substring(ACCESS_TOKEN_PREFIX.length());
     }
-
+    /**
+     * logging request header
+     * @param request HttpServletRequest */
     public void logRequestHeader(HttpServletRequest request){
         Enumeration<String> headerNames = request.getHeaderNames();
         if (headerNames != null) {

@@ -1,5 +1,6 @@
 package com.capstone.letmedrum.user.dto;
 
+import com.capstone.letmedrum.user.entity.User;
 import com.capstone.letmedrum.user.entity.UserRole;
 import lombok.Builder;
 import lombok.Getter;
@@ -10,17 +11,15 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class UserAuthInfoDto {
     private String email;
-    private String password;
     private UserRole role;
-    public UserAuthInfoDto(String email, String password, UserRole role){
+    public UserAuthInfoDto(String email, UserRole role){
         this.email = email;
-        this.password = password;
         this.role = role;
     }
-    public UserAuthInfoDto(String email, String password){
-        this(email, password, UserRole.ROLE_GUEST);
+    public UserAuthInfoDto(User user){
+        this(user.getEmail(), user.getRole());
     }
-    public boolean validateUserAuthInfoDto(){
-        return email != null && password != null && role != null;
+    public boolean validate(){
+        return email != null && role != null;
     }
 }

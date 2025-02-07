@@ -21,7 +21,6 @@ public class CustomUserDetails implements UserDetails {
     public CustomUserDetails(String email, String password, UserRole role){
         this.userAuthInfoDto = UserAuthInfoDto.builder()
                 .email(email)
-                .password(password)
                 .role(role)
                 .build();
     }
