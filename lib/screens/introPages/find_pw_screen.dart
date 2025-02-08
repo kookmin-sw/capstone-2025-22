@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
+/// 사용자가 이메일을 통해 본인 인증을 수행하는 화면
 class FindPwScreen extends StatefulWidget {
   const FindPwScreen({super.key});
 
@@ -15,9 +16,8 @@ class _FindPwScreenState extends State<FindPwScreen> {
   late Timer _timer;
   int _timeRemaining = 180; // 남은 시간 3분 (초 단위)
   bool _isTimerRunning = false; // 타이머가 실행 중인지 여부
-  final bool _isEmailValid = false; // 입력한 이메일이 유효한지 여부
-  bool _isEmailSent = false; // 이메일이 전송되었는지 여부
-  bool _isCodeValid = false; // 입력한 인증번호가 유효한지 여부
+  bool _isEmailSent = false; // 이메일이 전송되었는지 여부 (전송 버튼 활성화 여부)
+  bool _isCodeValid = false; // 사용자가 입력한 인증번호가 유효한지 여부
   final TextEditingController _emailController =
       TextEditingController(); // 이메일 입력 필드 제어하는 컨트롤러
   final TextEditingController _codeController =
@@ -26,7 +26,7 @@ class _FindPwScreenState extends State<FindPwScreen> {
   @override
   void dispose() {
     // 위젯 종료 시 실행
-    // 화면이 닫힐 때 호출: 타이머 종료, 메모리 해제
+    // 화면이 닫힐 때 호출: 타이머 종료 & 메모리 해제
     _timer.cancel(); // 타이머 종료
     _emailController.dispose(); // 이메일 입력 컨트롤러 해제
     _codeController.dispose(); // 인증번호 입력 컨트롤러 해제
@@ -40,7 +40,7 @@ class _FindPwScreenState extends State<FindPwScreen> {
     return emailRegex.hasMatch(email);
   }
 
-  // 타이머 시작 함수: 이메일 전송 후 자동으로 타이머 시작
+  // 타이머 시작 함수: 이메일 전송 후 자동으로 3분 타이머 시작
   void _startTimer() {
     setState(() {
       _isTimerRunning = true;
@@ -54,7 +54,7 @@ class _FindPwScreenState extends State<FindPwScreen> {
           _timeRemaining--;
         });
       } else {
-        // 시간이 0이 되면 _isTimerRunning을 false로 변경
+        // 시간이 0이 되면 _isTimerRunning을 false로 변경 (타이머 중지)
         _timer.cancel();
         setState(() {
           _isTimerRunning = false;
@@ -70,7 +70,7 @@ class _FindPwScreenState extends State<FindPwScreen> {
     return '$minutes:$secs';
   }
 
-  // 이메일 인증 요청
+  // 이메일 인증번호 전송 요청
   Future<void> _sendEmailVerification() async {
     final email = _emailController.text.trim();
     if (!_validateEmail(email)) return; // 이메일 형식이 맞지 않으면 실행하지 않음
@@ -83,7 +83,7 @@ class _FindPwScreenState extends State<FindPwScreen> {
     _startTimer(); // 이메일 전송되면 타이머 시작
   }
 
-  // 인증번호 확인 요청
+  // 입력한 인증번호 확인 요청
   Future<void> _verifyCode() async {
     final response = await http.get(
       // 서버에 인증번호 확인 요청
@@ -93,9 +93,8 @@ class _FindPwScreenState extends State<FindPwScreen> {
     if (response.statusCode == 200) {
       // 서버 응답이 정상(200)일 경우만 처리
       final data = jsonDecode(response.body);
-      if (data['body']['status'] == "??") {
-        // status로 뭐가 전달되지?
-        // 응답 데이터가 ??이면 인증 성공
+      if (data['body']['status'] == "valid") {
+        // 응답 데이터가 valid이면 인증 성공
         setState(() {
           _isCodeValid = true;
         });
@@ -106,7 +105,7 @@ class _FindPwScreenState extends State<FindPwScreen> {
       }
     } else {
       setState(() {
-        _isCodeValid = false;
+        _isCodeValid = false; // 서버 오류 시 인증 실패 처리
       });
     }
   }
@@ -168,7 +167,7 @@ class _FindPwScreenState extends State<FindPwScreen> {
                       padding: EdgeInsets.symmetric(vertical: 16.0),
                       backgroundColor: Color(0xFF424242),
                     ),
-                    onPressed: _isCodeValid // 인증번호가 유효해서 다음 버튼 활성화
+                    onPressed: _isCodeValid // 인증번호가 유효할 때만 다음 버튼 활성화
                         ? () {
                             Navigator.push(
                               context,
@@ -178,7 +177,7 @@ class _FindPwScreenState extends State<FindPwScreen> {
                               ),
                             );
                           }
-                        : null,
+                        : null, // 인증 실패 시 버튼 비활성화
                     child: Center(
                       child: Text(
                         '다음',
