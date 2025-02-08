@@ -39,7 +39,7 @@ class _LoginScreenState extends State<LoginScreen> {
     try {
       // 서버에 로그인 요청
       final response = await http.post(
-        Uri.parse('https://example.com/auth/signin'), // API URL 수정해야 함!
+        Uri.parse('https://10.0.2.2:8080/auth/signin'), // API URL 수정해야 함!
         headers: {'Content-Type': 'application/json'}, // 요청을 JSON 형식으로 보냄
         body: jsonEncode({'id': id, 'password': password}),
       );

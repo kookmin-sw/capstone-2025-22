@@ -87,7 +87,7 @@ class _FindPwScreenState extends State<FindPwScreen> {
   Future<void> _verifyCode() async {
     final response = await http.get(
       // 서버에 인증번호 확인 요청
-      Uri.parse('https://example.com/auth/email-confirm'), // API 변경하기!
+      Uri.parse('https://10.0.2.2:8080/auth/email-confirm'), // API 변경하기!
     );
 
     if (response.statusCode == 200) {
