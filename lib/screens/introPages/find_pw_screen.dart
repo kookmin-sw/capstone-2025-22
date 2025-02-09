@@ -123,7 +123,7 @@ class _FindPwScreenState extends State<FindPwScreen> {
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 introPageHeader(
-                  title: '본인 확인',
+                  title: '비밀번호 재설정',
                 ),
                 Text("본인인증을 위해 가입하신 이메일 주소로 인증번호를 발송합니다."),
                 SizedBox(height: 30),
@@ -138,6 +138,17 @@ class _FindPwScreenState extends State<FindPwScreen> {
                         isButtonEnabled: _validateEmail(_emailController.text),
                         onButtonPressed: _sendEmailVerification,
                       ),
+                      if (!_validateEmail(_emailController.text))
+                        Align(
+                          alignment: Alignment.centerLeft, // 왼쪽 정렬
+                          child: Padding(
+                            padding: const EdgeInsets.only(left: 8.0),
+                            child: Text(
+                              "이메일 주소 형식이 잘못됐습니다.",
+                              style: TextStyle(color: Colors.red),
+                            ),
+                          ),
+                        ),
                       SizedBox(height: 10),
                       _buildTextFieldWithTimerAndButton(
                         controller: _codeController,
@@ -147,6 +158,17 @@ class _FindPwScreenState extends State<FindPwScreen> {
                         isButtonEnabled: _isEmailSent,
                         onButtonPressed: _verifyCode,
                       ),
+                      if (!_isCodeValid)
+                        Align(
+                          alignment: Alignment.centerLeft, // 왼쪽 정렬
+                          child: Padding(
+                            padding: const EdgeInsets.only(left: 8.0),
+                            child: Text(
+                              "인증번호가 틀렸습니다.",
+                              style: TextStyle(color: Colors.red),
+                            ),
+                          ),
+                        ),
                     ],
                   ),
                 ),
@@ -158,7 +180,7 @@ class _FindPwScreenState extends State<FindPwScreen> {
                   ),
                 const SizedBox(height: 20),
                 SizedBox(
-                  width: 400,
+                  width: 300,
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
                       shape: RoundedRectangleBorder(
