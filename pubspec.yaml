@@ -31,6 +31,9 @@ dependencies:
   flutter:
     sdk: flutter
   font_awesome_flutter: ^10.5.0 # google 아이콘 사용 위한 패키지
+  google_sign_in: ^6.1.5  # google 로그인을 위한 패키지
+  http: ^1.2.1
+  flutter_secure_storage: ^9.0.0
 
 
   # The following adds the Cupertino Icons font to your application.
