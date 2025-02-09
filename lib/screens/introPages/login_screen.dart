@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:capstone_2025/screens/introPages/find_pw_screen.dart';
 import 'package:capstone_2025/screens/introPages/sign_up_screen.dart';
+import 'package:capstone_2025/screens/introPages/widgets/intro_page_header.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -93,108 +94,109 @@ class _LoginScreenState extends State<LoginScreen> {
         // 화면 중앙에 위젯을 배치
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20.0),
-          child: SizedBox(
-            width: 400,
-            child: SingleChildScrollView(
-              // 스크롤 가능
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  const SizedBox(height: 70),
-                  const Text(
-                    '🥁알려드럼🥁',
-                    style: TextStyle(
-                      fontSize: 38.0,
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  _buildTextFieldWrapper(
-                    // 아이디 입력 필드
-                    controller: _idController,
-                    hint: '아이디(이메일)',
-                    obscureText: false, // 가려지지 않음
-                    suffixIcon: null,
-                  ),
-                  const SizedBox(height: 10),
-                  _buildTextFieldWrapper(
-                    // 비밀번호 입력 필드
-                    controller: _passwordController,
-                    hint: '비밀번호',
-                    obscureText: !_isPasswordVisible, // 비밀번호 보이기/숨기기 기능 활성화
-                    suffixIcon: IconButton(
-                      // 눈 모양 아이콘 클릭하면 비밀번호 보이게 함
-                      icon: Icon(_isPasswordVisible
-                          ? Icons.visibility
-                          : Icons.visibility_off),
-                      onPressed: () {
-                        setState(() {
-                          // 눈 모양 아이콘 클릭할 때마다 상태 변경
-                          _isPasswordVisible = !_isPasswordVisible;
-                        });
-                      },
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  _isLoading
-                      ? const CircularProgressIndicator() // 로딩 중이면 로딩스피너 표시
-                      : ElevatedButton(
-                          // _isLoading이 false이면 로그인 버튼 활성화
-                          style: ElevatedButton.styleFrom(
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12.0),
-                            ),
-                            padding: const EdgeInsets.symmetric(vertical: 16.0),
-                            backgroundColor: Color(0xFF424242),
-                          ),
-                          onPressed: _login, // 로그인 버튼 클릭하면 _login 함수 호출
-                          child: const Center(
-                            child: Text(
-                              '로그인',
-                              style: TextStyle(
-                                fontSize: 15.0,
-                                color: Colors.white,
+          child: SingleChildScrollView(
+            // 스크롤 가능
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                introPageHeader(
+                  // 수정하기!!!
+                  title: '🥁알려드럼🥁',
+                ),
+                const SizedBox(height: 20),
+                SizedBox(
+                  width: 400,
+                  child: Column(
+                    children: [
+                      _buildTextFieldWrapper(
+                        // 아이디 입력 필드
+                        controller: _idController,
+                        hint: '아이디(이메일)',
+                        obscureText: false, // 가려지지 않음
+                        suffixIcon: null,
+                      ),
+                      const SizedBox(height: 10),
+                      _buildTextFieldWrapper(
+                        // 비밀번호 입력 필드
+                        controller: _passwordController,
+                        hint: '비밀번호',
+                        obscureText: !_isPasswordVisible, // 비밀번호 보이기/숨기기 기능 활성화
+                        suffixIcon: IconButton(
+                          // 눈 모양 아이콘 클릭하면 비밀번호 보이게 함
+                          icon: Icon(_isPasswordVisible
+                              ? Icons.visibility
+                              : Icons.visibility_off),
+                          onPressed: () {
+                            setState(() {
+                              // 눈 모양 아이콘 클릭할 때마다 상태 변경
+                              _isPasswordVisible = !_isPasswordVisible;
+                            });
+                          },
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      _isLoading
+                          ? const CircularProgressIndicator() // 로딩 중이면 로딩스피너 표시
+                          : ElevatedButton(
+                              // _isLoading이 false이면 로그인 버튼 활성화
+                              style: ElevatedButton.styleFrom(
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12.0),
+                                ),
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 16.0),
+                                backgroundColor: Color(0xFF424242),
+                              ),
+                              onPressed: _login, // 로그인 버튼 클릭하면 _login 함수 호출
+                              child: const Center(
+                                child: Text(
+                                  '로그인',
+                                  style: TextStyle(
+                                    fontSize: 15.0,
+                                    color: Colors.white,
+                                  ),
+                                ),
                               ),
                             ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end, // 오른쪽 끝 정렬
+                        children: [
+                          TextButton(
+                            // '비밀번호 찾기' 버튼
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      const FindPwScreen(), // 버튼 클릭하면 FindPwScreen으로 이동
+                                ),
+                              );
+                            },
+                            child: const Text('비밀번호 찾기',
+                                style: TextStyle(fontSize: 13)),
                           ),
-                        ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end, // 오른쪽 끝 정렬
-                    children: [
-                      TextButton(
-                        // '비밀번호 찾기' 버튼
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) =>
-                                  const FindPwScreen(), // 버튼 클릭하면 FindPwScreen으로 이동
-                            ),
-                          );
-                        },
-                        child: const Text('비밀번호 찾기',
-                            style: TextStyle(fontSize: 13)),
-                      ),
-                      const Text('|'),
-                      TextButton(
-                        // '회원가입' 버튼
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) =>
-                                  const SignUpScreen(), // 버튼 클릭하면 SignUpScreen으로 이동
-                            ),
-                          );
-                        },
-                        child:
-                            const Text('회원가입', style: TextStyle(fontSize: 13)),
+                          const Text('|'),
+                          TextButton(
+                            // '회원가입' 버튼
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      const SignUpScreen(), // 버튼 클릭하면 SignUpScreen으로 이동
+                                ),
+                              );
+                            },
+                            child: const Text('회원가입',
+                                style: TextStyle(fontSize: 13)),
+                          ),
+                        ],
                       ),
                     ],
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ),
