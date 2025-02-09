@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:capstone_2025/screens/introPages/login_screen.dart';
 import 'package:capstone_2025/screens/introPages/widgets/intro_page_header.dart';
 import 'package:flutter/material.dart';
 import 'dart:convert';
@@ -124,6 +125,7 @@ class _FindPwScreenState extends State<FindPwScreen> {
               children: [
                 introPageHeader(
                   title: '비밀번호 재설정',
+                  targetPage: LoginScreen(),
                 ),
                 Text("본인인증을 위해 가입하신 이메일 주소로 인증번호를 발송합니다."),
                 SizedBox(height: 30),

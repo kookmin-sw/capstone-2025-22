@@ -108,7 +108,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
           scrollDirection: Axis.vertical,
           child: Column(
             children: [
-              introPageHeader(title: '회원가입'),
+              introPageHeader(
+                title: '회원가입',
+                targetPage: LoginScreen(),
+              ),
               Form(
                 key: _formKey,
                 child: Column(
@@ -290,7 +293,7 @@ Row inputForm({
 }
 
 class ButtonForm extends StatelessWidget {
-  ButtonForm({
+  const ButtonForm({
     super.key,
     required this.btnName,
     this.buttonColor = const Color(0xFFD97D6C),

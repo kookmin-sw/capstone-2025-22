@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:capstone_2025/screens/introPages/find_pw_screen.dart';
+import 'package:capstone_2025/screens/introPages/login_screen_google.dart';
 import 'package:capstone_2025/screens/introPages/sign_up_screen.dart';
 import 'package:capstone_2025/screens/introPages/widgets/intro_page_header.dart';
 import 'package:flutter/material.dart';
@@ -103,6 +104,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 introPageHeader(
                   // 수정하기!!!
                   title: '🥁알려드럼🥁',
+                  targetPage: LoginScreenGoogle(),
                 ),
                 const SizedBox(height: 20),
                 SizedBox(
