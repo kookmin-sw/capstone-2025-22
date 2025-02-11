@@ -1,7 +1,6 @@
 package com.capstone.letmedrum.user.service;
 
-import com.capstone.letmedrum.common.service.RedisService;
-import com.capstone.letmedrum.common.service.RedisSingleDataService;
+import com.capstone.letmedrum.common.service.RedisSingleDataServiceImpl;
 import com.capstone.letmedrum.config.security.JwtUtils;
 import com.capstone.letmedrum.user.dto.UserAuthInfoDto;
 import com.capstone.letmedrum.user.dto.UserAuthResponseDto;
@@ -16,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -27,6 +27,7 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class UserAuthServiceTest {
+    @Spy
     @InjectMocks
     private UserAuthService userAuthService;
     @Mock
@@ -36,7 +37,7 @@ class UserAuthServiceTest {
     @Mock
     private JwtUtils jwtUtils;
     @Mock
-    private RedisSingleDataService redisSingleDataService;
+    private AuthTokenService authTokenService;
 
     private static final String email = "email";
     private static final String nickname = "username";
@@ -58,11 +59,12 @@ class UserAuthServiceTest {
                 .nickname(nickname)
                 .password(password).build();
         // stub
-        when(userRepository.findByEmail(anyString())).thenReturn(Optional.empty());
-        when(userRepository.save(any(User.class))).thenReturn(userCreateDto.toEntity());
-        when(jwtUtils.generateAccessToken(any())).thenReturn("token");
-        when(jwtUtils.generateRefreshToken(any())).thenReturn("token");
-        when(redisSingleDataService.setValue(anyString(), anyString(), anyInt())).thenReturn(1);
+        when(userRepository.findByEmail(anyString()))
+                .thenReturn(Optional.empty());
+        when(userRepository.save(any(User.class)))
+                .thenReturn(userCreateDto.toEntity());
+        when(userAuthService.generateUserAuthResponseDto(email, UserRole.ROLE_USER))
+                .thenReturn(UserAuthResponseDto.builder().email(email).build());
         // when
         UserAuthResponseDto res = userAuthService.signUpUser(userCreateDto);
         // then
@@ -77,7 +79,8 @@ class UserAuthServiceTest {
                 .password(password)
                 .build();
         // stub
-        when(userRepository.findByEmail(anyString())).thenReturn(Optional.of(userCreateDto.toEntityWithEncodedPassword(new BCryptPasswordEncoder())));
+        when(userRepository.findByEmail(anyString()))
+                .thenReturn(Optional.of(userCreateDto.toEntityWithEncodedPassword(new BCryptPasswordEncoder())));
         // when
         // then
         assertThrows(RuntimeException.class, () -> userAuthService.signUpUser(userCreateDto));
@@ -93,11 +96,12 @@ class UserAuthServiceTest {
                 .password(password)
                 .build();
         // stub
-        when(passwordEncoder.matches(anyString(), anyString())).thenReturn(true);
-        when(userRepository.findByEmail(anyString())).thenReturn(Optional.of(userCreateDto.toEntityWithEncodedPassword(new BCryptPasswordEncoder())));
-        when(jwtUtils.generateAccessToken(any())).thenReturn("token");
-        when(jwtUtils.generateRefreshToken(any())).thenReturn("token");
-        when(redisSingleDataService.setValue(anyString(), anyString(), anyInt())).thenReturn(1);
+        when(passwordEncoder.matches(any(), anyString()))
+                .thenReturn(true);
+        when(userRepository.findByEmail(email))
+                .thenReturn(Optional.of(userCreateDto.toEntityWithEncodedPassword(new BCryptPasswordEncoder())));
+        when(userAuthService.generateUserAuthResponseDto(email, UserRole.ROLE_USER))
+                .thenReturn(UserAuthResponseDto.builder().email(email).build());
         // when
         UserAuthResponseDto signInRes = userAuthService.signInUser(userSignInDto);
         // then
@@ -110,7 +114,8 @@ class UserAuthServiceTest {
         String wrongEmail = "wrongEmail", wrongPassword = "wrongPassword";
         UserSignInDto wrongEmailPasswordUser = new UserSignInDto(wrongEmail, wrongPassword);
         // stub
-        when(userRepository.findByEmail(anyString())).thenReturn(Optional.empty());
+        when(userRepository.findByEmail(anyString()))
+                .thenReturn(Optional.empty());
         // when
         // then
         assertThrows(RuntimeException.class, () -> userAuthService.signInUser(wrongEmailPasswordUser));
@@ -122,9 +127,12 @@ class UserAuthServiceTest {
         User savedUser = new User();
         savedUser.setEmail(email);
         // stub
-        when(jwtUtils.validateToken(refresh_token)).thenReturn(true);
-        when(jwtUtils.getUserEmail(anyString())).thenReturn(email);
-        when(redisSingleDataService.deleteValue(anyString())).thenReturn(1);
+        when(jwtUtils.validateToken(refresh_token))
+                .thenReturn(true);
+        when(jwtUtils.getUserEmail(refresh_token))
+                .thenReturn(email);
+        when(userRepository.findByEmail(email))
+                .thenReturn(Optional.of(savedUser));
         // when
         boolean res = userAuthService.signOutUser(refresh_token);
         // then
@@ -135,7 +143,8 @@ class UserAuthServiceTest {
     void testSignOutUserFailureInvalidToken() {
         // given
         // stub
-        when(jwtUtils.validateToken(refresh_token)).thenReturn(false);
+        when(jwtUtils.validateToken(refresh_token))
+                .thenReturn(false);
         // when
         // then
         assertThrows(RuntimeException.class, () -> userAuthService.signOutUser(refresh_token));
@@ -145,8 +154,12 @@ class UserAuthServiceTest {
     void testSignOutUserFailureInvalidUser() {
         // given
         // stub
-        when(jwtUtils.validateToken(refresh_token)).thenReturn(true);
-        when(jwtUtils.getUserEmail(anyString())).thenReturn(email);
+        when(jwtUtils.validateToken(refresh_token))
+                .thenReturn(true);
+        when(jwtUtils.getUserEmail(anyString()))
+                .thenReturn(email);
+        when(userRepository.findByEmail(anyString()))
+                .thenReturn(Optional.empty());
         // when
         // then
         assertThrows(RuntimeException.class, () -> userAuthService.signOutUser(refresh_token));
@@ -161,13 +174,14 @@ class UserAuthServiceTest {
                 new UserAuthInfoDto("new email", UserRole.ROLE_USER)
         );
         // stub
-        when(jwtUtils.validateToken(refresh_token)).thenReturn(true);
-        when(jwtUtils.getUserEmail(anyString())).thenReturn(email);
-        when(jwtUtils.generateRefreshToken(any())).thenReturn(newToken);
-        when(jwtUtils.generateAccessToken(any())).thenReturn(newToken);
-        when(redisSingleDataService.getValue(anyString())).thenReturn(refresh_token);
-        when(redisSingleDataService.setValue(anyString(), anyString(), anyInt())).thenReturn(1);
-        when(userRepository.findByEmail(anyString())).thenReturn(Optional.of(savedUser));
+        when(jwtUtils.validateToken(refresh_token))
+                .thenReturn(true);
+        when(jwtUtils.getUserEmail(refresh_token))
+                .thenReturn(email);
+        when(authTokenService.getRefreshToken(email))
+                .thenReturn(refresh_token);
+        when(userAuthService.generateUserAuthResponseDto(email, UserRole.ROLE_USER))
+                .thenReturn(UserAuthResponseDto.builder().email(email).refreshToken(newToken).build());
         // when
         UserAuthResponseDto res = userAuthService.doRefreshTokenRotation(refresh_token);
         // then
@@ -185,9 +199,12 @@ class UserAuthServiceTest {
         User savedUser = new User();
         savedUser.setEmail(email);
         // stub
-        when(jwtUtils.validateToken(refresh_token)).thenReturn(true);
-        when(userRepository.findByEmail(anyString())).thenReturn(Optional.of(savedUser));
-        when(redisSingleDataService.getValue(anyString())).thenReturn(currentRefreshToken);
+        when(jwtUtils.validateToken(prevRefreshToken))
+                .thenReturn(true);
+        when(userRepository.findByEmail(email))
+                .thenReturn(Optional.of(savedUser));
+        when(authTokenService.getRefreshToken(email))
+                .thenReturn(currentRefreshToken);
         // when
         // then
         assertThrows(RuntimeException.class, () -> userAuthService.doRefreshTokenRotation(prevRefreshToken));

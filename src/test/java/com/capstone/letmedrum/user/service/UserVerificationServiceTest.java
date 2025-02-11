@@ -1,6 +1,6 @@
 package com.capstone.letmedrum.user.service;
 
-import com.capstone.letmedrum.common.service.RedisSingleDataService;
+import com.capstone.letmedrum.common.service.RedisSingleDataServiceImpl;
 import com.capstone.letmedrum.mail.service.CustomMailSenderService;
 import com.capstone.letmedrum.mail.service.CustomMailTemplateService;
 import org.junit.jupiter.api.DisplayName;
@@ -22,7 +22,7 @@ class UserVerificationServiceTest {
     @Mock
     CustomMailTemplateService mailTemplateService;
     @Mock
-    RedisSingleDataService redisSingleDataService;
+    RedisSingleDataServiceImpl redisSingleDataServiceImpl;
 
     @Test
     @DisplayName("인증메일 전송 테스트")
@@ -31,7 +31,7 @@ class UserVerificationServiceTest {
         String email = "test@test.com";
         // stub
         when(mailTemplateService.generateAuthCodeTemplate(any())).thenReturn("mail template");
-        when(redisSingleDataService.setValue(anyString(), anyString(), anyInt())).thenReturn(1);
+        when(redisSingleDataServiceImpl.setValue(anyString(), anyString(), anyInt())).thenReturn(true);
         when(mailSenderService.sendText(any(), anyBoolean())).thenReturn(true);
         // when
         boolean result = userVerificationService.sendVerificationEmail(email);
@@ -46,7 +46,7 @@ class UserVerificationServiceTest {
         String email = "test@test.com";
         String authCode = "123456";
         // stub
-        when(redisSingleDataService.getValue(anyString())).thenReturn(authCode);
+        when(redisSingleDataServiceImpl.getValue(anyString())).thenReturn(authCode);
         // when
         boolean result = userVerificationService.isValidAuthCode(email, authCode);
         // then
