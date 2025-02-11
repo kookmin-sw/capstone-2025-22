@@ -1,6 +1,6 @@
 package com.capstone.letmedrum.user.service;
 
-import com.capstone.letmedrum.common.service.RedisSingleDataService;
+import com.capstone.letmedrum.common.service.RedisSingleDataServiceImpl;
 import com.capstone.letmedrum.mail.dto.AuthCodeTemplateDto;
 import com.capstone.letmedrum.mail.dto.MailDto;
 import com.capstone.letmedrum.mail.service.CustomMailSenderService;
@@ -16,23 +16,23 @@ import java.util.concurrent.ThreadLocalRandom;
 public class UserVerificationService {
     private final CustomMailTemplateService customMailTemplateService;
     private final CustomMailSenderService customMailSenderService;
-    private final RedisSingleDataService redisSingleDataService;
+    private final RedisSingleDataServiceImpl redisSingleDataServiceImpl;
     private final String senderAddress;
     /**
      * constructor for DI
      * @param customMailTemplateService CustomMailTemplateService class
      * @param customMailSenderService CustomMailSenderService class
-     * @param redisSingleDataService RedisSingleDataService class
+     * @param redisSingleDataServiceImpl RedisSingleDataService class
      * @param senderAddress sender's gmail address
     * */
     public UserVerificationService(
             CustomMailTemplateService customMailTemplateService,
             CustomMailSenderService customMailSenderService,
-            RedisSingleDataService redisSingleDataService,
+            RedisSingleDataServiceImpl redisSingleDataServiceImpl,
             @Value("spring.name.username") String senderAddress) {
         this.customMailTemplateService = customMailTemplateService;
         this.customMailSenderService = customMailSenderService;
-        this.redisSingleDataService = redisSingleDataService;
+        this.redisSingleDataServiceImpl = redisSingleDataServiceImpl;
         this.senderAddress = senderAddress;
     }
     /**
@@ -68,7 +68,7 @@ public class UserVerificationService {
                 .text(template)
                 .build();
         // save auth code on Redis
-        if(redisSingleDataService.setValue(getRedisAuthCodeKey(email), authCode, 600)==0){
+        if(!redisSingleDataServiceImpl.setValue(getRedisAuthCodeKey(email), authCode, 600)){
             log.error("failed to save authCode on Redis");
             throw new RuntimeException("failed to save authCode on Redis");
         }
@@ -83,7 +83,7 @@ public class UserVerificationService {
     * */
     public boolean isValidAuthCode(String email, String authCode) {
         String redisAuthCodeKey = getRedisAuthCodeKey(email);
-        String storedAuthCode = redisSingleDataService.getValue(redisAuthCodeKey);
+        String storedAuthCode = redisSingleDataServiceImpl.getValue(redisAuthCodeKey);
         return authCode.equals(storedAuthCode);
     }
 }
