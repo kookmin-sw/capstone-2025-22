@@ -84,6 +84,17 @@ public class JwtUtils {
         return false;
     }
     /**
+     * just process token (this function doesn't validate token)
+     * @param token access token or refresh token
+     * @return preprocessed token
+    * */
+    public String processToken(String token){
+        if(token.startsWith(ACCESS_TOKEN_PREFIX)){
+            return token.substring(ACCESS_TOKEN_PREFIX.length());
+        }
+        return token;
+    }
+    /**
      * @param token jwtToken String
      * @return JwtToken's Claims - Claims, nullable
      * */

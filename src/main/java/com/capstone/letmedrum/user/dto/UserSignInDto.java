@@ -2,14 +2,16 @@ package com.capstone.letmedrum.user.dto;
 
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Builder
 @Getter
 @Setter
+@NoArgsConstructor
 public class UserSignInDto {
-    private final String email;
-    private final String password;
+    private String email;
+    private String password;
     public UserSignInDto(String email, String password) {
         this.email = email;
         this.password = password;

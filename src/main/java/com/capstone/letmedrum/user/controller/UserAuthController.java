@@ -2,18 +2,27 @@ package com.capstone.letmedrum.user.controller;
 
 import com.capstone.letmedrum.common.dto.ApiResponse;
 import com.capstone.letmedrum.config.security.JwtUtils;
+import com.capstone.letmedrum.user.dto.UserAuthGoogleRequestDto;
 import com.capstone.letmedrum.user.dto.UserAuthResponseDto;
 import com.capstone.letmedrum.user.dto.UserCreateDto;
 import com.capstone.letmedrum.user.dto.UserSignInDto;
 import com.capstone.letmedrum.user.service.UserAuthService;
+import com.capstone.letmedrum.user.service.UserGoogleAuthService;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
 
 @RestController
 @RequestMapping("/auth")
 public class UserAuthController {
     private final UserAuthService userAuthService;
-    public UserAuthController(UserAuthService userAuthService){
+    private final UserGoogleAuthService userGoogleAuthService;
+    private final JwtUtils jwtUtils;
+
+    public UserAuthController(UserAuthService userAuthService, UserGoogleAuthService userGoogleAuthService, JwtUtils jwtUtils) {
         this.userAuthService = userAuthService;
+        this.userGoogleAuthService = userGoogleAuthService;
+        this.jwtUtils = jwtUtils;
     }
     /**
      * 현재 서버가 요청을 정상적으로 받는지 확인하기 위한 API
@@ -34,6 +43,13 @@ public class UserAuthController {
         UserAuthResponseDto responseDto = userAuthService.signInUser(userSignInDto);
         return ApiResponse.success(responseDto);
     }
+    /*
+    * */
+    @PostMapping("/signin/google")
+    public ApiResponse<UserAuthResponseDto> signInGoogle(@RequestBody UserAuthGoogleRequestDto userAuthGoogleRequestDto){
+        if(userAuthGoogleRequestDto.getGoogleAuthCode()==null) return ApiResponse.error("signIn fail : invalid request body");
+        return ApiResponse.success(userGoogleAuthService.signIn(userAuthGoogleRequestDto.getGoogleAuthCode()));
+    }
     /**
      * 아직 가입되지 않은 사용자를 회원가입 처리하는 API
      * @param userCreateDto - 사용자 회원가입 요청 객체
@@ -52,6 +68,7 @@ public class UserAuthController {
     * */
     @GetMapping("/signout")
     public ApiResponse<String> signOutUser(@RequestHeader(JwtUtils.ACCESS_TOKEN_HEADER_KEY) String refreshToken){
+        refreshToken = jwtUtils.processToken(refreshToken);
         boolean result = userAuthService.signOutUser(refreshToken);
         if(!result) return ApiResponse.error("signOut fail : invalid refresh token");
         return ApiResponse.success("success");
@@ -63,6 +80,7 @@ public class UserAuthController {
      * */
     @PostMapping("/token")
     public ApiResponse<UserAuthResponseDto> regenerateToken(@RequestHeader(JwtUtils.ACCESS_TOKEN_HEADER_KEY) String refreshToken){
+        refreshToken = jwtUtils.processToken(refreshToken);
         if(refreshToken==null || refreshToken.isEmpty()) return ApiResponse.error("refresh token is null or empty");
         return ApiResponse.success(userAuthService.doRefreshTokenRotation(refreshToken));
     }
