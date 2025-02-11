@@ -36,7 +36,8 @@ public class UserAuthService {
      * @throws RuntimeException If user info is not valid
     * */
     public UserAuthResponseDto signInUser(UserSignInDto userSignInDto) {
-        if(!verifyUserSignInInfo(userSignInDto)){
+        User existUser = userRepository.findByEmail(userSignInDto.getEmail()).orElse(null);
+        if(!(existUser != null && passwordEncoder.matches(userSignInDto.getPassword(), existUser.getPassword()))){
             throw new RuntimeException("invalid user info : email or password invalid");
         }
         return generateUserAuthResponseDto(userSignInDto.getEmail(), UserRole.ROLE_USER);
@@ -68,6 +69,7 @@ public class UserAuthService {
             throw new RuntimeException("refresh token invalid : using invalid or expired token");
         }
         String email = jwtUtils.getUserEmail(refreshToken);
+        userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("user not found"));
         authTokenService.deleteAccessTokenAndRefreshToken(email);
         return true;
     }
@@ -89,15 +91,6 @@ public class UserAuthService {
             throw new RuntimeException("refresh token invalid : using prev version token");
         }
         return generateUserAuthResponseDto(email, UserRole.ROLE_USER);
-    }
-    /**
-     * compare user's email and password with exist user
-     * @param userSignInDto user's email and password dto
-     * @return true if userSignInDto is valid
-     * */
-    boolean verifyUserSignInInfo(UserSignInDto userSignInDto){
-        User existUser = userRepository.findByEmail(userSignInDto.getEmail()).orElse(null);
-        return existUser != null && passwordEncoder.matches(userSignInDto.getPassword(), existUser.getPassword());
     }
     /**
      * save tokens on redis and return user auth response
