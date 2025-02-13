@@ -19,6 +19,9 @@ class _FindPwScreenState extends State<FindPwScreen> {
   bool _isTimerRunning = false; // 타이머가 실행 중인지 여부
   bool _isEmailSent = false; // 이메일이 전송되었는지 여부 (전송 버튼 활성화 여부)
   bool _isCodeValid = false; // 사용자가 입력한 인증번호가 유효한지 여부
+  String _emailError = '';
+  String _codeError = '';
+
   final TextEditingController _emailController =
       TextEditingController(); // 이메일 입력 필드 제어하는 컨트롤러
   final TextEditingController _codeController =
@@ -75,7 +78,13 @@ class _FindPwScreenState extends State<FindPwScreen> {
   Future<void> _sendEmailVerification() async {
     final email = _emailController.text.trim();
 
-    if (!_validateEmail(email)) return; // 이메일 유효성 검사
+    // 이메일 유효성 검사
+    if (!_validateEmail(email)) {
+      setState(() {
+        _emailError = "이메일 주소 형식이 잘못됐습니다.";
+      });
+      return;
+    }
 
     final uri =
         Uri.parse('http://10.0.2.2:28080/verification/auth-codes?email=$email');
@@ -87,6 +96,7 @@ class _FindPwScreenState extends State<FindPwScreen> {
       print("이메일 전송 성공");
       setState(() {
         _isEmailSent = true;
+        _emailError = '';
       });
       _startTimer(); // 이메일 전송되면 타이머 시작
     } else {
@@ -99,8 +109,17 @@ class _FindPwScreenState extends State<FindPwScreen> {
     final email = _emailController.text.trim();
     final code = _codeController.text.trim();
 
-    if (email.isEmpty || code.isEmpty) {
-      print("이메일 또는 인증번호가 비어 있음.");
+    if (email.isEmpty) {
+      setState(() {
+        _emailError = "이메일을 입력해주세요.";
+      });
+      return;
+    }
+
+    if (code.isEmpty) {
+      setState(() {
+        _codeError = "인증번호를 입력해주세요.";
+      });
       return;
     }
 
@@ -115,10 +134,12 @@ class _FindPwScreenState extends State<FindPwScreen> {
     if (data['body'] == "SUCCESS") {
       setState(() {
         _isCodeValid = true;
+        _codeError = '';
       });
     } else {
       setState(() {
         _isCodeValid = false; // 인증 실패
+        _codeError = "인증번호가 틀렸습니다.";
       });
     }
   }
@@ -136,13 +157,13 @@ class _FindPwScreenState extends State<FindPwScreen> {
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 introPageHeader(
-                  title: '비밀번호 재설정',
+                  title: '본인 확인',
                   targetPage: LoginScreen(),
                 ),
                 Text("본인인증을 위해 가입하신 이메일 주소로 인증번호를 발송합니다."),
                 SizedBox(height: 30),
                 SizedBox(
-                  width: 400,
+                  width: 450,
                   child: Column(
                     children: [
                       _buildTextFieldWithButton(
@@ -152,18 +173,17 @@ class _FindPwScreenState extends State<FindPwScreen> {
                         isButtonEnabled: _validateEmail(_emailController.text),
                         onButtonPressed: _sendEmailVerification,
                       ),
-                      if (!_validateEmail(_emailController.text))
-                        Align(
-                          alignment: Alignment.centerLeft, // 왼쪽 정렬
-                          child: Padding(
-                            padding: const EdgeInsets.only(left: 8.0),
-                            child: Text(
-                              "이메일 주소 형식이 잘못됐습니다.",
-                              style: TextStyle(color: Colors.red),
-                            ),
+                      Align(
+                        alignment: Alignment.centerLeft, // 왼쪽 정렬
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 8.0),
+                          child: Text(
+                            _emailError,
+                            style: TextStyle(color: Colors.red),
                           ),
                         ),
-                      SizedBox(height: 10),
+                      ),
+                      SizedBox(height: 5),
                       _buildTextFieldWithTimerAndButton(
                         controller: _codeController,
                         hint: '인증번호',
@@ -172,21 +192,19 @@ class _FindPwScreenState extends State<FindPwScreen> {
                         isButtonEnabled: _isEmailSent,
                         onButtonPressed: _verifyCode,
                       ),
-                      if (!_isCodeValid)
-                        Align(
-                          alignment: Alignment.centerLeft, // 왼쪽 정렬
-                          child: Padding(
-                            padding: const EdgeInsets.only(left: 8.0),
-                            child: Text(
-                              "인증번호가 틀렸습니다.",
-                              style: TextStyle(color: Colors.red),
-                            ),
+                      Align(
+                        alignment: Alignment.centerLeft, // 왼쪽 정렬
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 8.0),
+                          child: Text(
+                            _codeError,
+                            style: TextStyle(color: Colors.red),
                           ),
                         ),
+                      ),
                     ],
                   ),
                 ),
-                SizedBox(height: 10),
                 if (!_isTimerRunning && _isEmailSent) // 타이머가 종료되고 이메일이 전송되었을 경우
                   Text(
                     "인증번호 시간이 만료되었습니다. 이메일을 다시 전송해주세요.",
