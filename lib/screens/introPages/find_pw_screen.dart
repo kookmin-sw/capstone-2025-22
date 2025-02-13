@@ -74,39 +74,51 @@ class _FindPwScreenState extends State<FindPwScreen> {
   // 이메일 인증번호 전송 요청
   Future<void> _sendEmailVerification() async {
     final email = _emailController.text.trim();
-    if (!_validateEmail(email)) return; // 이메일 형식이 맞지 않으면 실행하지 않음
 
-    setState(() {
-      // 이메일 전송되었음 표시
-      _isEmailSent = true;
-    });
+    if (!_validateEmail(email)) return; // 이메일 유효성 검사
 
-    _startTimer(); // 이메일 전송되면 타이머 시작
+    final uri =
+        Uri.parse('http://10.0.2.2:28080/verification/auth-codes?email=$email');
+    final response = await http.get(uri);
+
+    final data = jsonDecode(response.body);
+
+    if (data['body'] == "SUCCESS") {
+      print("이메일 전송 성공");
+      setState(() {
+        _isEmailSent = true;
+      });
+      _startTimer(); // 이메일 전송되면 타이머 시작
+    } else {
+      print("이메일 전송 실패: ${response.body}");
+    }
   }
 
   // 입력한 인증번호 확인 요청
   Future<void> _verifyCode() async {
-    final response = await http.get(
-      // 서버에 인증번호 확인 요청
-      Uri.parse('https://10.0.2.2:8080/auth/email-confirm'), // API 변경하기!
-    );
+    final email = _emailController.text.trim();
+    final code = _codeController.text.trim();
 
-    if (response.statusCode == 200) {
-      // 서버 응답이 정상(200)일 경우만 처리
-      final data = jsonDecode(response.body);
-      if (data['body']['status'] == "valid") {
-        // 응답 데이터가 valid이면 인증 성공
-        setState(() {
-          _isCodeValid = true;
-        });
-      } else {
-        setState(() {
-          _isCodeValid = false; // 인증 실패
-        });
-      }
+    if (email.isEmpty || code.isEmpty) {
+      print("이메일 또는 인증번호가 비어 있음.");
+      return;
+    }
+
+    final uri = Uri.parse(
+        'http://10.0.2.2:28080/verification/auth-codes/check?email=$email&authCode=$code');
+    final response = await http.get(uri);
+
+    final data = jsonDecode(response.body);
+
+    print(response.body);
+
+    if (data['body'] == "SUCCESS") {
+      setState(() {
+        _isCodeValid = true;
+      });
     } else {
       setState(() {
-        _isCodeValid = false; // 서버 오류 시 인증 실패 처리
+        _isCodeValid = false; // 인증 실패
       });
     }
   }
