@@ -1,8 +1,12 @@
+import 'dart:convert';
+
 import 'package:capstone_2025/screens/introPages/login_screen.dart';
 import 'package:capstone_2025/screens/introPages/sign_up_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:http/http.dart' as http;
+import '/services/storage_service.dart';
 
 class LoginScreenGoogle extends StatefulWidget {
   const LoginScreenGoogle({super.key});
@@ -14,7 +18,10 @@ class LoginScreenGoogle extends StatefulWidget {
 class _LoginScreenGoogleState extends State<LoginScreenGoogle> {
   // GoogleSignIn 인스턴스 생성 (전역 변수)
   final GoogleSignIn _googleSignIn = GoogleSignIn(
-    scopes: ['email'], // 이메일 정보 가져오기
+    scopes: ['email', 'profile', 'openid'], // 이메일 정보 가져오기
+    serverClientId:
+        "637308987348-iilett3hur1ohas5r25fihlk7gdg5jci.apps.googleusercontent.com",
+    forceCodeForRefreshToken: true,
   );
 
   // Google 로그인 실행 함수
@@ -22,10 +29,10 @@ class _LoginScreenGoogleState extends State<LoginScreenGoogle> {
     try {
       print("Google 로그인 시도...");
 
-      // ✅ 기존 로그인 계정 로그아웃
+      // 기존 로그인 계정 로그아웃
       await _googleSignIn.signOut();
 
-      // ✅ 새로운 로그인 시도
+      // 새로운 로그인 시도
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
 
       if (googleUser == null) {
@@ -34,13 +41,62 @@ class _LoginScreenGoogleState extends State<LoginScreenGoogle> {
       }
 
       print("Google 로그인 성공!");
-      print("이름: ${googleUser.displayName}");
       print("이메일: ${googleUser.email}");
-      print("Google ID: ${googleUser.id}");
-      print("프로필 사진: ${googleUser.photoUrl}");
+
+      //auth code 받아오는 코드
+      final String? authCode = googleUser.serverAuthCode;
+
+      if (authCode == null) {
+        print("Auth code를 가져올 수 없습니다.");
+        return;
+      }
+
+      print("Auth Code: $authCode");
+
+      final userInfo = await sendAuthCodeToServer(authCode);
+      if (userInfo != null) {
+        print("UserInfo: $userInfo");
+        saveUserInfo(userInfo);
+      }
     } catch (error) {
       print("Google 로그인 오류: $error");
     }
+  }
+
+  // Auth Code 보내는 함수
+  Future<Map<String, dynamic>?> sendAuthCodeToServer(String authCode) async {
+    final Map<String, dynamic> requestBody = {
+      "googleAuthCode": authCode,
+    };
+
+    try {
+      // http post
+      final response =
+          await http.post(Uri.parse("http://10.0.2.2:28080/auth/signin/google"),
+              headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json",
+              },
+              body: jsonEncode(requestBody));
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return data; // 사용자 정보 반환
+      } else {
+        print("서버 오류: ${response.statusCode} - ${response.body}");
+        return null;
+      }
+    } catch (error) {
+      print("API 요청 실패 : $error");
+    }
+  }
+
+  // Response 받은 정보들 저장하는 함수
+  Future<void> saveUserInfo(Map<String, dynamic> userInfo) async {
+    await storage.write(key: "user_email", value: userInfo["email"]);
+    await storage.write(key: "user_name", value: userInfo["name"]);
+    await storage.write(key: "access_token", value: userInfo["access_token"]);
+    await storage.write(key: "refresh_token", value: userInfo["refresh_token"]);
   }
 
   @override
@@ -91,7 +147,7 @@ class _LoginScreenGoogleState extends State<LoginScreenGoogle> {
                   isTextBlack: true,
                   buttonColor: Color(0xFFE1E1E1),
                   needGoogle: true,
-                  clickedFunc: _handleGoogleSignIn, // ✅ Google 로그인 함수 적용
+                  clickedFunc: _handleGoogleSignIn, // Google 로그인 함수 적용
                 ),
               ),
               SizedBox(height: 15),
@@ -167,7 +223,7 @@ class ButtonForm extends StatelessWidget {
           children: [
             if (needGoogle)
               Icon(
-                FontAwesomeIcons.google, // ✅ Google 아이콘 유지
+                FontAwesomeIcons.google, // Google 아이콘 유지
                 size: 20,
                 color: Colors.black,
               ),
