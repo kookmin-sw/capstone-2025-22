@@ -170,7 +170,7 @@ class _FindPwScreenState extends State<FindPwScreen> {
                         controller: _emailController,
                         hint: '이메일',
                         buttonText: '전송',
-                        isButtonEnabled: _validateEmail(_emailController.text),
+                        // isButtonEnabled: _validateEmail(_emailController.text),
                         onButtonPressed: _sendEmailVerification,
                       ),
                       Align(
@@ -189,7 +189,7 @@ class _FindPwScreenState extends State<FindPwScreen> {
                         hint: '인증번호',
                         timerText: _formatTime(_timeRemaining),
                         buttonText: '확인',
-                        isButtonEnabled: _isEmailSent,
+                        // isButtonEnabled: _isEmailSent,
                         onButtonPressed: _verifyCode,
                       ),
                       Align(
@@ -221,17 +221,15 @@ class _FindPwScreenState extends State<FindPwScreen> {
                       padding: EdgeInsets.symmetric(vertical: 16.0),
                       backgroundColor: Color(0xFF424242),
                     ),
-                    onPressed: _isCodeValid // 인증번호가 유효할 때만 다음 버튼 활성화
-                        ? () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) =>
-                                    const FindPwScreen(), // '다음' 버튼 클릭하면 페이지 이동. 수정하기!
-                              ),
-                            );
-                          }
-                        : null, // 인증 실패 시 버튼 비활성화
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              const FindPwScreen(), // '다음' 버튼 클릭하면 페이지 이동. 수정하기!
+                        ),
+                      );
+                    }, // 인증 실패 시 버튼 비활성화
                     child: Center(
                       child: Text(
                         '다음',
@@ -257,7 +255,7 @@ class _FindPwScreenState extends State<FindPwScreen> {
     required String hint,
     required String buttonText,
     required VoidCallback onButtonPressed,
-    required bool isButtonEnabled,
+    // required bool isButtonEnabled,
   }) {
     return Row(
       children: [
@@ -289,10 +287,9 @@ class _FindPwScreenState extends State<FindPwScreen> {
         ),
         SizedBox(width: 10),
         ElevatedButton(
-          onPressed:
-              isButtonEnabled ? onButtonPressed : null, // 이메일이 유효할 때만 버튼 활성화
+          onPressed: onButtonPressed,
           style: ElevatedButton.styleFrom(
-            backgroundColor: isButtonEnabled ? Color(0xFFCF8A7A) : Colors.grey,
+            backgroundColor: Color(0xFFCF8A7A),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12.0),
             ),
@@ -314,7 +311,7 @@ class _FindPwScreenState extends State<FindPwScreen> {
     required String timerText,
     required String buttonText,
     required VoidCallback onButtonPressed,
-    required bool isButtonEnabled,
+    // required bool isButtonEnabled,
   }) {
     return Row(
       children: [
@@ -350,9 +347,9 @@ class _FindPwScreenState extends State<FindPwScreen> {
         ),
         SizedBox(width: 10),
         ElevatedButton(
-          onPressed: isButtonEnabled ? onButtonPressed : null,
+          onPressed: onButtonPressed,
           style: ElevatedButton.styleFrom(
-            backgroundColor: isButtonEnabled ? Color(0xFFCF8A7A) : Colors.grey,
+            backgroundColor: Color(0xFFCF8A7A),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12.0),
             ),
