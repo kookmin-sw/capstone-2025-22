@@ -1,6 +1,4 @@
-import 'package:capstone_2025/screens/introPages/login_screen.dart';
 import 'package:capstone_2025/screens/introPages/login_screen_google.dart';
-import 'package:capstone_2025/screens/introPages/sign_up_screen.dart';
 import 'package:flutter/material.dart';
 
 void main() {
