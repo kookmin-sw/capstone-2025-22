@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:capstone_2025/screens/introPages/find_pw_screen.dart';
 import 'package:capstone_2025/screens/introPages/login_screen_google.dart';
 import 'package:capstone_2025/screens/introPages/sign_up_screen.dart';
+import 'package:capstone_2025/screens/introPages/widgets/build_text_field.dart';
 import 'package:capstone_2025/screens/introPages/widgets/intro_page_header.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -111,7 +112,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   width: 400,
                   child: Column(
                     children: [
-                      buildTextFieldWrapper(
+                      buildTextField(
                         // 아이디 입력 필드
                         controller: _emailController,
                         hint: '아이디(이메일)',
@@ -119,7 +120,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         suffixIcon: null,
                       ),
                       const SizedBox(height: 10),
-                      buildTextFieldWrapper(
+                      buildTextField(
                         // 비밀번호 입력 필드
                         controller: _passwordController,
                         hint: '비밀번호',
@@ -202,42 +203,6 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
           ),
         ),
-      ),
-    );
-  }
-
-  /// 기존 buildTextField를 수정하지 않고, 컨트롤러 기능을 추가한 위젯 만듦
-  /// : 다른 파일에서도 사용한다면 따로 위젯으로 빼기 or buildTextField을 수정하기(controller 변수 추가하기)
-  Widget buildTextFieldWrapper({
-    required TextEditingController
-        controller, // 입력 값 관리하는 컨트롤러(ex: _emailController, _passController)
-    required String hint, // 입력 필트 내부에 표시되는 힌트 텍스트
-    required bool obscureText, // 비밀번호 입력 시 가릴지 여부
-    required Widget? suffixIcon, // 입력 필드 오른쪽에 표시할 아이콘 (ex: 비밀번호 눈 아이콘)
-  }) {
-    return TextField(
-      controller: controller, // 입력한 값을 가져오는 컨트롤러
-      obscureText: obscureText, // true이면 값을 .로 표시(비밀번호 필드)
-      decoration: InputDecoration(
-        hintText: hint,
-        hintStyle: TextStyle(fontSize: 15),
-        filled: true,
-        fillColor: Colors.white, // 배경색 흰색으로 설정
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12.0),
-        ),
-        enabledBorder: OutlineInputBorder(
-          // 입력 필드가 선택되지 않았을 때 표시되는 테두리 스타일
-          borderRadius: BorderRadius.circular(12.0),
-          borderSide: BorderSide(color: Colors.grey.shade400),
-        ),
-        focusedBorder: OutlineInputBorder(
-          // 입력 필드가 focus 받았을 때 표시되는 테두리 스타일
-          borderRadius: BorderRadius.circular(12.0),
-          borderSide:
-              BorderSide(color: Color(0xFF424242), width: 2.0), // 회색, 두껍게
-        ),
-        suffixIcon: suffixIcon, // 입력 필드 오른쪽 아이콘
       ),
     );
   }
