@@ -1,13 +1,62 @@
+# macOS 전용 무시 파일
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows 전용 무시 파일
+Thumbs.db
+desktop.ini
+$RECYCLE.BIN/
+
+# Git의 줄바꿈 자동 변환 방지 (Mac vs Windows 호환)
+*.sh text eol=lf
+*.bat text eol=crlf
+
+# macOS & Windows 환경 공통 Flutter & Android 무시 파일
+android/.cxx/
+android/app/.cxx/
+android/app/build/
+android/app/.externalNativeBuild/
+android/.gradle/
+.gradle/
+captures/
+android/app/src/main/java/io/flutter/plugins/GeneratedPluginRegistrant.java
+
+# Gradle 관련 파일
 gradle-wrapper.jar
-/.gradle
-/captures/
 /gradlew
 /gradlew.bat
 /local.properties
-GeneratedPluginRegistrant.java
 
-# Remember to never publicly share your keystore.
-# See https://flutter.dev/to/reference-keystore
+# CMake & NDK 관련 파일 (자동 생성된 빌드 파일들)
+*.cmake
+*.ninja
+*.json
+*.o
+*.bin
+*.txt
+*.so
+*.dll
+*.dylib
+android/app/cmake-build-debug/
+android/app/cmake-build-release/
+
+# 보안 관련 (절대 공개 X)
 key.properties
 **/*.keystore
 **/*.jks
+
+# CMake & NDK 관련 파일 (자동 생성된 빌드 파일들)
+*.cmake
+*.ninja
+*.json
+*.o
+*.so
+*.dll
+*.dylib
+CMakeCache.txt
+CMakeFiles/
+CMakeLists.txt
+cmake_install.cmake
+android/app/src/main/cpp/cmake-build-debug/
+android/app/src/main/cpp/cmake-build-release/
