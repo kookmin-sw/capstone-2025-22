@@ -225,6 +225,70 @@ class _SignUpScreenState extends State<SignUpScreen> {
     });
   }
 
+  Future<Map<String, dynamic>?> sendUserDataToServer(
+      String email, String password, String nickname) async {
+    final Map<String, dynamic> requestBody = {
+      "email": email,
+      "password": password,
+      "nickname": nickname,
+    };
+
+    try {
+      // http post
+      final response =
+          // "http://10.0.2.2:28080/auth/signup" // 에뮬레이터용
+          await http.post(Uri.parse("http://192.168.219.108:28080/auth/signup"),
+              headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json",
+              },
+              body: jsonEncode(requestBody));
+
+      if (response.statusCode == 200) {
+        print("회원가입 성공!");
+        final data = jsonDecode(response.body);
+        return data; // 사용자 정보 반환
+      } else {
+        print("서버 오류: ${response.statusCode} - ${response.body}");
+        return null;
+      }
+    } catch (error) {
+      print("API 요청 실패 : $error");
+    }
+  }
+
+// Response 받은 정보들 저장하는 함수
+  Future<void> saveUserInfo(Map<String, dynamic> userInfo) async {
+    await storage.write(key: "user_email", value: userInfo["email"]);
+    await storage.write(key: "user_name", value: userInfo["name"]);
+  }
+
+  void signUpComplete() async {
+    if (isEmailValidate &&
+        isNameValidate &&
+        isAuthCodeRight &&
+        isPwCorrect &&
+        isPwValidate) {
+      submitErr = false;
+
+      var userInfo = await sendUserDataToServer(
+          idController.text, pwController.text, nameController.text);
+
+      if (userInfo != null) {
+        await saveUserInfo(userInfo);
+        if (mounted) {
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (_) => LoginScreenGoogle()),
+          );
+        }
+      }
+    } else {
+      setState(() {
+        submitErr = true;
+      });
+    }
+  }
+
   // 타이머 시작 함수: 이메일 전송 후 자동으로 3분 타이머 시작
   void _startTimer() {
     setState(() {
@@ -400,22 +464,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       child: ButtonForm(
                         btnName: "제출",
                         buttonColor: Color(0xFF424242),
-                        clickedFunc: () {
-                          if (isEmailValidate &&
-                              isNameValidate &&
-                              isAuthCodeRight &&
-                              isPwCorrect &&
-                              isPwValidate) {
-                            submitErr = false;
-                            Navigator.of(context).pushReplacement(
-                                MaterialPageRoute(
-                                    builder: (_) => LoginScreenGoogle()));
-                          } else {
-                            setState(() {
-                              submitErr = true;
-                            });
-                          }
-                        },
+                        clickedFunc: signUpComplete,
                       ),
                     ),
                     if (submitErr)
