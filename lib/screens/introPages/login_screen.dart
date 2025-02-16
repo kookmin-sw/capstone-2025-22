@@ -15,7 +15,7 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final TextEditingController _idController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final _storage =
       const FlutterSecureStorage(); // 로그인 성공 시 받은 JWT 토큰을 저장. 이후 자동 로그인 기능 구현할 때 사용.
@@ -24,11 +24,11 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> _login() async {
     // 로그인 버튼 클릭 시
-    final String id = _idController.text.trim(); // 사용자가 입력한 아이디 가져오기
+    final String email = _emailController.text.trim(); // 사용자가 입력한 아이디 가져오기
     final String password =
         _passwordController.text.trim(); // 사용자가 입력한 비밀번호 가져오기
 
-    if (id.isEmpty || password.isEmpty) {
+    if (email.isEmpty || password.isEmpty) {
       // 아이디, 비밀번호 둘 중 하나라도 입력하지 않고 로그인 버튼을 눌렀을 경우 오류 메시지 출력
       _showSnackbar('아이디와 비밀번호를 입력하세요.');
       return;
@@ -41,22 +41,24 @@ class _LoginScreenState extends State<LoginScreen> {
     try {
       // 서버에 로그인 요청
       final response = await http.post(
-        Uri.parse('https://10.0.2.2:8080/auth/signin'), // API URL 수정해야 함!
+        Uri.parse('http://10.0.2.2:28080/auth/signin'), // API URL 수정해야 함!
         headers: {'Content-Type': 'application/json'}, // 요청을 JSON 형식으로 보냄
-        body: jsonEncode({'id': id, 'password': password}),
+        body: jsonEncode({'email': email, 'password': password}),
       );
 
       final data = jsonDecode(response.body);
 
-      if (response.statusCode == 200) {
-        // 로그인 성공 시
+      if (data['body'] == null) {
+        // 로그인 실패
+        _showSnackbar('로그인에 실패했습니다');
+        print("실패");
+      } else {
+        // 로그인 성공
         // JWT 저장
         await _storage.write(
             key: 'access_token', value: data['body']['access_token']);
         await _storage.write(
             key: 'refresh_token', value: data['body']['refresh_token']);
-
-        _showSnackbar('로그인 성공!'); // 로그인 성공 메시지 출력 (필요 없을 시 삭제하기)
 
         // 로그인 성공 시 화면으로 이동
         if (mounted) {
@@ -67,13 +69,11 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
           );
         }
-      } else {
-        // 로그인 실패 처리
-        _showSnackbar('로그인 실패: ${data['message']}'); // 200이 아닌 응답을 받을 경우
       }
     } catch (e) {
       // 인터넷 연결 문제 또는 서버 오류 발생 시
       _showSnackbar('네트워크 오류: $e');
+      print(e);
     } finally {
       setState(() {
         _isLoading = false; // 로딩 상태 해제 & 로그인 버튼 다시 활성화
@@ -111,15 +111,15 @@ class _LoginScreenState extends State<LoginScreen> {
                   width: 400,
                   child: Column(
                     children: [
-                      _buildTextFieldWrapper(
+                      buildTextFieldWrapper(
                         // 아이디 입력 필드
-                        controller: _idController,
+                        controller: _emailController,
                         hint: '아이디(이메일)',
                         obscureText: false, // 가려지지 않음
                         suffixIcon: null,
                       ),
                       const SizedBox(height: 10),
-                      _buildTextFieldWrapper(
+                      buildTextFieldWrapper(
                         // 비밀번호 입력 필드
                         controller: _passwordController,
                         hint: '비밀번호',
@@ -208,9 +208,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
   /// 기존 buildTextField를 수정하지 않고, 컨트롤러 기능을 추가한 위젯 만듦
   /// : 다른 파일에서도 사용한다면 따로 위젯으로 빼기 or buildTextField을 수정하기(controller 변수 추가하기)
-  Widget _buildTextFieldWrapper({
+  Widget buildTextFieldWrapper({
     required TextEditingController
-        controller, // 입력 값 관리하는 컨트롤러(ex: _idController, _passController)
+        controller, // 입력 값 관리하는 컨트롤러(ex: _emailController, _passController)
     required String hint, // 입력 필트 내부에 표시되는 힌트 텍스트
     required bool obscureText, // 비밀번호 입력 시 가릴지 여부
     required Widget? suffixIcon, // 입력 필드 오른쪽에 표시할 아이콘 (ex: 비밀번호 눈 아이콘)
