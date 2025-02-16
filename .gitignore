@@ -60,4 +60,6 @@ android/gradle.properties
 
 # macOS 관련
 macos/
->>>>>>> 340d22d3968a61f64ca8190769e21e39c2e9dfc0
+
+# 백엔드 도커
+/backend-docker
