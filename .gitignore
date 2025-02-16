@@ -12,18 +12,16 @@
 .swiftpm/
 migrate_working_dir/
 
-# IntelliJ related
+# IntelliJ 관련 파일
 *.iml
 *.ipr
 *.iws
 .idea/
 
-# The .vscode folder contains launch configuration and tasks you configure in
-# VS Code which you may wish to be included in version control, so this line
-# is commented out by default.
-#.vscode/
+# VS Code 관련 파일
+# .vscode/
 
-# Flutter/Dart/Pub related
+# Flutter/Dart/Pub 관련
 **/doc/api/
 **/ios/Flutter/.last_build_id
 .dart_tool/
@@ -33,13 +31,28 @@ migrate_working_dir/
 .pub/
 /build/
 
-# Symbolication related
+# Symbolication 관련
 app.*.symbols
 
-# Obfuscation related
+# Obfuscation 관련
 app.*.map.json
 
-# Android Studio will place build artifacts here
+# Android 관련
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Gradle 관련
+.gradle/
+android/.gradle/
+android/app/build/
+android/gradle.properties
+
+# 유지해야 하는 Gradle 파일 (예외 처리)
+!android/build.gradle
+!android/app/build.gradle
+!android/gradle/wrapper/gradle-wrapper.properties
+!android/settings.gradle
+
+# macOS 관련
+macos/
