@@ -42,6 +42,10 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 
+<<<<<<< HEAD
+# 백엔드 도커
+/backend-docker
+=======
 # Gradle 관련
 .gradle/
 android/.gradle/
@@ -56,3 +60,6 @@ android/gradle.properties
 
 # macOS 관련
 macos/
+
+# 백엔드 도커
+/backend-docker
