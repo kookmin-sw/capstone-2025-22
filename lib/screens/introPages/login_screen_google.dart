@@ -72,6 +72,8 @@ class _LoginScreenGoogleState extends State<LoginScreenGoogle> {
     try {
       // http post
       final response =
+          // "http://192.168.219.108:28080/auth/signin/google"
+          // "http://10.0.2.2:28080/auth/signin/google" // 안드로이드 에뮬레이터
           await http.post(Uri.parse("http://10.0.2.2:28080/auth/signin/google"),
               headers: {
                 "Content-Type": "application/json",
