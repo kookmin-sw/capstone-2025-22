@@ -56,7 +56,7 @@ android/app/**/armeabi-v7a/
 android/app/**/x86/
 android/app/**/x86_64/
 android/app/**/*.json
-!!android/app/google-services.json
+!android/app/google-services.json  # Firebase 관련 파일 유지
 android/app/**/*.bin
 android/app/**/*.txt
 android/app/**/*.ninja
@@ -69,9 +69,18 @@ android/app/**/prefab_*
 android/app/**/directory-*
 android/app/**/index-*.json
 
-# iOS/Xcode 관련 (macOS 개발 환경 파일 무시)
+# iOS/Xcode 관련 (macOS 개발 환경 파일 완전 제외)
 ios/
-ios/**
+ios/Runner.xcodeproj/
+ios/Runner.xcworkspace/
+ios/Podfile.lock
+ios/Pods/
+ios/.symlinks/
+ios/Flutter/Generated.xcconfig
+ios/Flutter/flutter_export_environment.sh
+ios/Flutter/App.framework
+ios/Flutter/Flutter.framework
+ios/Flutter/flutter_assets/
 
 # Java 관련
 *.class
