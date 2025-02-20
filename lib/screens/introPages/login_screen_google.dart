@@ -2,13 +2,15 @@ import 'dart:convert';
 
 import 'package:capstone_2025/screens/introPages/login_screen.dart';
 import 'package:capstone_2025/screens/introPages/sign_up_screen.dart';
+import '/services/storage_service.dart';
+
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:http/http.dart' as http;
-import '/services/storage_service.dart';
 
 class LoginScreenGoogle extends StatefulWidget {
+  // Google 로그인 포함되어 있는 로그인 페이지
   const LoginScreenGoogle({super.key});
 
   @override
@@ -18,16 +20,16 @@ class LoginScreenGoogle extends StatefulWidget {
 class _LoginScreenGoogleState extends State<LoginScreenGoogle> {
   // GoogleSignIn 인스턴스 생성 (전역 변수)
   final GoogleSignIn _googleSignIn = GoogleSignIn(
-    scopes: ['email', 'profile', 'openid'], // 이메일 정보 가져오기
+    scopes: ['email', 'profile', 'openid'], // Google 로그인 시 필요한 scope
     serverClientId:
         "637308987348-iilett3hur1ohas5r25fihlk7gdg5jci.apps.googleusercontent.com",
-    forceCodeForRefreshToken: true,
+    forceCodeForRefreshToken: true, // refresh token 받기 위해 필요
   );
 
   // Google 로그인 실행 함수
   Future<void> _handleGoogleSignIn() async {
     try {
-      print("Google 로그인 시도...");
+      // print("Google 로그인 시도..."); // 디버깅용
 
       // 기존 로그인 계정 로그아웃
       await _googleSignIn.signOut();
@@ -71,15 +73,16 @@ class _LoginScreenGoogleState extends State<LoginScreenGoogle> {
 
     try {
       // http post
-      final response =
-          // "http://192.168.219.108:28080/auth/signin/google"
-          // "http://10.0.2.2:28080/auth/signin/google" // 안드로이드 에뮬레이터
-          await http.post(Uri.parse("http://10.0.2.2:28080/auth/signin/google"),
-              headers: {
-                "Content-Type": "application/json",
-                "Accept": "application/json",
-              },
-              body: jsonEncode(requestBody));
+      final response = await http.post(
+          Uri.parse(
+            "http://10.0.2.2:28080/auth/signin/google", // 안드로이드 에뮬레이터
+            // "http://192.168.219.108:28080/auth/signin/google" // 아이폰
+          ),
+          headers: {
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+          },
+          body: jsonEncode(requestBody));
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -243,3 +246,4 @@ class ButtonForm extends StatelessWidget {
     );
   }
 }
+

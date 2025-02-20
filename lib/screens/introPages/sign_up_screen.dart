@@ -53,8 +53,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
       print("GET 요청 시작 --");
 
       final uri = Uri.http(
-        // "10.0.2.2:28080", // 서버 주소 (에뮬레이터용)
-        "192.168.219.108:28080", // 서버 주소 (실제 기기용- 아이폰)
+        "10.0.2.2:28080", // 서버 주소 (에뮬레이터용)
+        // "192.168.219.108:28080", // 서버 주소 (실제 기기용- 아이폰)
         endpoint, // 엔드포인트
         queryParam,
       );
