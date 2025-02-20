@@ -56,7 +56,7 @@ android/app/**/armeabi-v7a/
 android/app/**/x86/
 android/app/**/x86_64/
 android/app/**/*.json
-!android/app/google-services.json  # Firebase 관련 파일 유지
+!android/app/google-service.json  # Firebase 관련 파일 유지
 android/app/**/*.bin
 android/app/**/*.txt
 android/app/**/*.ninja
