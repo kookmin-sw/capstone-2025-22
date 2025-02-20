@@ -155,3 +155,8 @@ gradle-app.setting
 *.iml
 *.ipr
 *.iws
+
+.idea/ 
+macos
+settings.json
+backup
