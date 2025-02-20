@@ -124,7 +124,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
     if (resData == {}) {
       return;
     }
-    if (resData["body"] == "SUCCESS") {
+    if (resData["body"] == "valid") {
       setState(() {
         isEmailValidate = true;
         isAuthButtonEnabled = true;
@@ -134,7 +134,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
       });
       return;
     }
-    if (resData["body"] == "FAILURE") {
+    if (resData["body"] == "invalid") {
       _idErrorMessage = "이미 가입된 이메일 주소입니다."; // 이메일이 올바른 경우 메시지 출력
       return;
     }
@@ -154,7 +154,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
       return;
     }
 
-    if (resData["body"] == "FAILURE") {
+    if (resData["body"] == "invalid") {
       print(resData["body"]);
       _codeErrorMessage = "인증번호가 틀렸습니다.";
       return;
@@ -183,12 +183,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
       _nameErrorMessage = "error";
       return;
     }
-    if (resData["body"] == "SUCCESS") {
+    if (resData["body"] == "valid") {
       isNameValidate = true;
       _nameErrorMessage = null;
       return;
     }
-    if (resData["body"] == "FAILURE") {
+    if (resData["body"] == "invalid") {
       isNameValidate = false;
 
       _nameErrorMessage = "이미 사용 중인 닉네임입니다.";
@@ -236,8 +236,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
     try {
       // http post
       final response =
-          // "http://10.0.2.2:28080/auth/signup" // 에뮬레이터용
-          await http.post(Uri.parse("http://192.168.219.108:28080/auth/signup"),
+          // "http://192.168.219.108:28080/auth/signup// 에뮬레이터용
+          await http.post(Uri.parse("http://10.0.2.2:28080/auth/signup"),
               headers: {
                 "Content-Type": "application/json",
                 "Accept": "application/json",
@@ -248,7 +248,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
         print("회원가입 성공!");
         final data = jsonDecode(response.body);
         return data; // 사용자 정보 반환
-      } else {
+      } 
+      if (response.statusCode == 409) {
+        errMessage = "이미 가입된 이메일 주소입니다.";
+        return null;
+        } else {
         print("서버 오류: ${response.statusCode} - ${response.body}");
         return null;
       }
