@@ -160,3 +160,9 @@ gradle-app.setting
 macos
 settings.json
 backup
+
+backend-docker
+android/build.gradle.kts
+android/settings.gradle.kts
+linux/flutter/generated_plugin_registrant.h
+windows/flutter/generated_plugin_registrant.h
