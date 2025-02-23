@@ -1,6 +1,7 @@
 package com.capstone.letmedrum.user.service;
 
 import com.capstone.letmedrum.user.entity.User;
+import com.capstone.letmedrum.user.exception.InvalidUserInfoException;
 import com.capstone.letmedrum.user.repository.UserRepository;
 import org.springframework.stereotype.Service;
 
@@ -22,11 +23,11 @@ public class UserRetrieveService {
      *  if user with email exists return user, else throw exception
      * @param email - user's email, String
      * @return User - User, not-null
-     * @throws RuntimeException if user not exists
+     * @throws InvalidUserInfoException if user not exists
     * */
     public User getUserOrExceptionByEmail(String email){
         return userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("user not exists : " + email));
+                .orElseThrow(() -> new InvalidUserInfoException("user not exists"));
     }
     /**
      *  if user with email exists return user, else return null
