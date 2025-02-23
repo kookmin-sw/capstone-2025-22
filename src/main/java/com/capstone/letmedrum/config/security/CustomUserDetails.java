@@ -1,6 +1,6 @@
 package com.capstone.letmedrum.config.security;
 
-import com.capstone.letmedrum.user.dto.UserAuthInfoDto;
+import com.capstone.letmedrum.auth.dto.UserAuthInfoDto;
 import com.capstone.letmedrum.user.entity.UserRole;
 import lombok.Builder;
 import org.springframework.security.core.GrantedAuthority;

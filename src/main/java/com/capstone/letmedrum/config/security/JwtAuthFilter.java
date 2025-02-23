@@ -1,6 +1,6 @@
 package com.capstone.letmedrum.config.security;
 
-import com.capstone.letmedrum.user.service.CustomUserDetailService;
+import com.capstone.letmedrum.auth.service.CustomUserDetailService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;

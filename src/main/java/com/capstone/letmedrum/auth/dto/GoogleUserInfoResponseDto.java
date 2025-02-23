@@ -1,12 +1,10 @@
-package com.capstone.letmedrum.user.dto;
+package com.capstone.letmedrum.auth.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 @Getter
 @Setter
+@Builder
 @AllArgsConstructor
 @NoArgsConstructor
 public class GoogleUserInfoResponseDto {

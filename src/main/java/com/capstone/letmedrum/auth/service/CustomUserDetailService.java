@@ -1,4 +1,4 @@
-    package com.capstone.letmedrum.user.service;
+    package com.capstone.letmedrum.auth.service;
 
     import com.capstone.letmedrum.config.security.CustomUserDetails;
     import com.capstone.letmedrum.user.entity.User;

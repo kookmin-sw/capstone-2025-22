@@ -1,4 +1,4 @@
-package com.capstone.letmedrum.user.dto;
+package com.capstone.letmedrum.auth.dto;
 
 import lombok.Builder;
 import lombok.Getter;

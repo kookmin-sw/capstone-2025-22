@@ -1,6 +1,6 @@
 package com.capstone.letmedrum.config.security;
 
-import com.capstone.letmedrum.user.dto.UserAuthInfoDto;
+import com.capstone.letmedrum.auth.dto.UserAuthInfoDto;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
@@ -130,7 +130,7 @@ public class JwtUtils {
         String authorization = request.getHeader(ACCESS_TOKEN_HEADER_KEY);
         if(authorization==null || !authorization.startsWith(ACCESS_TOKEN_PREFIX)){
             log.info(String.format("JwtUtils : authentication is null or invalid prefix : %s", authorization));
-            logRequestHeader(request);
+            // logRequestHeader(request);
             return null;
         }
         return authorization.substring(ACCESS_TOKEN_PREFIX.length());

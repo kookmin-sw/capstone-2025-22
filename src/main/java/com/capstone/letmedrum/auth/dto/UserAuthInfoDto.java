@@ -1,4 +1,4 @@
-package com.capstone.letmedrum.user.dto;
+package com.capstone.letmedrum.auth.dto;
 
 import com.capstone.letmedrum.user.entity.User;
 import com.capstone.letmedrum.user.entity.UserRole;

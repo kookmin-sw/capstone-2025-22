@@ -1,16 +1,17 @@
-package com.capstone.letmedrum.user.controller;
+package com.capstone.letmedrum.auth.controller;
 
+import com.capstone.letmedrum.auth.exception.InvalidTokenException;
 import com.capstone.letmedrum.common.dto.ApiResponse;
+import com.capstone.letmedrum.common.enums.SuccessFlag;
+import com.capstone.letmedrum.common.exception.InvalidRequestException;
 import com.capstone.letmedrum.config.security.JwtUtils;
-import com.capstone.letmedrum.user.dto.UserAuthGoogleRequestDto;
-import com.capstone.letmedrum.user.dto.UserAuthResponseDto;
-import com.capstone.letmedrum.user.dto.UserCreateDto;
-import com.capstone.letmedrum.user.dto.UserSignInDto;
-import com.capstone.letmedrum.user.service.UserAuthService;
-import com.capstone.letmedrum.user.service.UserGoogleAuthService;
+import com.capstone.letmedrum.auth.dto.UserAuthGoogleRequestDto;
+import com.capstone.letmedrum.auth.dto.UserAuthResponseDto;
+import com.capstone.letmedrum.user.dto.request.UserCreateDto;
+import com.capstone.letmedrum.auth.dto.UserSignInDto;
+import com.capstone.letmedrum.auth.service.UserAuthService;
+import com.capstone.letmedrum.auth.service.UserGoogleAuthService;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.Map;
 
 @RestController
 @RequestMapping("/auth")
@@ -30,7 +31,7 @@ public class UserAuthController {
     * */
     @GetMapping("/test")
     public ApiResponse<String> testApi(){
-        return ApiResponse.success("success", "success");
+        return ApiResponse.success(SuccessFlag.SUCCESS.getLabel());
     }
     /**
      * 이메일과 비밀번호를 활용하여 사용자 로그인 처리하는 API
@@ -39,7 +40,7 @@ public class UserAuthController {
     * */
     @PostMapping("/signin")
     public ApiResponse<UserAuthResponseDto> signInUser(@RequestBody UserSignInDto userSignInDto){
-        if(!userSignInDto.validate()) return ApiResponse.error("signIn fail : invalid request body");
+        if(!userSignInDto.validate()) throw new InvalidRequestException("invalid request body");
         UserAuthResponseDto responseDto = userAuthService.signInUser(userSignInDto);
         return ApiResponse.success(responseDto);
     }
@@ -47,7 +48,7 @@ public class UserAuthController {
     * */
     @PostMapping("/signin/google")
     public ApiResponse<UserAuthResponseDto> signInGoogle(@RequestBody UserAuthGoogleRequestDto userAuthGoogleRequestDto){
-        if(userAuthGoogleRequestDto.getGoogleAuthCode()==null) return ApiResponse.error("signIn fail : invalid request body");
+        if(userAuthGoogleRequestDto.getGoogleAuthCode()==null) throw new InvalidRequestException("invalid request body");
         return ApiResponse.success(userGoogleAuthService.signIn(userAuthGoogleRequestDto.getGoogleAuthCode()));
     }
     /**
@@ -57,7 +58,7 @@ public class UserAuthController {
     * */
     @PostMapping("/signup")
     public ApiResponse<UserAuthResponseDto> signUpUser(@RequestBody UserCreateDto userCreateDto){
-        if(!userCreateDto.validate()) return ApiResponse.error("signUp fail : invalid request body");
+        if(!userCreateDto.validate()) throw new InvalidRequestException("invalid request body");
         UserAuthResponseDto responseDto = userAuthService.signUpUser(userCreateDto);
         return ApiResponse.success(responseDto);
     }
@@ -70,8 +71,8 @@ public class UserAuthController {
     public ApiResponse<String> signOutUser(@RequestHeader(JwtUtils.ACCESS_TOKEN_HEADER_KEY) String refreshToken){
         refreshToken = jwtUtils.processToken(refreshToken);
         boolean result = userAuthService.signOutUser(refreshToken);
-        if(!result) return ApiResponse.error("signOut fail : invalid refresh token");
-        return ApiResponse.success("success");
+        if(!result) throw new InvalidTokenException("invalid refresh token");
+        return ApiResponse.success(SuccessFlag.SUCCESS.getLabel());
     }
     /**
      * 사용자의 refresh token을 기반으로, 유효한 토큰이라면 access token과 refresh token을 재발급하는 API
@@ -81,7 +82,7 @@ public class UserAuthController {
     @PostMapping("/token")
     public ApiResponse<UserAuthResponseDto> regenerateToken(@RequestHeader(JwtUtils.ACCESS_TOKEN_HEADER_KEY) String refreshToken){
         refreshToken = jwtUtils.processToken(refreshToken);
-        if(refreshToken==null || refreshToken.isEmpty()) return ApiResponse.error("refresh token is null or empty");
+        if(refreshToken==null || refreshToken.isEmpty()) throw new InvalidTokenException("token is null or empty");
         return ApiResponse.success(userAuthService.doRefreshTokenRotation(refreshToken));
     }
 }
