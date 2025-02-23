@@ -42,7 +42,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   bool isAuthButtonEnabled = false; // 인증번호 확인 버튼 활성화 여부
   bool isNameButtonEnabled = true; // 닉네임 중복확인 버튼 활성화 여부
 
-  // 🔹 타이머 관련 변수 추가
+  // 타이머 관련 변수 추가
   late Timer _timer;
   int _timeRemaining = 180; // 남은 시간 3분 (초 단위)
   bool _isTimerRunning = false; // 타이머가 실행 중인지 여부
@@ -71,6 +71,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
+        
         print("서버 응답: $data");
 
         setState(() {
@@ -243,14 +244,18 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 "Accept": "application/json",
               },
               body: jsonEncode(requestBody));
-
+      print("response.statusCode: ${response.statusCode}");
       if (response.statusCode == 200) {
         print("회원가입 성공!");
+
+
         final data = jsonDecode(response.body);
         return data; // 사용자 정보 반환
       } 
       if (response.statusCode == 409) {
-        errMessage = "이미 가입된 이메일 주소입니다.";
+        setState(() {
+          errMessage = "이미 가입된 이메일 주소입니다.";
+        });
         return null;
         } else {
         print("서버 오류: ${response.statusCode} - ${response.body}");
@@ -289,6 +294,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
     } else {
       setState(() {
         submitErr = true;
+        errMessage = "입력된 정보를 다시 확인해주세요. 필수 항목이 비어있거나 조건을 만족하지 않았습니다.";
       });
     }
   }
@@ -341,14 +347,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
               introPageHeader(
                 title: '회원가입',
                 targetPage: LoginScreenGoogle(),
-              ),
-              Text(
-                errMessage,
-                style: TextStyle(
-                  color: Colors.red,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w800,
-                ),
               ),
               SizedBox(
                 height: 5,
@@ -471,14 +469,14 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         clickedFunc: signUpComplete,
                       ),
                     ),
-                    if (submitErr)
                       Padding(
                         padding: const EdgeInsets.symmetric(vertical: 10),
                         child: Text(
-                          "입력된 정보를 다시 확인해주세요. 필수 항목이 비어있거나 조건을 만족하지 않았습니다.",
+                          errMessage
+                          ,
                           style: TextStyle(
                             color: Colors.red,
-                            fontSize: 14,
+                            fontSize: 15,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
