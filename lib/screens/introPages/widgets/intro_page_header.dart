@@ -1,12 +1,16 @@
-import 'package:capstone_2025/screens/introPages/sign_up_screen.dart';
 import 'package:flutter/material.dart';
 
 // intro 페이지 헤더 : 뒤로가기 버튼 + 제목
-// 제목을 인자로 받음
+// 제목과 이동할 페이지를 인자로 받음
 class introPageHeader extends StatelessWidget {
   final String title;
+  final Widget targetPage; // 이동할 페이지
 
-  introPageHeader({required this.title});
+  const introPageHeader({
+    super.key,
+    required this.title,
+    required this.targetPage,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -19,7 +23,12 @@ class introPageHeader extends StatelessWidget {
           child: Align(
             alignment: Alignment.centerLeft,
             child: IconButton(
-              onPressed: goToMain,
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => targetPage),
+                );
+              },
               icon: Icon(
                 Icons.arrow_back_sharp,
                 size: 65,

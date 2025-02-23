@@ -1,9 +1,19 @@
 import 'package:capstone_2025/screens/introPages/login_screen.dart';
+import 'package:capstone_2025/screens/introPages/login_screen_google.dart';
 import 'package:capstone_2025/screens/introPages/sign_up_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 void main() {
-  runApp(const MyApp());
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // 앱을 가로 모드로 고정
+  SystemChrome.setPreferredOrientations([
+    DeviceOrientation.landscapeLeft,
+    DeviceOrientation.landscapeRight,
+  ]).then((_) {
+    runApp(const MyApp());
+  });
 }
 
 class MyApp extends StatelessWidget {
@@ -15,7 +25,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       // 페이지 공통 백그라운드 컬러 지정
       theme: ThemeData(scaffoldBackgroundColor: Color(0xFFF2F1F3)),
-      home: SignUpScreen(),
+      home: LoginScreenGoogle(),
     );
   }
 }
