@@ -1,14 +1,18 @@
 package com.capstone.letmedrum.user.service;
 
-import com.capstone.letmedrum.common.service.RedisSingleDataServiceImpl;
+import com.capstone.letmedrum.auth.service.AuthManagerService;
+import com.capstone.letmedrum.config.security.JwtUtils;
 import com.capstone.letmedrum.mail.dto.AuthCodeTemplateDto;
 import com.capstone.letmedrum.mail.dto.MailDto;
 import com.capstone.letmedrum.mail.service.CustomMailSenderService;
 import com.capstone.letmedrum.mail.service.CustomMailTemplateService;
+import com.capstone.letmedrum.auth.dto.UserAuthInfoDto;
+import com.capstone.letmedrum.user.entity.UserRole;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.time.ZoneId;
 import java.util.concurrent.ThreadLocalRandom;
 
 @Slf4j
@@ -16,34 +20,34 @@ import java.util.concurrent.ThreadLocalRandom;
 public class UserVerificationService {
     private final CustomMailTemplateService customMailTemplateService;
     private final CustomMailSenderService customMailSenderService;
-    private final RedisSingleDataServiceImpl redisSingleDataServiceImpl;
+    private final JwtUtils jwtUtils;
+    private final AuthManagerService authManagerService;
     private final String senderAddress;
     /**
      * constructor for DI
      * @param customMailTemplateService CustomMailTemplateService class
      * @param customMailSenderService CustomMailSenderService class
-     * @param redisSingleDataServiceImpl RedisSingleDataService class
+     * @param authManagerService AuthManagerService class
+     * @param jwtUtils JwtUtils class
      * @param senderAddress sender's gmail address
     * */
     public UserVerificationService(
             CustomMailTemplateService customMailTemplateService,
             CustomMailSenderService customMailSenderService,
-            RedisSingleDataServiceImpl redisSingleDataServiceImpl,
+            AuthManagerService authManagerService,
+            JwtUtils jwtUtils,
             @Value("spring.name.username") String senderAddress) {
         this.customMailTemplateService = customMailTemplateService;
         this.customMailSenderService = customMailSenderService;
-        this.redisSingleDataServiceImpl = redisSingleDataServiceImpl;
+        this.authManagerService = authManagerService;
+        this.jwtUtils = jwtUtils;
         this.senderAddress = senderAddress;
     }
     /**
-     * generate redis key with email
-     * @param email users email
-     * @return redis key - String, not-null
+     * generate email auth code
+     * @param length length of auth code
+     * @return email auth code
      * */
-    public String getRedisAuthCodeKey(String email) {
-        String authCodeKeySuffix = "_authCode";
-        return email + authCodeKeySuffix;
-    }
     public String generateAuthCode(int length) {
         return String.valueOf(ThreadLocalRandom.current().nextInt((int)Math.pow(10, length), (int)Math.pow(10, length+1)-1));
     }
@@ -51,7 +55,6 @@ public class UserVerificationService {
      * send auth code to email (parameter)
      * @param email receiver's email
      * @return true if success - not null
-     * @throws RuntimeException if failed to save auth code on redis
     * */
     public boolean sendVerificationEmail(String email) {
         String authCode = generateAuthCode(5);
@@ -68,10 +71,7 @@ public class UserVerificationService {
                 .text(template)
                 .build();
         // save auth code on Redis
-        if(!redisSingleDataServiceImpl.setValue(getRedisAuthCodeKey(email), authCode, 600)){
-            log.error("failed to save authCode on Redis");
-            throw new RuntimeException("failed to save authCode on Redis");
-        }
+        authManagerService.saveAuthCode(email, authCode);
         // send mail
         return customMailSenderService.sendText(mailDto, true);
     }
@@ -82,8 +82,21 @@ public class UserVerificationService {
      * @return true if authCode is same with saved authCode
     * */
     public boolean isValidAuthCode(String email, String authCode) {
-        String redisAuthCodeKey = getRedisAuthCodeKey(email);
-        String storedAuthCode = redisSingleDataServiceImpl.getValue(redisAuthCodeKey);
+        String storedAuthCode = authManagerService.getAuthCode(email);
         return authCode.equals(storedAuthCode);
+    }
+    /**
+     * generate and save email token by user's email
+     * @param email user's email
+     * @return email token made by user's email
+    * */
+    public String createEmailVerificationToken(String email) {
+        String emailToken = jwtUtils.generateJwtToken(
+                new UserAuthInfoDto(email, UserRole.ROLE_USER),
+                ZoneId.systemDefault(),
+                Integer.toUnsignedLong(AuthManagerService.emailTokenExpSeconds)
+        );
+        authManagerService.saveEmailToken(email, emailToken);
+        return emailToken;
     }
 }
