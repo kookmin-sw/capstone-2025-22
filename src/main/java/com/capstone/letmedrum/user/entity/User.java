@@ -20,6 +20,8 @@ public class User {
     private String nickname;
     @Column(name = "role")
     private UserRole role;
+    @Column(name="profile_image")
+    private String profileImage;
     @Builder
     public User(String email, String password, String nickname, UserRole role) {
         this.email = email;
