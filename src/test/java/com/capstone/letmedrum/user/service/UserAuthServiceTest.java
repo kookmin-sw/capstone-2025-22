@@ -1,15 +1,15 @@
 package com.capstone.letmedrum.user.service;
 
-import com.capstone.letmedrum.common.service.RedisSingleDataServiceImpl;
+import com.capstone.letmedrum.auth.service.AuthManagerService;
+import com.capstone.letmedrum.auth.service.UserAuthService;
 import com.capstone.letmedrum.config.security.JwtUtils;
-import com.capstone.letmedrum.user.dto.UserAuthInfoDto;
-import com.capstone.letmedrum.user.dto.UserAuthResponseDto;
-import com.capstone.letmedrum.user.dto.UserCreateDto;
-import com.capstone.letmedrum.user.dto.UserSignInDto;
+import com.capstone.letmedrum.auth.dto.UserAuthInfoDto;
+import com.capstone.letmedrum.auth.dto.UserAuthResponseDto;
+import com.capstone.letmedrum.user.dto.request.UserCreateDto;
+import com.capstone.letmedrum.auth.dto.UserSignInDto;
 import com.capstone.letmedrum.user.entity.User;
 import com.capstone.letmedrum.user.entity.UserRole;
 import com.capstone.letmedrum.user.repository.UserRepository;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -37,33 +37,24 @@ class UserAuthServiceTest {
     @Mock
     private JwtUtils jwtUtils;
     @Mock
-    private AuthTokenService authTokenService;
-
-    private static final String email = "email";
-    private static final String nickname = "username";
-    private static final String password = "password";
-    private static final String secret_key = "abcdefgjijklmnopqrstuvwxyzabcdefgjijklmnopqrstuvwxyz";
-    private static String refresh_token;
-    @BeforeAll
-    static void setUp() {
-        refresh_token = new JwtUtils(secret_key).generateRefreshToken(
-                new UserAuthInfoDto("email", UserRole.ROLE_USER)
-        );
-    }
+    private AuthManagerService authManagerService;
     @Test
     @DisplayName("회원가입 성공 테스트")
     void testSignUpUserSuccess() {
         // given
+        String email = "email";
+        String nickname = "username";
+        String password = "password";
         UserCreateDto userCreateDto = UserCreateDto.builder()
                 .email(email)
                 .nickname(nickname)
                 .password(password).build();
         // stub
-        when(userRepository.findByEmail(anyString()))
+        when(userRepository.findByEmail(email))
                 .thenReturn(Optional.empty());
         when(userRepository.save(any(User.class)))
                 .thenReturn(userCreateDto.toEntity());
-        when(userAuthService.generateUserAuthResponseDto(email, UserRole.ROLE_USER))
+        when(userAuthService.generateResponseAndSaveToken(email, UserRole.ROLE_USER))
                 .thenReturn(UserAuthResponseDto.builder().email(email).build());
         // when
         UserAuthResponseDto res = userAuthService.signUpUser(userCreateDto);
@@ -74,6 +65,8 @@ class UserAuthServiceTest {
     @DisplayName("회원가입 실패 테스트 : 이미 가입된 사용자")
     void testSignUpUserFailure(){
         // given
+        String email = "email";
+        String password = "password";
         UserCreateDto userCreateDto = UserCreateDto.builder()
                 .email(email)
                 .password(password)
@@ -89,6 +82,8 @@ class UserAuthServiceTest {
     @DisplayName("로그인 성공 테스트")
     void testSignInUserSuccess() {
         // given
+        String email = "email";
+        String password = "password";
         UserSignInDto userSignInDto = new UserSignInDto(email, password);
         UserCreateDto userCreateDto = UserCreateDto
                 .builder()
@@ -100,7 +95,7 @@ class UserAuthServiceTest {
                 .thenReturn(true);
         when(userRepository.findByEmail(email))
                 .thenReturn(Optional.of(userCreateDto.toEntityWithEncodedPassword(new BCryptPasswordEncoder())));
-        when(userAuthService.generateUserAuthResponseDto(email, UserRole.ROLE_USER))
+        when(userAuthService.generateResponseAndSaveToken(email, UserRole.ROLE_USER))
                 .thenReturn(UserAuthResponseDto.builder().email(email).build());
         // when
         UserAuthResponseDto signInRes = userAuthService.signInUser(userSignInDto);
@@ -124,6 +119,11 @@ class UserAuthServiceTest {
     @DisplayName("로그아웃 성공 테스트")
     void testSignOutUserSuccess() {
         // given
+        String email = "email";
+        String secret_key = "abcdefgjijklmnopqrstuvwxyzabcdefgjijklmnopqrstuvwxyz";
+        String refresh_token = new JwtUtils(secret_key).generateRefreshToken(
+                new UserAuthInfoDto("email", UserRole.ROLE_USER)
+        );
         User savedUser = new User();
         savedUser.setEmail(email);
         // stub
@@ -142,6 +142,10 @@ class UserAuthServiceTest {
     @DisplayName("로그아웃 실패 테스트 : 토큰 만료")
     void testSignOutUserFailureInvalidToken() {
         // given
+        String secret_key = "abcdefgjijklmnopqrstuvwxyzabcdefgjijklmnopqrstuvwxyz";
+        String refresh_token = new JwtUtils(secret_key).generateRefreshToken(
+                new UserAuthInfoDto("email", UserRole.ROLE_USER)
+        );
         // stub
         when(jwtUtils.validateToken(refresh_token))
                 .thenReturn(false);
@@ -153,6 +157,11 @@ class UserAuthServiceTest {
     @DisplayName("로그아웃 실패 테스트 : 사용자 없음")
     void testSignOutUserFailureInvalidUser() {
         // given
+        String email = "email";
+        String secret_key = "abcdefgjijklmnopqrstuvwxyzabcdefgjijklmnopqrstuvwxyz";
+        String refresh_token = new JwtUtils(secret_key).generateRefreshToken(
+                new UserAuthInfoDto("email", UserRole.ROLE_USER)
+        );
         // stub
         when(jwtUtils.validateToken(refresh_token))
                 .thenReturn(true);
@@ -168,6 +177,11 @@ class UserAuthServiceTest {
     @DisplayName("토큰 재발급 성공 테스트")
     void refreshTokenSuccess(){
         // given
+        String email = "email";
+        String secret_key = "abcdefgjijklmnopqrstuvwxyzabcdefgjijklmnopqrstuvwxyz";
+        String refresh_token = new JwtUtils(secret_key).generateRefreshToken(
+                new UserAuthInfoDto("email", UserRole.ROLE_USER)
+        );
         User savedUser = new User();
         savedUser.setEmail(email);
         String newToken = new JwtUtils(secret_key).generateRefreshToken(
@@ -178,9 +192,9 @@ class UserAuthServiceTest {
                 .thenReturn(true);
         when(jwtUtils.getUserEmail(refresh_token))
                 .thenReturn(email);
-        when(authTokenService.getRefreshToken(email))
+        when(authManagerService.getRefreshToken(email))
                 .thenReturn(refresh_token);
-        when(userAuthService.generateUserAuthResponseDto(email, UserRole.ROLE_USER))
+        when(userAuthService.generateResponseAndSaveToken(email, UserRole.ROLE_USER))
                 .thenReturn(UserAuthResponseDto.builder().email(email).refreshToken(newToken).build());
         // when
         UserAuthResponseDto res = userAuthService.doRefreshTokenRotation(refresh_token);
@@ -192,10 +206,14 @@ class UserAuthServiceTest {
     @DisplayName("토큰 재발급 실패 테스트 : 이전 버전 토큰")
     void refreshTokenFailure(){
         // given
+        String email = "email";
+        String secret_key = "abcdefgjijklmnopqrstuvwxyzabcdefgjijklmnopqrstuvwxyz";
+        String currentRefreshToken = new JwtUtils(secret_key).generateRefreshToken(
+                new UserAuthInfoDto("email", UserRole.ROLE_USER)
+        );
         String prevRefreshToken = new JwtUtils(secret_key).generateRefreshToken(
                 new UserAuthInfoDto("new email", UserRole.ROLE_USER)
         );
-        String currentRefreshToken = refresh_token;
         User savedUser = new User();
         savedUser.setEmail(email);
         // stub
@@ -203,7 +221,7 @@ class UserAuthServiceTest {
                 .thenReturn(true);
         when(userRepository.findByEmail(email))
                 .thenReturn(Optional.of(savedUser));
-        when(authTokenService.getRefreshToken(email))
+        when(authManagerService.getRefreshToken(email))
                 .thenReturn(currentRefreshToken);
         // when
         // then

@@ -1,9 +1,10 @@
 package com.capstone.letmedrum.user.controller;
 
-import com.capstone.letmedrum.user.dto.UserAuthInfoDto;
-import com.capstone.letmedrum.user.dto.UserCreateDto;
+import com.capstone.letmedrum.auth.controller.UserAuthController;
+import com.capstone.letmedrum.auth.dto.UserAuthInfoDto;
+import com.capstone.letmedrum.user.dto.request.UserCreateDto;
 import com.capstone.letmedrum.user.entity.UserRole;
-import com.capstone.letmedrum.user.service.UserAuthService;
+import com.capstone.letmedrum.auth.service.UserAuthService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -18,8 +19,6 @@ import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(MockitoExtension.class)
 class UserAuthControllerTest {
