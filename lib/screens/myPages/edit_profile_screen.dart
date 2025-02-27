@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:capstone_2025/screens/introPages/login_screen.dart';
 import 'package:capstone_2025/screens/introPages/widgets/intro_page_header.dart';
 
@@ -14,6 +15,7 @@ class EditProfileScreen extends StatefulWidget {
 class _EditProfileScreenState extends State<EditProfileScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _nicknameController = TextEditingController();
+  final _storage = const FlutterSecureStorage(); // Secure Storage 인스턴스
 
   bool _isDuplicate = false; // 닉네임 중복 여부
   File? _profileImage; // 프로필 사진
@@ -22,12 +24,22 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   @override
   void initState() {
     super.initState();
-    _emailController.text = "example@gmail.com"; // 기존 이메일 표시
-    _nicknameController.text = "홍길동"; // 기존 닉네임 표시
+    _loadUserData(); // secure storage에서 유저 데이터 불러오기
 
     // 닉네임이나 이메일 변경 시 _isModified 상태 갱신
     _emailController.addListener(_checkModifincation);
     _nicknameController.addListener(_checkModifincation);
+  }
+
+// Secure Storage에서 데이터 불러와서 입력 필드 초기화
+  Future<void> _loadUserData() async {
+    String? email = await _storage.read(key: 'user_email');
+    String? userName = await _storage.read(key: 'user_name');
+
+    setState(() {
+      _emailController.text = email ?? "example@gmail.com";
+      _nicknameController.text = userName ?? "홍길동";
+    });
   }
 
   void _checkModifincation() {
