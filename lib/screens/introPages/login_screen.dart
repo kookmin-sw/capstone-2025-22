@@ -69,7 +69,9 @@ class _LoginScreenState extends State<LoginScreen> {
         final String accessToken = data['body']['access_token'];
         final String refreshToken = data['body']['refresh_token'];
 
-        // JWT 저장
+        // secure storage에 저장
+        await _storage.write(key: 'user_email', value: userEmail);
+        await _storage.write(key: 'user_name', value: userName);
         await _storage.write(key: 'access_token', value: accessToken);
         await _storage.write(key: 'refresh_token', value: refreshToken);
 
