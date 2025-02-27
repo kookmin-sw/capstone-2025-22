@@ -15,55 +15,44 @@ class FindPwScreen extends StatefulWidget {
 }
 
 class _FindPwScreenState extends State<FindPwScreen> {
-  late Timer _timer;
-  int _timeRemaining = 180; // 남은 시간 3분 (초 단위)
+  Timer? _timer;
+  int _timeRemaining = 180; // 타이머 초기값(3분)
   bool _isTimerRunning = false; // 타이머가 실행 중인지 여부
-  bool _isEmailSent = false; // 이메일이 전송되었는지 여부 (전송 버튼 활성화 여부)
-  bool _isCodeValid = false; // 사용자가 입력한 인증번호가 유효한지 여부
+  bool _isEmailSent = false; // 이메일이 전송되었는지 여부
+  bool _isCodeValid = false; // 인증번호가 유효한지 여부
+
   String _emailMessage = '';
   Color _emailMessageColor = Colors.red;
   String _codeMessage = '';
   Color _codeMessageColor = Colors.red;
 
-  final TextEditingController _emailController =
-      TextEditingController(); // 이메일 입력 필드 제어하는 컨트롤러
-  final TextEditingController _codeController =
-      TextEditingController(); // 인증번호 입력 필드 제어하는 컨트롤러
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _codeController = TextEditingController();
 
   @override
   void dispose() {
-    // 위젯 종료 시 실행
-    // 화면이 닫힐 때 호출: 타이머 종료 & 메모리 해제
-    _timer.cancel(); // 타이머 종료
-    _emailController.dispose(); // 이메일 입력 컨트롤러 해제
-    _codeController.dispose(); // 인증번호 입력 컨트롤러 해제
+    // 화면이 닫힐 때(위젯 종료 시) 호출: 타이머 종료 & 메모리 해제
+    _timer?.cancel(); // 타이머 종료
+    _emailController.dispose(); //컨트롤러 해제
+    _codeController.dispose();
     super.dispose();
   }
 
-  // 이메일 형식 확인
+  // 이메일 형식 유효성 검사
   bool _validateEmail(String email) {
     final emailRegex =
         RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$');
     return emailRegex.hasMatch(email);
   }
 
-  // 가입된 이메일인지 확인
-  Future<bool> _verificateEmail(String email) async {
-    bool result = false;
-
+  // 서버에서 이메일 가입 여부 확인
+  Future<bool> _isRegisteredEmail(String email) async {
     final uri = Uri.parse('http://10.0.2.2:28080/verification/emails=$email');
     final response = await http.get(uri);
-
-    // print("response.statusCode: ${response.statusCode}"); // 에러 코드 확인
-
-    if (response.statusCode != 200) {
-      result = true;
-    }
-
-    return result;
+    return response.statusCode == 200; // 200이면 등록된 이메일
   }
 
-  // 타이머 시작 함수: 이메일 전송 후 자동으로 3분 타이머 시작
+  // 타이머 시작
   void _startTimer() {
     setState(() {
       _isTimerRunning = true;
@@ -72,17 +61,16 @@ class _FindPwScreenState extends State<FindPwScreen> {
 
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (_timeRemaining > 0) {
-        // 1초마다 _timeRemaining 값을 1씩 감소
         setState(() => _timeRemaining--);
       } else {
         // 시간이 0이 되면 _isTimerRunning을 false로 변경 (타이머 중지)
-        _timer.cancel();
+        _timer?.cancel();
         setState(() => _isTimerRunning = false);
       }
     });
   }
 
-  // 타이머 형식 변환 함수 (초 → MM:SS)
+  // 남은 시간 포맷 (MM:SS)
   String _formatTime(int seconds) {
     final minutes = (seconds ~/ 60).toString().padLeft(2, '0');
     final secs = (seconds % 60).toString().padLeft(2, '0');
@@ -90,7 +78,7 @@ class _FindPwScreenState extends State<FindPwScreen> {
   }
 
   /// 이메일 인증번호 전송 버튼 눌렀을 때 실행되는 함수
-  Future<void> _validateAndSendEmail() async {
+  Future<void> _sendVerificationEmail() async {
     final email = _emailController.text.trim();
 
     // 예외처리1: 이메일 주소 형식이 잘못되었을 때
@@ -103,8 +91,7 @@ class _FindPwScreenState extends State<FindPwScreen> {
     }
 
     // 예외처리2: 가입되지 않은 이메일일 때
-    bool isInvalidEmail = await _verificateEmail(email);
-    if (isInvalidEmail) {
+    if (!await _isRegisteredEmail(email)) {
       setState(() {
         _emailMessage = "가입되지 않은 이메일입니다.";
         _emailMessageColor = Colors.red;
@@ -115,7 +102,6 @@ class _FindPwScreenState extends State<FindPwScreen> {
     final uri =
         Uri.parse('http://10.0.2.2:28080/verification/auth-codes?email=$email');
     final response = await http.get(uri);
-
     final data = jsonDecode(response.body);
 
     if (response.statusCode == 200 && data['body'] == "SUCCESS") {
@@ -125,15 +111,17 @@ class _FindPwScreenState extends State<FindPwScreen> {
         _emailMessage = '이메일을 전송했습니다.';
         _emailMessageColor = Colors.green;
       });
-      _startTimer(); // 이메일 전송되면 타이머 시작
+      _startTimer(); // 타이머 시작
     } else {
-      _emailMessage = '이메일 전송에 실패했습니다.';
-      _emailMessageColor = Colors.red;
+      setState(() {
+        _emailMessage = '이메일 전송에 실패했습니다.';
+        _emailMessageColor = Colors.red;
+      });
     }
   }
 
   /// 인증번호 확인 버튼을 눌렀을 때 실행되는 함수
-  Future<void> _validateAndVerifyCode() async {
+  Future<void> _verifyCode() async {
     final email = _emailController.text.trim();
     final code = _codeController.text.trim();
 
@@ -143,7 +131,6 @@ class _FindPwScreenState extends State<FindPwScreen> {
         _emailMessage = "이메일을 입력하고 전송 버튼을 눌러주세요";
         _emailMessageColor = Colors.red;
       });
-
       return;
     }
 
@@ -159,7 +146,6 @@ class _FindPwScreenState extends State<FindPwScreen> {
     final uri = Uri.parse(
         'http://10.0.2.2:28080/verification/auth-codes/check?email=$email&authCode=$code');
     final response = await http.get(uri);
-
     final data = jsonDecode(response.body);
 
     if (response.statusCode == 200 && data['body'] == 'SUCCESS') {
@@ -167,8 +153,8 @@ class _FindPwScreenState extends State<FindPwScreen> {
         _isCodeValid = true;
         _codeMessage = '인증되었습니다.';
         _codeMessageColor = Colors.green;
-        _timer.cancel(); // 타이머 종료
       });
+      _timer?.cancel(); // 타이머 종료
     } else {
       setState(() {
         _isCodeValid = false; // 인증 실패
@@ -187,7 +173,6 @@ class _FindPwScreenState extends State<FindPwScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 20.0),
           child: SingleChildScrollView(
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 introPageHeader(title: '본인 확인', targetPage: LoginScreen()),
                 const Text("본인인증을 위해 가입하신 이메일 주소로 인증번호를 발송합니다."),
@@ -196,11 +181,11 @@ class _FindPwScreenState extends State<FindPwScreen> {
                   width: 450,
                   child: Column(
                     children: [
-                      _buildTextFieldWithButton(
+                      _buildTextField(
                         controller: _emailController,
                         hint: '이메일',
                         buttonText: '전송',
-                        onButtonPressed: _validateAndSendEmail,
+                        onButtonPressed: _sendVerificationEmail,
                       ),
                       Align(
                         alignment: Alignment.centerLeft, // 왼쪽 정렬
@@ -213,12 +198,12 @@ class _FindPwScreenState extends State<FindPwScreen> {
                         ),
                       ),
                       SizedBox(height: 5),
-                      _buildTextFieldWithTimerAndButton(
+                      _buildTextField(
                         controller: _codeController,
                         hint: '인증번호',
                         timerText: _formatTime(_timeRemaining),
                         buttonText: '확인',
-                        onButtonPressed: _validateAndVerifyCode,
+                        onButtonPressed: _verifyCode,
                       ),
                       Align(
                         alignment: Alignment.centerLeft, // 왼쪽 정렬
@@ -279,67 +264,13 @@ class _FindPwScreenState extends State<FindPwScreen> {
     );
   }
 
-  // 입력 칸 오른쪽에 버튼 추가 - 이메일 입력 필드
-  Widget _buildTextFieldWithButton({
+  // 입력 필드
+  Widget _buildTextField({
     required TextEditingController controller,
     required String hint,
     required String buttonText,
     required VoidCallback onButtonPressed,
-  }) {
-    return Row(
-      children: [
-        Expanded(
-          child: TextField(
-            controller: controller,
-            onChanged: (value) {
-              // 입력 값이 변경될 때마다 버튼 상태 변경
-              setState(() {});
-            },
-            decoration: InputDecoration(
-              hintText: hint,
-              hintStyle: TextStyle(fontSize: 15),
-              filled: true,
-              fillColor: Colors.white,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12.0),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12.0),
-                borderSide: BorderSide(color: Colors.grey.shade400),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12.0),
-                borderSide: BorderSide(color: Color(0xFF424242), width: 2.0),
-              ),
-            ),
-          ),
-        ),
-        SizedBox(width: 10),
-        ElevatedButton(
-          onPressed: onButtonPressed,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Color(0xFFCF8A7A),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12.0),
-            ),
-            padding: EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
-          ),
-          child: Text(
-            buttonText,
-            style: TextStyle(color: Colors.white),
-          ),
-        ),
-      ],
-    );
-  }
-
-  // 입력 칸 내부에 타이머와 오른쪽에 버튼 추가 - 인증번호 입력 필드
-  Widget _buildTextFieldWithTimerAndButton({
-    required TextEditingController controller,
-    required String hint,
-    required String timerText,
-    required String buttonText,
-    required VoidCallback onButtonPressed,
+    String? timerText,
   }) {
     return Row(
       children: [
@@ -362,14 +293,16 @@ class _FindPwScreenState extends State<FindPwScreen> {
                 borderRadius: BorderRadius.circular(12.0),
                 borderSide: BorderSide(color: Color(0xFF424242), width: 2.0),
               ),
-              suffix: Text(
-                // 입력 필드 내부에 타이머 표시
-                timerText,
-                style: TextStyle(
-                    fontSize: 15,
-                    color: Color(0xFFCF8A7A),
-                    fontWeight: FontWeight.bold),
-              ),
+              suffix: timerText != null
+                  ? Text(
+                      // 입력 필드 내부에 타이머 표시
+                      timerText,
+                      style: TextStyle(
+                          fontSize: 15,
+                          color: Color(0xFFCF8A7A),
+                          fontWeight: FontWeight.bold),
+                    )
+                  : null,
             ),
           ),
         ),
