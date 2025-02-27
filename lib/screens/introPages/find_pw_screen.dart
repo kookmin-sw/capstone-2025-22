@@ -40,11 +40,27 @@ class _FindPwScreenState extends State<FindPwScreen> {
     super.dispose();
   }
 
-  // 이메일 유효성 검사
+  // 이메일 형식 확인
   bool _validateEmail(String email) {
-    final emailRegex = RegExp(
-        r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'); // 이메일 형식 확인
+    final emailRegex =
+        RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$');
     return emailRegex.hasMatch(email);
+  }
+
+  // 가입된 이메일인지 확인
+  Future<bool> _verificateEmail(String email) async {
+    bool result = false;
+
+    final uri = Uri.parse('http://10.0.2.2:28080/verification/emails=$email');
+    final response = await http.get(uri);
+
+    // print("response.statusCode: ${response.statusCode}"); // 에러 코드 확인
+
+    if (response.statusCode != 200) {
+      result = true;
+    }
+
+    return result;
   }
 
   // 타이머 시작 함수: 이메일 전송 후 자동으로 3분 타이머 시작
@@ -73,13 +89,26 @@ class _FindPwScreenState extends State<FindPwScreen> {
     return '$minutes:$secs';
   }
 
-  // 이메일 인증번호 전송 요청
+  /// 이메일 인증번호 전송 버튼 눌렀을 때 실행되는 함수
   Future<void> _validateAndSendEmail() async {
     final email = _emailController.text.trim();
 
-    // 이메일 유효성 검사
+    // 예외처리1: 이메일 주소 형식이 잘못되었을 때
     if (!_validateEmail(email)) {
-      setState(() => _emailMessage = "이메일 주소 형식이 잘못됐습니다.");
+      setState(() {
+        _emailMessage = "이메일 주소 형식이 잘못됐습니다.";
+        _emailMessageColor = Colors.red;
+      });
+      return;
+    }
+
+    // 예외처리2: 가입되지 않은 이메일일 때
+    bool isInvalidEmail = await _verificateEmail(email);
+    if (isInvalidEmail) {
+      setState(() {
+        _emailMessage = "가입되지 않은 이메일입니다.";
+        _emailMessageColor = Colors.red;
+      });
       return;
     }
 
@@ -89,7 +118,7 @@ class _FindPwScreenState extends State<FindPwScreen> {
 
     final data = jsonDecode(response.body);
 
-    if (data['body'] == "SUCCESS") {
+    if (response.statusCode == 200 && data['body'] == "SUCCESS") {
       print("이메일 전송 성공");
       setState(() {
         _isEmailSent = true;
@@ -98,22 +127,32 @@ class _FindPwScreenState extends State<FindPwScreen> {
       });
       _startTimer(); // 이메일 전송되면 타이머 시작
     } else {
-      print("이메일 전송 실패: ${response.body}");
+      _emailMessage = '이메일 전송에 실패했습니다.';
+      _emailMessageColor = Colors.red;
     }
   }
 
-  // 입력한 인증번호 확인 요청
+  /// 인증번호 확인 버튼을 눌렀을 때 실행되는 함수
   Future<void> _validateAndVerifyCode() async {
     final email = _emailController.text.trim();
     final code = _codeController.text.trim();
 
-    if (email.isEmpty) {
-      setState(() => _emailMessage = "이메일을 입력해주세요.");
+    // 예외처리1: 이메일을 입력&전송하지 않았을 때
+    if (!_isEmailSent) {
+      setState(() {
+        _emailMessage = "이메일을 입력하고 전송 버튼을 눌러주세요";
+        _emailMessageColor = Colors.red;
+      });
+
       return;
     }
 
+    // 예외처리2: 인증번호를 입력하지 않았을 때
     if (code.isEmpty) {
-      setState(() => _codeMessage = "인증번호를 입력해주세요.");
+      setState(() {
+        _codeMessage = "인증번호를 입력해주세요.";
+        _codeMessageColor = Colors.red;
+      });
       return;
     }
 
@@ -123,7 +162,7 @@ class _FindPwScreenState extends State<FindPwScreen> {
 
     final data = jsonDecode(response.body);
 
-    if (data['body'] == "SUCCESS") {
+    if (response.statusCode == 200 && data['body'] == 'SUCCESS') {
       setState(() {
         _isCodeValid = true;
         _codeMessage = '인증되었습니다.';
@@ -134,6 +173,7 @@ class _FindPwScreenState extends State<FindPwScreen> {
       setState(() {
         _isCodeValid = false; // 인증 실패
         _codeMessage = "인증번호가 틀렸습니다.";
+        _codeMessageColor = Colors.red;
       });
     }
   }
@@ -209,15 +249,17 @@ class _FindPwScreenState extends State<FindPwScreen> {
                       padding: EdgeInsets.symmetric(vertical: 16.0),
                       backgroundColor: Color(0xFF424242),
                     ),
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) =>
-                              const SetNewPwScreen(), // '다음' 버튼 클릭하면 페이지 이동. 수정하기!
-                        ),
-                      );
-                    }, // 인증 실패 시 버튼 비활성화
+                    onPressed: _isCodeValid
+                        ? () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    const SetNewPwScreen(), // '다음' 버튼 클릭하면 페이지 이동.
+                              ),
+                            );
+                          }
+                        : null, // 인증 실패 시 버튼 비활성화
                     child: Center(
                       child: Text(
                         '다음',
