@@ -1,12 +1,13 @@
 import 'dart:convert';
-import 'package:capstone_2025/screens/introPages/find_pw_screen.dart';
-import 'package:capstone_2025/screens/introPages/login_screen_google.dart';
-import 'package:capstone_2025/screens/introPages/sign_up_screen.dart';
-import 'package:capstone_2025/screens/introPages/widgets/build_text_field.dart';
-import 'package:capstone_2025/screens/introPages/widgets/intro_page_header.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:capstone_2025/screens/introPages/sign_up_screen.dart';
+import 'package:capstone_2025/screens/introPages/find_pw_screen.dart';
+import 'package:capstone_2025/screens/introPages/login_screen_google.dart';
+import 'package:capstone_2025/screens/introPages/widgets/build_text_field.dart';
+import 'package:capstone_2025/screens/introPages/widgets/intro_page_header.dart';
+import 'package:capstone_2025/screens/myPages/edit_profile_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -23,60 +24,74 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _isPasswordVisible = false; // 비밀번호 보기 상태 관리
   bool _isLoading = false; // 로딩 상태 관리
 
+  // 로그인 버튼 클릭 시
   Future<void> _login() async {
-    // 로그인 버튼 클릭 시
     final String email = _emailController.text.trim(); // 사용자가 입력한 아이디 가져오기
     final String password =
         _passwordController.text.trim(); // 사용자가 입력한 비밀번호 가져오기
 
+    // 예외처리1: 정보가 누락되었을 때
     if (email.isEmpty || password.isEmpty) {
-      // 아이디, 비밀번호 둘 중 하나라도 입력하지 않고 로그인 버튼을 눌렀을 경우 오류 메시지 출력
       _showSnackbar('아이디와 비밀번호를 입력하세요.');
       return;
     }
 
+    // 예외처리2: 이메일 주소 형식이 잘못되었을 때
+    final emailRegex = RegExp(
+        r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'); // 이메일 형식 확인
+    final validateEmail = emailRegex.hasMatch(email);
+    if (!validateEmail) {
+      _showSnackbar("이메일 주소 형식이 잘못됐습니다.");
+      return;
+    }
+
     setState(() {
-      _isLoading = true; // 로딩 상태를 활성화 -> 로딩스피너 표시
+      _isLoading = true; // 로딩스피너 표시
     });
 
     try {
       // 서버에 로그인 요청
       final response = await http.post(
-        // Uri.parse(
-        //     'http://192.168.219.108:28080/auth/signin'), // API URL 수정해야 함!
-        Uri.parse('http://10.0.2.2:28080/auth/signin'), // API URL 수정해야 함!
-        headers: {'Content-Type': 'application/json'}, // 요청을 JSON 형식으로 보냄
+        Uri.parse('http://10.0.2.2:28080/auth/signin'),
+        headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'email': email, 'password': password}),
       );
 
       final data = jsonDecode(response.body);
 
-      if (data['body'] == null) {
-        // 로그인 실패
-        _showSnackbar('로그인에 실패했습니다');
-        print("실패");
-      } else {
-        // 로그인 성공
+      print("response.statusCode: ${response.statusCode}"); // 에러 코드 확인
+
+      // 로그인 성공!
+      if (response.statusCode == 200 && data['body'] != null) {
+        // ignore: unused_local_variable
+        final String userEmail = data['body']['email'];
+        final String userName = data['body']['name'];
+        final String accessToken = data['body']['access_token'];
+        final String refreshToken = data['body']['refresh_token'];
+
         // JWT 저장
-        await _storage.write(
-            key: 'access_token', value: data['body']['access_token']);
-        await _storage.write(
-            key: 'refresh_token', value: data['body']['refresh_token']);
+        await _storage.write(key: 'access_token', value: accessToken);
+        await _storage.write(key: 'refresh_token', value: refreshToken);
+
+        _showSnackbar('$userName님 환영합니다.');
 
         // 로그인 성공 시 화면으로 이동
         if (mounted) {
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
-              builder: (context) => const LoginScreen(), // MainScreen으로 바꾸기!
+              builder: (context) =>
+                  const EditProfileScreen(), // MainScreen으로 바꾸기!
             ),
           );
         }
+      } else {
+        // 로그인 실패
+        _handleError(response.statusCode);
       }
     } catch (e) {
       // 인터넷 연결 문제 또는 서버 오류 발생 시
       _showSnackbar('네트워크 오류: $e');
-      print(e);
     } finally {
       setState(() {
         _isLoading = false; // 로딩 상태 해제 & 로그인 버튼 다시 활성화
@@ -84,8 +99,29 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  // 에러 코드에 따른 에러 처리
+  void _handleError(int statusCode) {
+    switch (statusCode) {
+      case 400: // 정보가 누락되었을 때
+        _showSnackbar('아이디와 비밀번호를 입력하세요.');
+        break;
+      case 403: // 권한이 없을 때
+        _showSnackbar('접근 권한이 없습니다.');
+        break;
+      case 404: // 사용자 정보가 없을 때
+        _showSnackbar('사용자 정보를 찾을 수 없습니다.');
+        break;
+      case 500: // 서버 내부 오류
+        _showSnackbar('서버 오류가 발생했습니다. 잠시 후 다시 시도하세요.');
+        break;
+      default:
+        _showSnackbar('알 수 없는 오류가 발생했습니다.');
+        break;
+    }
+  }
+
+  // 페이지 하단에 메시지 출력하는 함수
   void _showSnackbar(String message) {
-    // 메시지 출력하는 함수
     ScaffoldMessenger.of(context)
         .showSnackBar(SnackBar(content: Text(message)));
   }
@@ -105,7 +141,6 @@ class _LoginScreenState extends State<LoginScreen> {
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 introPageHeader(
-                  // 수정하기!!!
                   title: '🥁알려드럼🥁',
                   targetPage: LoginScreenGoogle(),
                 ),
