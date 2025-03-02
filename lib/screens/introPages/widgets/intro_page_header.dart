@@ -5,11 +5,13 @@ import 'package:flutter/material.dart';
 class introPageHeader extends StatelessWidget {
   final String title;
   final Widget targetPage; // 이동할 페이지
+  final bool previous; // 바로 이전의 페이지로 이동할지 여부
 
   const introPageHeader({
     super.key,
     required this.title,
     required this.targetPage,
+    this.previous = false,
   });
 
   @override
@@ -23,12 +25,16 @@ class introPageHeader extends StatelessWidget {
           child: Align(
             alignment: Alignment.centerLeft,
             child: IconButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => targetPage),
-                );
-              },
+              onPressed: previous
+                  ? () {
+                      Navigator.pop(context);
+                    }
+                  : () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => targetPage),
+                      );
+                    },
               icon: Icon(
                 Icons.arrow_back_sharp,
                 size: 65,
