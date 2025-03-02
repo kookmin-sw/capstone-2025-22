@@ -1,9 +1,11 @@
 import 'dart:io';
 import 'dart:convert';
+import 'package:capstone_2025/screens/mainPages/navigation_screens.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 // ignore: depend_on_referenced_packages
 import 'package:image_picker/image_picker.dart';
+import 'package:capstone_2025/screens/mainPages/my_page.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:capstone_2025/screens/introPages/find_pw_screen.dart';
 import 'package:capstone_2025/screens/introPages/widgets/intro_page_header.dart';
@@ -175,8 +177,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             child: Column(
               // crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                introPageHeader(
-                    title: '', targetPage: FindPwScreen()), // targetPage 바꾸기
+                introPageHeader(title: '', targetPage: NavigationScreens()),
                 Stack(
                   alignment: Alignment.bottomRight,
                   children: [
