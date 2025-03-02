@@ -1,4 +1,5 @@
 import 'package:capstone_2025/screens/introPages/set_new_pw_screen.dart';
+import 'package:capstone_2025/screens/mainPages/edit_profile_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
@@ -99,8 +100,7 @@ class _MyPageState extends State<MyPage> {
   void _navigateToEditProfile() {
     Navigator.push(
       context,
-      MaterialPageRoute(
-          builder: (_) => SetNewPwScreen()), // TODO: EditProfileScreen으로 변경 가능
+      MaterialPageRoute(builder: (_) => EditProfileScreen()),
     );
   }
 
