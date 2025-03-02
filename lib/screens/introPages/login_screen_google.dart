@@ -2,6 +2,8 @@ import 'dart:convert';
 
 import 'package:capstone_2025/screens/introPages/login_screen.dart';
 import 'package:capstone_2025/screens/introPages/sign_up_screen.dart';
+import 'package:capstone_2025/screens/mainPages/my_page.dart';
+import 'package:capstone_2025/screens/mainPages/navigation_screens.dart';
 import '/services/storage_service.dart';
 
 import 'package:flutter/material.dart';
@@ -59,6 +61,11 @@ class _LoginScreenGoogleState extends State<LoginScreenGoogle> {
       if (userInfo != null) {
         print("UserInfo: $userInfo");
         saveUserInfo(userInfo);
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(
+            builder: (_) => NavigationScreens(),
+          ),
+        );
       }
     } catch (error) {
       print("Google 로그인 오류: $error");
@@ -246,4 +253,3 @@ class ButtonForm extends StatelessWidget {
     );
   }
 }
-
