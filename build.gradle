@@ -12,6 +12,14 @@ java {
 		languageVersion = JavaLanguageVersion.of(17)
 	}
 }
+// root 모듈에 대한 spring boot jar 생성 방지
+bootJar {
+	enabled = false
+}
+// root 모듈에 대한 plain jar 생성 방지
+jar {
+	enabled = false
+}
 
 configurations {
 	compileOnly {
@@ -22,29 +30,51 @@ configurations {
 repositories {
 	mavenCentral()
 }
-
-dependencies {
-	implementation 'org.springframework.boot:spring-boot-starter-web'
-	// jpa
-	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
-	// security
-	implementation 'org.springframework.boot:spring-boot-starter-security'
-	//Jwt
-	implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
-	implementation 'io.jsonwebtoken:jjwt-impl:0.11.5'
-	implementation 'io.jsonwebtoken:jjwt-jackson:0.11.5'
-	// logger
-	implementation 'org.slf4j:slf4j-api'
-	// swagger
-	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.0.2'
-	//
-	compileOnly 'org.projectlombok:lombok'
-	runtimeOnly 'com.mysql:mysql-connector-j'
-	annotationProcessor 'org.projectlombok:lombok'
-	testImplementation 'org.springframework.boot:spring-boot-starter-test'
-	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+// ext
+ext {
+	set('springCloudVersion', "2023.0.2")
 }
-
-tasks.named('test') {
-	useJUnitPlatform()
+subprojects {
+	// group
+	group = 'com.capstone'
+	// plugin
+	apply plugin: 'java'
+	apply plugin: 'org.springframework.boot'
+	apply plugin: 'io.spring.dependency-management'
+	// repository
+	repositories {
+		mavenCentral()
+	}
+	// java version
+	java {
+		toolchain {
+			languageVersion = JavaLanguageVersion.of(17)
+		}
+	}
+	// plain jar 생성 방지
+	jar {
+		enabled=false
+	}
+	// 모듈 내부에 spring boot jar 생성
+	bootJar{
+		enabled=true
+	}
+	// dependency management
+	dependencyManagement {
+		imports {
+			mavenBom "org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"
+		}
+	}
+	// public dependencies
+	dependencies {
+		// lombok
+		compileOnly 'org.projectlombok:lombok'
+		annotationProcessor 'org.projectlombok:lombok'
+		// logging
+		implementation 'org.slf4j:slf4j-api'
+		// swagger-webflux
+		implementation("org.springdoc:springdoc-openapi-starter-webflux-ui:2.0.4")
+		// actuator
+		implementation 'org.springframework.boot:spring-boot-starter-actuator'
+	}
 }
