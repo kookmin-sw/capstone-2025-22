@@ -1,1 +1,9 @@
 rootProject.name = 'letmedrum'
+include 'common'
+include 'auth-service'
+include 'verification-service'
+include 'user-service'
+include 'gateway-service'
+include 'config-server'
+include 'discovery-service'
+

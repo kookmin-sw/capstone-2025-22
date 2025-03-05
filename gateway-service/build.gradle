@@ -1,0 +1,32 @@
+plugins {
+    id 'java'
+}
+
+group = 'com.capstone'
+version = '0.0.1-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    // webflux
+    implementation 'org.springframework.boot:spring-boot-starter-webflux'
+    // spring security
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+    // common module
+    implementation project(":common")
+    // eureka
+    implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
+    // cloud gateway
+    implementation 'org.springframework.cloud:spring-cloud-starter-gateway'
+    // config client
+    implementation 'org.springframework.cloud:spring-cloud-config-client'
+    // test
+    testImplementation platform('org.junit:junit-bom:5.10.0')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+}
+
+test {
+    useJUnitPlatform()
+}
