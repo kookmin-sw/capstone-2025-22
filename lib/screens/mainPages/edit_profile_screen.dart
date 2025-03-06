@@ -5,9 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 // ignore: depend_on_referenced_packages
 import 'package:image_picker/image_picker.dart';
-import 'package:capstone_2025/screens/mainPages/my_page.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:capstone_2025/screens/introPages/find_pw_screen.dart';
 import 'package:capstone_2025/screens/introPages/widgets/intro_page_header.dart';
 
 class EditProfileScreen extends StatefulWidget {
@@ -28,7 +26,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   // secure storage에서 불러온 데이터 저장
   String? email;
-  String? userName;
+  String? nickName;
   String? accessToken;
 
   @override
@@ -43,19 +41,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 // Secure Storage에서 데이터 불러와서 입력 필드 초기화
   Future<void> _loadUserData() async {
     email = await _storage.read(key: 'user_email');
-    userName = await _storage.read(key: 'user_name');
+    nickName = await _storage.read(key: 'nick_name');
     accessToken = await _storage.read(key: 'access_token');
 
     setState(() {
       _emailController.text = email ?? "example@gmail.com";
-      _nicknameController.text = userName ?? "홍길동";
+      _nicknameController.text = nickName ?? "홍길동";
     });
-
-    // // 테스트 코드
-    // setState(() {
-    //   _emailController.text = "bomi0320@naver.com" ?? "example@gmail.com";
-    //   _nicknameController.text = "bomi" ?? "홍길동";
-    // });
   }
 
   void _checkModifincation() {
@@ -70,13 +62,16 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   Future<void> _checkNickname() async {
     print(_nicknameController.text);
     final uri = Uri.parse(
-        'http://10.0.2.2:28080/verification/nicknames=${_nicknameController.text}');
+        'http://10.0.2.2:28080/verification/nicknames?nickname=${_nicknameController.text}');
     final response = await http.get(uri);
     final data = jsonDecode(response.body);
-    print(response.statusCode);
     print(data['body']);
-    if (response.statusCode == 200) {
-      _isDuplicate = true; // 200이면 이미 존재하는 이메일
+    print(response.statusCode);
+
+    if (data['body'] == 'invalid') {
+      setState(() {
+        _isDuplicate = true; // invalid이면 이미 존재하는 이메일
+      });
     }
   }
 
@@ -210,75 +205,109 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   child: Column(
                     children: [
                       // 아이디 입력 필드(수정 불가)
-                      Row(
+                      Table(
+                        columnWidths: const {
+                          0: IntrinsicColumnWidth(), // 첫 번째 열 (아이디 / 닉네임)
+                          1: FlexColumnWidth(), // 두 번째 열 (입력 칸)
+                          2: IntrinsicColumnWidth(), // 세 번째 열 (버튼)
+                        },
+                        defaultVerticalAlignment:
+                            TableCellVerticalAlignment.middle, // 세로 정렬 맞추기
                         children: [
-                          const Text("아이디", style: TextStyle(fontSize: 16)),
-                          const SizedBox(width: 20),
-                          SizedBox(
-                            width: 330,
-                            child: TextField(
-                              readOnly: true,
-                              controller: _emailController,
-                              decoration: InputDecoration(
-                                enabledBorder: const UnderlineInputBorder(
-                                  borderSide: BorderSide(color: Colors.grey),
-                                ),
-                                focusedBorder: const UnderlineInputBorder(
-                                  borderSide: BorderSide(color: Colors.grey),
+                          // 아이디 행
+                          TableRow(
+                            children: [
+                              Padding(
+                                padding: const EdgeInsets.only(
+                                    right: 20, bottom: 15),
+                                child: const Text("아이디",
+                                    style: TextStyle(fontSize: 16)),
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.only(
+                                    right: 10, bottom: 15),
+                                child: SizedBox(
+                                  width: 300,
+                                  child: TextField(
+                                    readOnly: true,
+                                    controller: _emailController,
+                                    decoration: InputDecoration(
+                                      enabledBorder: const UnderlineInputBorder(
+                                        borderSide:
+                                            BorderSide(color: Colors.grey),
+                                      ),
+                                      focusedBorder: const UnderlineInputBorder(
+                                        borderSide:
+                                            BorderSide(color: Colors.grey),
+                                      ),
+                                    ),
+                                  ),
                                 ),
                               ),
-                            ),
+                              const SizedBox(), // 빈 공간 유지
+                            ],
                           ),
-                        ],
-                      ),
-                      const SizedBox(height: 20),
-                      // 닉네임 입력 필드(수정 가능)
-                      Row(
-                        children: [
-                          const Text("닉네임", style: TextStyle(fontSize: 16)),
-                          const SizedBox(width: 20),
-                          Expanded(
-                            // width: 330,
-                            child: TextField(
-                              controller: _nicknameController,
-                              decoration: InputDecoration(
-                                hintText: userName,
-                                enabledBorder: const UnderlineInputBorder(
-                                  borderSide: BorderSide(color: Colors.grey),
-                                ),
-                                focusedBorder: const UnderlineInputBorder(
-                                  borderSide: BorderSide(color: Colors.black),
-                                ),
-                                suffixIcon: IconButton(
-                                  icon: const Icon(Icons.close,
-                                      color: Colors.grey),
-                                  onPressed: () {
-                                    setState(() {
-                                      _nicknameController.clear();
-                                      _isDuplicate = false;
-                                    });
-                                  },
+                          // 닉네임 행
+                          TableRow(
+                            children: [
+                              Padding(
+                                padding: const EdgeInsets.only(right: 20),
+                                child: const Text("닉네임",
+                                    style: TextStyle(fontSize: 16)),
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.only(right: 10),
+                                child: SizedBox(
+                                  width: 300, // 아이디 입력 칸과 동일한 크기 적용
+                                  child: TextField(
+                                    controller: _nicknameController,
+                                    decoration: InputDecoration(
+                                      hintText: nickName,
+                                      enabledBorder: const UnderlineInputBorder(
+                                          borderSide:
+                                              BorderSide(color: Colors.grey)),
+                                      focusedBorder: const UnderlineInputBorder(
+                                          borderSide:
+                                              BorderSide(color: Colors.black)),
+                                      suffixIcon: IconButton(
+                                        icon: const Icon(Icons.close,
+                                            color: Colors.grey),
+                                        onPressed: () {
+                                          setState(() {
+                                            _nicknameController.clear();
+                                            _isDuplicate = false;
+                                          });
+                                        },
+                                      ),
+                                    ),
+                                    onChanged: (text) {
+                                      setState(() {}); // 'x' 버튼 갱신
+                                    },
+                                  ),
                                 ),
                               ),
-                              onChanged: (text) {
-                                setState(() {}); // 'x' 버튼 갱신
-                              },
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          // 중복 확인 버튼
-                          ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12.0),
+                              Padding(
+                                padding: const EdgeInsets.only(left: 10),
+                                child: Wrap(
+                                  children: [
+                                    ElevatedButton(
+                                      style: ElevatedButton.styleFrom(
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(12.0),
+                                        ),
+                                        backgroundColor: Color(0xFFCF8A7A),
+                                        foregroundColor: Colors.white,
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 13, vertical: 13),
+                                      ),
+                                      onPressed: _checkNickname,
+                                      child: const Text("중복확인"),
+                                    ),
+                                  ],
+                                ),
                               ),
-                              backgroundColor: Color(0xFFCF8A7A),
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 13, vertical: 13),
-                            ),
-                            onPressed: _checkNickname,
-                            child: const Text("중복확인"),
+                            ],
                           ),
                         ],
                       ),
