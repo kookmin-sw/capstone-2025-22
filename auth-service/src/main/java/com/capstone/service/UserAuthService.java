@@ -47,7 +47,7 @@ public class UserAuthService {
                     if(user.getEmail()==null || !user.getEmail().equals(signInDto.getEmail()) || !passwordEncoder.matches(signInDto.getPassword(), user.getPassword())){
                         return Mono.error(new InvalidUserInfoException("invalid email or password"));
                     }
-                    return Mono.just(generateResponseAndSaveToken(user.getEmail(), user.getRole()));
+                    return Mono.just(generateResponseAndSaveToken(user.getEmail(), user.getNickname(), user.getRole()));
                 });
     }
     /**
@@ -64,7 +64,7 @@ public class UserAuthService {
                     if(user.getEmail()!=null) return Mono.error(new CustomException(HttpStatus.CONFLICT,"user already exists"));
                     signUpDto.setPassword(passwordEncoder.encode(signUpDto.getPassword()));
                     return userClientService.saveUser(signUpDto)
-                            .map(res -> generateResponseAndSaveToken(signUpDto.getEmail(), UserRole.ROLE_USER));
+                            .map(res -> generateResponseAndSaveToken(signUpDto.getEmail(), signUpDto.getNickname(),UserRole.ROLE_USER));
                 });
     }
 
@@ -100,16 +100,18 @@ public class UserAuthService {
                     if(!savedRefreshToken.equals(refreshToken)){
                         return authManagerService.deleteAccessTokenAndRefreshToken(email)
                                 .then(Mono.error(new InvalidTokenException("invalid refresh token : using prev token")));
+                    }else{
+                        return userClientService.findUserByEmail(email);
                     }
-                    return Mono.just(generateResponseAndSaveToken(email, UserRole.ROLE_USER));
-                });
+                })
+                .flatMap(user -> Mono.just(generateResponseAndSaveToken(user.getEmail(), user.getNickname(), user.getRole())));
     }
     /**
      * save tokens on redis and return user auth response
      * @param email user's email
      * @param role user's role
     * */
-    public AuthResponseDto generateResponseAndSaveToken(String email, UserRole role){
+    public AuthResponseDto generateResponseAndSaveToken(String email, String nickname, UserRole role){
         UserAuthInfoDto userAuthInfoDto = UserAuthInfoDto
                 .builder()
                 .email(email)
@@ -123,6 +125,7 @@ public class UserAuthService {
                 .accessToken(jwtUtils.generateAccessToken(userAuthInfoDto))
                 .refreshToken(jwtUtils.generateRefreshToken(userAuthInfoDto))
                 .email(email)
+                .nickname(nickname)
                 .build();
     }
 }
