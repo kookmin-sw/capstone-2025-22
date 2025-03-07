@@ -32,6 +32,6 @@ public class UserGoogleAuthService {
                 .flatMap(googleClientService::getUserInfo)
                 .flatMap(userInfo -> userClientService.findUserByEmail(userInfo.getEmail()))
                 .flatMap(userClientService::saveUser)
-                .map(user -> userAuthService.generateResponseAndSaveToken(user.getEmail(), user.getRole()));
+                .map(user -> userAuthService.generateResponseAndSaveToken(user.getEmail(), user.getNickname(),user.getRole()));
     }
 }
