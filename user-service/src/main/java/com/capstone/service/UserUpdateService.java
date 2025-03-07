@@ -78,6 +78,28 @@ public class UserUpdateService {
                 .nickname(user.getNickname()).build());
     }
     @Transactional
+    public UserProfileUpdateResponseDto updateProfile(String accessToken, String nickname, MultipartFile profileIamge){
+        accessToken = jwtUtils.processToken(accessToken);
+        if(!jwtUtils.validateToken(accessToken)) throw new InvalidTokenException("Invalid access token : expired or invalid");
+        String email = jwtUtils.getUserEmail(accessToken);
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new InvalidUserInfoException("User not found"));
+        user.setNickname(nickname);
+        if(profileIamge!=null){
+            try{
+                byte[] imageBytes = ImageUtils.resizeImage(profileIamge.getBytes(), 300);
+                user.setProfileImage(imageBytes);
+            }catch (IOException e){
+                throw new InternalServerException(e.getMessage());
+            }
+        }
+        userRepository.save(user);
+        return UserProfileUpdateResponseDto.builder()
+                .profileImage(getBase64Image(user.getProfileImage()))
+                .nickname(user.getNickname())
+                .build();
+    }
+    @Transactional
     public UserInfoDto createUser(UserCreateDto userCreateDto) {
         if(userRepository.findByEmail(userCreateDto.getEmail()).isPresent())
             throw new CustomException(HttpStatus.CONFLICT, "user already exists");
