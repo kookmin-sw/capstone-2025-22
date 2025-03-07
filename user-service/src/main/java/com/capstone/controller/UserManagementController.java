@@ -57,8 +57,8 @@ public class UserManagementController {
     public ResponseEntity<CustomResponseDto<UserProfileUpdateResponseDto>> updateProfile(
             @RequestHeader(JwtUtils.ACCESS_TOKEN_HEADER_KEY) String accessToken,
             @RequestPart(value = "nickname") String nickname,
-            @RequestPart(value = "profileImage", required = false) Optional<MultipartFile> profileImageMono) {
-        MultipartFile profileImage = profileImageMono.orElse(null);
+            @RequestPart(value = "profileImage", required = false) Optional<MultipartFile> profileImageOptional) {
+        MultipartFile profileImage = profileImageOptional.orElse(null);
         return ApiResponse.success(
                 userUpdateService.updateProfile(accessToken, nickname, profileImage)
         );
