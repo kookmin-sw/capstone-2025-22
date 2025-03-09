@@ -24,5 +24,7 @@ FROM openjdk:17-jdk-slim
 WORKDIR /app
 # 빌드된 JAR 파일 복사 (JAR 파일이 여러 개일 경우 하나만 선택)
 COPY --from=builder ./app.jar app.jar
+# curl 설치
+RUN apt-get update && apt-get install -y curl
 # 컨테이너 실행 명령
 ENTRYPOINT ["java", "-jar", "app.jar"]
