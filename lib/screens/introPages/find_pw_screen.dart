@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:capstone_2025/screens/introPages/login_screen.dart';
 import 'package:capstone_2025/screens/introPages/set_new_pw_screen.dart';
 import 'package:capstone_2025/screens/introPages/widgets/intro_page_header.dart';
@@ -29,6 +30,8 @@ class _FindPwScreenState extends State<FindPwScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _codeController = TextEditingController();
 
+  final _storage = const FlutterSecureStorage();
+
   @override
   void dispose() {
     // 화면이 닫힐 때(위젯 종료 시) 호출: 타이머 종료 & 메모리 해제
@@ -47,9 +50,21 @@ class _FindPwScreenState extends State<FindPwScreen> {
 
   // 서버에서 이메일 가입 여부 확인
   Future<bool> _isRegisteredEmail(String email) async {
-    final uri = Uri.parse('http://10.0.2.2:28080/verification/emails=$email');
+    print("가입된 이메일인지 확인");
+    final uri =
+        Uri.parse('http://10.0.2.2:28080/verification/emails?email=$email');
     final response = await http.get(uri);
-    return response.statusCode == 200; // 200이면 등록된 이메일
+    final data = jsonDecode(response.body);
+    print(response.statusCode);
+    print(data['body']);
+
+    if (data['body'] == "invalid") {
+      // 가입된 이메일
+      return true;
+    } else {
+      print("body: ${response.body}");
+      return false;
+    }
   }
 
   // 타이머 시작
@@ -103,8 +118,9 @@ class _FindPwScreenState extends State<FindPwScreen> {
         Uri.parse('http://10.0.2.2:28080/verification/auth-codes?email=$email');
     final response = await http.get(uri);
     final data = jsonDecode(response.body);
-
-    if (response.statusCode == 200 && data['body'] == "SUCCESS") {
+    print(response.statusCode);
+    print(data['body']);
+    if (response.statusCode == 200 && data['body'] == "valid") {
       print("이메일 전송 성공");
       setState(() {
         _isEmailSent = true;
@@ -147,13 +163,22 @@ class _FindPwScreenState extends State<FindPwScreen> {
         'http://10.0.2.2:28080/verification/auth-codes/check?email=$email&authCode=$code');
     final response = await http.get(uri);
     final data = jsonDecode(response.body);
+    print(data['body']);
+    print(response.statusCode);
 
-    if (response.statusCode == 200 && data['body'] == 'SUCCESS') {
+    if (response.statusCode == 200) {
+      print(data['body']);
+
+      // 이메일 토큰 받아서 저장
+      final String emailToken = data['body']['emailToken'];
+      await _storage.write(key: 'email_token', value: emailToken);
+
       setState(() {
         _isCodeValid = true;
         _codeMessage = '인증되었습니다.';
         _codeMessageColor = Colors.green;
       });
+
       _timer?.cancel(); // 타이머 종료
     } else {
       setState(() {
