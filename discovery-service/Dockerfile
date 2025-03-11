@@ -27,4 +27,4 @@ COPY --from=builder ./app.jar app.jar
 # curl 설치
 RUN apt-get update && apt-get install -y curl
 # 컨테이너 실행 명령
-ENTRYPOINT ["java", "-jar", "app.jar"]
+ENTRYPOINT ["java", "-XX:-UseContainerSupport", "-jar", "app.jar"]
