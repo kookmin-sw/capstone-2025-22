@@ -30,6 +30,9 @@ class _LoginScreenState extends State<LoginScreen> {
     final String password =
         _passwordController.text.trim(); // 사용자가 입력한 비밀번호 가져오기
 
+    print(email);
+    print(password);
+
     // 예외처리1: 정보가 누락되었을 때
     if (email.isEmpty || password.isEmpty) {
       _showSnackbar('아이디와 비밀번호를 입력하세요.');
@@ -53,29 +56,34 @@ class _LoginScreenState extends State<LoginScreen> {
       // 서버에 로그인 요청
       final response = await http.post(
         Uri.parse('http://10.0.2.2:28080/auth/signin'),
-        headers: {'Content-Type': 'application/json'},
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+        },
         body: jsonEncode({'email': email, 'password': password}),
       );
 
       final data = jsonDecode(response.body);
 
       print("response.statusCode: ${response.statusCode}"); // 에러 코드 확인
+      print(response.body);
+      print(data['body']);
 
       // 로그인 성공!
-      if (response.statusCode == 200 && data['body'] != null) {
+      if (response.statusCode == 200) {
         // ignore: unused_local_variable
         final String userEmail = data['body']['email'];
-        final String userName = data['body']['name'];
-        final String accessToken = data['body']['access_token'];
-        final String refreshToken = data['body']['refresh_token'];
+        final String nickName = data['body']['nickname'];
+        final String accessToken = data['body']['accessToken'];
+        final String refreshToken = data['body']['refreshToken'];
 
         // secure storage에 저장
         await _storage.write(key: 'user_email', value: userEmail);
-        await _storage.write(key: 'user_name', value: userName);
+        await _storage.write(key: 'nick_name', value: nickName);
         await _storage.write(key: 'access_token', value: accessToken);
         await _storage.write(key: 'refresh_token', value: refreshToken);
 
-        _showSnackbar('$userName님 환영합니다.');
+        _showSnackbar('$nickName님 환영합니다.');
 
         // 로그인 성공 시 메인 화면으로 이동
         if (mounted) {
