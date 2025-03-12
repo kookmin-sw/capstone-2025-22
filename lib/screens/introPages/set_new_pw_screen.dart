@@ -90,7 +90,8 @@ class _SetNewPwScreenState extends State<SetNewPwScreen> {
                     height: 50,
                     child: introPageHeader(
                       title: '비밀번호 재설정',
-                      targetPage: FindPwScreen(),
+                      targetPage: FindPwScreen(), // 이게 의미 없음.
+                      previous: true, // 바로 이전의 페이지로 이동
                     ),
                   ),
                   Text(
