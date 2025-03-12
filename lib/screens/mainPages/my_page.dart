@@ -298,7 +298,9 @@ class _MyPageState extends State<MyPage> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => const MusicsheetDetail(),
+                              builder: (context) => MusicsheetDetail(
+                                songTitle: item["악보명"]!,
+                              ),
                             ),
                           ),
                         },
