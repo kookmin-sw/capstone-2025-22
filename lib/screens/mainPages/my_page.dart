@@ -1,6 +1,9 @@
 import 'package:capstone_2025/screens/introPages/set_new_pw_screen.dart';
+import 'package:capstone_2025/screens/mainPages/edit_profile_screen.dart';
+import 'package:capstone_2025/screens/mainPages/musicsheet_detail.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class MyPage extends StatefulWidget {
   const MyPage({super.key});
@@ -11,6 +14,27 @@ class MyPage extends StatefulWidget {
 
 class _MyPageState extends State<MyPage> {
   bool isSheetMusicUploaded = true;
+  final _storage = const FlutterSecureStorage(); // Secure Storage 인스턴스
+  String? email;
+  String? userName;
+  String? accessToken;
+
+  // Secure Storage에서 데이터 불러와서 상태 업데이트
+  Future<void> _loadUserData() async {
+    String? storedEmail = await _storage.read(key: 'user_email');
+    String? storedUserName = await _storage.read(key: 'user_name');
+    String? storedAccessToken = await _storage.read(key: 'access_token');
+
+    setState(() {
+      email = storedEmail;
+      userName = storedUserName;
+      accessToken = storedAccessToken;
+
+      print(email);
+      print(userName);
+      print(accessToken);
+    });
+  }
 
   List<Map<String, String>> sheetMusicData = [
     {
@@ -99,8 +123,7 @@ class _MyPageState extends State<MyPage> {
   void _navigateToEditProfile() {
     Navigator.push(
       context,
-      MaterialPageRoute(
-          builder: (_) => SetNewPwScreen()), // TODO: EditProfileScreen으로 변경 가능
+      MaterialPageRoute(builder: (_) => EditProfileScreen()),
     );
   }
 
@@ -163,7 +186,7 @@ class _MyPageState extends State<MyPage> {
               children: [
                 Row(
                   children: [
-                    Text("홍길동",
+                    Text(userName == null ? "홍길동" : userName!,
                         style: TextStyle(
                             fontSize: 23, fontWeight: FontWeight.bold)),
                     SizedBox(width: 10),
@@ -174,7 +197,7 @@ class _MyPageState extends State<MyPage> {
                     ),
                   ],
                 ),
-                Text("example@gmail.com",
+                Text(email == null ? "example@gmail.com" : email!,
                     style: TextStyle(fontSize: 19, color: Colors.grey)),
               ],
             ),
@@ -221,6 +244,11 @@ class _MyPageState extends State<MyPage> {
     );
   }
 
+  FaIcon sheetIcon = FaIcon(
+    FontAwesomeIcons.fileLines,
+    size: 25,
+  );
+
   // 악보 연습 기록 테이블
   Widget _buildSheetMusicTable() {
     return Column(
@@ -234,9 +262,10 @@ class _MyPageState extends State<MyPage> {
           ),
           child: Row(
             children: [
-              _buildListHeaderCell("악보명", flex: 5),
-              _buildListHeaderCell("마지막 연습 날짜", flex: 5),
-              _buildListHeaderCell("최고 점수", flex: 3),
+              _buildListHeaderCell("악보명", flex: 1),
+              _buildListHeaderCell("마지막 연습 날짜", flex: 1),
+              _buildListHeaderCell("최고 점수", flex: 1),
+              _buildListHeaderCell("상세 기록", flex: 1),
             ],
           ),
         ),
@@ -258,9 +287,26 @@ class _MyPageState extends State<MyPage> {
                 ),
                 child: Row(
                   children: [
-                    _buildListCell(item["악보명"]!, flex: 5),
-                    _buildListCell(item["마지막 연습 날짜"]!, flex: 5),
-                    _buildListCell(item["최고 점수"]!, flex: 3),
+                    _buildListCell(item["악보명"]!, flex: 1),
+                    _buildListCell(item["마지막 연습 날짜"]!, flex: 1),
+                    _buildListCell(item["최고 점수"]!, flex: 1),
+                    Expanded(
+                      // 상세 기록 버튼
+                      flex: 1,
+                      child: GestureDetector(
+                        onTap: () => {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => MusicsheetDetail(
+                                songTitle: item["악보명"]!,
+                              ),
+                            ),
+                          ),
+                        },
+                        child: Center(child: sheetIcon),
+                      ),
+                    ),
                   ],
                 ),
               );
