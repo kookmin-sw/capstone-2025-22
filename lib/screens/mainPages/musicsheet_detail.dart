@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class MusicsheetDetail extends StatefulWidget {
-  const MusicsheetDetail({super.key});
+  final String songTitle; // 추가: 노래 제목 받기
+
+  const MusicsheetDetail({super.key, required this.songTitle});
 
   @override
   State<MusicsheetDetail> createState() => _MusicsheetDetailState();
