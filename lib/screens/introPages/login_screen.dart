@@ -1,10 +1,11 @@
 import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:capstone_2025/screens/mainPages/my_page.dart';
 import 'package:capstone_2025/screens/introPages/sign_up_screen.dart';
 import 'package:capstone_2025/screens/introPages/find_pw_screen.dart';
+import 'package:capstone_2025/screens/mainPages/navigation_screens.dart';
 import 'package:capstone_2025/screens/introPages/login_screen_google.dart';
 import 'package:capstone_2025/screens/introPages/widgets/build_text_field.dart';
 import 'package:capstone_2025/screens/introPages/widgets/intro_page_header.dart';
@@ -90,7 +91,7 @@ class _LoginScreenState extends State<LoginScreen> {
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
-              builder: (context) => const MyPage(),
+              builder: (context) => NavigationScreens(),
             ),
           );
         }
