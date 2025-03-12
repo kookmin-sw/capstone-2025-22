@@ -11,11 +11,11 @@ class MusicsheetDetail extends StatefulWidget {
 
 class _MusicsheetDetailState extends State<MusicsheetDetail> {
   List<Map<String, String>> scoreData = [
-    {'연습 날짜': "2025.01.18", '점수': "100"},
+    {'연습 날짜': "2025.01.18", '점수': "70"},
     {'연습 날짜': "2025.02.10", '점수': "95"},
-    {'연습 날짜': "2025.02.11", '점수': "90"},
+    {'연습 날짜': "2025.02.11", '점수': "100"},
     {'연습 날짜': "2025.02.12", '점수': "85"},
-    {'연습 날짜': "2025.02.17", '점수': "80"},
+    {'연습 날짜': "2025.02.17", '점수': "90"},
   ];
 
   List<FlSpot> generateChartData() {
@@ -24,6 +24,12 @@ class _MusicsheetDetailState extends State<MusicsheetDetail> {
       final score = double.tryParse(entry.value['점수']!) ?? 0.0;
       return FlSpot(index, score);
     }).toList();
+  }
+
+  double getMinY() {
+    final scores = scoreData.map((data) => double.tryParse(data['점수']!) ?? 0.0);
+    final minScore = scores.reduce((a, b) => a < b ? a : b); // 최소 점수 찾기
+    return (minScore - 5).clamp(0.0, 100.0); // 최소값에서 5점 감소 (최소 0점)
   }
 
   Widget _buildGraph() {
@@ -41,69 +47,109 @@ class _MusicsheetDetailState extends State<MusicsheetDetail> {
         ],
       ),
       child: Padding(
-        padding: const EdgeInsets.all(8.0),
+        padding: const EdgeInsets.all(15),
         child: LineChart(
           LineChartData(
-            backgroundColor: Colors.grey.shade200,
-            gridData: FlGridData(
-              show: false,
-              drawVerticalLine: true,
-              drawHorizontalLine: true,
-              getDrawingHorizontalLine: (value) => FlLine(
-                color: Colors.grey.shade400,
-                strokeWidth: 0.8,
-                dashArray: [4, 4],
+              minX: -0.3,
+              maxX: scoreData.length.toDouble() - 0.7,
+              minY: getMinY(), // 최소값 - 5점
+              maxY: 105,
+              backgroundColor: Colors.grey.shade200,
+              gridData: FlGridData(
+                show: false,
+                drawVerticalLine: true,
+                drawHorizontalLine: true,
+                getDrawingHorizontalLine: (value) => FlLine(
+                  color: Colors.grey.shade400,
+                  strokeWidth: 0.8,
+                  dashArray: [4, 4],
+                ),
+                getDrawingVerticalLine: (value) => FlLine(
+                  color: Colors.grey.shade400,
+                  strokeWidth: 0.8,
+                  dashArray: [4, 4],
+                ),
               ),
-              getDrawingVerticalLine: (value) => FlLine(
-                color: Colors.grey.shade400,
-                strokeWidth: 0.8,
-                dashArray: [4, 4],
-              ),
-            ),
-            titlesData: FlTitlesData(
-              leftTitles: AxisTitles(
-                sideTitles: SideTitles(
-                  showTitles: true,
-                  reservedSize: 30,
-                  getTitlesWidget: (value, meta) => Text(
-                    value.toInt().toString(),
-                    style: TextStyle(fontSize: 12, color: Colors.grey.shade700),
+              titlesData: FlTitlesData(
+                leftTitles: AxisTitles(
+                  sideTitles: SideTitles(
+                    showTitles: true,
+                    reservedSize: 30,
+                    getTitlesWidget: (value, meta) {
+                      if (value > 100) {
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 5),
+                          child: Text(
+                            "점수",
+                            style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                                color: const Color.fromARGB(255, 46, 45, 45)),
+                          ),
+                        ); // 100점 초과 값 숨김
+                      }
+                      if (value == getMinY()) return Container();
+                      return Text(
+                        value.toInt().toString(),
+                        style: TextStyle(
+                            fontSize: 12, color: Colors.grey.shade700),
+                      );
+                    },
+                    interval: 5, // 0~100 점수 기준
                   ),
-                  interval: 10, // 0~100 점수 기준
+                ),
+                rightTitles: AxisTitles(
+                  sideTitles: SideTitles(showTitles: false), // 오른쪽 축 제거
+                ),
+                topTitles: AxisTitles(
+                  sideTitles: SideTitles(showTitles: false), // 위쪽 축 제거
+                ),
+                bottomTitles: AxisTitles(
+                  sideTitles: SideTitles(showTitles: false), // 아래쪽 축 제거
                 ),
               ),
-              rightTitles: AxisTitles(
-                sideTitles: SideTitles(showTitles: false), // 오른쪽 축 제거
-              ),
-              topTitles: AxisTitles(
-                sideTitles: SideTitles(showTitles: false), // 위쪽 축 제거
-              ),
-              bottomTitles: AxisTitles(
-                sideTitles: SideTitles(showTitles: false), // 아래쪽 축 제거
-              ),
-            ),
-            borderData: FlBorderData(show: true),
-            lineBarsData: [
-              LineChartBarData(
-                spots: generateChartData(),
-                isCurved: true,
-                gradient: LinearGradient(
-                  colors: [Colors.orange.shade700, Colors.orange.shade400],
-                ),
-                barWidth: 3,
-                isStrokeCapRound: true,
-                belowBarData: BarAreaData(
-                  show: true,
+              borderData: FlBorderData(show: true),
+              lineBarsData: [
+                LineChartBarData(
+                  spots: generateChartData(),
+                  isCurved: false,
                   gradient: LinearGradient(
-                    colors: [
-                      Colors.orange.withOpacity(0.2),
-                      Colors.transparent
-                    ],
+                    colors: [Colors.orange.shade700, Colors.orange.shade400],
+                  ),
+                  barWidth: 3,
+                  isStrokeCapRound: true,
+                  belowBarData: BarAreaData(
+                    show: true,
+                    gradient: LinearGradient(
+                      colors: [
+                        Colors.orange.withOpacity(0.2),
+                        Colors.transparent
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            ],
-          ),
+              ],
+              lineTouchData: LineTouchData(
+                touchTooltipData: LineTouchTooltipData(
+                  getTooltipColor: (LineBarSpot spot) =>
+                      Colors.amberAccent.withOpacity(0.5),
+                  getTooltipItems: (List<LineBarSpot> touchedSpots) {
+                    return touchedSpots.map((spot) {
+                      return LineTooltipItem(
+                        '${scoreData[(spot.x).toInt()]['연습 날짜']}\n점수: ${spot.y.toInt()}점',
+                        const TextStyle(
+                          color: Colors.black,
+                          fontWeight: FontWeight.w500,
+                          fontSize: 10,
+                        ),
+                      );
+                    }).toList();
+                  },
+                ),
+                touchCallback:
+                    (FlTouchEvent event, LineTouchResponse? response) {},
+                handleBuiltInTouches: true,
+              )),
         ),
       ),
     );
