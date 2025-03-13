@@ -17,7 +17,7 @@ import java.util.UUID;
 @Service
 public class UserClientService {
     private final WebClient userWebClient;
-    public UserClientService(@Qualifier("userWebClient") WebClient userWebClient) {
+    public UserClientService(@Qualifier(WebClientConfig.userClientName) WebClient userWebClient) {
         this.userWebClient = userWebClient;
     }
     public Mono<UserResponseDto> findUserByEmail(String email) {
