@@ -1,7 +1,7 @@
-// 테스트하려고 만든 파일이야. 이 파일 삭제해도 돼!
+// 팝업창 테스트하려고 만든 파일이야. 드럼 기초 페이지 만든 후 이 파일 삭제해줘!
 
 import 'package:flutter/material.dart';
-import '../drumBasicsPages/widgets/drum_info_popup.dart'; // 위젯 파일 import
+import 'drum_info_popup.dart'; // 위젯 파일 import
 
 class Test extends StatelessWidget {
   const Test({super.key});
