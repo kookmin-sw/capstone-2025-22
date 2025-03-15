@@ -44,31 +44,11 @@ class _DrumInfoPopupState extends State<DrumInfoPopup> {
               child: Column(
                 children: [
                   _buildTitle(), // 제목: 스크롤되지 않음
-                  const SizedBox(height: 20), // 제목 ~ 내용 사이 간격
+                  const SizedBox(height: 20), // 제목과 내용 사이 간격
                   Expanded(
                     child: Stack(
                       children: [
-                        // 스크롤바의 테두리를 설정하는 테마 없음.
-                        // 그 대신에, 스크롤바 배경 그림자 효과 추가
-                        Positioned(
-                          right: 3,
-                          top: 0,
-                          bottom: 0,
-                          child: Container(
-                            decoration: BoxDecoration(
-                              // color: Colors.grey.shade100,
-                              borderRadius: BorderRadius.circular(10),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.3),
-                                  spreadRadius: 2,
-                                  blurRadius: 2,
-                                  offset: const Offset(1, 1),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
+                        _buildScrollbarBackground(), // 스크롤바 배경 추가(그림자)
                         ScrollbarTheme(
                           data: _customScrollbarTheme(), // 스크롤바 테마 적용
                           child: Scrollbar(
@@ -83,7 +63,7 @@ class _DrumInfoPopupState extends State<DrumInfoPopup> {
                               child: Column(
                                 children: [
                                   _buildImage(), // 이미지 (옵션)
-                                  const SizedBox(height: 20), // 이미지 ~ 설명 사이 간격
+                                  const SizedBox(height: 20), // 이미지와 설명 사이 간격
                                   _buildDescription(), // 설명 텍스트
                                 ],
                               ),
@@ -97,6 +77,30 @@ class _DrumInfoPopupState extends State<DrumInfoPopup> {
               ),
             ),
             _buildCloseButton(context), // 닫기 버튼(오른쪽 상단)
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// 스크롤바 배경 그림자 효과 추가
+  Positioned _buildScrollbarBackground() {
+    // 스크롤바의 테두리를 설정하는 테마 없음.
+    // 그 대신에, 스크롤바 배경 그림자 효과 추가
+    return Positioned(
+      right: 3, // 부모 위젯(Stack)의 오른쪽에서 3픽셀 떨어진 위치
+      top: 0,
+      bottom: 0,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(10), // 둥근 테두리
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.3), // 그림자 색상(연한 검정)
+              spreadRadius: 2, // 그림자 퍼지는 정도
+              blurRadius: 2, // 흐림 효과
+              offset: const Offset(1, 1), // 위치 조정
+            ),
           ],
         ),
       ),
@@ -129,16 +133,16 @@ class _DrumInfoPopupState extends State<DrumInfoPopup> {
 
   /// 이미지 (옵션)
   SizedBox _buildImage() {
-    if (widget.imagePath == null)
-      return const SizedBox.shrink(); // 이미지가 없으면 빈 위젯 return
-    return SizedBox(
-      width: 300, // 이미지 너비 설정
-      child: Image.asset(
-        widget.imagePath!, // 전달받은 이미지 경로 사용
-        fit: BoxFit.contain, // 이미지 비율 유지
-        // *주의: 이미지 크기가 고정되어 있으면 스크롤 불가
-      ),
-    );
+    return widget.imagePath == null
+        ? const SizedBox.shrink() // 이미지가 없으면 빈 위젯 return
+        : SizedBox(
+            width: 300, // 이미지 너비 설정
+            child: Image.asset(
+              widget.imagePath!, // 전달받은 이미지 경로 사용
+              fit: BoxFit.contain, // 이미지 비율 유지
+              // *주의: 이미지 크기가 고정되어 있으면 스크롤 불가
+            ),
+          );
   }
 
   /// 설명 텍스트
