@@ -40,29 +40,60 @@ class _DrumInfoPopupState extends State<DrumInfoPopup> {
         child: Stack(
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(30, 30, 30, 60),
-              child: ScrollbarTheme(
-                data: _customScrollbarTheme(), // 스크롤바 테마 적용
-                child: Scrollbar(
-                  controller: _scrollController, // 스크롤 컨트롤러 연결
-                  trackVisibility: true, // 스크롤 트랙(스크롤이 움직이는 영역) 표시
-                  thumbVisibility: true, // 스크롤바 표시
-                  interactive: true, // 스크롤바 드래그 가능하게 설정
-                  child: SingleChildScrollView(
-                    controller: _scrollController, // 스크롤 컨트롤러 연결
-                    physics:
-                        const AlwaysScrollableScrollPhysics(), // 항상 스크롤 가능하도록 설정
-                    child: Column(
+              padding: const EdgeInsets.fromLTRB(30, 20, 30, 20),
+              child: Column(
+                children: [
+                  _buildTitle(), // 제목: 스크롤되지 않음
+                  const SizedBox(height: 20), // 제목 ~ 내용 사이 간격
+                  Expanded(
+                    child: Stack(
                       children: [
-                        _buildTitle(), // 제목
-                        const SizedBox(height: 20), // 제목 ~ 이미지 사이 간격
-                        _buildImage(), // 이미지 (옵션)
-                        const SizedBox(height: 20), // 이미지 ~ 설명 사이 간격
-                        _buildDescription(), // 설명 텍스트
+                        // 스크롤바의 테두리를 설정하는 테마 없음.
+                        // 그 대신에, 스크롤바 배경 그림자 효과 추가
+                        Positioned(
+                          right: 3,
+                          top: 0,
+                          bottom: 0,
+                          child: Container(
+                            decoration: BoxDecoration(
+                              // color: Colors.grey.shade100,
+                              borderRadius: BorderRadius.circular(10),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.3),
+                                  spreadRadius: 2,
+                                  blurRadius: 2,
+                                  offset: const Offset(1, 1),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        ScrollbarTheme(
+                          data: _customScrollbarTheme(), // 스크롤바 테마 적용
+                          child: Scrollbar(
+                            controller: _scrollController, // 스크롤 컨트롤러 연결
+                            trackVisibility: true, // 스크롤 트랙(스크롤이 움직이는 영역) 표시
+                            thumbVisibility: true, // 스크롤바 표시
+                            interactive: true, // 스크롤바 드래그 가능하게 설정
+                            child: SingleChildScrollView(
+                              controller: _scrollController, // 스크롤 컨트롤러 연결
+                              physics:
+                                  const AlwaysScrollableScrollPhysics(), // 항상 스크롤 가능하도록 설정
+                              child: Column(
+                                children: [
+                                  _buildImage(), // 이미지 (옵션)
+                                  const SizedBox(height: 20), // 이미지 ~ 설명 사이 간격
+                                  _buildDescription(), // 설명 텍스트
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
                       ],
                     ),
                   ),
-                ),
+                ],
               ),
             ),
             _buildCloseButton(context), // 닫기 버튼(오른쪽 상단)
@@ -77,12 +108,11 @@ class _DrumInfoPopupState extends State<DrumInfoPopup> {
     return ScrollbarThemeData(
       trackVisibility: WidgetStateProperty.all(true), // 스크롤바 트랙 항상 표시
       trackColor:
-          WidgetStateProperty.all(const Color(0xff949494)), // 스크롤바 트랙 색상 (회색)
-      trackBorderColor: WidgetStateProperty.all(
-          const Color.fromARGB(255, 126, 126, 126)), // 스크롤바 트랙 테두리 색상
-      thumbColor: WidgetStateProperty.all(Colors.white), // 스크롤바 색상 (흰색)
+          WidgetStateProperty.all(const Color(0xffbebebe)), // 스크롤바 트랙 색상 (회색)
+      thumbColor: WidgetStateProperty.all(
+          const Color.fromARGB(255, 255, 255, 255)), // 스크롤바 색상 (흰색)
 
-      thickness: WidgetStateProperty.all(3), // 스크롤바 두께
+      thickness: WidgetStateProperty.all(4), // 스크롤바 두께
       radius: const Radius.circular(10), // 스크롤바 모서리 둥글게 설정
     );
   }
