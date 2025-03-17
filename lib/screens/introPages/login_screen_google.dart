@@ -1,11 +1,9 @@
 import 'dart:convert';
-
 import 'package:capstone_2025/screens/introPages/login_screen.dart';
 import 'package:capstone_2025/screens/introPages/sign_up_screen.dart';
-import 'package:capstone_2025/screens/mainPages/my_page.dart';
 import 'package:capstone_2025/screens/mainPages/navigation_screens.dart';
+import 'package:capstone_2025/services/server_addr.dart';
 import '/services/storage_service.dart';
-
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -13,6 +11,7 @@ import 'package:http/http.dart' as http;
 
 class LoginScreenGoogle extends StatefulWidget {
   // Google 로그인 포함되어 있는 로그인 페이지
+
   const LoginScreenGoogle({super.key});
 
   @override
@@ -82,8 +81,7 @@ class _LoginScreenGoogleState extends State<LoginScreenGoogle> {
       // http post
       final response = await http.post(
           Uri.parse(
-            "http://10.0.2.2:28080/auth/signin/google", // 안드로이드 에뮬레이터
-            // "http://192.168.219.108:28080/auth/signin/google" // 아이폰
+            "http://${serverAddr}/auth/signin/google", // 안드로이드 에뮬레이터
           ),
           headers: {
             "Content-Type": "application/json",
