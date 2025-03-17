@@ -8,6 +8,7 @@ import 'package:capstone_2025/screens/introPages/find_pw_screen.dart';
 import 'package:capstone_2025/screens/introPages/login_screen_google.dart';
 import 'package:capstone_2025/screens/introPages/widgets/build_text_field.dart';
 import 'package:capstone_2025/screens/introPages/widgets/intro_page_header.dart';
+import 'package:capstone_2025/screens/mainPages/navigation_screens.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -90,7 +91,7 @@ class _LoginScreenState extends State<LoginScreen> {
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
-              builder: (context) => const MyPage(),
+              builder: (context) => NavigationScreens(),
             ),
           );
         }
@@ -233,7 +234,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 context,
                                 MaterialPageRoute(
                                   builder: (context) =>
-                                      const SignUpScreen(), // 버튼 클릭하면 SignUpScreen으로 이동
+                                      const SignUpScreen(), // 버튼 클릭하면 signupScreen 이동
                                 ),
                               );
                             },
