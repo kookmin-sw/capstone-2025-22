@@ -1,6 +1,7 @@
 import 'package:capstone_2025/screens/introPages/set_new_pw_screen.dart';
 import 'package:capstone_2025/screens/mainPages/edit_profile_screen.dart';
 import 'package:capstone_2025/screens/mainPages/musicsheet_detail.dart';
+import 'package:capstone_2025/services/storage_service.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -13,17 +14,22 @@ class MyPage extends StatefulWidget {
 }
 
 class _MyPageState extends State<MyPage> {
+  @override
+  void initState() {
+    super.initState();
+    _loadUserData(); // 페이지가 열릴 때 사용자 데이터 불러오기
+  }
+
   bool isSheetMusicUploaded = true;
-  final _storage = const FlutterSecureStorage(); // Secure Storage 인스턴스
   String? email;
   String? userName;
   String? accessToken;
 
   // Secure Storage에서 데이터 불러와서 상태 업데이트
   Future<void> _loadUserData() async {
-    String? storedEmail = await _storage.read(key: 'user_email');
-    String? storedUserName = await _storage.read(key: 'user_name');
-    String? storedAccessToken = await _storage.read(key: 'access_token');
+    String? storedEmail = await storage.read(key: 'user_email');
+    String? storedUserName = await storage.read(key: 'nick_name');
+    String? storedAccessToken = await storage.read(key: 'access_token');
 
     setState(() {
       email = storedEmail;
