@@ -94,10 +94,10 @@ public class UserUpdateService {
             }
         }
         userRepository.save(user);
-        return UserProfileUpdateResponseDto.builder()
-                .profileImage(getBase64Image(user.getProfileImage()))
-                .nickname(user.getNickname())
-                .build();
+        UserProfileUpdateResponseDto res = UserProfileUpdateResponseDto.builder()
+                .nickname(user.getNickname()).build();
+        if(profileIamge!=null) res.setProfileImage(getBase64Image(user.getProfileImage()));
+        return res;
     }
     @Transactional
     public UserInfoDto createUser(UserCreateDto userCreateDto) {
