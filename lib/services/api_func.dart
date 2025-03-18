@@ -21,10 +21,10 @@ Future<Map<String, dynamic>> getHTTP(
       },
     );
 
-    // print("_________________");
-    // print("응답 상태 코드: ${response.statusCode}");
-    // print("응답 본문: ${response.body}");
-    // print("_________________");
+    print("_________________");
+    print("응답 상태 코드: ${response.statusCode}");
+    print("응답 본문: ${response.body}");
+    print("_________________");
 
     if (response.statusCode == 200) {
       // 정상적인 경우
@@ -52,7 +52,6 @@ Future<Map<String, dynamic>> getHTTP(
     }
   } catch (error) {
     // 네트워크 오류 또는 JSON 파싱 오류 처리
-    print("API 요청 실패: $error");
     return {'errMessage': "네트워크 오류가 발생했습니다."};
   }
 }
@@ -73,10 +72,10 @@ Future<Map<String, dynamic>> postHTTP(
       body: jsonEncode(requestBody),
     );
 
-    // print("_________________");
-    // print("응답 상태 코드: ${response.statusCode}");
-    // print("응답 본문: ${response.body}");
-    // print("_________________");
+    print("_________________");
+    print("응답 상태 코드: ${response.statusCode}");
+    print("응답 본문: ${response.body}");
+    print("_________________");
 
     if (response.statusCode == 200) {
       // 정상적인 경우
@@ -105,7 +104,6 @@ Future<Map<String, dynamic>> postHTTP(
       }
     }
   } catch (error) {
-    print("API 요청 실패 : $error");
     return {'errMessage': "네트워크 오류가 발생했습니다."};
   }
 }
@@ -129,10 +127,10 @@ Future<Map<String, dynamic>> putHTTP(String endpoint,
       body: jsonEncode(requestBody),
     );
 
-    // print("_________________");
-    // print("응답 상태 코드: ${response.statusCode}");
-    // print("응답 본문: ${response.body}");
-    // print("_________________");
+    print("_________________");
+    print("응답 상태 코드: ${response.statusCode}");
+    print("응답 본문: ${response.body}");
+    print("_________________");
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
@@ -156,7 +154,6 @@ Future<Map<String, dynamic>> putHTTP(String endpoint,
       }
     }
   } catch (error) {
-    print("API 요청 실패 : $error");
     return {'errMessage': "네트워크 오류가 발생했습니다."};
   }
 }
