@@ -54,6 +54,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       // 프로필 이미지가 있으면 file 객체로 변환
       if (profileImagePath != null && profileImagePath.isNotEmpty) {
         _profileImage = File(profileImagePath);
+      } else {
+        _profileImage = null; // 새로운 사용자에게 기본 이미지 적용
       }
     });
   }
@@ -160,7 +162,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       // 닉네임 추가
       request.fields['nickname'] = _nicknameController.text;
 
-      // 프로필 이미지 추가 (있는 경우만)
       if (_profileImage != null) {
         request.files.add(await http.MultipartFile.fromPath(
           'profileImage',
