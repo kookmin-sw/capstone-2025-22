@@ -8,6 +8,7 @@ import 'package:capstone_2025/screens/mainPages/navigation_screens.dart';
 import 'package:capstone_2025/screens/introPages/login_screen_google.dart';
 import 'package:capstone_2025/screens/introPages/widgets/build_text_field.dart';
 import 'package:capstone_2025/screens/introPages/widgets/intro_page_header.dart';
+import 'package:capstone_2025/screens/mainPages/navigation_screens.dart';
 
 /// 일반 로그인 화면
 class LoginScreen extends StatefulWidget {
