@@ -182,15 +182,31 @@ class _MusicsheetDetailState extends State<MusicsheetDetail> {
                   ),
                   Expanded(
                     child: Center(
-                      child: Text(
-                        "악보 1",
-                        style: TextStyle(
-                          fontSize: 25,
-                          fontWeight: FontWeight.w900,
+                        child: Stack(
+                      children: [
+                        // 외곽선 텍스트
+                        Text(
+                          widget.songTitle,
+                          style: TextStyle(
+                            fontSize: 27,
+                            fontWeight: FontWeight.w900,
+                            foreground: Paint()
+                              ..style = PaintingStyle.stroke
+                              ..strokeWidth = 4 // 외곽선 두께
+                              ..color = Colors.black54, // 외곽선 색상
+                          ),
                         ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
+                        // 내부 색상 텍스트
+                        Text(
+                          widget.songTitle,
+                          style: const TextStyle(
+                            fontSize: 27,
+                            fontWeight: FontWeight.w900,
+                            color: Colors.white, // 내부 색상
+                          ),
+                        ),
+                      ],
+                    )),
                   ),
                 ],
               ),

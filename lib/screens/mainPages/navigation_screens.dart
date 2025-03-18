@@ -8,7 +8,7 @@ class NavigationScreens extends StatefulWidget {
 }
 
 class _NavigationScreensState extends State<NavigationScreens> {
-  int _selectedIndex = 0; // 선택된 메뉴 인덱스
+  int _selectedIndex = 4; // 선택된 메뉴 인덱스 - default: 4
 
   // 선택된 인덱스에 따라 오른쪽 화면을 변경하는 함수 - 추후 변경 필요
   Widget _getPage(int index) {
