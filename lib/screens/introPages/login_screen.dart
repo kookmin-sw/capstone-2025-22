@@ -114,6 +114,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
   /// 로그인 성공 시 사용자 정보 저장
   Future<void> _saveUserData(Map<String, dynamic> userData) async {
+    await _storage.deleteAll(); // 기존 데이터 초기화
+
     await _storage.write(key: 'user_email', value: userData['email']);
     await _storage.write(key: 'nick_name', value: userData['nickname']);
     await _storage.write(key: 'access_token', value: userData['accessToken']);
