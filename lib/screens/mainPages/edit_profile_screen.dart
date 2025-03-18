@@ -1,8 +1,11 @@
 import 'dart:io';
 import 'dart:convert';
+import 'dart:typed_data';
+import 'package:path_provider/path_provider.dart';
 import 'package:capstone_2025/screens/mainPages/navigation_screens.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
 // ignore: depend_on_referenced_packages
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -23,6 +26,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   bool _isDuplicate = false; // 닉네임 중복 여부
   File? _profileImage; // 프로필 사진
   bool _isModified = false; // 회원정보 수정 여부
+  String? _message; // 중복 확인 후 메시지
+  Color _messageColor = Colors.red;
 
   // secure storage에서 불러온 데이터 저장
   String? email;
@@ -33,34 +38,37 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   void initState() {
     super.initState();
     _loadUserData(); // secure storage에서 유저 데이터 불러오기
-
-    // 닉네임 변경 시 _checkModifincation 상태 갱신
-    _nicknameController.addListener(_checkModifincation);
   }
 
-// Secure Storage에서 데이터 불러와서 입력 필드 초기화
+// Secure Storage에서 데이터 불러와서 필드 초기화
   Future<void> _loadUserData() async {
     email = await _storage.read(key: 'user_email');
     nickName = await _storage.read(key: 'nick_name');
     accessToken = await _storage.read(key: 'access_token');
+    String? profileImagePath = await _storage.read(key: 'profile_image');
 
     setState(() {
       _emailController.text = email ?? "example@gmail.com";
       _nicknameController.text = nickName ?? "홍길동";
-    });
-  }
 
-  void _checkModifincation() {
-    setState(() {
-      _isModified = (_emailController.text != "example@gmail.com" ||
-          _nicknameController.text != "홍길동" ||
-          _profileImage != null);
+      // 프로필 이미지가 있으면 file 객체로 변환
+      if (profileImagePath != null && profileImagePath.isNotEmpty) {
+        _profileImage = File(profileImagePath);
+      }
     });
   }
 
 // 서버에서 닉네임 중복 확인
   Future<void> _checkNickname() async {
-    print(_nicknameController.text);
+    // 닉네임을 입력하지 않았을 때
+    if (_nicknameController.text == '') {
+      setState(() {
+        _message = "닉네임을 입력하세요.";
+        _messageColor = Colors.red;
+      });
+      return;
+    }
+
     final uri = Uri.parse(
         'http://10.0.2.2:28080/verification/nicknames?nickname=${_nicknameController.text}');
     final response = await http.get(uri);
@@ -68,9 +76,20 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     print(data['body']);
     print(response.statusCode);
 
+    setState(() => _message = null); // 기존 오류 메시지 초기화
+
     if (data['body'] == 'invalid') {
       setState(() {
         _isDuplicate = true; // invalid이면 이미 존재하는 이메일
+        _isModified = false;
+        _message = "이미 가입된 닉네임입니다.";
+        _messageColor = Colors.red;
+      });
+    } else {
+      setState(() {
+        _isModified = true;
+        _message = "중복확인에 성공했습니다.";
+        _messageColor = Colors.green;
       });
     }
   }
@@ -125,39 +144,89 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     );
   }
 
-  Future<void> changeUserProfile() async {
-    final url = Uri.parse('http://10.0.2.2:28080/user/profile'); // 요청 경로
+  Future<void> changeUserProfile({bool useBase64 = false}) async {
+    print("Access Token: $accessToken"); // 토큰 값 출력
+    final url = Uri.parse('http://10.0.2.2:28080/users/profile'); // 요청 경로
 
     try {
       var request = http.MultipartRequest('PUT', url);
 
       // 헤더 추가
       request.headers.addAll({
-        'Authorization': 'Bearer $accessToken', // 사용자 access token 포함
+        'authorization': 'Bearer $accessToken', // 사용자 access token
+        'accept': '*/*', // 요청 accept 타입 설정
       });
 
       // 닉네임 추가
       request.fields['nickname'] = _nicknameController.text;
 
-      // 이미지 파일이 있는 경우 추가
+      // 프로필 이미지 추가 (있는 경우만)
       if (_profileImage != null) {
         request.files.add(await http.MultipartFile.fromPath(
           'profileImage',
           _profileImage!.path,
+          contentType: MediaType('image', 'jpeg'),
         ));
       }
 
       // 요청 보내기
       var response = await request.send();
+      var responseBody = await response.stream.bytesToString();
+
+      print("응답 코드: ${response.statusCode}");
+      print("응답 바디: $responseBody");
 
       // 응답 확인
       if (response.statusCode == 200) {
         print('사용자 정보 수정 성공');
+
+        final data = jsonDecode(responseBody);
+        await _saveUserData(data['body']); // Secure Storage에 사용자 정보 저장
+
+        // 메인 화면으로 이동
+        if (mounted) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => NavigationScreens()),
+          );
+        }
       } else {
-        print("실패");
+        print("실패: ${response.reasonPhrase}");
       }
     } catch (e) {
       print('네트워크 오류');
+    }
+  }
+
+  /// 사용자 정보 수정 성공 시 사용자 정보 저장
+  Future<void> _saveUserData(Map<String, dynamic> userData) async {
+    await _storage.write(key: 'nick_name', value: userData['nickname']);
+
+    // base64 이미지 변환 및 저장
+    if (userData['profileImage'] != null &&
+        userData['profileImage'].isNotEmpty) {
+      String base64Image = userData['profileImage'];
+
+      try {
+        Uint8List imageBytes = base64Decode(base64Image); // Base64 디코딩
+        Directory tempDir =
+            await getApplicationDocumentsDirectory(); // 저장할 디렉토리
+        String filePath = '${tempDir.path}/profile_image.png';
+
+        File imageFile = File(filePath);
+        await imageFile.writeAsBytes(imageBytes); // 파일로 저장
+
+        await _storage.write(
+            key: 'profile_image', value: filePath); // 저장된 경로 기록
+
+        setState(() {
+          _profileImage = imageFile; // UI 업데이트
+        });
+
+        print("프로필 이미지 저장 완료: $filePath");
+      } catch (e) {
+        print("프로필 이미지 저장 실패: $e");
+      }
     }
   }
 
@@ -263,6 +332,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                     controller: _nicknameController,
                                     decoration: InputDecoration(
                                       hintText: nickName,
+                                      hintStyle: TextStyle(
+                                        color: Colors.grey,
+                                      ),
                                       enabledBorder: const UnderlineInputBorder(
                                           borderSide:
                                               BorderSide(color: Colors.grey)),
@@ -276,6 +348,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                           setState(() {
                                             _nicknameController.clear();
                                             _isDuplicate = false;
+                                            _message = "닉네임을 입력하세요.";
+                                            _messageColor = Colors.red;
                                           });
                                         },
                                       ),
@@ -312,18 +386,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         ],
                       ),
                       // 중복된 닉네임 경고 메시지
-                      if (_isDuplicate)
-                        Align(
-                          alignment: Alignment.centerLeft, // 왼쪽 정렬
-                          child: const Padding(
-                            padding: EdgeInsets.only(left: 70),
-                            child: Text(
-                              "이미 가입된 닉네임입니다.",
-                              style: TextStyle(color: Colors.red, fontSize: 12),
-                            ),
-                          ),
-                        ),
-                      SizedBox(height: 30),
+                      if (_message != null) buildErrorMessage(),
+                      SizedBox(height: 20),
                     ],
                   ),
                 ),
@@ -353,6 +417,20 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+
+  /// 오류 메시지
+  Widget buildErrorMessage() {
+    return Align(
+      alignment: Alignment.centerLeft, // 왼쪽 정렬
+      child: Padding(
+        padding: const EdgeInsets.only(left: 70),
+        child: Text(
+          _message!,
+          style: TextStyle(color: _messageColor),
         ),
       ),
     );
