@@ -4,6 +4,8 @@ import com.capstone.dto.google.GoogleTokenRequestDto;
 import com.capstone.dto.google.GoogleTokenResponseDto;
 import com.capstone.dto.google.GoogleUserInfoResponseDto;
 import com.capstone.exception.InternalServerException;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
@@ -13,6 +15,7 @@ import reactor.core.publisher.Mono;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 
+@Slf4j
 @Service
 public class GoogleClientService {
     @Value("${auth.google.client-id}")
@@ -26,8 +29,8 @@ public class GoogleClientService {
     @Value("${auth.google.user-info-uri}")
     private String googleUserInfoUri;
     private final WebClient webClient;
-    public GoogleClientService(WebClient.Builder webClientBuilder) {
-        webClient = webClientBuilder.build();
+    public GoogleClientService(@Qualifier(WebClientConfig.googleClientName) WebClient googleClient) {
+        webClient = googleClient;
     }
     /**
      * get Google access token by using authentication code
@@ -44,12 +47,18 @@ public class GoogleClientService {
                 .code(decodedAuthCode)
                 .grant_type("authorization_code")
                 .build();
+        log.info("clientId: {}, clientSecret: {}", clientId, clientSecret);
+        log.info("redirectUri: {}, googleAccessTokenUri: {}", redirectUri, googleAccessTokenUri);
         return webClient.post()
                 .uri(googleAccessTokenUri)
                 .accept(MediaType.APPLICATION_JSON)
                 .bodyValue(googleTokenRequestDto)
                 .retrieve()
-                .onStatus(HttpStatusCode::isError, res -> Mono.error(new InternalServerException("failed to get access token")))
+                .onStatus(HttpStatusCode::isError, res -> res.bodyToMono(String.class)
+                        .flatMap(errorBody -> {
+                            log.error("Google OAuth Error Response: {}", errorBody);
+                            return Mono.error(new InternalServerException("Failed to get access token: " + errorBody));
+                        }))
                 .bodyToMono(GoogleTokenResponseDto.class)
                 .retry(2)
                 .map(GoogleTokenResponseDto::getAccess_token);

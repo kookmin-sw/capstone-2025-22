@@ -53,7 +53,9 @@ public class UserAuthController {
     public Mono<ResponseEntity<CustomResponseDto<AuthResponseDto>>> signInGoogle(@RequestBody AuthGoogleRequestDto authGoogleRequestDto){
         if(authGoogleRequestDto.getGoogleAuthCode()==null) throw new InvalidRequestException("invalid request body");
         return userGoogleAuthService.signIn(authGoogleRequestDto.getGoogleAuthCode())
-                .map(ApiResponse::success);
+                .map(res -> {
+                    return ApiResponse.success(res);
+                });
     }
     /**
      * 아직 가입되지 않은 사용자를 회원가입 처리하는 API

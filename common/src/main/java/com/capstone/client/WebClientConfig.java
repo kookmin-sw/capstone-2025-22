@@ -1,9 +1,11 @@
 package com.capstone.client;
 
+import org.apache.http.HttpHeaders;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
+import org.springframework.http.MediaType;
 import org.springframework.web.reactive.function.client.WebClient;
 
 @Configuration
@@ -12,6 +14,7 @@ public class WebClientConfig {
     public static final String userClientName = "userClient";
     public static final String authClientName = "authClient";
     public static final String verificationClientName = "verificationClient";
+    public static final String googleClientName = "googleClient";
     private final String userBaseUrl;
     private final String authBaseUrl;
     private final String verificationBaseUrl;
@@ -39,6 +42,12 @@ public class WebClientConfig {
     public WebClient verificationClient(WebClient.Builder webClientBuilder) {
         return webClientBuilder
                 .baseUrl(verificationBaseUrl)
+                .build();
+    }
+    @Bean
+    public WebClient googleClient(){
+        return WebClient.builder()
+                .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .build();
     }
 }
