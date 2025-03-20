@@ -1,5 +1,6 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class MusicsheetDetail extends StatefulWidget {
@@ -18,16 +19,33 @@ class _MusicsheetDetailState extends State<MusicsheetDetail> {
     {'연습 날짜': "2025.02.11", '점수': "100"},
     {'연습 날짜': "2025.02.12", '점수': "85"},
     {'연습 날짜': "2025.02.17", '점수': "90"},
+    {'연습 날짜': "2025.02.18", '점수': "75"},
+    {'연습 날짜': "2025.02.20", '점수': "88"},
+    {'연습 날짜': "2025.02.22", '점수': "93"},
+    {'연습 날짜': "2025.02.25", '점수': "78"},
+    {'연습 날짜': "2025.02.28", '점수': "85"},
+    {'연습 날짜': "2025.03.02", '점수': "97"},
+    {'연습 날짜': "2025.03.05", '점수': "92"},
+    {'연습 날짜': "2025.03.08", '점수': "80"},
+    {'연습 날짜': "2025.03.10", '점수': "76"},
+    {'연습 날짜': "2025.03.12", '점수': "98"},
+    {'연습 날짜': "2025.03.15", '점수': "100"},
   ];
 
-  // 차트 데이터 생성
+  List<Map<String, String>> lastFive = []; // 그래프에 출력할 마지막 5개 데이터
+
   List<FlSpot> generateChartData() {
-    return scoreData.asMap().entries.map((entry) {
-      // 모든 원소에 대해 수행
-      final index = entry.key.toDouble();
-      final score = double.tryParse(entry.value['점수']!) ?? 0.0;
-      return FlSpot(index, score); // idx, score 쌍 return
-    }).toList();
+    // scoreData에서 마지막 5개 데이터만 가져오기
+    lastFive = scoreData.sublist(scoreData.length - 5, scoreData.length);
+
+    // 차트 데이터로 변환 (x축은 0부터 시작)
+    return List.generate(
+      lastFive.length,
+      (index) {
+        final score = double.tryParse(lastFive[index]['점수']!) ?? 0.0;
+        return FlSpot(index.toDouble(), score); // x축은 0부터 시작
+      },
+    );
   }
 
   // 최소값 찾기(그래프 하단 여백 남기기 위해)
@@ -60,7 +78,7 @@ class _MusicsheetDetailState extends State<MusicsheetDetail> {
           LineChartData(
               // 그래프 상하좌우 여백
               minX: -0.3,
-              maxX: scoreData.length.toDouble() - 0.7,
+              maxX: 4.3,
               minY: getMinY(), // 최소값 - 5점
               maxY: 105,
 
@@ -158,8 +176,8 @@ class _MusicsheetDetailState extends State<MusicsheetDetail> {
                   getTooltipItems: (List<LineBarSpot> touchedSpots) {
                     return touchedSpots.map((spot) {
                       return LineTooltipItem(
-                        // 상세 정보
-                        '${scoreData[(spot.x).toInt()]['연습 날짜']}\n점수: ${spot.y.toInt()}점',
+                        // 상세 정보 - 마지막 5개 데이터
+                        '${lastFive[(spot.x).toInt()]['연습 날짜']}\n점수: ${spot.y.toInt()}점',
                         const TextStyle(
                           color: Colors.black,
                           fontWeight: FontWeight.w500,
@@ -337,30 +355,35 @@ class _MusicsheetDetailState extends State<MusicsheetDetail> {
       children: [
         Positioned.fill(
           top: 20,
-          child: ListView.builder(
-            itemCount: scoreData.length,
-            padding: EdgeInsets.only(top: 10),
-            physics: ClampingScrollPhysics(),
-            shrinkWrap: true,
-            itemBuilder: (context, index) {
-              var item = scoreData[index];
+          child: Scrollbar(
+            thumbVisibility: true, // 항상 스크롤바 보이기
+            thickness: 8, // 스크롤바 두께 조정
+            radius: Radius.circular(10), // 스크롤바 끝부분 둥글게 처리
+            child: ListView.builder(
+              itemCount: scoreData.length,
+              padding: EdgeInsets.only(top: 10),
+              physics: ClampingScrollPhysics(),
+              shrinkWrap: true,
+              itemBuilder: (context, index) {
+                var item = scoreData[index];
 
-              return Container(
-                padding: EdgeInsets.symmetric(vertical: 12),
-                decoration: BoxDecoration(
-                  color: index.isEven ? Colors.white : Colors.grey.shade100,
-                  border: Border(
-                    bottom: BorderSide(color: Colors.grey.shade300, width: 1),
+                return Container(
+                  padding: EdgeInsets.symmetric(vertical: 12),
+                  decoration: BoxDecoration(
+                    color: index.isEven ? Colors.white : Colors.grey.shade100,
+                    border: Border(
+                      bottom: BorderSide(color: Colors.grey.shade300, width: 1),
+                    ),
                   ),
-                ),
-                child: Row(
-                  children: [
-                    _buildListCell(item["연습 날짜"]!, flex: 1),
-                    _buildListCell(item["점수"]!, flex: 1, isCenter: true),
-                  ],
-                ),
-              );
-            },
+                  child: Row(
+                    children: [
+                      _buildListCell(item["연습 날짜"]!, flex: 1),
+                      _buildListCell(item["점수"]!, flex: 1, isCenter: true),
+                    ],
+                  ),
+                );
+              },
+            ),
           ),
         ),
         Container(
