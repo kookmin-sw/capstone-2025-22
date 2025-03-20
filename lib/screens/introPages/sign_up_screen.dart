@@ -88,9 +88,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
       });
       return;
     }
-    if (resData["errorMessage"] != null) {
+    if (resData['errMessage'] != null) {
       // error 발생 시
-      _idErrorMessage = resData[errMessage];
+      _idErrorMessage = resData['errMessage'];
       return;
     }
 
@@ -107,8 +107,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
       });
       return;
     }
-    if (resData['errorMessage'] != null) {
-      _idErrorMessage = resData[errMessage];
+    if (resData['errMessage'] != null) {
+      _idErrorMessage = resData['errMessage'];
       return;
     }
     if (resData["body"] == "invalid") {
@@ -128,7 +128,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
     Map<String, dynamic> resData = // API 호출
         await getHTTP("/verification/auth-codes/check", queryParam);
 
-    if (resData[errMessage] != null) {
+    if (resData['errMessage'] != null) {
       _codeErrorMessage = "error";
       return;
     }
@@ -178,7 +178,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
         _nameErrorMessage = "이미 사용 중인 닉네임입니다.";
         return;
       }
-      if (resData["errorMessage"] != null) {
+      if (resData['errMessage'] != null) {
         isNameValidate = false;
         _nameErrorMessage = "error";
         return;
@@ -244,7 +244,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
       var userInfo = await postHTTP("/auth/signup", requestBody);
 
-      if (userInfo[errMessage] == null) {
+      if (userInfo['errMessage'] == null) {
         // 서버로부터 사용자 정보 정상적으로 받았을 경우
         await saveUserInfo(userInfo);
         if (mounted) {
