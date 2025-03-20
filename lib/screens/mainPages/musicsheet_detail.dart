@@ -20,20 +20,24 @@ class _MusicsheetDetailState extends State<MusicsheetDetail> {
     {'연습 날짜': "2025.02.17", '점수': "90"},
   ];
 
+  // 차트 데이터 생성
   List<FlSpot> generateChartData() {
     return scoreData.asMap().entries.map((entry) {
+      // 모든 원소에 대해 수행
       final index = entry.key.toDouble();
       final score = double.tryParse(entry.value['점수']!) ?? 0.0;
-      return FlSpot(index, score);
+      return FlSpot(index, score); // idx, score 쌍 return
     }).toList();
   }
 
+  // 최소값 찾기(그래프 하단 여백 남기기 위해)
   double getMinY() {
     final scores = scoreData.map((data) => double.tryParse(data['점수']!) ?? 0.0);
     final minScore = scores.reduce((a, b) => a < b ? a : b); // 최소 점수 찾기
     return (minScore - 5).clamp(0.0, 100.0); // 최소값에서 5점 감소 (최소 0점)
   }
 
+  // 그래프 생성
   Widget _buildGraph() {
     return Container(
       decoration: BoxDecoration(
@@ -41,6 +45,7 @@ class _MusicsheetDetailState extends State<MusicsheetDetail> {
         borderRadius: BorderRadius.circular(9),
         boxShadow: [
           BoxShadow(
+            // 그래프 그림자 추가
             color: Colors.black.withOpacity(0.2),
             blurRadius: 5,
             spreadRadius: 1.5,
@@ -51,34 +56,45 @@ class _MusicsheetDetailState extends State<MusicsheetDetail> {
       child: Padding(
         padding: const EdgeInsets.all(15),
         child: LineChart(
+          // LineChart 위젯 추가
           LineChartData(
+              // 그래프 상하좌우 여백
               minX: -0.3,
               maxX: scoreData.length.toDouble() - 0.7,
               minY: getMinY(), // 최소값 - 5점
               maxY: 105,
+
+              // 배경색
               backgroundColor: Colors.grey.shade200,
+
+              // 그래프 속성
               gridData: FlGridData(
-                show: false,
-                drawVerticalLine: true,
-                drawHorizontalLine: true,
+                show: false, // 그리드 라인 제거
+                drawVerticalLine: true, // 세로선 그리기
+                drawHorizontalLine: true, // 가로선 그리기
                 getDrawingHorizontalLine: (value) => FlLine(
+                  // 가로선 스타일
                   color: Colors.grey.shade400,
                   strokeWidth: 0.8,
                   dashArray: [4, 4],
                 ),
                 getDrawingVerticalLine: (value) => FlLine(
+                  // 세로선 스타일
                   color: Colors.grey.shade400,
                   strokeWidth: 0.8,
                   dashArray: [4, 4],
                 ),
               ),
               titlesData: FlTitlesData(
+                // 축 제목
                 leftTitles: AxisTitles(
                   sideTitles: SideTitles(
+                    // 왼쪽 축 제목
                     showTitles: true,
                     reservedSize: 30,
                     getTitlesWidget: (value, meta) {
                       if (value > 100) {
+                        // 점수 태그 추가
                         return Padding(
                           padding: const EdgeInsets.only(bottom: 5),
                           child: Text(
@@ -90,8 +106,9 @@ class _MusicsheetDetailState extends State<MusicsheetDetail> {
                           ),
                         ); // 100점 초과 값 숨김
                       }
-                      if (value == getMinY()) return Container();
+                      if (value == getMinY()) return Container(); // 최소값 숨김
                       return Text(
+                        // 점수 표시
                         value.toInt().toString(),
                         style: TextStyle(
                             fontSize: 12, color: Colors.grey.shade700),
@@ -112,10 +129,12 @@ class _MusicsheetDetailState extends State<MusicsheetDetail> {
               ),
               borderData: FlBorderData(show: true),
               lineBarsData: [
+                // 그래프 데이터
                 LineChartBarData(
                   spots: generateChartData(),
                   isCurved: false,
                   gradient: LinearGradient(
+                    // 그래프 그라데이션
                     colors: [Colors.orange.shade700, Colors.orange.shade400],
                   ),
                   barWidth: 3,
@@ -132,12 +151,14 @@ class _MusicsheetDetailState extends State<MusicsheetDetail> {
                 ),
               ],
               lineTouchData: LineTouchData(
+                // 점 클릭 시 툴팁
                 touchTooltipData: LineTouchTooltipData(
                   getTooltipColor: (LineBarSpot spot) =>
                       Colors.amberAccent.withOpacity(0.5),
                   getTooltipItems: (List<LineBarSpot> touchedSpots) {
                     return touchedSpots.map((spot) {
                       return LineTooltipItem(
+                        // 상세 정보
                         '${scoreData[(spot.x).toInt()]['연습 날짜']}\n점수: ${spot.y.toInt()}점',
                         const TextStyle(
                           color: Colors.black,
@@ -148,7 +169,7 @@ class _MusicsheetDetailState extends State<MusicsheetDetail> {
                     }).toList();
                   },
                 ),
-                touchCallback:
+                touchCallback: // 터치 이벤트
                     (FlTouchEvent event, LineTouchResponse? response) {},
                 handleBuiltInTouches: true,
               )),
@@ -170,6 +191,7 @@ class _MusicsheetDetailState extends State<MusicsheetDetail> {
         child: Column(
           children: [
             SizedBox(
+              // 뒤로가기 버튼
               width: double.infinity,
               child: Row(
                 children: [
@@ -181,6 +203,7 @@ class _MusicsheetDetailState extends State<MusicsheetDetail> {
                     ),
                   ),
                   Expanded(
+                    // 노래 제목
                     child: Center(
                         child: Stack(
                       children: [
@@ -213,6 +236,7 @@ class _MusicsheetDetailState extends State<MusicsheetDetail> {
             ),
             SizedBox(height: 7),
             Expanded(
+              // 그래프와 표
               child: Padding(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 25,
@@ -225,6 +249,7 @@ class _MusicsheetDetailState extends State<MusicsheetDetail> {
                         children: [
                           SizedBox(height: 10),
                           Expanded(
+                            // 그래프
                             flex: 5,
                             child: Container(
                               decoration: BoxDecoration(
@@ -244,6 +269,7 @@ class _MusicsheetDetailState extends State<MusicsheetDetail> {
                           ),
                           SizedBox(height: 10),
                           Expanded(
+                            // 표
                             flex: 5,
                             child: Container(
                               decoration: BoxDecoration(
@@ -267,6 +293,7 @@ class _MusicsheetDetailState extends State<MusicsheetDetail> {
                     ),
                     SizedBox(width: 5),
                     Expanded(
+                      // 악보 출력 예정 공간
                       flex: 3,
                       child: Padding(
                         padding: const EdgeInsets.all(8.0),
@@ -306,6 +333,7 @@ class _MusicsheetDetailState extends State<MusicsheetDetail> {
 
   Widget _buildScoreTable() {
     return Stack(
+      // 표와 헤더 겹치기 - 헤더 두께 조정을 위해
       children: [
         Positioned.fill(
           top: 20,
@@ -336,6 +364,7 @@ class _MusicsheetDetailState extends State<MusicsheetDetail> {
           ),
         ),
         Container(
+          // 표 헤더
           height: 30,
           decoration: BoxDecoration(
             color: Color(0xffD97D6C),
@@ -352,9 +381,11 @@ class _MusicsheetDetailState extends State<MusicsheetDetail> {
     );
   }
 
+  // 표 헤더 셀 생성
   Widget _buildListHeaderCell(String text,
       {int flex = 1, bool isCenter = false}) {
     if (isCenter) {
+      // 가운데 정렬
       return Expanded(
         flex: flex,
         child: Center(
@@ -370,6 +401,7 @@ class _MusicsheetDetailState extends State<MusicsheetDetail> {
       );
     }
     return Expanded(
+      // 왼쪽 정렬
       flex: flex,
       child: Padding(
         padding: const EdgeInsets.only(left: 65),
@@ -383,8 +415,10 @@ class _MusicsheetDetailState extends State<MusicsheetDetail> {
     );
   }
 
+  // 표 셀 생성
   Widget _buildListCell(String text, {int flex = 1, bool isCenter = false}) {
     if (isCenter) {
+      // 가운데 정렬
       return Expanded(
         flex: flex,
         child: Center(
@@ -397,6 +431,7 @@ class _MusicsheetDetailState extends State<MusicsheetDetail> {
       );
     }
     return Expanded(
+      // 왼쪽 정렬
       flex: flex,
       child: Padding(
         padding: const EdgeInsets.only(left: 50),
