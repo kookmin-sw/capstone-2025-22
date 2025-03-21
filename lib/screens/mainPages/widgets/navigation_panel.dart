@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class NavigationPanel extends StatelessWidget {
-  final int selectedIndex;
-  final Function(int) onItemSelected;
+  final int selectedIndex; // 선택된 메뉴 인덱스
+  final Function(int) onItemSelected; // 메뉴 선택 시 호출되는 함수
 
   const NavigationPanel({
     required this.selectedIndex,
@@ -21,6 +21,7 @@ class NavigationPanel extends StatelessWidget {
         ],
       ),
       child: Column(
+        // 네비게이션 바 메뉴
         children: [
           SizedBox(height: 35),
           Text("알려드럼 로고",
@@ -29,6 +30,7 @@ class NavigationPanel extends StatelessWidget {
                   fontWeight: FontWeight.bold,
                   color: Colors.redAccent)),
           SizedBox(height: 20),
+          // 네비게이션 바 메뉴 아이템
           _navItem(FaIcon(FontAwesomeIcons.drum), "드럼 기초", 0),
           _navItem(FaIcon(FontAwesomeIcons.handsClapping), "메트로놈", 1),
           _navItem(FaIcon(FontAwesomeIcons.music), "패턴 및 필인 연습", 2),
@@ -39,7 +41,7 @@ class NavigationPanel extends StatelessWidget {
     );
   }
 
-  /// `icon`을 `FaIcon` 또는 `Icon`으로 받을 수 있도록 `Widget` 타입으로 변경
+  // 네비게이션 바 메뉴 아이템 위젯 - 아이콘, 타이틀, 인덱스
   Widget _navItem(Widget icon, String title, int index) {
     bool isSelected = selectedIndex == index;
 
@@ -47,7 +49,7 @@ class NavigationPanel extends StatelessWidget {
       onTap: () => onItemSelected(index),
       child: Stack(
         children: [
-          // 강조 바
+          // 강조 바 - 선택되었을 때
           if (isSelected)
             Positioned(
               left: 10, // 왼쪽으로 좀 더 빼줌
@@ -83,6 +85,7 @@ class NavigationPanel extends StatelessWidget {
                   : [],
             ),
             child: Row(
+              // 네비게이션 버튼 아이콘, 타이틀
               children: [
                 SizedBox(width: 15),
                 IconTheme(

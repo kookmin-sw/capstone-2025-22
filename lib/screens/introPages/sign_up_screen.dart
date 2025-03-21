@@ -1,12 +1,8 @@
-import 'dart:collection';
-
 import 'package:capstone_2025/screens/introPages/login_screen_google.dart';
 import 'package:capstone_2025/screens/introPages/widgets/intro_page_header.dart';
-import 'package:capstone_2025/services/server_addr.dart';
+import 'package:capstone_2025/services/api_func.dart';
 import 'package:capstone_2025/services/storage_service.dart';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
 import 'dart:async';
 
 class SignUpScreen extends StatefulWidget {
@@ -52,77 +48,26 @@ class _SignUpScreenState extends State<SignUpScreen> {
   int _timeRemaining = 180; // 남은 시간 3분 (초 단위)
   bool _isTimerRunning = false; // 타이머가 실행 중인지 여부
 
-// HTTP handler 함수 - get 요청 전용
-  Future<Map<String, dynamic>> handleHTTP(
-      String endpoint, Map<String, dynamic> queryParam) async {
-    try {
-      print("GET 요청 시작 --");
-
-      final uri = Uri.http(
-        serverAddr, // 서버 주소 : 현재 애뮬레이터 10.0.2.2:28080
-        endpoint, // API 엔드포인트
-        queryParam,
-      );
-
-      final response = await http.get(
-        uri,
-        headers: {
-          "Accept": "application/json", // 기대하는 응답 형식
-        },
-      );
-      print("_________________");
-      print(response.body);
-      print("_________________");
-
-      if (response.statusCode == 200) {
-        // 정상적인 경우
-        final data = jsonDecode(response.body);
-
-        print("서버 응답: $data");
-
-        setState(() {
-          // 정상 작동했으니 기타 에러메세지 초기화
-          errMessage = " ";
-        });
-        return data;
-      } else {
-        // statusCode == 500
-        print("서버 오류: ${response.statusCode} - ${response.body}");
-        setState(() {
-          // 에러 메세지 업데이트
-          errMessage = "서버 오류 발생: ${response.statusCode}";
-        });
-        return {};
-      }
-    } catch (error) {
-      // 에러 catch
-      print("API 요청 실패: $error");
-      setState(() {
-        errMessage = "네트워크 오류 발생";
-      });
-      return {};
-    }
-  }
-
   // 이메일 인증 및 인증코드 전송 로직 함수
   Future<void> emailAuth() async {
     String value = idController.text; // 입력된 아이디(이메일) 받아오기
     setState(() {
       isEmailButtonEnabled = false; // 인증번호 전송 버튼 중복 클릭 방지
       _idErrorMessage = null; // 기존 오류 메시지 초기화
+      _codeErrorMessage = null; // 기존 오류 메시지 초기화
     });
 
     setState(() {
       if (value.isEmpty) {
         // 이메일을 입력하지 않았을 때
-        isEmailButtonEnabled = false;
+        isEmailButtonEnabled = true;
         _idErrorMessage = "이메일을 입력해주세요.";
         return;
       }
       // 이메일 정규 표현식
       if (!RegExp(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$")
           .hasMatch(value)) {
-        isEmailButtonEnabled = false;
+        isEmailButtonEnabled = true;
         _idErrorMessage = "올바른 이메일 형식이 아닙니다.";
         return;
       }
@@ -134,7 +79,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
     };
     // 이메일 존재 여부 확인
     Map<String, dynamic> resData =
-        await handleHTTP("/verification/emails", queryParam);
+        await getHTTP("/verification/emails", queryParam);
     if (resData["body"] == "invalid") {
       // 이메일이 이미 존재할 경우
       _idErrorMessage = "이미 가입된 이메일 주소입니다."; // 이메일이 올바른 경우 메시지 출력
@@ -143,18 +88,14 @@ class _SignUpScreenState extends State<SignUpScreen> {
       });
       return;
     }
-    if (resData == {}) {
+    if (resData['errMessage'] != null) {
       // error 발생 시
-      _idErrorMessage = "error";
+      _idErrorMessage = resData['errMessage'];
       return;
     }
 
     // 인증 코드 전송
-    resData = await handleHTTP("/verification/auth-codes", queryParam);
-    if (resData == {}) {
-      _idErrorMessage = "error";
-      return;
-    }
+    resData = await getHTTP("/verification/auth-codes", queryParam);
     if (resData["body"] == "valid") {
       // 정상적인 경우
       setState(() {
@@ -164,6 +105,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
         storage.write(key: "email", value: value); // storage에 이메일 저장
         _startTimer(); // 타이머 시작
       });
+      return;
+    }
+    if (resData['errMessage'] != null) {
+      _idErrorMessage = resData['errMessage'];
       return;
     }
     if (resData["body"] == "invalid") {
@@ -181,13 +126,13 @@ class _SignUpScreenState extends State<SignUpScreen> {
       "authCode": numController.text, // 입력된 인증 코드
     };
     Map<String, dynamic> resData = // API 호출
-        await handleHTTP("/verification/auth-codes/check", queryParam);
+        await getHTTP("/verification/auth-codes/check", queryParam);
 
-    if (resData == {}) {
+    if (resData['errMessage'] != null) {
       _codeErrorMessage = "error";
       return;
     }
-    if (resData["body"] == "invalid") {
+    if (resData["body"] == null) {
       // 인증 코드 틀렸을 때
       print(resData["body"]);
       _codeErrorMessage = "인증번호가 틀렸습니다.";
@@ -200,9 +145,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
           value: resData["body"]["emailToken"]); // email token 저장
       isAuthCodeRight = true;
       _timer.cancel(); // 타이머 종료
-      _isTimerRunning = false; // 타이머 변수 설정
-      _idErrorMessage = null; // 인증번호 전송 알림 문구 삭제
-      isAuthButtonEnabled = false; // 인증번호 확인 버튼 비활성화
+      setState(() {
+        _isTimerRunning = false; // 타이머 변수 설정
+        _codeErrorMessage = null; // 인증번호 전송 알림 문구 삭제
+        _idErrorMessage = null;
+        isAuthButtonEnabled = false; // 인증번호 확인 버튼 비활성화
+      });
       return;
     }
   }
@@ -214,25 +162,28 @@ class _SignUpScreenState extends State<SignUpScreen> {
       "nickname": nameController.text,
     };
     Map<String, dynamic> resData =
-        await handleHTTP("/verification/nicknames", queryParam);
-    if (resData == {}) {
-      isNameValidate = false;
-      _nameErrorMessage = "error";
-      return;
-    }
-    if (resData["body"] == "valid") {
-      // 닉네임 사용 가능
-      isNameValidate = true;
-      _nameErrorMessage = null;
-      return;
-    }
-    if (resData["body"] == "invalid") {
-      // 닉네임 중복
-      isNameValidate = false;
+        await getHTTP("/verification/nicknames", queryParam);
 
-      _nameErrorMessage = "이미 사용 중인 닉네임입니다.";
-      return;
-    }
+    setState(() {
+      if (resData["body"] == "valid") {
+        // 닉네임 사용 가능
+        isNameValidate = true;
+        _nameErrorMessage = null;
+        return;
+      }
+      if (resData["body"] == "invalid") {
+        // 닉네임 중복
+        isNameValidate = false;
+
+        _nameErrorMessage = "이미 사용 중인 닉네임입니다.";
+        return;
+      }
+      if (resData['errMessage'] != null) {
+        isNameValidate = false;
+        _nameErrorMessage = "error";
+        return;
+      }
+    });
   }
 
 // 비밀번호 유효성 검사 함수
@@ -269,47 +220,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
     });
   }
 
-// 사용자 정보 전송 함수 - 최종 전송 버튼에 연결
-  Future<Map<String, dynamic>?> sendUserDataToServer(
-      String email, String password, String nickname) async {
-    final Map<String, dynamic> requestBody = {
-      "email": email,
-      "password": password,
-      "nickname": nickname,
-    };
-
-    try {
-      // http post
-      final response =
-          await http.post(Uri.parse("http://${serverAddr}/auth/signup"),
-              headers: {
-                "Content-Type": "application/json",
-                "Accept": "application/json",
-              },
-              body: jsonEncode(requestBody));
-      print("response.statusCode: ${response.statusCode}");
-      if (response.statusCode == 200) {
-        // 정상
-        print("회원가입 성공!");
-
-        final data = jsonDecode(response.body);
-        return data; // 사용자 정보 반환
-      }
-      if (response.statusCode == 409) {
-        // 이메일 중복
-        setState(() {
-          errMessage = "이미 가입된 이메일 주소입니다.";
-        });
-        return null;
-      } else {
-        print("서버 오류: ${response.statusCode} - ${response.body}");
-        return null;
-      }
-    } catch (error) {
-      print("API 요청 실패 : $error");
-    }
-  }
-
 // Response 받은 정보들 저장하는 함수
   Future<void> saveUserInfo(Map<String, dynamic> userInfo) async {
     // secure Storage에 저장
@@ -326,10 +236,15 @@ class _SignUpScreenState extends State<SignUpScreen> {
         isPwValidate) {
       submitErr = false; // 회원가입 조건 모두 만족, 에러문 위젯 생성 false
 
-      var userInfo = await sendUserDataToServer(
-          idController.text, pwController.text, nameController.text);
+      final Map<String, dynamic> requestBody = {
+        "email": idController.text,
+        "password": pwController.text,
+        "nickname": nameController.text,
+      };
 
-      if (userInfo != null) {
+      var userInfo = await postHTTP("/auth/signup", requestBody);
+
+      if (userInfo['errMessage'] == null) {
         // 서버로부터 사용자 정보 정상적으로 받았을 경우
         await saveUserInfo(userInfo);
         if (mounted) {
@@ -368,14 +283,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
         setState(() {
           _isTimerRunning = false;
           isEmailButtonEnabled = true; // 시간 만료 - 인증번호 재전송 가능하게 만듦
+          isAuthButtonEnabled = false; // 시간 만료 - 인증번호 확인 버튼 비활성화
+          _codeErrorMessage = "인증번호가 만료되었습니다.";
         });
       }
     });
-    if (!(_isTimerRunning && isAuthButtonEnabled)) {
-      // 타이머 만료 및 인증코드 전송 버튼 활성화 되어있을 때
-      _codeErrorMessage = "인증번호가 만료되었습니다.";
-      isEmailButtonEnabled = true;
-    }
   }
 
   // 타이머 형식 변환 함수 (초 → MM:SS)
@@ -388,12 +300,15 @@ class _SignUpScreenState extends State<SignUpScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: false, // 키보드에 의해 UI 밀림 방지
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 10),
         child: SingleChildScrollView(
           // 스크롤 가능하도록 설정
+          physics: BouncingScrollPhysics(), // 스크롤 효과
           child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
               introPageHeader(
                 title: '회원가입',
