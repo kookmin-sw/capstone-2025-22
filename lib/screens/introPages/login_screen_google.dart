@@ -65,7 +65,7 @@ class _LoginScreenGoogleState extends State<LoginScreenGoogle> {
       };
 
       final userInfo = await postHTTP("/auth/signin/google", requestBody);
-      if (userInfo['errMessage'] != null) {
+      if (userInfo['errMessage'] == null) {
         // 로그인 성공
         print("UserInfo: $userInfo");
         saveUserInfo(userInfo); // 정보 저장
