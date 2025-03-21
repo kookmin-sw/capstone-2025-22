@@ -1,4 +1,5 @@
 import 'package:capstone_2025/screens/introPages/find_pw_screen.dart';
+import 'package:capstone_2025/screens/introPages/login_screen.dart';
 import 'package:capstone_2025/screens/introPages/widgets/intro_page_header.dart';
 import 'package:flutter/material.dart';
 import 'dart:convert';
@@ -64,6 +65,14 @@ class _SetNewPwScreenState extends State<SetNewPwScreen> {
       if (response.statusCode == 200) {
         // 서버 응답이 정상(200)일 경우만
         print('비밀번호 변경 성공: ${response.body}');
+
+        // 로그인 화면으로 이동
+        if (mounted) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => LoginScreen()),
+          );
+        }
       } else {
         print('비밀번호 변경 실패: ${response.statusCode}');
         throw Exception('비밀번호 변경 실패');
