@@ -28,17 +28,17 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   // 보안 저장소
   final _storage = const FlutterSecureStorage();
 
-  // 사용자 상태 정보
-  bool _isDuplicate = false; // 닉네임 중복 여부
-  bool _isModified = false; // 회원정보 수정 여부
-  String? _message; // 중복 확인 후 메시지
-  Color _messageColor = Colors.red; // 메시지 색상
-
-  // secure storage에 저장된 사용자 정보
+  // Secure Storage 또는 api로부터 불러온 사용자 정보
   String? email;
   String? nickName;
   String? accessToken; // 인증 토큰 (API 요청에 필요)
   File? _profileImage; // 프로필 사진
+
+  // 상태 정보
+  bool _isDuplicate = false; // 닉네임 중복 여부
+  bool _isModified = false; // 회원정보 수정 여부
+  String _message = ""; // 중복 확인 후 메시지
+  Color _messageColor = Colors.red; // 메시지 색상
 
   // 앱이 실행되면 자동으로 secure storage에서 사용자 정보를 불러옴
   @override
@@ -47,22 +47,62 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     _loadUserData(); // secure storage에서 유저 데이터 불러오기
   }
 
-  /// Secure Storage에서 데이터 불러와 UI 업데이트
+  /// Secure Storage 또는 api로부터 데이터 불러와 UI 업데이트
   Future<void> _loadUserData() async {
     email = await _storage.read(key: 'user_email');
     nickName = await _storage.read(key: 'nick_name');
     accessToken = await _storage.read(key: 'access_token');
-    String? profileImagePath = await _storage.read(key: 'profile_image');
 
     // UI 업데이트
     setState(() {
       _emailController.text = email ?? "example@gmail.com";
       _nicknameController.text = nickName ?? "홍길동";
-      _profileImage =
-          (profileImagePath != null && File(profileImagePath).existsSync())
-              ? File(profileImagePath) // 저장된 이미지가 있으면 사용
-              : null; // 없으면 null (UI에서 기본 이미지 표시)
     });
+
+    if (email != null && accessToken != null) {
+      try {
+        print("api 요청");
+        final uri = Uri.parse('http://10.0.2.2:28080/user/email?email=$email');
+        print("1");
+
+        final response = await http.get(
+          uri,
+          headers: {
+            'authorization': 'Bearer $accessToken', // 꼭 Bearer 붙이기
+          },
+        );
+        print("2");
+        print(response);
+        print(response.statusCode);
+        final data = jsonDecode(response.body);
+        print("3");
+        print(data['body']);
+
+        if (response.statusCode == 200) {
+          final data = jsonDecode(response.body);
+          final body = data['body'];
+
+          // 프로필 이미지 처리
+          if (body['profileImage'] != null) {
+            Uint8List imageBytes = base64Decode(body['profileImage']);
+            Directory tempDir = await getApplicationDocumentsDirectory();
+            String filePath = '${tempDir.path}/profile_image.png';
+
+            File imageFile = File(filePath);
+            await imageFile.writeAsBytes(imageBytes);
+
+            await _storage.write(key: 'profile_image', value: filePath);
+            _profileImage = imageFile;
+          } else {
+            print("프로필 사진이 없음.");
+          }
+        }
+      } catch (e) {
+        print("유저 정보 로딩 실패: $e");
+      }
+    }
+
+    setState(() {}); // UI 업데이트
   }
 
   /// 중복 확인 메시지 업데이트 함수
@@ -88,7 +128,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     print(data['body']);
     print(response.statusCode);
 
-    setState(() => _message = null); // 기존 오류 메시지 초기화
+    setState(() => _message = ""); // 기존 오류 메시지 초기화
 
     if (data['body'] == 'invalid') {
       _updateMessage("이미 가입된 닉네임입니다.", Colors.red);
@@ -122,37 +162,59 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     showMenu(
       context: context,
       position: RelativeRect.fromLTRB(
-        offset.dx, // X 좌표
-        offset.dy + 20, // Y 좌표 (조금 더 아래에 위치하도록 조정)
+        offset.dx - 10, // X 좌표 (조금 더 왼쪽에 위치하도록 설정)
+        offset.dy + 20, // Y 좌표 (조금 더 아래에 위치하도록 설정)
         offset.dx + 500, // 메뉴 너비
         offset.dy + 100, // 메뉴 높이
       ),
       items: [
         PopupMenuItem(
-          child: ListTile(
-            title: const Text("사진 촬영"),
+          child: GestureDetector(
             onTap: () {
-              Navigator.pop(context); // 메뉴 닫기
+              Navigator.pop(context);
               _pickImage(ImageSource.camera);
             },
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: const [
+                Text("사진 촬영"),
+                Icon(Icons.photo_camera_outlined, color: Colors.black54),
+              ],
+            ),
           ),
         ),
         PopupMenuItem(
-          child: ListTile(
-            title: const Text("앨범에서 선택"),
+          padding: EdgeInsets.all(0),
+          enabled: false, // 클릭 안 되게
+          height: 1,
+          child: Divider(thickness: 1, height: 1, indent: 0, endIndent: 0),
+        ),
+        PopupMenuItem(
+          child: GestureDetector(
             onTap: () {
-              Navigator.pop(context); // 메뉴 닫기
+              Navigator.pop(context);
               _pickImage(ImageSource.gallery);
             },
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: const [
+                Text("앨범에서 선택"),
+                Icon(Icons.image_outlined, color: Colors.black54),
+              ],
+            ),
           ),
         ),
       ],
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16), // 둥근 테두리
+      ),
+      color: Colors.white,
     );
   }
 
   /// 사용자 정보 업데이트 API 호출 (닉네임, 프로필 사진)
   Future<void> _updateUserProfile() async {
-    final url = Uri.parse('http://10.0.2.2:28080/users/profile'); // 요청 경로
+    final url = Uri.parse('http://10.0.2.2:28080/user/profile'); // 요청 경로
 
     try {
       var request = http.MultipartRequest('PUT', url);
@@ -419,7 +481,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             ],
           ),
           // 중복된 닉네임 경고 메시지
-          if (_message != null) buildErrorMessage(),
+          buildErrorMessage(),
           const SizedBox(height: 20),
         ],
       ),
@@ -433,7 +495,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       child: Padding(
         padding: const EdgeInsets.only(left: 70),
         child: Text(
-          _message!,
+          _message,
           style: TextStyle(color: _messageColor),
         ),
       ),
