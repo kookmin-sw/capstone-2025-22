@@ -321,6 +321,9 @@ class _MusicsheetDetailState extends State<MusicsheetDetail> {
                             Expanded(
                               flex: 20,
                               child: Container(
+                                child: Image.asset(
+                                  'assets/images/image.png',
+                                ),
                                 decoration: BoxDecoration(
                                   color: Colors.white,
                                   borderRadius: BorderRadius.circular(9),
