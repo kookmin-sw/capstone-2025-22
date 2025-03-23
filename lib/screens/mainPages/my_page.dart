@@ -1,9 +1,12 @@
 import 'package:capstone_2025/screens/introPages/set_new_pw_screen.dart';
 import 'package:capstone_2025/screens/mainPages/edit_profile_screen.dart';
 import 'package:capstone_2025/screens/mainPages/musicsheet_detail.dart';
+import 'package:capstone_2025/services/api_func.dart';
 import 'package:capstone_2025/services/storage_service.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'dart:convert'; // Base64 디코딩
+import 'dart:typed_data'; // Uint8List 변환
 
 class MyPage extends StatefulWidget {
   const MyPage({super.key});
@@ -23,7 +26,7 @@ class _MyPageState extends State<MyPage> {
   // 사용자 프로필에 출력될 사용자 정보 및 액세스 토큰
   String? email;
   String? userName;
-  String? accessToken;
+  String? profileImage = null;
 
   // 악보 기록 아이콘
   FaIcon sheetIcon = FaIcon(
@@ -65,10 +68,21 @@ class _MyPageState extends State<MyPage> {
     String? storedEmail = await storage.read(key: 'user_email');
     String? storedUserName = await storage.read(key: 'nick_name');
 
+    Map<String, String> queryParam = {
+      "email": storedEmail ?? "",
+    };
+
+    if (queryParam["email"] == "") {
+      print("이메일 정보가 없습니다.");
+      return;
+    }
+    var clientInfo = await getHTTP("/user/email", queryParam);
+
     setState(() {
       // 사용자 정보 업데이트
       email = storedEmail;
       userName = storedUserName;
+      profileImage = clientInfo["profileImage"];
 
       print(email);
       print(userName);
@@ -187,12 +201,20 @@ class _MyPageState extends State<MyPage> {
             child: SizedBox(
               height: 70,
               width: 70,
-              child: CircleAvatar(
-                // 프로필 이미지 - 아이콘 처리(사진으로 바꿔야 함)
-                radius: 40,
-                backgroundColor: Colors.grey[300],
-                child: Icon(Icons.person, size: 60, color: Colors.white),
-              ),
+              child: (profileImage == null)
+                  ? CircleAvatar(
+                      // 프로필 이미지 - 아이콘 처리(사진으로 바꿔야 함)
+                      radius: 40,
+                      backgroundColor: Colors.grey[300],
+                      child: Icon(Icons.person, size: 60, color: Colors.white),
+                    )
+                  : CircleAvatar(
+                      // 프로필 이미지 - 사진 처리
+                      radius: 40,
+                      backgroundColor: Colors.grey[300],
+                      backgroundImage: MemoryImage(
+                          Uint8List.fromList(base64Decode(profileImage!))),
+                    ),
             ),
           ),
           SizedBox(width: 20),
