@@ -26,6 +26,7 @@ class _MyPageState extends State<MyPage> {
   // 사용자 프로필에 출력될 사용자 정보 및 액세스 토큰
   String? email;
   String? userName;
+  String? accessToken;
   String? profileImage = null;
 
   // 악보 기록 아이콘
@@ -67,25 +68,29 @@ class _MyPageState extends State<MyPage> {
     // Secure Storage에서 사용자 데이터 불러오기
     String? storedEmail = await storage.read(key: 'user_email');
     String? storedUserName = await storage.read(key: 'nick_name');
+    String? storedAccessToken = await storage.read(key: 'access_token');
 
     Map<String, String> queryParam = {
       "email": storedEmail ?? "",
     };
+
+    Map<String, dynamic> reqHeader = {
+      "authorization": storedAccessToken ?? "",
+    };
+    // print("storedAccessToken: ${storedAccessToken}");
 
     if (queryParam["email"] == "") {
       print("이메일 정보가 없습니다.");
       return;
     }
     var clientInfo = await getHTTP("/user/email", queryParam);
+    print(clientInfo);
 
     setState(() {
       // 사용자 정보 업데이트
       email = storedEmail;
       userName = storedUserName;
       profileImage = clientInfo["profileImage"];
-
-      print(email);
-      print(userName);
     });
   }
 
