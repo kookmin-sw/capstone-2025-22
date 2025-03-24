@@ -1,3 +1,4 @@
+import 'package:capstone_2025/screens/drumBasicsPages/drum_basics_page.dart';
 import 'package:capstone_2025/screens/mainPages/my_page.dart';
 import 'package:capstone_2025/screens/mainPages/widgets/navigation_panel.dart';
 import 'package:flutter/material.dart';
@@ -14,7 +15,7 @@ class _NavigationScreensState extends State<NavigationScreens> {
   Widget _getPage(int index) {
     switch (index) {
       case 0:
-        return MyPage();
+        return DrumBasicsPage();
       case 1:
         return MyPage();
       case 2:
