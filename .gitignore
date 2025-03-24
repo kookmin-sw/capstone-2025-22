@@ -144,6 +144,9 @@ gradle-app.setting
 .project
 .classpath
 *.hprof  # Java heap dump
+android/gradle.properties
+android/app/build.gradle
+android/gradle/wrapper/gradle-wrapper.properties
 
 # 기타 공통 제외 항목
 *.log
