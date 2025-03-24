@@ -3,6 +3,7 @@ import 'package:capstone_2025/screens/introPages/login_screen.dart';
 import 'package:capstone_2025/screens/introPages/widgets/intro_page_header.dart';
 import 'package:flutter/material.dart';
 import 'dart:convert';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 
 // 사용자가 본인 인증 완료 후 새로운 비밀번호를 설정하는 화면
@@ -20,6 +21,33 @@ class _SetNewPwScreenState extends State<SetNewPwScreen> {
   final _passwordController = TextEditingController(); // 새 비밀번호 입력 제어 컨트롤러
   final _confirmPasswordController =
       TextEditingController(); // 새 비밀번호 확인 제어 컨트롤러
+  final _storage = const FlutterSecureStorage();
+
+  // 기존 비밀번호와 동일한지 확인
+  Future<bool> _isSameAsOldPassword(String password) async {
+    final accessToken = await _storage.read(key: 'email_token');
+    final uri = Uri.parse('http://10.0.2.2:28080/verification/password');
+
+    final response = await http.post(
+      uri,
+      headers: {
+        'Content-Type': 'application/json',
+        'authorization': accessToken ?? '',
+      },
+      body: jsonEncode({'password': password}),
+    );
+
+    print(response.statusCode);
+
+    if (response.statusCode == 200) {
+      final result = jsonDecode(response.body);
+      print(result['body']);
+      return result['body'] == 'invalid'; // invalid이면 이전과 같음
+    } else {
+      print('비밀번호 검증 실패: ${response.statusCode}');
+      return false;
+    }
+  }
 
   // 비밀번호 유효성 검사
   String? _validatePassword(String? value) {
@@ -65,14 +93,6 @@ class _SetNewPwScreenState extends State<SetNewPwScreen> {
       if (response.statusCode == 200) {
         // 서버 응답이 정상(200)일 경우만
         print('비밀번호 변경 성공: ${response.body}');
-
-        // 로그인 화면으로 이동
-        if (mounted) {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => LoginScreen()),
-          );
-        }
       } else {
         print('비밀번호 변경 실패: ${response.statusCode}');
         throw Exception('비밀번호 변경 실패');
@@ -215,26 +235,38 @@ class _SetNewPwScreenState extends State<SetNewPwScreen> {
                   SizedBox(
                       width: 400,
                       child: ElevatedButton(
-                        onPressed: () {
+                        onPressed: () async {
                           if (_formKey.currentState!.validate()) {
                             // 비밀번호 변경 완료하면 팝업창 띄움, 이후에 홈으로 이동 기능 추가해야 함
-                            showDialog(
-                              context: context,
-                              builder: (BuildContext context) {
-                                return AlertDialog(
-                                  title: Text('완료'),
-                                  content: Text('비밀번호가 성공적으로 변경되었습니다.'),
-                                  actions: [
-                                    TextButton(
-                                      onPressed: () {
-                                        Navigator.of(context).pop();
-                                      },
-                                      child: Text('확인'),
-                                    ),
-                                  ],
-                                );
-                              },
-                            );
+                            final isDuplicate = await _isSameAsOldPassword(
+                                _passwordController.text); // 🔁 중복 검사
+                            if (isDuplicate) {
+                              showDialog(
+                                context: context,
+                                builder: (BuildContext context) {
+                                  return AlertDialog(
+                                    title: Text('완료'),
+                                    content: Text('비밀번호가 성공적으로 변경되었습니다.'),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () {
+                                          Navigator.of(context).pop();
+                                        },
+                                        child: Text('확인'),
+                                      ),
+                                    ],
+                                  );
+                                },
+                              );
+                            }
+                            // 로그인 화면으로 이동
+                            if (mounted) {
+                              Navigator.pushReplacement(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) => LoginScreen()),
+                              );
+                            }
                           }
                         },
                         style: ElevatedButton.styleFrom(
