@@ -1,14 +1,12 @@
-import 'package:capstone_2025/screens/introPages/login_screen.dart';
 import 'package:capstone_2025/screens/introPages/login_screen_google.dart';
 import 'package:capstone_2025/screens/introPages/widgets/intro_page_header.dart';
+import 'package:capstone_2025/services/api_func.dart';
 import 'package:capstone_2025/services/storage_service.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
 import 'dart:async';
 
 class SignUpScreen extends StatefulWidget {
+  // 회원가입 페이지
   const SignUpScreen({super.key});
 
   @override
@@ -18,19 +16,22 @@ class SignUpScreen extends StatefulWidget {
 class _SignUpScreenState extends State<SignUpScreen> {
   final _formKey = GlobalKey<FormState>();
 
+  // TextField Controller들
   final TextEditingController idController = TextEditingController();
   final TextEditingController numController = TextEditingController();
   final TextEditingController nameController = TextEditingController();
   final TextEditingController pwController = TextEditingController();
   final TextEditingController pwConfirmController = TextEditingController();
 
+  // Error Message들
   String? _idErrorMessage;
-  String? _codeErrorMessage;
+  String? _codeErrorMessage; // 인증번호
   String? _nameErrorMessage;
   String? _pwErrorMessage;
   String? _pwConfirmErrorMessage;
-  String errMessage = " ";
+  String errMessage = " "; // 기타 (최종 에러 메세지)
 
+  // 각 field 유효성 변수
   bool isEmailValidate = false;
   bool isAuthCodeRight = false;
   bool isNameValidate = false;
@@ -47,172 +48,164 @@ class _SignUpScreenState extends State<SignUpScreen> {
   int _timeRemaining = 180; // 남은 시간 3분 (초 단위)
   bool _isTimerRunning = false; // 타이머가 실행 중인지 여부
 
-  Future<Map<String, dynamic>> handleHTTP(
-      String endpoint, Map<String, dynamic> queryParam) async {
-    try {
-      print("GET 요청 시작 --");
-
-      final uri = Uri.http(
-        "10.0.2.2:28080", // 서버 주소 (에뮬레이터용)
-        // "192.168.219.108:28080", // 서버 주소 (실제 기기용- 아이폰)
-        endpoint, // 엔드포인트
-        queryParam,
-      );
-
-      final response = await http.get(
-        uri,
-        headers: {
-          "Accept": "application/json",
-        },
-      );
-      print("_________________");
-      print(response.body);
-      print("_________________");
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        
-        print("서버 응답: $data");
-
-        setState(() {
-          errMessage = " ";
-        });
-        return data;
-      } else {
-        print("서버 오류: ${response.statusCode} - ${response.body}");
-        setState(() {
-          errMessage = "서버 오류 발생: ${response.statusCode}";
-        });
-        return {};
-      }
-    } catch (error) {
-      print("API 요청 실패: $error");
-      setState(() {
-        errMessage = "네트워크 오류 발생";
-      });
-      return {};
-    }
-  }
-
+  // 이메일 인증 및 인증코드 전송 로직 함수
   Future<void> emailAuth() async {
-    String value = idController.text;
+    String value = idController.text; // 입력된 아이디(이메일) 받아오기
     setState(() {
-      isEmailButtonEnabled = false;
+      isEmailButtonEnabled = false; // 인증번호 전송 버튼 중복 클릭 방지
       _idErrorMessage = null; // 기존 오류 메시지 초기화
+      _codeErrorMessage = null; // 기존 오류 메시지 초기화
     });
 
     setState(() {
       if (value.isEmpty) {
-        isEmailButtonEnabled = false;
+        // 이메일을 입력하지 않았을 때
+        isEmailButtonEnabled = true;
         _idErrorMessage = "이메일을 입력해주세요.";
         return;
       }
-
+      // 이메일 정규 표현식
       if (!RegExp(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$")
           .hasMatch(value)) {
-        isEmailButtonEnabled = false;
+        isEmailButtonEnabled = true;
         _idErrorMessage = "올바른 이메일 형식이 아닙니다.";
         return;
       }
     });
-
     // JSON 데이터 정의
     final Map<String, String> queryParam = {
+      // API를 통해 전달할 param
       "email": idController.text,
     };
+    // 이메일 존재 여부 확인
     Map<String, dynamic> resData =
-        await handleHTTP("/verification/auth-codes", queryParam);
-    if (resData == {}) {
+        await getHTTP("/verification/emails", queryParam);
+    if (resData["body"] == "invalid") {
+      // 이메일이 이미 존재할 경우
+      _idErrorMessage = "이미 가입된 이메일 주소입니다."; // 이메일이 올바른 경우 메시지 출력
+      setState(() {
+        isEmailButtonEnabled = true; // 인증번호 전송 버튼 활성화
+      });
       return;
     }
+    if (resData['errMessage'] != null) {
+      // error 발생 시
+      _idErrorMessage = resData['errMessage'];
+      return;
+    }
+
+    // 인증 코드 전송
+    resData = await getHTTP("/verification/auth-codes", queryParam);
     if (resData["body"] == "valid") {
+      // 정상적인 경우
       setState(() {
-        isEmailValidate = true;
-        isAuthButtonEnabled = true;
+        isEmailValidate = true; // 유효성 변수 업데이트
+        isAuthButtonEnabled = true; // 인증번호 확인 버튼 활성화
         _idErrorMessage = "인증번호가 전송되었습니다.";
-        storage.write(key: "email", value: value);
+        storage.write(key: "email", value: value); // storage에 이메일 저장
         _startTimer(); // 타이머 시작
       });
       return;
     }
+    if (resData['errMessage'] != null) {
+      _idErrorMessage = resData['errMessage'];
+      return;
+    }
     if (resData["body"] == "invalid") {
+      // 이미 유효할 경우
       _idErrorMessage = "이미 가입된 이메일 주소입니다."; // 이메일이 올바른 경우 메시지 출력
       return;
     }
   }
 
+  // 인증 코드 확인 로직 함수
   Future<void> checkAuthCode() async {
     // JSON 데이터 정의
     final Map<String, dynamic> queryParam = {
-      "email": await storage.read(key: "email"),
-      "authCode": numController.text,
+      "email": await storage.read(key: "email"), // 저장된 이메일 가져오기
+      "authCode": numController.text, // 입력된 인증 코드
     };
-    Map<String, dynamic> resData =
-        await handleHTTP("/verification/auth-codes/check", queryParam);
+    Map<String, dynamic> resData = // API 호출
+        await getHTTP("/verification/auth-codes/check", queryParam);
 
-    if (resData == {}) {
+    if (resData['errMessage'] != null) {
       _codeErrorMessage = "error";
       return;
     }
-
-    if (resData["body"] == "invalid") {
+    if (resData["body"] == null) {
+      // 인증 코드 틀렸을 때
       print(resData["body"]);
       _codeErrorMessage = "인증번호가 틀렸습니다.";
       return;
     } else {
+      // 인증 코드 맞았을 때
       print(resData["body"]);
-      // storage.write(key: "emailToken", value: resData["body"]["emailToken"]);
+      storage.write(
+          key: "emailToken",
+          value: resData["body"]["emailToken"]); // email token 저장
       isAuthCodeRight = true;
-      _timer.cancel();
-      _isTimerRunning = false;
-      _codeErrorMessage = null;
-      _idErrorMessage = null;
-      isAuthButtonEnabled = false;
+      _timer.cancel(); // 타이머 종료
+      setState(() {
+        _isTimerRunning = false; // 타이머 변수 설정
+        _codeErrorMessage = null; // 인증번호 전송 알림 문구 삭제
+        _idErrorMessage = null;
+        isAuthButtonEnabled = false; // 인증번호 확인 버튼 비활성화
+      });
       return;
     }
   }
 
+  // 닉네임 유효성 검사 함수
   Future<void> nameAuth() async {
     // JSON 데이터 정의
     final Map<String, dynamic> queryParam = {
       "nickname": nameController.text,
     };
     Map<String, dynamic> resData =
-        await handleHTTP("/verification/nicknames", queryParam);
-    if (resData == {}) {
-      isNameValidate = false;
-      _nameErrorMessage = "error";
-      return;
-    }
-    if (resData["body"] == "valid") {
-      isNameValidate = true;
-      _nameErrorMessage = null;
-      return;
-    }
-    if (resData["body"] == "invalid") {
-      isNameValidate = false;
+        await getHTTP("/verification/nicknames", queryParam);
 
-      _nameErrorMessage = "이미 사용 중인 닉네임입니다.";
-      return;
-    }
+    setState(() {
+      if (resData["body"] == "valid") {
+        // 닉네임 사용 가능
+        isNameValidate = true;
+        _nameErrorMessage = null;
+        return;
+      }
+      if (resData["body"] == "invalid") {
+        // 닉네임 중복
+        isNameValidate = false;
+
+        _nameErrorMessage = "이미 사용 중인 닉네임입니다.";
+        return;
+      }
+      if (resData['errMessage'] != null) {
+        isNameValidate = false;
+        _nameErrorMessage = "error";
+        return;
+      }
+    });
   }
 
+// 비밀번호 유효성 검사 함수
   void passwordAuth() {
     setState(() {
       String value = pwController.text;
       if (value.isEmpty) {
+        // 입력란 비어있을 때
         _pwErrorMessage = "비밀번호를 입력해주세요.";
-      } else if (!RegExp(
+      } else if (!RegExp(// 정규 표현식
               r"^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,20}$")
           .hasMatch(value)) {
         _pwErrorMessage = "8~20자의 영문, 숫자, 특수문자 조합이어야 합니다.";
       } else {
+        // 정상적인 경우
         _pwErrorMessage = null;
         isPwValidate = true;
       }
     });
   }
 
+  // 비밀번호 확인 함수
   void passwordConfirmAuth() {
     setState(() {
       if (pwConfirmController.text.isEmpty) {
@@ -220,78 +213,49 @@ class _SignUpScreenState extends State<SignUpScreen> {
       } else if (pwConfirmController.text != pwController.text) {
         _pwConfirmErrorMessage = "비밀번호가 일치하지 않습니다.";
       } else {
+        // 정상적인 경우
         _pwConfirmErrorMessage = null;
         isPwCorrect = true;
       }
     });
   }
 
-  Future<Map<String, dynamic>?> sendUserDataToServer(
-      String email, String password, String nickname) async {
-    final Map<String, dynamic> requestBody = {
-      "email": email,
-      "password": password,
-      "nickname": nickname,
-    };
-
-    try {
-      // http post
-      final response =
-          // "http://192.168.219.108:28080/auth/signup// 에뮬레이터용
-          await http.post(Uri.parse("http://10.0.2.2:28080/auth/signup"),
-              headers: {
-                "Content-Type": "application/json",
-                "Accept": "application/json",
-              },
-              body: jsonEncode(requestBody));
-      print("response.statusCode: ${response.statusCode}");
-      if (response.statusCode == 200) {
-        print("회원가입 성공!");
-
-
-        final data = jsonDecode(response.body);
-        return data; // 사용자 정보 반환
-      } 
-      if (response.statusCode == 409) {
-        setState(() {
-          errMessage = "이미 가입된 이메일 주소입니다.";
-        });
-        return null;
-        } else {
-        print("서버 오류: ${response.statusCode} - ${response.body}");
-        return null;
-      }
-    } catch (error) {
-      print("API 요청 실패 : $error");
-    }
-  }
-
 // Response 받은 정보들 저장하는 함수
   Future<void> saveUserInfo(Map<String, dynamic> userInfo) async {
+    // secure Storage에 저장
     await storage.write(key: "user_email", value: userInfo["email"]);
     await storage.write(key: "user_name", value: userInfo["name"]);
   }
 
+  // 회원가입 완료 여부 확인 함수
   void signUpComplete() async {
     if (isEmailValidate &&
         isNameValidate &&
         isAuthCodeRight &&
         isPwCorrect &&
         isPwValidate) {
-      submitErr = false;
+      submitErr = false; // 회원가입 조건 모두 만족, 에러문 위젯 생성 false
 
-      var userInfo = await sendUserDataToServer(
-          idController.text, pwController.text, nameController.text);
+      final Map<String, dynamic> requestBody = {
+        "email": idController.text,
+        "password": pwController.text,
+        "nickname": nameController.text,
+      };
 
-      if (userInfo != null) {
+      var userInfo = await postHTTP("/auth/signup", requestBody);
+
+      if (userInfo['errMessage'] == null) {
+        // 서버로부터 사용자 정보 정상적으로 받았을 경우
         await saveUserInfo(userInfo);
         if (mounted) {
           Navigator.of(context).pushReplacement(
+            // 로그인 페이지로 이동
             MaterialPageRoute(builder: (_) => LoginScreenGoogle()),
           );
         }
       }
     } else {
+      // 서버로부터 사용자 정보 받지 못했을 경우
       setState(() {
         submitErr = true;
         errMessage = "입력된 정보를 다시 확인해주세요. 필수 항목이 비어있거나 조건을 만족하지 않았습니다.";
@@ -318,14 +282,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
         print("타이머 종료!"); // 타이머 종료 로그 추가
         setState(() {
           _isTimerRunning = false;
-          isEmailButtonEnabled = true;
+          isEmailButtonEnabled = true; // 시간 만료 - 인증번호 재전송 가능하게 만듦
+          isAuthButtonEnabled = false; // 시간 만료 - 인증번호 확인 버튼 비활성화
+          _codeErrorMessage = "인증번호가 만료되었습니다.";
         });
       }
     });
-    if (!(_isTimerRunning && isAuthButtonEnabled)) {
-      _codeErrorMessage = "인증번호가 만료되었습니다.";
-      isEmailButtonEnabled = true;
-    }
   }
 
   // 타이머 형식 변환 함수 (초 → MM:SS)
@@ -338,15 +300,19 @@ class _SignUpScreenState extends State<SignUpScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: false, // 키보드에 의해 UI 밀림 방지
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 10),
         child: SingleChildScrollView(
+          // 스크롤 가능하도록 설정
+          physics: BouncingScrollPhysics(), // 스크롤 효과
           child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
               introPageHeader(
                 title: '회원가입',
-                targetPage: LoginScreenGoogle(),
+                targetPage: LoginScreenGoogle(), // 뒤로가기 버튼 대상
               ),
               SizedBox(
                 height: 5,
@@ -356,6 +322,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 child: Column(
                   children: [
                     inputForm(
+                      // 아이디 입력란
                       tag: "아이디",
                       hintText: '본인인증을 위한 이메일 주소를 입력해주세요.',
                       onChangedFunc: (value) {
@@ -375,6 +342,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     SizedBox(height: 25),
                     // 인증번호 입력칸 오른쪽에 타이머 추가
                     inputForm(
+                        // 인증번호 입력란
                         tag: "인증번호",
                         hintText: '인증번호 6자리를 입력해주세요.',
                         onChangedFunc: (value) {},
@@ -390,7 +358,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     SizedBox(
                       height: 5,
                     ),
-                    if (isAuthCodeRight)
+                    if (isAuthCodeRight) // 인증번호 확인 완료
                       Text(
                         "인증되었습니다.",
                         style: TextStyle(
@@ -399,8 +367,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           fontSize: 12,
                         ),
                       ),
-                    SizedBox(height: isAuthCodeRight ? 20 : 25),
+                    SizedBox(
+                        height: isAuthCodeRight
+                            ? 20
+                            : 25), // 인증번호 메세지 유무에 따라 사이즈 조정
                     inputForm(
+                      // 닉네임 입력란
                       tag: "닉네임",
                       hintText: '2~8자',
                       onChangedFunc: (value) {
@@ -439,6 +411,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       ),
                     SizedBox(height: isAuthCodeRight ? 20 : 25),
                     inputForm(
+                      // 비밀번호 입력란
                       tag: "비밀번호",
                       hintText: '8~20자의 영문, 숫자, 특수문자 조합',
                       onChangedFunc: (value) {
@@ -450,6 +423,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     ),
                     SizedBox(height: 25),
                     inputForm(
+                      // 비밀번호 확인 입력란
                       tag: "비밀번호 확인",
                       hintText: '비밀번호를 한 번 더 입력해주세요.',
                       onChangedFunc: (value) {
@@ -461,6 +435,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     ),
                     SizedBox(height: 40),
                     SizedBox(
+                      // 제출 버튼
                       width: 300,
                       height: 60,
                       child: ButtonForm(
@@ -469,18 +444,18 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         clickedFunc: signUpComplete,
                       ),
                     ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 10),
-                        child: Text(
-                          errMessage
-                          ,
-                          style: TextStyle(
-                            color: Colors.red,
-                            fontSize: 15,
-                            fontWeight: FontWeight.w500,
-                          ),
+                    Padding(
+                      // 에러 메세지
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      child: Text(
+                        errMessage,
+                        style: TextStyle(
+                          color: Colors.red,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w500,
                         ),
                       ),
+                    ),
                     SizedBox(height: 30),
                   ],
                 ),
@@ -493,24 +468,26 @@ class _SignUpScreenState extends State<SignUpScreen> {
   }
 }
 
+// 텍스트 입력 폼
 Row inputForm({
-  required String tag,
+  required String tag, // 입력폼 태그
   double fontSize = 18,
-  required String hintText,
-  required Function(String) onChangedFunc,
-  required bool needBtn,
-  String btnName = 'null',
+  required String hintText, // 입력 내용 조건문
+  required Function(String) onChangedFunc, // 연결 함수
+  required bool needBtn, // 버튼 유무
+  String btnName = 'null', // 버튼 이름
   String? timerString, // 추가 UI 요소 (예: 타이머)
-  VoidCallback? btnFunc,
-  TextEditingController? controller,
-  String? errorMessage,
-  bool isEnabled = true,
+  VoidCallback? btnFunc, // 버튼 연결 함수
+  TextEditingController? controller, //텍스트 컨트롤러
+  String? errorMessage, // 에러메세지
+  bool isEnabled = true, // 버튼 사용 가능 유무
 }) {
   return Row(
     mainAxisAlignment: MainAxisAlignment.center,
     children: [
       Expanded(flex: 8, child: SizedBox()),
       Expanded(
+        // 태그
         flex: 5,
         child: Text(
           tag,
@@ -524,6 +501,7 @@ Row inputForm({
       ),
       Expanded(flex: 1, child: SizedBox()),
       Expanded(
+        // 입력란
         flex: 19,
         child: Stack(
           alignment: Alignment.centerRight, // 타이머를 오른쪽 끝에 배치
@@ -567,7 +545,7 @@ Row inputForm({
         ),
       ),
       Expanded(flex: 1, child: SizedBox()),
-      if (needBtn)
+      if (needBtn) // 버튼
         Expanded(
           flex: 4,
           child: ButtonForm(
