@@ -18,6 +18,7 @@ CMakeUserPresets.json
 .packages
 build/
 pubspec.lock  # 패키지 업데이트를 통제할 경우 주석 해제
+!pubspec.yaml  # pubspec.yaml 파일은 유지
 doc/api/
 .env*
 
