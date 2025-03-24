@@ -10,7 +10,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 @Service
 public class AuthClientService {
     private final WebClient authClient;
-    public AuthClientService(@Qualifier("authWebClient") WebClient authWebClient) {
+    public AuthClientService(@Qualifier(WebClientConfig.authClientName) WebClient authWebClient) {
         this.authClient = authWebClient;
     }
     public String findEmailTokenSync(String email) {
