@@ -60,5 +60,6 @@ CMakeLists.txt
 cmake_install.cmake
 android/app/src/main/cpp/cmake-build-debug/
 android/app/src/main/cpp/cmake-build-release/
-
-gradle.properties
+android/gradle.properties
+android/app/build.gradle
+android/gradle/wrapper/gradle-wrapper.properties

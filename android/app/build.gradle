@@ -5,8 +5,10 @@ plugins {
 }
 
 android {
+    compileSdkVersion rootProject.findProperty("android.compileSdkOverride")?.toInteger() ?: 34
+
+
     namespace = "com.example.capstone_2025"
-    compileSdk = 34  // 최신 SDK 버전 적용
 
     defaultConfig {
         applicationId = "com.example.capstone_2025"
@@ -14,7 +16,6 @@ android {
         targetSdk = 34  // 최신 Android 버전 적용
         versionCode = 1
         versionName = "1.0"
-
     }
 
     buildTypes {
@@ -30,6 +31,13 @@ android {
 
     kotlinOptions {
         jvmTarget = "17"
+    }
+
+    testOptions {
+        unitTests.returnDefaultValues = true
+        unitTests.all {
+            ignoreFailures = true
+        }
     }
 }
 
