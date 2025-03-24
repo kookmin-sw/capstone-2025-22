@@ -1,6 +1,12 @@
 import 'package:capstone_2025/screens/introPages/set_new_pw_screen.dart';
+import 'package:capstone_2025/screens/mainPages/edit_profile_screen.dart';
+import 'package:capstone_2025/screens/mainPages/musicsheet_detail.dart';
+import 'package:capstone_2025/services/api_func.dart';
+import 'package:capstone_2025/services/storage_service.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'dart:convert'; // Base64 디코딩
+import 'dart:typed_data'; // Uint8List 변환
 
 class MyPage extends StatefulWidget {
   const MyPage({super.key});
@@ -10,7 +16,24 @@ class MyPage extends StatefulWidget {
 }
 
 class _MyPageState extends State<MyPage> {
-  bool isSheetMusicUploaded = true;
+  @override
+  void initState() {
+    super.initState();
+    _loadUserData(); // 페이지가 열릴 때 사용자 데이터 불러오기
+  }
+
+  bool isSheetMusicUploaded = true; // 업로드된 악보 존재하는지
+  // 사용자 프로필에 출력될 사용자 정보 및 액세스 토큰
+  String? email;
+  String? userName;
+  String? accessToken;
+  String? profileImage = null;
+
+  // 악보 기록 아이콘
+  FaIcon sheetIcon = FaIcon(
+    FontAwesomeIcons.fileLines,
+    size: 25,
+  );
 
   List<Map<String, String>> sheetMusicData = [
     {
@@ -40,6 +63,53 @@ class _MyPageState extends State<MyPage> {
     },
   ];
 
+  // Secure Storage에서 데이터 불러와서 상태 업데이트
+  Future<void> _loadUserData() async {
+    // Secure Storage에서 사용자 데이터 불러오기
+    String? storedEmail = await storage.read(key: 'user_email');
+    String? storedUserName = await storage.read(key: 'nick_name');
+    String? storedAccessToken = await storage.read(key: 'access_token');
+
+    Map<String, String> queryParam = {
+      "email": storedEmail ?? "",
+    };
+
+    Map<String, dynamic> reqHeader = {
+      "authorization": storedAccessToken ?? "",
+    };
+    // print("storedAccessToken: ${storedAccessToken}");
+
+    if (queryParam["email"] == "") {
+      print("이메일 정보가 없습니다.");
+      return;
+    }
+    var clientInfo = await getHTTP("/user/email", queryParam);
+    print(clientInfo);
+
+    setState(() {
+      // 사용자 정보 업데이트
+      email = storedEmail;
+      userName = storedUserName;
+      profileImage = clientInfo["profileImage"];
+    });
+  }
+
+  // 회원정보 수정 화면으로 이동
+  void _navigateToEditProfile() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => EditProfileScreen()),
+    );
+  }
+
+  // 비밀번호 변경 화면으로 이동
+  void _navigateToChangePassword() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => SetNewPwScreen()),
+    );
+  }
+
   // 편집 버튼 클릭 시 메뉴 모달 표시
   void _showCustomModal(BuildContext context) {
     showDialog(
@@ -47,10 +117,12 @@ class _MyPageState extends State<MyPage> {
       barrierColor: Colors.black54, // 배경 흐림 효과
       builder: (BuildContext context) {
         return Dialog(
+          // 모달 다이얼로그
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(15),
           ),
           child: Container(
+            // 모달 내용
             width: 300,
             padding: EdgeInsets.symmetric(vertical: 15, horizontal: 20),
             decoration: BoxDecoration(
@@ -58,6 +130,7 @@ class _MyPageState extends State<MyPage> {
               borderRadius: BorderRadius.circular(15),
             ),
             child: Column(
+              // 모달 내용
               mainAxisSize: MainAxisSize.min,
               children: [
                 _buildMenuItem(
@@ -77,6 +150,7 @@ class _MyPageState extends State<MyPage> {
   Widget _buildMenuItem(
       BuildContext context, String text, IconData icon, Function action) {
     return InkWell(
+      // 클릭 가능 위젯
       onTap: () {
         Navigator.pop(context);
         action();
@@ -95,23 +169,6 @@ class _MyPageState extends State<MyPage> {
     );
   }
 
-  // 회원정보 수정 화면으로 이동
-  void _navigateToEditProfile() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-          builder: (_) => SetNewPwScreen()), // TODO: EditProfileScreen으로 변경 가능
-    );
-  }
-
-  // 비밀번호 변경 화면으로 이동
-  void _navigateToChangePassword() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => SetNewPwScreen()),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -121,12 +178,12 @@ class _MyPageState extends State<MyPage> {
           padding: EdgeInsets.all(20),
           child: Column(
             children: [
-              _buildProfileSection(),
+              _buildProfileSection(), // 프로필 섹션
               SizedBox(height: 15),
-              _buildSheetMusicHeader(),
-              isSheetMusicUploaded
-                  ? Expanded(child: _buildSheetMusicTable())
-                  : _buildNoSheetMusicMessage(),
+              _buildSheetMusicHeader(), // 악보 연습 기록 헤더
+              isSheetMusicUploaded // 악보가 존재하는지 확인
+                  ? Expanded(child: _buildSheetMusicTable()) // 악보 연습 기록 테이블
+                  : _buildNoSheetMusicMessage(), // 악보가 없을 때 표시할 메시지
             ],
           ),
         ),
@@ -149,32 +206,43 @@ class _MyPageState extends State<MyPage> {
             child: SizedBox(
               height: 70,
               width: 70,
-              child: CircleAvatar(
-                radius: 40,
-                backgroundColor: Colors.grey[300],
-                child: Icon(Icons.person, size: 60, color: Colors.white),
-              ),
+              child: (profileImage == null)
+                  ? CircleAvatar(
+                      // 프로필 이미지 - 아이콘 처리(사진으로 바꿔야 함)
+                      radius: 40,
+                      backgroundColor: Colors.grey[300],
+                      child: Icon(Icons.person, size: 60, color: Colors.white),
+                    )
+                  : CircleAvatar(
+                      // 프로필 이미지 - 사진 처리
+                      radius: 40,
+                      backgroundColor: Colors.grey[300],
+                      backgroundImage: MemoryImage(
+                          Uint8List.fromList(base64Decode(profileImage!))),
+                    ),
             ),
           ),
           SizedBox(width: 20),
           Expanded(
+            // 사용자 정보
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
                   children: [
-                    Text("홍길동",
+                    Text(userName == null ? "홍길동" : userName!, // 사용자 이름
                         style: TextStyle(
                             fontSize: 23, fontWeight: FontWeight.bold)),
                     SizedBox(width: 10),
                     GestureDetector(
+                      // 편집 버튼
                       onTap: () => _showCustomModal(context),
                       child: FaIcon(FontAwesomeIcons.edit,
                           size: 22, color: Colors.black),
                     ),
                   ],
                 ),
-                Text("example@gmail.com",
+                Text(email == null ? "example@gmail.com" : email!, // 사용자 이메일
                     style: TextStyle(fontSize: 19, color: Colors.grey)),
               ],
             ),
@@ -184,7 +252,7 @@ class _MyPageState extends State<MyPage> {
     );
   }
 
-  // 악보 연습 기록 헤더
+  // 악보 연습 기록 타이틀
   Widget _buildSheetMusicHeader() {
     return Padding(
       padding: const EdgeInsets.only(left: 20),
@@ -234,21 +302,26 @@ class _MyPageState extends State<MyPage> {
           ),
           child: Row(
             children: [
-              _buildListHeaderCell("악보명", flex: 5),
-              _buildListHeaderCell("마지막 연습 날짜", flex: 5),
-              _buildListHeaderCell("최고 점수", flex: 3),
+              // 테이블 헤더
+              _buildListHeaderCell("악보명", flex: 1),
+              _buildListHeaderCell("마지막 연습 날짜", flex: 1),
+              _buildListHeaderCell("최고 점수", flex: 1),
+              _buildListHeaderCell("상세 기록", flex: 1),
             ],
           ),
         ),
         Expanded(
           child: ListView.builder(
+            // 테이블 바디
             itemCount: sheetMusicData.length,
             padding: EdgeInsets.zero,
-            physics: ClampingScrollPhysics(),
+            physics: ClampingScrollPhysics(), // 스크롤 끝에서 효과 없애기
             itemBuilder: (context, index) {
+              // 테이블 행
               var item = sheetMusicData[index];
 
               return Container(
+                // 테이블 셀
                 padding: EdgeInsets.symmetric(vertical: 12),
                 decoration: BoxDecoration(
                   color: index.isEven ? Colors.white : Colors.grey.shade100,
@@ -258,9 +331,27 @@ class _MyPageState extends State<MyPage> {
                 ),
                 child: Row(
                   children: [
-                    _buildListCell(item["악보명"]!, flex: 5),
-                    _buildListCell(item["마지막 연습 날짜"]!, flex: 5),
-                    _buildListCell(item["최고 점수"]!, flex: 3),
+                    // 테이블 셀 내용
+                    _buildListCell(item["악보명"]!, flex: 1),
+                    _buildListCell(item["마지막 연습 날짜"]!, flex: 1),
+                    _buildListCell(item["최고 점수"]!, flex: 1),
+                    Expanded(
+                      // 상세 기록 버튼
+                      flex: 1,
+                      child: GestureDetector(
+                        onTap: () => {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => MusicsheetDetail(
+                                songTitle: item["악보명"]!,
+                              ),
+                            ),
+                          ),
+                        },
+                        child: Center(child: sheetIcon),
+                      ),
+                    ),
                   ],
                 ),
               );
@@ -272,6 +363,7 @@ class _MyPageState extends State<MyPage> {
   }
 }
 
+// 테이블 헤더 만드는 위젯
 Widget _buildListHeaderCell(String text, {int flex = 1}) {
   return Expanded(
     flex: flex,
@@ -284,6 +376,7 @@ Widget _buildListHeaderCell(String text, {int flex = 1}) {
   );
 }
 
+// 테이블 셀 만드는 위젯
 Widget _buildListCell(String text, {int flex = 1}) {
   return Expanded(
     flex: flex,
