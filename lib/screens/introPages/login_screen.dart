@@ -8,6 +8,7 @@ import 'package:capstone_2025/screens/mainPages/navigation_screens.dart';
 import 'package:capstone_2025/screens/introPages/login_screen_google.dart';
 import 'package:capstone_2025/screens/introPages/widgets/build_text_field.dart';
 import 'package:capstone_2025/screens/introPages/widgets/intro_page_header.dart';
+import 'package:capstone_2025/screens/mainPages/navigation_screens.dart';
 
 /// 일반 로그인 화면
 class LoginScreen extends StatefulWidget {
@@ -113,6 +114,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
   /// 로그인 성공 시 사용자 정보 저장
   Future<void> _saveUserData(Map<String, dynamic> userData) async {
+    await _storage.deleteAll(); // 기존 데이터 초기화
+
     await _storage.write(key: 'user_email', value: userData['email']);
     await _storage.write(key: 'nick_name', value: userData['nickname']);
     await _storage.write(key: 'access_token', value: userData['accessToken']);
