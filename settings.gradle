@@ -7,4 +7,5 @@ include 'gateway-service'
 include 'config-server'
 include 'discovery-service'
 include 'audio-service'
+include 'music-service'
 
