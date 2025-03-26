@@ -43,6 +43,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
   bool isAuthButtonEnabled = false; // 인증번호 확인 버튼 활성화 여부
   bool isNameButtonEnabled = true; // 닉네임 중복확인 버튼 활성화 여부
 
+  bool isLoading = false; // 로딩 중 여부
+
   // 타이머 관련 변수 추가
   late Timer _timer;
   int _timeRemaining = 180; // 남은 시간 3분 (초 단위)
@@ -51,15 +53,21 @@ class _SignUpScreenState extends State<SignUpScreen> {
   // 이메일 인증 및 인증코드 전송 로직 함수
   Future<void> emailAuth() async {
     String value = idController.text; // 입력된 아이디(이메일) 받아오기
+    showLoadingDialog(context); // 로딩창 표시
     setState(() {
       isEmailButtonEnabled = false; // 인증번호 전송 버튼 중복 클릭 방지
       _idErrorMessage = null; // 기존 오류 메시지 초기화
       _codeErrorMessage = null; // 기존 오류 메시지 초기화
+      isLoading = true; // 로딩 중 변수 업데이트
     });
 
     setState(() {
       if (value.isEmpty) {
         // 이메일을 입력하지 않았을 때
+        // 모달이 떠 있는지 확인 후 닫기 (화면 전체 pop 방지)
+        if (Navigator.canPop(context)) {
+          Navigator.pop(context); // 모달만 닫기
+        } // 로딩창 닫기
         isEmailButtonEnabled = true;
         _idErrorMessage = "이메일을 입력해주세요.";
         return;
@@ -67,6 +75,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
       // 이메일 정규 표현식
       if (!RegExp(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$")
           .hasMatch(value)) {
+        // 모달이 떠 있는지 확인 후 닫기 (화면 전체 pop 방지)
+        if (Navigator.canPop(context)) {
+          Navigator.pop(context); // 모달만 닫기
+        } // 로딩창 닫기
         isEmailButtonEnabled = true;
         _idErrorMessage = "올바른 이메일 형식이 아닙니다.";
         return;
@@ -85,12 +97,20 @@ class _SignUpScreenState extends State<SignUpScreen> {
       _idErrorMessage = "이미 가입된 이메일 주소입니다."; // 이메일이 올바른 경우 메시지 출력
       setState(() {
         isEmailButtonEnabled = true; // 인증번호 전송 버튼 활성화
+        // 모달이 떠 있는지 확인 후 닫기 (화면 전체 pop 방지)
+        if (Navigator.canPop(context)) {
+          Navigator.pop(context); // 모달만 닫기
+        } // 로딩창 닫기
       });
       return;
     }
     if (resData['errMessage'] != null) {
       // error 발생 시
       _idErrorMessage = resData['errMessage'];
+      // 모달이 떠 있는지 확인 후 닫기 (화면 전체 pop 방지)
+      if (Navigator.canPop(context)) {
+        Navigator.pop(context); // 모달만 닫기
+      } // 로딩창 닫기
       return;
     }
 
@@ -99,8 +119,13 @@ class _SignUpScreenState extends State<SignUpScreen> {
     if (resData["body"] == "valid") {
       // 정상적인 경우
       setState(() {
+        // 모달이 떠 있는지 확인 후 닫기 (화면 전체 pop 방지)
+        if (Navigator.canPop(context)) {
+          Navigator.pop(context); // 모달만 닫기
+        } // 로딩창 닫기
         isEmailValidate = true; // 유효성 변수 업데이트
         isAuthButtonEnabled = true; // 인증번호 확인 버튼 활성화
+        isLoading = false; // 로딩 중 변수 업데이트
         _idErrorMessage = "인증번호가 전송되었습니다.";
         storage.write(key: "email", value: value); // storage에 이메일 저장
         _startTimer(); // 타이머 시작
@@ -108,10 +133,18 @@ class _SignUpScreenState extends State<SignUpScreen> {
       return;
     }
     if (resData['errMessage'] != null) {
+      // 모달이 떠 있는지 확인 후 닫기 (화면 전체 pop 방지)
+      if (Navigator.canPop(context)) {
+        Navigator.pop(context); // 모달만 닫기
+      } // 로딩창 닫기
       _idErrorMessage = resData['errMessage'];
       return;
     }
     if (resData["body"] == "invalid") {
+      // 모달이 떠 있는지 확인 후 닫기 (화면 전체 pop 방지)
+      if (Navigator.canPop(context)) {
+        Navigator.pop(context); // 모달만 닫기
+      } // 로딩창 닫기
       // 이미 유효할 경우
       _idErrorMessage = "이미 가입된 이메일 주소입니다."; // 이메일이 올바른 경우 메시지 출력
       return;
@@ -128,14 +161,14 @@ class _SignUpScreenState extends State<SignUpScreen> {
     Map<String, dynamic> resData = // API 호출
         await getHTTP("/verification/auth-codes/check", queryParam);
 
-    if (resData['errMessage'] != null) {
-      _codeErrorMessage = "error";
-      return;
-    }
     if (resData["body"] == null) {
       // 인증 코드 틀렸을 때
       print(resData["body"]);
       _codeErrorMessage = "인증번호가 틀렸습니다.";
+      return;
+    }
+    if (resData['errMessage'] != null) {
+      _codeErrorMessage = "error";
       return;
     } else {
       // 인증 코드 맞았을 때
@@ -233,8 +266,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
         isNameValidate &&
         isAuthCodeRight &&
         isPwCorrect &&
-        isPwValidate) {
+        isPwValidate &&
+        !_isTimerRunning) {
       submitErr = false; // 회원가입 조건 모두 만족, 에러문 위젯 생성 false
+
+      showLoadingDialog(context); // 로딩창 표시
 
       final Map<String, dynamic> requestBody = {
         "email": idController.text,
@@ -245,6 +281,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
       var userInfo = await postHTTP("/auth/signup", requestBody);
 
       if (userInfo['errMessage'] == null) {
+        Navigator.pop(context);
         // 서버로부터 사용자 정보 정상적으로 받았을 경우
         await saveUserInfo(userInfo);
         if (mounted) {
@@ -256,6 +293,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
       }
     } else {
       // 서버로부터 사용자 정보 받지 못했을 경우
+      // 모달이 떠 있는지 확인 후 닫기 (화면 전체 pop 방지)
+      if (Navigator.canPop(context)) {
+        Navigator.pop(context); // 모달만 닫기
+      }
       setState(() {
         submitErr = true;
         errMessage = "입력된 정보를 다시 확인해주세요. 필수 항목이 비어있거나 조건을 만족하지 않았습니다.";
@@ -295,6 +336,21 @@ class _SignUpScreenState extends State<SignUpScreen> {
     final minutes = (seconds ~/ 60).toString().padLeft(2, '0');
     final secs = (seconds % 60).toString().padLeft(2, '0');
     return '$minutes:$secs';
+  }
+
+  void showLoadingDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      barrierDismissible: false, // 사용자가 닫을 수 없도록 설정
+      builder: (context) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          child: Center(
+            child: CircularProgressIndicator(),
+          ),
+        );
+      },
+    );
   }
 
   @override
