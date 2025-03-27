@@ -13,6 +13,6 @@ import java.util.List;
 public interface SheetPracticeRepository extends JpaRepository<SheetPractice, Integer> {
     @Query("select sp " +
             "from SheetPractice sp " +
-            "where sp.userEmail=:email and sp.sheet.sheetId=:sheetId order by sp.createdDate DESC")
-    List<SheetPractice> findAllByEmailAndSheetId(@Param("email") String email, @Param("sheetId") Integer sheetId, Pageable pageable);
+            "where sp.userEmail=:email and sp.userSheet.userSheetId=:sheetId order by sp.createdDate DESC")
+    List<SheetPractice> findAllByEmailAndSheetId(@Param("email") String email, @Param("sheetId") Integer userSheetId, Pageable pageable);
 }
