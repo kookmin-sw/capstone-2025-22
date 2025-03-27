@@ -8,4 +8,7 @@ include 'config-server'
 include 'discovery-service'
 include 'audio-service'
 include 'music-service'
+include 'common-auth'
+include 'common-auth'
+include 'common-redis'
 

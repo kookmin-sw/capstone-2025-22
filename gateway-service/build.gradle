@@ -16,6 +16,7 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-security'
     // common module
     implementation project(":common")
+    implementation project(":common-auth")
     // eureka
     implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
     // cloud gateway

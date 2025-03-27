@@ -18,6 +18,8 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-webflux'
     // common module
     implementation project(':common')
+    implementation project(':common-auth')
+    implementation project(':common-redis')
     // JavaMailSender
     implementation 'org.springframework.boot:spring-boot-starter-mail'
     // thymeleaf

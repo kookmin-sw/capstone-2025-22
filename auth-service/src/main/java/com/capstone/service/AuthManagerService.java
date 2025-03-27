@@ -1,5 +1,6 @@
 package com.capstone.service;
 
+import com.capstone.constants.AuthConstants;
 import com.capstone.exception.InternalServerException;
 import com.capstone.jwt.JwtUtils;
 import com.capstone.redis.RedisSingleDataServiceImpl;
@@ -42,8 +43,8 @@ public class AuthManagerService {
     public void saveAccessTokenAndRefreshToken(String email, String accessToken, String refreshToken){
         String accessTokenKey = getAccessTokenKey(email);
         String refreshTokenKey = getRefreshTokenKey(email);
-        saveAuthInfo(accessTokenKey, accessToken, JwtUtils.ACCESS_TOKEN_EXP_TIME.intValue()).subscribe();
-        saveAuthInfo(refreshTokenKey, refreshToken, JwtUtils.REFRESH_TOKEN_EXP_TIME.intValue()).subscribe();
+        saveAuthInfo(accessTokenKey, accessToken, AuthConstants.ACCESS_TOKEN_EXP_TIME.intValue()).subscribe();
+        saveAuthInfo(refreshTokenKey, refreshToken, AuthConstants.REFRESH_TOKEN_EXP_TIME.intValue()).subscribe();
     }
     /**
      * save auth info on redis

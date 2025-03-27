@@ -1,6 +1,7 @@
 package com.capstone.jwt;
 
 import com.capstone.auth.UserAuthInfoDto;
+import com.capstone.constants.AuthConstants;
 import com.capstone.enums.UserRole;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
@@ -16,16 +17,11 @@ import java.security.Key;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Date;
-import java.util.Enumeration;
 
 @Component
 @Slf4j
 public class JwtUtils {
     private final Key SECRET_KEY;
-    public static final Long ACCESS_TOKEN_EXP_TIME = 1000000L;
-    public static final Long REFRESH_TOKEN_EXP_TIME = 1000000000L;
-    public static final String ACCESS_TOKEN_HEADER_KEY = "authorization";
-    public static final String ACCESS_TOKEN_PREFIX = "Bearer ";
     public JwtUtils(@Value("${jwt.secret-key}") String secret_key){
         byte[] keyBytes = Decoders.BASE64.decode(secret_key);
         this.SECRET_KEY = Keys.hmacShaKeyFor(keyBytes);
@@ -56,7 +52,7 @@ public class JwtUtils {
     */
     public String generateAccessToken(UserAuthInfoDto dto){
         ZoneId zoneId = ZoneId.systemDefault();
-        return this.generateJwtToken(dto, zoneId, ACCESS_TOKEN_EXP_TIME);
+        return this.generateJwtToken(dto, zoneId, AuthConstants.ACCESS_TOKEN_EXP_TIME);
     }
     /**
      * generate refresh token
@@ -65,7 +61,7 @@ public class JwtUtils {
      * */
     public String generateRefreshToken(UserAuthInfoDto dto){
         ZoneId zoneId = ZoneId.systemDefault();
-        return this.generateJwtToken(dto, zoneId, REFRESH_TOKEN_EXP_TIME);
+        return this.generateJwtToken(dto, zoneId, AuthConstants.REFRESH_TOKEN_EXP_TIME);
     }
     /**
      * validate token
@@ -91,8 +87,8 @@ public class JwtUtils {
      * @return preprocessed token
     * */
     public String processToken(String token){
-        if(token.startsWith(ACCESS_TOKEN_PREFIX)){
-            return token.substring(ACCESS_TOKEN_PREFIX.length());
+        if(token.startsWith(AuthConstants.ACCESS_TOKEN_PREFIX)){
+            return token.substring(AuthConstants.ACCESS_TOKEN_PREFIX.length());
         }
         return token;
     }
@@ -142,13 +138,13 @@ public class JwtUtils {
      * @return accessToken - String, nullable */
     public String getTokenFromRequest(HttpRequest request){
         try {
-            String authorization = request.getHeaders().get(ACCESS_TOKEN_HEADER_KEY).get(0);
-            if(authorization==null || !authorization.startsWith(ACCESS_TOKEN_PREFIX)){
+            String authorization = request.getHeaders().get(AuthConstants.ACCESS_TOKEN_HEADER_KEY).get(0);
+            if(authorization==null || !authorization.startsWith(AuthConstants.ACCESS_TOKEN_PREFIX)){
                 log.info("JwtUtils : authentication is null or invalid prefix : {}", authorization);
                 // logRequestHeader(request);
                 return null;
             }
-            return authorization.substring(ACCESS_TOKEN_PREFIX.length());
+            return authorization.substring(AuthConstants.ACCESS_TOKEN_PREFIX.length());
         }catch (NullPointerException e){
             return null;
         }

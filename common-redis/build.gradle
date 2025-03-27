@@ -1,0 +1,19 @@
+plugins {
+    id 'java'
+}
+
+group = 'com.capstone'
+version = '0.0.1-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    // redis
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis-reactive'
+}
+
+test {
+    useJUnitPlatform()
+}

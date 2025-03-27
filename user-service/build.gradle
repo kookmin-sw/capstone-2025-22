@@ -7,6 +7,7 @@ springBoot {
 dependencies {
     // common module
     implementation project(':common')
+    implementation project(":common-auth")
     // webflux
     implementation 'org.springframework.boot:spring-boot-starter-webflux'
     // web

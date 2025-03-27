@@ -1,14 +1,12 @@
 package com.capstone.controller;
 
+import com.capstone.constants.AuthConstants;
 import com.capstone.dto.UserResponseDto;
 import com.capstone.dto.request.UserCreateDto;
 import com.capstone.dto.request.UserPasswordUpdateDto;
-import com.capstone.dto.request.UserProfileUpdateRequestDto;
 import com.capstone.dto.response.UserProfileUpdateResponseDto;
 import com.capstone.entity.User;
 import com.capstone.enums.SuccessFlag;
-import com.capstone.exception.InternalServerException;
-import com.capstone.jwt.JwtUtils;
 import com.capstone.response.ApiResponse;
 import com.capstone.response.CustomResponseDto;
 import com.capstone.service.UserRetrieveService;
@@ -16,11 +14,8 @@ import com.capstone.service.UserUpdateService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
 
 import java.util.Optional;
 
@@ -55,7 +50,7 @@ public class UserManagementController {
     }
     @PutMapping(value = "/profile", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<CustomResponseDto<UserProfileUpdateResponseDto>> updateProfile(
-            @RequestHeader(JwtUtils.ACCESS_TOKEN_HEADER_KEY) String accessToken,
+            @RequestHeader(AuthConstants.ACCESS_TOKEN_HEADER_KEY) String accessToken,
             @RequestPart(value = "nickname") String nickname,
             @RequestPart(value = "profileImage", required = false) Optional<MultipartFile> profileImageOptional) {
         MultipartFile profileImage = profileImageOptional.orElse(null);

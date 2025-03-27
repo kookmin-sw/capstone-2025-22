@@ -1,11 +1,9 @@
 package com.capstone.util;
 
-import com.capstone.exception.CustomException;
 import com.capstone.exception.InternalServerException;
 import com.capstone.exception.InvalidRequestException;
 import com.capstone.redis.RedisSingleDataServiceImpl;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Mono;
