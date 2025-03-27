@@ -12,14 +12,14 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @NoArgsConstructor
 public class SheetResponseDto {
-    private int sheetId;
+    private int userSheetId;
     private String sheetName;
     private String color;
     private LocalDateTime lastPracticeDate;
 
     public static SheetResponseDto from(UserSheet userSheet, LocalDateTime lastPracticeDate){
         return SheetResponseDto.builder()
-                .sheetId(userSheet.getSheetId())
+                .userSheetId(userSheet.getUserSheetId())
                 .sheetName(userSheet.getSheetName())
                 .color(userSheet.getColor())
                 .lastPracticeDate(lastPracticeDate).build();
@@ -27,7 +27,7 @@ public class SheetResponseDto {
 
     public static SheetResponseDto from(UserSheet userSheet){
         return SheetResponseDto.builder()
-                .sheetId(userSheet.getSheetId())
+                .userSheetId(userSheet.getUserSheetId())
                 .sheetName(userSheet.getSheetName())
                 .color(userSheet.getColor()).build();
     }

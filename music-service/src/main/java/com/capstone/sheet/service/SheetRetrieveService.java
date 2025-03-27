@@ -30,7 +30,7 @@ public class SheetRetrieveService {
     public List<SheetResponseDto> getSheetsByEmail(String email) {
         Stream<SheetResponseDto> userSheets = userSheetRepository.findAllByEmail(email).stream().map(userSheet -> {
             Pageable pageable = PageRequest.of(0, 1);
-            List<SheetPractice> lastPractice = sheetPracticeRepository.findAllByEmailAndSheetId(email, userSheet.getSheetId(), pageable);
+            List<SheetPractice> lastPractice = sheetPracticeRepository.findAllByEmailAndSheetId(email, userSheet.getUserSheetId(), pageable);
             return lastPractice.isEmpty() ? SheetResponseDto.from(userSheet) : SheetResponseDto.from(userSheet, lastPractice.get(0).getCreatedDate());
         });
         return userSheets.toList();

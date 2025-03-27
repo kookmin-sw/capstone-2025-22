@@ -8,6 +8,7 @@ import com.capstone.sheet.repository.SheetRepository;
 import com.capstone.sheet.repository.UserSheetRepository;
 import com.github.javafaker.Faker;
 import jakarta.annotation.PostConstruct;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
@@ -16,6 +17,7 @@ import java.util.List;
 import java.util.Locale;
 
 @Component
+@Profile("dev")
 public class FakeDataGenerator {
     private final SheetRepository sheetRepository;
     private final UserSheetRepository userSheetRepository;
@@ -33,32 +35,32 @@ public class FakeDataGenerator {
     public void init() {
         Faker faker = new Faker(Locale.KOREAN);
         String testUser = "test@test.com";
-        List<Integer> sheetIds = generateSheets(faker, 10);
-        List<UserSheet> userSheets = generateUserSheets(faker, sheetIds, 10, testUser);
+        List<Sheet> sheets = generateSheets(faker, 10);
+        List<UserSheet> userSheets = generateUserSheets(faker, sheets, 10, testUser);
         generateSheetPractices(faker, userSheets, 10, testUser);
     }
     /**
      * generate fake data for sheets
     * */
-    public List<Integer> generateSheets(Faker faker, int count) {
-        List<Integer> sheetIds = new ArrayList<>();
+    public List<Sheet> generateSheets(Faker faker, int count) {
+        List<Sheet> sheets = new ArrayList<>();
         for (int i=0; i<count; i++){
             Sheet sheet = sheetRepository.save(
                     Sheet.builder()
                             .sheetInfo(faker.lorem().paragraph(10))
                             .build()
             );
-            sheetIds.add(sheet.getSheetId());
+            sheets.add(sheet);
         }
-        return sheetIds;
+        return sheets;
     }
     /**
      * generate fake data for userSheets (user : fake user)
      * */
-    public List<UserSheet> generateUserSheets(Faker faker, List<Integer> sheetIds, int countPerSheet, String testUser) {
+    public List<UserSheet> generateUserSheets(Faker faker, List<Sheet> sheets, int countPerSheet, String testUser) {
         List<UserSheet> userSheets = new ArrayList<>();
         for (int i=0; i<countPerSheet; i++){
-            for (int sheetId: sheetIds){
+            for (Sheet sheet: sheets){
                 UserSheet userSheet = userSheetRepository.save(
                         UserSheet.builder()
                                 .sheetName(faker.harryPotter().book())
@@ -66,7 +68,7 @@ public class FakeDataGenerator {
                                 .color(faker.color().hex())
                                 .createdDate(LocalDateTime.now())
                                 .userEmail(testUser)
-                                .sheetId(sheetId)
+                                .sheet(sheet)
                                 .build()
                 );
                 userSheets.add(userSheet);

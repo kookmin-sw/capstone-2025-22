@@ -28,6 +28,7 @@ public class UserSheet {
     private LocalDateTime createdDate;
     @Column(nullable = false)
     private String userEmail;
-    @Column(nullable = false)
-    private int sheetId;
+    @ManyToOne
+    @JoinColumn(name = "sheet_id")
+    private Sheet sheet;
 }
