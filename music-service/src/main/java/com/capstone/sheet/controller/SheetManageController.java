@@ -4,6 +4,7 @@ import com.capstone.enums.SuccessFlag;
 import com.capstone.exception.InvalidRequestException;
 import com.capstone.response.ApiResponse;
 import com.capstone.response.CustomResponseDto;
+import com.capstone.sheet.dto.SheetListRequestDto;
 import com.capstone.sheet.dto.SheetResponseDto;
 import com.capstone.sheet.dto.SheetUpdateRequestDto;
 import com.capstone.sheet.service.SheetManageService;
@@ -47,5 +48,12 @@ public class SheetManageController {
                 requestDto.getColor(),
                 userSheetId);
         return ApiResponse.success(updatedUserSheet);
+    }
+    @DeleteMapping("")
+    public ResponseEntity<CustomResponseDto<String>> deleteSheet(
+            @RequestParam("email") String email,
+            @RequestBody SheetListRequestDto requestDto) {
+        sheetManageService.deleteSheetByIdList(email, requestDto.sheetIds);
+        return ApiResponse.success(SuccessFlag.SUCCESS.getLabel());
     }
 }

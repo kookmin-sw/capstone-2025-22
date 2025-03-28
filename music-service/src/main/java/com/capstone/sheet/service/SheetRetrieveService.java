@@ -1,8 +1,12 @@
 package com.capstone.sheet.service;
 
+import com.capstone.exception.DataNotFoundException;
 import com.capstone.practice.entity.SheetPractice;
 import com.capstone.practice.repository.SheetPracticeRepository;
+import com.capstone.sheet.dto.SheetDetailResponseDto;
 import com.capstone.sheet.dto.SheetResponseDto;
+import com.capstone.sheet.entity.Sheet;
+import com.capstone.sheet.entity.UserSheet;
 import com.capstone.sheet.repository.SheetRepository;
 import com.capstone.sheet.repository.UserSheetRepository;
 import org.springframework.data.domain.PageRequest;
@@ -34,5 +38,20 @@ public class SheetRetrieveService {
             return lastPractice.isEmpty() ? SheetResponseDto.from(userSheet) : SheetResponseDto.from(userSheet, lastPractice.get(0).getCreatedDate());
         });
         return userSheets.toList();
+    }
+    /**
+     * 특정 악보 상세 정보 조회
+     * @param email 사용자 이메일
+     * @param userSheetId 악보 id
+     * @return SheetDetailResponseDto
+     * @throws DataNotFoundException if UserSheet not exists
+    * */
+    public SheetDetailResponseDto getSheetById(String email, int userSheetId) {
+        UserSheet userSheet = userSheetRepository.findById(userSheetId)
+                .orElseThrow(() -> new DataNotFoundException("UserSheet not found"));
+        SheetPractice lastPractice = sheetPracticeRepository.findLastPracticeByEmailAndSheetId(email, userSheetId);
+        return lastPractice==null ?
+                SheetDetailResponseDto.from(userSheet, null) :
+                SheetDetailResponseDto.from(userSheet, lastPractice.getCreatedDate());
     }
 }
