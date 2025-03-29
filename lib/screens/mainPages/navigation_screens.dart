@@ -1,9 +1,12 @@
 import 'package:capstone_2025/screens/drumBasicsPages/drum_basics_page.dart';
+import 'package:capstone_2025/screens/drumSheetPages/drum_sheet_screen.dart';
 import 'package:capstone_2025/screens/mainPages/my_page.dart';
 import 'package:capstone_2025/screens/mainPages/widgets/navigation_panel.dart';
 import 'package:flutter/material.dart';
 
 class NavigationScreens extends StatefulWidget {
+  const NavigationScreens({super.key});
+
   @override
   _NavigationScreensState createState() => _NavigationScreensState();
 }
@@ -21,7 +24,7 @@ class _NavigationScreensState extends State<NavigationScreens> {
       case 2: // 패턴 및 필인 연습
         return MyPage();
       case 3: // 악보 연습
-        return MyPage();
+        return DrumSheetScreen();
       case 4: // 마이페이지
         return MyPage();
       default:
