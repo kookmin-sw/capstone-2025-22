@@ -18,11 +18,12 @@ public class SheetManageController {
     public SheetManageController(SheetManageService sheetManageService) {
         this.sheetManageService = sheetManageService;
     }
-    @GetMapping("/health")
-    public ResponseEntity<CustomResponseDto<String>> health() {
-        return ApiResponse.success(SuccessFlag.SUCCESS.getLabel());
-    }
-
+    /**
+     * 악보 이름 수정
+     * @param userSheetId 사용자 악보 id
+     * @param requestDto 사용자 이메일, 새로운 악보 이름
+     * @return SheetResponseDto
+    * */
     @PutMapping("/{userSheetId}/name")
     public ResponseEntity<CustomResponseDto<SheetResponseDto>> updateSheetName(
             @PathVariable("userSheetId") int userSheetId,
@@ -36,6 +37,12 @@ public class SheetManageController {
                 userSheetId);
         return ApiResponse.success(updatedUserSheet);
     }
+    /**
+     * 악보 색상 수정
+     * @param userSheetId 사용자 악보 id
+     * @param requestDto 사용자 이메일, 새로운 색상 정보
+     * @return SheetResponseDto
+     * */
     @PutMapping("/{userSheetId}/color")
     public ResponseEntity<CustomResponseDto<SheetResponseDto>> updateSheetColor(
     @PathVariable("userSheetId") int userSheetId,
@@ -49,6 +56,12 @@ public class SheetManageController {
                 userSheetId);
         return ApiResponse.success(updatedUserSheet);
     }
+    /**
+     * 악보 일괄 삭제
+     * @param email 사용자 이메일
+     * @param requestDto 삭제할 악보 id 목록
+     * @return valid | invalid
+     * */
     @DeleteMapping("")
     public ResponseEntity<CustomResponseDto<String>> deleteSheet(
             @RequestParam("email") String email,
