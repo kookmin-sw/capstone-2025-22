@@ -41,15 +41,15 @@ public class SheetRetrieveService {
     }
     /**
      * 특정 악보 상세 정보 조회
-     * @param email 사용자 이메일
      * @param userSheetId 악보 id
      * @return SheetDetailResponseDto
      * @throws DataNotFoundException if UserSheet not exists
     * */
-    public SheetDetailResponseDto getSheetById(String email, int userSheetId) {
+    public SheetDetailResponseDto getSheetById(int userSheetId) {
         UserSheet userSheet = userSheetRepository.findById(userSheetId)
                 .orElseThrow(() -> new DataNotFoundException("UserSheet not found"));
-        SheetPractice lastPractice = sheetPracticeRepository.findLastPracticeByEmailAndSheetId(email, userSheetId);
+        SheetPractice lastPractice = sheetPracticeRepository.findLastPracticeByEmailAndSheetId(userSheetId)
+                .orElse(null);
         return lastPractice==null ?
                 SheetDetailResponseDto.from(userSheet, null) :
                 SheetDetailResponseDto.from(userSheet, lastPractice.getCreatedDate());
