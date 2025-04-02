@@ -1,15 +1,13 @@
 package com.capstone.sheet.controller;
 
+import com.capstone.data.TestDataGenerator;
+import com.capstone.enums.SuccessFlag;
 import com.capstone.practice.entity.SheetPractice;
 import com.capstone.practice.repository.SheetPracticeRepository;
-import com.capstone.response.CustomResponseDto;
-import com.capstone.sheet.dto.SheetResponseDto;
+import com.capstone.sheet.dto.SheetListRequestDto;
 import com.capstone.sheet.dto.SheetUpdateRequestDto;
-import com.capstone.sheet.entity.Sheet;
 import com.capstone.sheet.entity.UserSheet;
-import com.capstone.sheet.repository.SheetRepository;
 import com.capstone.sheet.repository.UserSheetRepository;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -23,13 +21,11 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.time.LocalDateTime;
-import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -45,48 +41,19 @@ class SheetManageControllerTest {
     private UserSheetRepository userSheetRepository;
 
     @Autowired
-    private SheetRepository sheetRepository;
-
-    @Autowired
     private SheetPracticeRepository sheetPracticeRepository;
 
-    List<String> userEmails = Arrays.asList("test@gmail.com", "test2@gmail.com");
+    @Autowired
+    TestDataGenerator testDataGenerator;
 
     @BeforeEach
     void setUp() {
-        Sheet sheet = sheetRepository.save(
-                Sheet.builder()
-                        .sheetInfo("sheetInfo")
-                        .build()
-        );
-        for (String userEmail : userEmails) {
-            for(int i=0; i<5; i++) {
-                UserSheet userSheet = userSheetRepository.save(
-                        UserSheet.builder()
-                                .sheetName("init")
-                                .color("init")
-                                .userEmail(userEmail)
-                                .sheet(sheet)
-                                .build()
-                );
-                sheetPracticeRepository.save(
-                        SheetPractice.builder()
-                                .userSheet(userSheet)
-                                .score(80)
-                                .practiceInfo("practiceInfo")
-                                .userEmail(userEmail)
-                                .createdDate(LocalDateTime.now())
-                                .build()
-                );
-            }
-        }
+        testDataGenerator.generateTestData();
     }
 
     @AfterEach
     void tearDown() {
-        sheetPracticeRepository.deleteAll();
-        userSheetRepository.deleteAll();
-        sheetRepository.deleteAll();
+        testDataGenerator.deleteAllTestData();
     }
 
     @Test
@@ -135,5 +102,26 @@ class SheetManageControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.body.color").value(newColor))
                 .andExpect(jsonPath("$.body.lastPracticeDate").value(lastPractice));
+    }
+
+    @Test
+    @DisplayName("악보 일괄 삭제 성공 테스트")
+    void deleteSheet_success() throws Exception {
+        // given
+        String userEmail = TestDataGenerator.userEmails.get(0);
+        List<Integer> userSheetIds = userSheetRepository.findAllByEmail(userEmail)
+                .stream().map(UserSheet::getUserSheetId).toList();
+        SheetListRequestDto requestDto = SheetListRequestDto.builder()
+                .sheetIds(userSheetIds)
+                .build();
+        // when & then
+        mockMvc.perform(delete("/sheets")
+                .param("email", userEmail)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(new ObjectMapper().writeValueAsString(requestDto)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.body").value(SuccessFlag.SUCCESS.getLabel()))
+                .andDo(print());
+        assert userSheetRepository.findAllByEmail(userEmail).isEmpty();
     }
 }

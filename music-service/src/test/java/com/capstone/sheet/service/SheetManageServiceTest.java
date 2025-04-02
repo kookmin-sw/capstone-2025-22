@@ -1,13 +1,11 @@
 package com.capstone.sheet.service;
 
+import com.capstone.data.TestDataGenerator;
 import com.capstone.exception.DataNotFoundException;
 import com.capstone.exception.InvalidRequestException;
 import com.capstone.sheet.dto.SheetResponseDto;
-import com.capstone.sheet.entity.Sheet;
 import com.capstone.sheet.entity.UserSheet;
-import com.capstone.sheet.repository.SheetRepository;
 import com.capstone.sheet.repository.UserSheetRepository;
-import com.netflix.discovery.converters.Auto;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -16,10 +14,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -34,44 +30,25 @@ class SheetManageServiceTest {
     private SheetRetrieveService sheetRetrieveService;
 
     @Autowired
-    private SheetRepository sheetRepository;
-
-    @Autowired
     private UserSheetRepository userSheetRepository;
 
-    List<String> userEmails = Arrays.asList("test@gmail.com", "test2@gmail.com");
+    @Autowired
+    private TestDataGenerator testDataGenerator;
 
     @BeforeEach
     void setUp() {
-        Sheet sheet = sheetRepository.save(
-                Sheet.builder()
-                        .sheetInfo("sheetInfo")
-                        .build()
-        );
-        for (String userEmail : userEmails) {
-            for(int i=0; i<10; i++) {
-                userSheetRepository.save(
-                        UserSheet.builder()
-                                .sheetName("init")
-                                .color("init")
-                                .userEmail(userEmail)
-                                .sheet(sheet)
-                                .build()
-                );
-            }
-        }
+        testDataGenerator.generateTestData();
     }
 
     @AfterEach
     void tearDown() {
-        userSheetRepository.deleteAll();
-        sheetRepository.deleteAll();
+        testDataGenerator.deleteAllTestData();
     }
 
     @Test
     void updateSheetNameTest() {
         // given
-        String email = userEmails.get(0);
+        String email = TestDataGenerator.userEmails.get(0);
         String ghostEmail = UUID.randomUUID() + "@gmail.com";
         String newName = "newName"+ UUID.randomUUID();
         // when
@@ -88,7 +65,7 @@ class SheetManageServiceTest {
     @Test
     void updateSheetColorTest() {
         // given
-        String email = userEmails.get(0);
+        String email = TestDataGenerator.userEmails.get(0);
         String ghostEmail = UUID.randomUUID() + "@gmail.com";
         String newColor = "newColor"+ UUID.randomUUID();
         // when
@@ -105,7 +82,7 @@ class SheetManageServiceTest {
     @Test
     void deleteSheetsTest() {
         // given
-        String email = userEmails.get(0);
+        String email = TestDataGenerator.userEmails.get(0);
         String ghostEmail = UUID.randomUUID() + "@gmail.com";
         // when
         List<Integer> userSheetIds = sheetRetrieveService.getSheetsByEmail(email)

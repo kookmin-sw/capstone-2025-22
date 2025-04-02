@@ -1,19 +1,17 @@
 package com.capstone.sheet.service;
 
+import com.capstone.data.TestDataGenerator;
+import com.capstone.exception.DataNotFoundException;
+import com.capstone.sheet.dto.SheetDetailResponseDto;
 import com.capstone.sheet.dto.SheetResponseDto;
-import com.capstone.sheet.entity.Sheet;
 import com.capstone.sheet.entity.UserSheet;
-import com.capstone.sheet.repository.SheetRepository;
 import com.capstone.sheet.repository.UserSheetRepository;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.TestPropertySource;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
@@ -26,48 +24,34 @@ import static org.junit.jupiter.api.Assertions.*;
 @ActiveProfiles("test")
 class SheetRetrieveServiceTest {
     @Autowired
-    private SheetRepository sheetRepository;
-
-    @Autowired
     private UserSheetRepository userSheetRepository;
 
     @Autowired
     private SheetRetrieveService sheetRetrieveService;
 
-    String userEmail = "test@test.com";
+    @Autowired
+    private TestDataGenerator testDataGenerator;
+
     @BeforeEach
     void setUp() {
-        Sheet sheet = sheetRepository.save(
-                Sheet.builder()
-                        .sheetInfo("sheetInfo")
-                        .build()
-        );
-        for(int i=0; i<10; i++) {
-            userSheetRepository.save(
-                    UserSheet.builder()
-                            .sheetName("init")
-                            .color("init")
-                            .userEmail(userEmail)
-                            .sheet(sheet)
-                            .build()
-            );
-        }
+        testDataGenerator.generateTestData();
     }
+
     @AfterEach
     void tearDown() {
-        userSheetRepository.deleteAll();
-        sheetRepository.deleteAll();
+        testDataGenerator.deleteAllTestData();
     }
+
     @Test
-    void getSheetsByEmail() {
+    void getSheetsByEmailTest() {
         // given
-        String email = userEmail;
-        String ghostUserEmail = UUID.randomUUID().toString() + "@test.com";
+        String email = TestDataGenerator.userEmails.get(0);
+        String ghostUserEmail = UUID.randomUUID() + "@test.com";
         // when
         List<SheetResponseDto> res = sheetRetrieveService.getSheetsByEmail(email);
         List<SheetResponseDto> mustBeEmpty = sheetRetrieveService.getSheetsByEmail(ghostUserEmail);
         // then
-        assert res.size() == 10;
+        assert res.size() == TestDataGenerator.userSheetsPerUser;
         assert mustBeEmpty.isEmpty();
         assertTrue(() -> {
             for (SheetResponseDto r : res) {
@@ -76,5 +60,18 @@ class SheetRetrieveServiceTest {
             }
             return true;
         });
+    }
+    @Test
+    void getSheetByIdTest(){
+        // given
+        String email = TestDataGenerator.userEmails.get(0);
+        // when
+        SheetResponseDto target = sheetRetrieveService.getSheetsByEmail(email).get(0);
+        SheetDetailResponseDto res = sheetRetrieveService.getSheetById(target.getUserSheetId());
+        // then
+        assert res != null;
+        assert res.getSheetName().equals(target.getSheetName());
+        assert res.getUserSheetId() == target.getUserSheetId();
+        assertThrows(DataNotFoundException.class, () -> sheetRetrieveService.getSheetById(-1));
     }
 }
