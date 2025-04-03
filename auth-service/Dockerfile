@@ -2,7 +2,9 @@
 FROM openjdk:17-jdk-slim AS builder
 LABEL authors="kym8821"
 ARG MODULE_NAME=auth-service
-ARG COMMON_MODULE=common
+ARG COMMON_MODULE1="common"
+ARG COMMON_MODULE2="common-auth"
+ARG COMMON_MODULE3="common-redis"
 WORKDIR /app
 # copy from root module
 COPY gradlew /app/
@@ -12,13 +14,16 @@ COPY docker-settings.gradle /app/settings.gradle
 # copy from sub module
 COPY /${MODULE_NAME} /app/module
 # copy from common module
-COPY /${COMMON_MODULE} /app/common
+COPY /${COMMON_MODULE1} /app/${COMMON_MODULE1}
+COPY /${COMMON_MODULE2} /app/${COMMON_MODULE2}
+COPY /${COMMON_MODULE3} /app/${COMMON_MODULE3}
 # ensure execute gradlew
 RUN chmod +x gradlew
 # build project
 RUN ./gradlew build -x test --stacktrace
 # copy spring boot jar on root dir
-RUN cp module/build/libs/*.jar /app.jar
+RUN ls module/build/libs
+RUN cp module/build/libs/${MODULE_NAME}-*.jar /app.jar
 
 # Runtime Stage
 FROM openjdk:17-jdk-slim

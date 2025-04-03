@@ -1,7 +1,7 @@
 # Build Stage
 FROM openjdk:17-jdk-slim AS builder
 LABEL authors="kym8821"
-ARG MODULE_NAME=gateway-service
+ARG MODULE_NAME=audio-service
 ARG COMMON_MODULE1="common"
 ARG COMMON_MODULE2="common-auth"
 ARG COMMON_MODULE3="common-redis"
