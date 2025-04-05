@@ -39,3 +39,6 @@ out/
 ### data ###
 redis
 db
+
+### config ###
+**/resources/*.yml

@@ -20,8 +20,6 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
     // eureka-client
     implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
-    // config client
-    implementation 'org.springframework.cloud:spring-cloud-config-client'
     // common module
     implementation project(':common')
     implementation project(':common-auth')
@@ -35,3 +33,14 @@ dependencies {
 test {
     useJUnitPlatform()
 }
+
+tasks.register("copyConfig", Copy){
+    from("${rootProject.projectDir}/config-backend/dev/auth-service"){
+        include("application.yml")
+    }
+    from("${rootProject.projectDir}/config-backend/dev"){
+        include("common.yml")
+    }
+    into("./src/main/resources")
+}
+processResources.dependsOn(copyConfig)
