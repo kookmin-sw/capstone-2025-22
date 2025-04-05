@@ -16,8 +16,6 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-webflux'
     // eureka-client
     implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
-    // config client
-    implementation 'org.springframework.cloud:spring-cloud-config-client'
     // common module
     implementation project(':common')
     // stomp
@@ -32,3 +30,14 @@ dependencies {
 test {
     useJUnitPlatform()
 }
+
+tasks.register("copyConfig", Copy){
+    from("${rootProject.projectDir}/config-backend/dev/audio-service"){
+        include("application.yml")
+    }
+    from("${rootProject.projectDir}/config-backend/dev"){
+        include("common.yml")
+    }
+    into("./src/main/resources")
+}
+processResources.dependsOn(copyConfig)

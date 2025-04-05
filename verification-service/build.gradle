@@ -28,8 +28,6 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-data-redis-reactive'
     // eureka-client
     implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
-    // config client
-    implementation 'org.springframework.cloud:spring-cloud-config-client'
     // test
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'com.squareup.okhttp3:mockwebserver:4.12.0'
@@ -39,3 +37,14 @@ dependencies {
 test {
     useJUnitPlatform()
 }
+
+tasks.register("copyConfig", Copy){
+    from("${rootProject.projectDir}/config-backend/dev/verification-service"){
+        include("application.yml")
+    }
+    from("${rootProject.projectDir}/config-backend/dev"){
+        include("common.yml")
+    }
+    into("./src/main/resources")
+}
+processResources.dependsOn(copyConfig)
