@@ -37,6 +37,9 @@ public class SecurityConfig {
     private final String[] AUTH_WHITE_LIST = {
             "/auth/**"
     };
+    private final String[] MUSIC_WHITE_LIST = {
+            "/music/v3/api-docs",
+    };
     private JwtAuthFilter jwtAuthFilter;
     public SecurityConfig(JwtAuthFilter jwtAuthFilter) {
         this.jwtAuthFilter = jwtAuthFilter;
@@ -53,6 +56,7 @@ public class SecurityConfig {
                     exchange.pathMatchers(USER_WHITE_LIST).permitAll();
                     exchange.pathMatchers(VERIFICATION_WHITE_LIST).permitAll();
                     exchange.pathMatchers(AUTH_WHITE_LIST).permitAll();
+                    exchange.pathMatchers(MUSIC_WHITE_LIST).permitAll();
                     exchange.anyExchange().authenticated();
                 });
         return http.build();
