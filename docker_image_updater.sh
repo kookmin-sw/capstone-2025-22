@@ -3,7 +3,7 @@
 score=0
 success_commands=()
 function update_score {
-  score=$((score+16))
+  score=$((score+10))
   success_commands+=("$1 update success\n")
 }
 # login to docker
@@ -24,17 +24,17 @@ fi
 if sh ./common_updater.sh gateway-service; then
   update_score gateway-service
 fi
-# update config-server
-if sh ./common_updater.sh config-server; then
-  update_score config-server
-fi
 # update discovery-service
 if sh ./common_updater.sh discovery-service; then
   update_score discovery-service
+fi
+# update music-service
+if sh ./common_updater.sh music-service; then
+  update_score music-service
 fi
 
 for command in "${success_commands[@]}"; do
   echo -e "\033[32m$command\033[0m"
 done
 
-echo -e "\033[32mFinal Score: $score / 96 \033[0m"
+echo -e "\033[32mFinal Score: $score / 60 \033[0m"
