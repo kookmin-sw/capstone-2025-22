@@ -4,36 +4,37 @@ import com.capstone.dto.UserResponseDto;
 import com.capstone.enums.UserRole;
 import jakarta.persistence.*;
 import lombok.*;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.sql.Blob;
+import java.time.LocalDateTime;
 
 @Entity
 @Getter
 @Setter
+@Builder
 @NoArgsConstructor
+@AllArgsConstructor
+@EntityListeners(AuditingEntityListener.class)
 public class User {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "user_id")
-    private Long userId;
-    @Column(name = "email")
+    @Column(unique = true, nullable = false)
     private String email;
-    @Column(name = "password")
+    @Column
     private String password;
-    @Column(name = "nickname")
+    @Column(unique = true)
     private String nickname;
-    @Column(name = "role")
+    @Column
     private UserRole role;
+    @CreatedDate
+    private LocalDateTime createdDate;
+    @LastModifiedDate
+    private LocalDateTime updatedDate;
     @Lob
     @Column(name="profile_image", columnDefinition = "Blob")
     private byte[] profileImage;
-    @Builder
-    public User(String email, String password, String nickname, UserRole role) {
-        this.email = email;
-        this.password = password;
-        this.nickname = nickname;
-        this.role = role;
-    }
     public UserResponseDto toResponseDto() {
         return UserResponseDto.builder()
                 .email(this.email)

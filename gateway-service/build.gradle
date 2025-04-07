@@ -16,12 +16,11 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-security'
     // common module
     implementation project(":common")
+    implementation project(":common-auth")
     // eureka
     implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
     // cloud gateway
     implementation 'org.springframework.cloud:spring-cloud-starter-gateway'
-    // config client
-    implementation 'org.springframework.cloud:spring-cloud-config-client'
     // test
     testImplementation platform('org.junit:junit-bom:5.10.0')
     testImplementation 'org.junit.jupiter:junit-jupiter'
@@ -30,3 +29,14 @@ dependencies {
 test {
     useJUnitPlatform()
 }
+
+tasks.register("copyConfig", Copy){
+    from("${rootProject.projectDir}/config-backend/dev/gateway-service"){
+        include("application.yml")
+    }
+    from("${rootProject.projectDir}/config-backend/dev"){
+        include("common.yml")
+    }
+    into("./src/main/resources")
+}
+processResources.dependsOn(copyConfig)

@@ -1,6 +1,6 @@
 package com.capstone.swagger;
 
-import com.capstone.jwt.JwtUtils;
+import com.capstone.constants.AuthConstants;
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
@@ -24,7 +24,7 @@ public class SwaggerConfig {
         Components components = new Components().addSecuritySchemes(name, new SecurityScheme()
                 .type(SecurityScheme.Type.HTTP)
                 .in(SecurityScheme.In.HEADER)
-                .name(JwtUtils.ACCESS_TOKEN_HEADER_KEY)
+                .name(AuthConstants.ACCESS_TOKEN_HEADER_KEY)
                 .scheme("bearer")
                 .bearerFormat("JWT")
         );
