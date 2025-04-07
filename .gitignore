@@ -175,3 +175,14 @@ windows/flutter/generated_plugin_registrant.h
 android/app/build.gradle.kts
 android/app/src/main/kotlin/com/example/temp_project/MainActivity.kt
 pubspec.lock
+
+# Python 관련
+.venv/
+venv/
+ENV/
+env/
+*.pyc
+__pycache__/
+*.pyo
+*.pyd
+.Python
