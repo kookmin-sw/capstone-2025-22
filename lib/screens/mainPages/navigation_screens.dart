@@ -1,15 +1,28 @@
+import 'dart:ffi';
+
 import 'package:capstone_2025/screens/drumBasicsPages/drum_basics_page.dart';
 import 'package:capstone_2025/screens/mainPages/my_page.dart';
 import 'package:capstone_2025/screens/mainPages/widgets/navigation_panel.dart';
+import 'package:capstone_2025/screens/metronomePages/metronome.dart';
 import 'package:flutter/material.dart';
 
 class NavigationScreens extends StatefulWidget {
+  final int firstSelectedIndex; // 선택된 메뉴 인덱스
+
+  const NavigationScreens({super.key, this.firstSelectedIndex = 4});
+
   @override
   _NavigationScreensState createState() => _NavigationScreensState();
 }
 
 class _NavigationScreensState extends State<NavigationScreens> {
-  int _selectedIndex = 4; // 선택된 메뉴 인덱스 - default: 4
+  late int _selectedIndex; // 선택된 메뉴 인덱스
+
+  @override // idx 초기화
+  void initState() {
+    super.initState();
+    _selectedIndex = widget.firstSelectedIndex;
+  }
 
   // 선택된 인덱스에 따라 오른쪽 화면을 변경하는 함수 - 추후 변경 필요
   Widget _getPage(int index) {
@@ -17,7 +30,7 @@ class _NavigationScreensState extends State<NavigationScreens> {
       case 0: // 드럼 기초
         return DrumBasicsPage();
       case 1: // 메트로놈
-        return MyPage();
+        return Metronome();
       case 2: // 패턴 및 필인 연습
         return MyPage();
       case 3: // 악보 연습
@@ -40,6 +53,12 @@ class _NavigationScreensState extends State<NavigationScreens> {
             onItemSelected: (index) {
               setState(() {
                 // 메뉴 선택 시 해당 메뉴 인덱스로 변경
+                if (index == 1) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => Metronome()),
+                  );
+                }
                 _selectedIndex = index;
               });
             },
