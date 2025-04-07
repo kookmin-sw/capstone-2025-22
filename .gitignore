@@ -30,6 +30,14 @@ doc/api/
 .pub/
 coverage/
 lib/generated_plugin_registrant.dart
+linux/flutter/generated_plugin_registrant.cc
+linux/flutter/generated_plugins.cmake
+linux/flutter/generated_plugin_registrant.h
+windows/flutter/generated_plugin_registrant.cc
+windows/flutter/generated_plugins.cmake
+windows/flutter/generated_plugin_registrant.h
+macos/Flutter/ephemeral/Flutter-Generated.xcconfig
+macos/Flutter/ephemeral/flutter_export_environment.sh
 
 # Android 관련
 android/.cxx/
@@ -46,6 +54,11 @@ android/**/GeneratedPluginRegistrant.java
 android/**/gradle-wrapper.jar
 android/gradle.properties
 android/app/proguard-rules.pro
+android/app/build.gradle
+android/build.gradle
+android/settings.gradle
+android/gradle/wrapper/gradle-wrapper.properties
+android/app/src/main/java/io/flutter/plugins/GeneratedPluginRegistrant.java
 
 # Android NDK 및 CMake 관련 빌드 파일
 android/app/.cxx/
@@ -147,6 +160,9 @@ gradle-app.setting
 android/gradle.properties
 android/app/build.gradle
 android/gradle/wrapper/gradle-wrapper.properties
+android/build.gradle.kts
+android/settings.gradle.kts
+android/app/build.gradle.kts
 
 # 기타 공통 제외 항목
 *.log
@@ -159,6 +175,7 @@ android/gradle/wrapper/gradle-wrapper.properties
 *.iml
 *.ipr
 *.iws
+pubspec.lock
 
 .idea/ 
 macos
@@ -174,7 +191,6 @@ linux/flutter/generated_plugin_registrant.h
 windows/flutter/generated_plugin_registrant.h
 android/app/build.gradle.kts
 android/app/src/main/kotlin/com/example/temp_project/MainActivity.kt
-pubspec.lock
 
 # Python 관련
 .venv/
