@@ -1,5 +1,6 @@
 package com.capstone.controller;
 
+import com.capstone.constants.AuthConstants;
 import com.capstone.dto.request.AuthGoogleRequestDto;
 import com.capstone.dto.response.AuthResponseDto;
 import com.capstone.dto.request.SignInDto;
@@ -74,7 +75,7 @@ public class UserAuthController {
      * @return 성공여부
     * */
     @GetMapping("/signout")
-    public Mono<ResponseEntity<CustomResponseDto<String>>> signOutUser(@RequestHeader(JwtUtils.ACCESS_TOKEN_HEADER_KEY) String refreshToken){
+    public Mono<ResponseEntity<CustomResponseDto<String>>> signOutUser(@RequestHeader(AuthConstants.ACCESS_TOKEN_HEADER_KEY) String refreshToken){
         refreshToken = jwtUtils.processToken(refreshToken);
         return userAuthService.signOutUser(refreshToken)
                 .flatMap(res -> {
@@ -88,7 +89,7 @@ public class UserAuthController {
      * @return access token과 refresh token을 포함한 응답객체
      * */
     @PostMapping("/token")
-    public Mono<ResponseEntity<CustomResponseDto<AuthResponseDto>>> regenerateToken(@RequestHeader(JwtUtils.ACCESS_TOKEN_HEADER_KEY) String refreshToken){
+    public Mono<ResponseEntity<CustomResponseDto<AuthResponseDto>>> regenerateToken(@RequestHeader(AuthConstants.ACCESS_TOKEN_HEADER_KEY) String refreshToken){
         refreshToken = jwtUtils.processToken(refreshToken);
         if(refreshToken==null || refreshToken.isEmpty()) throw new InvalidTokenException("token is null or empty");
         return userAuthService.doRefreshTokenRotation(refreshToken)

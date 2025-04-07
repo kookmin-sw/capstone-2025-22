@@ -16,12 +16,15 @@ public class RouteLocatorConfig {
     private String authServiceUrl;
     @Value("${client.verification-service-url}")
     private String verificationServiceUrl;
+    @Value("${client.music-service-url}")
+    private String musicServiceUrl;
     @Bean
     public RouteLocator routeLocator(RouteLocatorBuilder builder) {
         return builder.routes()
                 .route("user-service", r -> r.path("/users/**").uri(userServiceUrl))
                 .route("auth-service", r -> r.path("/auth/**").uri(authServiceUrl))
                 .route("verification-service", r -> r.path("/verification/**").uri(verificationServiceUrl))
+                .route("music-service", r-> r.path("/music/**").uri(musicServiceUrl))
                 .build();
     }
 }

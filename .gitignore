@@ -37,5 +37,8 @@ out/
 .vscode/
 
 ### data ###
-redis
+docker_redis
 db
+
+### config ###
+**/resources/*.yml
