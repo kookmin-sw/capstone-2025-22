@@ -16,7 +16,7 @@ public class AudioController {
     }
     @MessageMapping("/audio/forwarding")
     public void sendAudio(AudioMessageDto audio){
-        log.info("Sending audio message: {}", audio.toString());
+        log.info("Sending audio message");
         provider.produceAudioEvent(audio);
     }
 }
