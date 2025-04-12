@@ -16,47 +16,65 @@
     </style>
 </head>
 <body>
-<input type="text" id="messageInput" placeholder="메시지를 입력하세요" />
+
+<input type="file" id="fileInput" />
 <button id="sendButton">전송</button>
 
 <div id="messages"></div>
 
 <script>
-    const socket = new SockJS('http://localhost:8084/ws/audio'); // socket 연결 경로
+    const socket = new SockJS('http://localhost:8084/ws/audio'); // 소켓 연결 경로
     const stompClient = Stomp.over(socket);
 
     stompClient.connect({}, function (frame) {
         console.log('Connected: ' + frame);
-        stompClient.subscribe('/topic/audio', function (message) { // 구독 경로
-            console.log("success message : ")
+
+        stompClient.subscribe('/topic/onset', function (message) { // 구독 경로
+            console.log("Received message:");
             console.log(message.body);
-            const receivedMessage = JSON.parse(message.body); // 메시지 파싱
-            displayMessage(receivedMessage.message); // 화면에 메시지 표시
+            const receivedMessage = JSON.parse(message.body);
+            displayMessage('데이터 수신 완료 : ' + receivedMessage["onsets"]);
         });
 
-        // Send message on button click
         document.getElementById('sendButton').addEventListener('click', function () {
-            const contents = document.getElementById('messageInput').value;
-            const headers = {
-                destination: '/app/audio/forwarding',
-                'content-type': 'application/json',
+            const fileInput = document.getElementById('fileInput');
+            const file = fileInput.files[0];
+
+            if (!file) {
+                alert("파일을 선택해주세요.");
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                const base64Data = e.target.result.split(',')[1]; // Base64 인코딩된 데이터
+
+                const message = {
+                    message: base64Data
+                };
+
+                const headers = {
+                    destination: '/app/audio/forwarding',
+                    'content-type': 'application/json',
+                };
+
+                stompClient.send("/app/audio/forwarding", headers, JSON.stringify(message));
+                displayMessage("파일 전송 완료: " + file.name);
             };
-            const message = {
-                message: contents // 입력된 내용
-            };
-            stompClient.send("/app/audio/forwarding", headers, JSON.stringify(message)); // 메세지 전송 경로
-            document.getElementById('messageInput').value = ''; // 입력 필드 초기화
+
+            reader.readAsDataURL(file);
         });
     });
 
-    // 화면에 메시지를 추가하는 함수
+    // 메시지를 화면에 표시
     function displayMessage(message) {
         const messagesDiv = document.getElementById('messages');
         const messageElement = document.createElement('div');
-        messageElement.textContent = message; // 메시지 내용 설정
-        messagesDiv.appendChild(messageElement); // 메시지 추가
-        messagesDiv.scrollTop = messagesDiv.scrollHeight; // 스크롤을 맨 아래로
+        messageElement.textContent = message;
+        messagesDiv.appendChild(messageElement);
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
     }
 </script>
+
 </body>
 </html>
