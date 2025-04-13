@@ -35,23 +35,23 @@ dependencies:
   http: ^1.2.1
   flutter_secure_storage: ^9.0.0
   fl_chart: ^0.70.2 # chart 사용을 위한 패키지
-  audioplayers: ^5.2.0 # 오디오 재생을 위한 패키지
-
-  # The following adds the Cupertino Icons font to your application.
-  # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
+  flutter_riverpod: ^2.6.1 # 상태관리를 위한 패키지
+  riverpod_annotation: ^2.6.1
+  just_audio: ^0.9.30 # Add the latest version of just_audio
+
+
+
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-
-  # The "flutter_lints" package below contains a set of recommended lints to
-  # encourage good coding practices. The lint set provided by the package is
-  # activated in the `analysis_options.yaml` file located at the root of your
-  # package. See that file for information about deactivating specific lint
-  # rules and activating additional ones.
   flutter_lints: ^5.0.0
   image_picker: # 카메라, 앨범에서 사진을 가져오는 패키지
+  build_runner:
+  custom_lint:
+  riverpod_generator: ^2.6.5
+  riverpod_lint: ^2.6.5
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -68,6 +68,15 @@ flutter:
     - assets/images/default_profile.jpg
     - assets/images/drum_kit.jpg
     - assets/images/image.png
+    - assets/images/notes/two.png
+    - assets/images/notes/triplet2.png
+    - assets/images/notes/triplet.png
+    - assets/images/notes/three.png
+    - assets/images/notes/three_2.png
+    - assets/images/notes/quarter.png
+    - assets/images/notes/four.png
+    - assets/images/notes/four_2.png
+    - assets/images/notes/dot_quarter.png
     - assets/sounds/metronome_first.wav
     - assets/sounds/metronome_other.wav
 
