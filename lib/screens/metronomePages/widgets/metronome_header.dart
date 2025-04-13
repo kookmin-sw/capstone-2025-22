@@ -118,10 +118,12 @@ class _MetronomeHeaderState extends ConsumerState<MetronomeHeader> {
       final currItemBase4 = ref.watch(currItemBase4Provider);
 
       if (timeSignature == '1/4') {
-        if (subNext % subBeatCount == 0) {
-          next = (current == 0) ? -1 : 0;
-          ref.read(currItemProvider.notifier).state = next;
+        if (subNext == 0) {
+          next = 0;
+        } else if (subNext == (subBeatCount - 1)) {
+          next = -1;
         }
+        ref.read(currItemProvider.notifier).state = next;
       } else {
         if (subNext % subBeatCount == 0) {
           next = (current + 1) % beatCount;
@@ -129,9 +131,8 @@ class _MetronomeHeaderState extends ConsumerState<MetronomeHeader> {
         }
       }
 
-      final effectiveIndex = subNext;
-
       subNext = (subNext + 1) % (beatCount * subBeatCount);
+      final effectiveIndex = subNext;
 
       if (ref.watch(isSoundOnProvider)) {
         // 소리 재생을 위한 for loop
@@ -146,10 +147,20 @@ class _MetronomeHeaderState extends ConsumerState<MetronomeHeader> {
                       currBeatPattern == 'two' ||
                       currBeatPattern == 'triplet' ||
                       currBeatPattern == 'four') &&
-                  effectiveIndex % subBeatCount == 0) {
+                  effectiveIndex % 2 == 0) {
                 widget.firstBeatPlayer.seek(Duration.zero);
                 widget.firstBeatPlayer.play();
-              } else {}
+              } else if (currBeatPattern == 'triplet2') {
+                if (effectiveIndex == 4) {
+                  widget.firstBeatPlayer.seek(Duration.zero);
+                  widget.firstBeatPlayer.play();
+                } else {}
+              } else if (currBeatPattern == 'four_2') {
+                if (effectiveIndex == 6) {
+                  widget.firstBeatPlayer.seek(Duration.zero);
+                  widget.firstBeatPlayer.play();
+                } else {}
+              }
             } else if (currBeatPattern == 'quarter' ||
                 currBeatPattern == 'two' ||
                 currBeatPattern == 'triplet' ||
