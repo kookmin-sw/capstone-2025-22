@@ -42,6 +42,9 @@ class _SheetListScreenState extends State<SheetListScreen> {
   SortOption _selectedSort = SortOption.date;
   bool _isSelectionMode = false;
   bool _isAllSelected = false;
+  bool _isSearchMode = false;
+  final TextEditingController _searchController = TextEditingController();
+  List<Sheet> _searchResults = [];
 
   // 악보 리스트 샘플 데이터
   final List<Sheet> _sheets = [
@@ -470,8 +473,42 @@ class _SheetListScreenState extends State<SheetListScreen> {
     );
   }
 
+  // 검색 기능 구현
+  void _performSearch(String query) {
+    setState(() {
+      if (query.isEmpty) {
+        _searchResults = [];
+        return;
+      }
+      _searchResults = _sheets
+          .where((sheet) =>
+              sheet.title.toLowerCase().contains(query.toLowerCase()))
+          .toList();
+    });
+  }
+
+  // 검색 모드 토글
+  void _toggleSearchMode() {
+    setState(() {
+      _isSearchMode = !_isSearchMode;
+      if (!_isSearchMode) {
+        _searchController.clear();
+        _searchResults = [];
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
+    final displayedSheets = _isSearchMode && _searchController.text.isNotEmpty
+        ? _searchResults
+        : _sortedSheets;
     final selectedSheets = _sheets.where((sheet) => sheet.isSelected).toList();
 
     return Scaffold(
@@ -490,29 +527,155 @@ class _SheetListScreenState extends State<SheetListScreen> {
         elevation: 0,
         toolbarHeight: 50,
         actions: [
-          if (_isSelectionMode)
-            TextButton(
-              onPressed: _toggleSelectAll,
-              child: Text(
-                _isAllSelected ? '전체 선택 해제' : '전체 선택',
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
+          if (_isSelectionMode) ...[
+            Container(
+              margin: const EdgeInsets.only(right: 8),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(32),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.1),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: TextButton(
+                onPressed: _toggleSelectAll,
+                style: TextButton.styleFrom(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(32),
+                  ),
+                ),
+                child: Text(
+                  _isAllSelected ? '전체 선택 해제' : '전체 선택',
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF595959),
+                  ),
                 ),
               ),
-            )
-          else ...[
+            ),
+            Container(
+              margin: const EdgeInsets.only(right: 8),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(32),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.1),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: TextButton(
+                onPressed: _toggleSelectionMode,
+                style: TextButton.styleFrom(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(32),
+                  ),
+                ),
+                child: const Text(
+                  '완료',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF595959),
+                  ),
+                ),
+              ),
+            ),
+          ] else if (_isSearchMode) ...[
+            Container(
+              width: 250,
+              height: 32,
+              margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(10),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.08),
+                    blurRadius: 2,
+                    offset: const Offset(0, 1),
+                  ),
+                ],
+              ),
+              child: Row(
+                children: [
+                  const Padding(
+                    padding: EdgeInsets.only(left: 12),
+                    child: Icon(
+                      Icons.search,
+                      size: 18,
+                      color: Color(0xFF595959),
+                    ),
+                  ),
+                  Expanded(
+                    child: TextField(
+                      controller: _searchController,
+                      autofocus: true,
+                      decoration: const InputDecoration(
+                        hintText: '검색어를 입력해주세요',
+                        hintStyle: TextStyle(
+                          color: Color(0xFF949494),
+                          fontSize: 13,
+                        ),
+                        border: InputBorder.none,
+                        contentPadding:
+                            EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                      ),
+                      style: const TextStyle(
+                        color: Color(0xFF595959),
+                        fontSize: 13,
+                      ),
+                      onChanged: _performSearch,
+                    ),
+                  ),
+                  IconButton(
+                    padding: const EdgeInsets.all(4),
+                    constraints: const BoxConstraints(),
+                    icon: const Icon(
+                      Icons.close,
+                      size: 18,
+                      color: Color(0xFF595959),
+                    ),
+                    onPressed: _toggleSearchMode,
+                  ),
+                  const SizedBox(width: 8),
+                ],
+              ),
+            ),
+          ] else ...[
             _buildSortingButton(context),
             PopupMenuButton<String>(
               color: const Color(0xFFfefefe),
+              offset: const Offset(-20, 50),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              constraints: const BoxConstraints(
+                minWidth: 160,
+                maxWidth: 160,
+              ),
               onSelected: (value) {
                 if (value == '선택') {
                   _toggleSelectionMode();
+                } else if (value == '검색') {
+                  _toggleSearchMode();
                 }
               },
               itemBuilder: (context) => [
                 const PopupMenuItem(
                   value: '선택',
+                  height: 40,
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -525,7 +688,18 @@ class _SheetListScreenState extends State<SheetListScreen> {
                   ),
                 ),
                 const PopupMenuItem(
+                  enabled: false,
+                  height: 1,
+                  padding: EdgeInsets.zero,
+                  child: Divider(
+                    height: 1,
+                    thickness: 1,
+                    color: Color(0xFFEEEEEE),
+                  ),
+                ),
+                const PopupMenuItem(
                   value: '검색',
+                  height: 40,
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -539,7 +713,7 @@ class _SheetListScreenState extends State<SheetListScreen> {
                 ),
               ],
             ),
-          ]
+          ],
         ],
       ),
       body: Padding(
@@ -553,53 +727,55 @@ class _SheetListScreenState extends State<SheetListScreen> {
                 crossAxisSpacing: 16,
                 mainAxisSpacing: 16,
                 children: [
-                  GestureDetector(
-                    onTap: () {
-                      showDialog(
-                        context: context,
-                        builder: (_) => AddSheetDialog(
-                          onSubmit: (sheetName) async {
-                            final newSheet = await addSheet(sheetName);
-                            setState(() {
-                              _sheets.add(newSheet);
-                            });
-                          },
-                        ),
-                      );
-                    },
-                    child: Column(
-                      children: [
-                        Expanded(
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(12),
-                              boxShadow: const [
-                                BoxShadow(
-                                  color: Colors.black12,
-                                  blurRadius: 4,
-                                  offset: Offset(0, 2),
+                  if (!_isSearchMode)
+                    GestureDetector(
+                      onTap: () {
+                        showDialog(
+                          context: context,
+                          builder: (_) => AddSheetDialog(
+                            onSubmit: (sheetName) async {
+                              final newSheet = await addSheet(sheetName);
+                              setState(() {
+                                _sheets.add(newSheet);
+                              });
+                            },
+                          ),
+                        );
+                      },
+                      child: Column(
+                        children: [
+                          Expanded(
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(12),
+                                boxShadow: const [
+                                  BoxShadow(
+                                    color: Colors.black12,
+                                    blurRadius: 4,
+                                    offset: Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              child: const Center(
+                                child: Icon(
+                                  Icons.add,
+                                  size: 36,
+                                  color: Colors.redAccent,
                                 ),
-                              ],
-                            ),
-                            child: const Center(
-                              child: Icon(
-                                Icons.add,
-                                size: 36,
-                                color: Colors.redAccent,
                               ),
                             ),
                           ),
-                        ),
-                        const SizedBox(height: 25),
-                        const Text(
-                          '악보 추가',
-                          style: TextStyle(fontSize: 14, color: Colors.black87),
-                        ),
-                      ],
+                          const SizedBox(height: 25),
+                          const Text(
+                            '악보 추가',
+                            style:
+                                TextStyle(fontSize: 14, color: Colors.black87),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                  ..._sortedSheets.map((sheet) => GestureDetector(
+                  ...displayedSheets.map((sheet) => GestureDetector(
                         onTap: () {
                           if (_isSelectionMode) {
                             _onSheetSelected(sheet);
@@ -648,62 +824,65 @@ class _SheetListScreenState extends State<SheetListScreen> {
                 ],
               ),
             ),
-            if (selectedSheets.length == 1)
-              Container(
-                height: MediaQuery.of(context).size.height * 0.12,
-                padding: const EdgeInsets.symmetric(vertical: 3),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(32),
-                  color: Colors.white,
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    TextButton(
-                      onPressed: () => _renameSheet(selectedSheets.first),
-                      child: const Text('이름 변경',
-                          style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFF646464))),
-                    ),
-                    TextButton(
-                      onPressed: () => _changeSheetColor(selectedSheets.first),
-                      child: const Text('색상 변경',
-                          style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFF646464))),
-                    ),
-                    TextButton(
-                      onPressed: () => _confirmDeleteMultiple(selectedSheets),
-                      child: const Text('삭제',
-                          style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFFd97d6c))),
-                    ),
-                  ],
-                ),
-              )
-            else if (selectedSheets.length > 1)
-              Container(
-                height: MediaQuery.of(context).size.height * 0.12,
-                padding: const EdgeInsets.symmetric(vertical: 3),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(32),
-                  color: Colors.white,
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    TextButton(
-                      onPressed: () => _confirmDeleteMultiple(selectedSheets),
-                      child: const Text('삭제',
-                          style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFFd97d6c))),
-                    ),
-                  ],
-                ),
-              )
+            if (_isSelectionMode) ...[
+              if (selectedSheets.length == 1)
+                Container(
+                  height: MediaQuery.of(context).size.height * 0.12,
+                  padding: const EdgeInsets.symmetric(vertical: 3),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(32),
+                    color: Colors.white,
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      TextButton(
+                        onPressed: () => _renameSheet(selectedSheets.first),
+                        child: const Text('이름 변경',
+                            style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF646464))),
+                      ),
+                      TextButton(
+                        onPressed: () =>
+                            _changeSheetColor(selectedSheets.first),
+                        child: const Text('색상 변경',
+                            style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF646464))),
+                      ),
+                      TextButton(
+                        onPressed: () => _confirmDeleteMultiple(selectedSheets),
+                        child: const Text('삭제',
+                            style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFFd97d6c))),
+                      ),
+                    ],
+                  ),
+                )
+              else if (selectedSheets.length > 1)
+                Container(
+                  height: MediaQuery.of(context).size.height * 0.12,
+                  padding: const EdgeInsets.symmetric(vertical: 3),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(32),
+                    color: Colors.white,
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      TextButton(
+                        onPressed: () => _confirmDeleteMultiple(selectedSheets),
+                        child: const Text('삭제',
+                            style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFFd97d6c))),
+                      ),
+                    ],
+                  ),
+                )
+            ],
           ],
         ),
       ),
