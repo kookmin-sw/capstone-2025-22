@@ -20,10 +20,10 @@ COPY /${COMMON_MODULE3} /app/${COMMON_MODULE3}
 # ensure execute gradlew
 RUN chmod +x gradlew
 # build project
-RUN ./gradlew build -x test --stacktrace
+RUN ./gradlew clean build --info
 # copy spring boot jar on root dir
 RUN ls module/build/libs
-RUN cp module/build/libs/${MODULE_NAME}-*.jar /app.jar
+RUN cp module/build/libs/module-*.jar /app.jar
 
 # Runtime Stage
 FROM openjdk:17-jdk-slim
