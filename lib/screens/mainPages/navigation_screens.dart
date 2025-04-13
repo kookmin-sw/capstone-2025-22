@@ -24,7 +24,7 @@ class _NavigationScreensState extends State<NavigationScreens> {
     _selectedIndex = widget.firstSelectedIndex;
   }
 
-  // 선택된 인덱스에 따라 오른쪽 화면을 변경하는 함수 - 추후 변경 필요
+  // 선택된 인덱스에 따라 오른쪽 화면을 변경하는 함수
   Widget _getPage(int index) {
     switch (index) {
       case 0: // 드럼 기초
