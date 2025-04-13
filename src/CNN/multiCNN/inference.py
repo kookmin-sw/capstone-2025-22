@@ -18,7 +18,7 @@ def predict_drum_sound(device, mel_transform, model_path, wav_path, sample_rate=
 
     # 오디오 로드
     waveform, sr = torchaudio.load(wav_path)
-    # print("Original waveform shape:", waveform.shape)
+    print("Original waveform shape:", waveform.shape)
 
     if sr != sample_rate:
         # 필요하면 리샘플링
@@ -28,16 +28,16 @@ def predict_drum_sound(device, mel_transform, model_path, wav_path, sample_rate=
 
     if waveform.shape[0] > 1: #1채널로 변환
         waveform = torch.mean(waveform, dim=0, keepdim=True)
-        # print("After mono conversion shape:", waveform.shape)
+        print("After mono conversion shape:", waveform.shape)
 
     #MelSpectrogram 변환
     features = mel_transform(waveform)
-    # print("After mel_transform shape:", features.shape)
+    print("After mel_transform shape:", features.shape)
 
     # 모델에 입력 전에 배치 차원 추가 (확인용)
     if len(features.shape) == 3:  # [채널, 높이, 너비] 형태라면
         features = features.unsqueeze(0)  # [1, 채널, 높이, 너비]로 변환
-        # print("After adding batch dimension:", features.shape)
+        print("After adding batch dimension:", features.shape)
 
     # 디바이스로 이동
     features = features.to(device)
