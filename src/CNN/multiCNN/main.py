@@ -20,5 +20,5 @@ epochs = 30
 
 model_path = "drum_model_multiCNN_30.pt"
 # 2.예측
-# print(model_path)
+print(model_path)
 CNN_inference(device, torch_mel_transform, model_path, test_data_folder_path="../../test_data")

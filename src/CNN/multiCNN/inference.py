@@ -9,7 +9,7 @@ sys.path.append(previous_folder)
 from utils import convert_to_wav
 
 def predict_drum_sound(device, mel_transform, model_path, wav_path, sample_rate=44100):
-    class_labels = ["kick", "snare", "overheads", "toms"]
+    class_labels = ["KD", "SD", "CY", "TT", "HH"]  # 5개 레이블
 
     # 모델 로드
     model = MultiCNN(num_classes=len(class_labels)).to(device)
@@ -26,7 +26,7 @@ def predict_drum_sound(device, mel_transform, model_path, wav_path, sample_rate=
         waveform = resampler(waveform)
         # print("Resampled waveform shape:", waveform.shape)
 
-    if waveform.shape[0] != 1: #1채널로 변환
+    if waveform.shape[0] > 1: #1채널로 변환
         waveform = torch.mean(waveform, dim=0, keepdim=True)
         # print("After mono conversion shape:", waveform.shape)
 
@@ -44,11 +44,14 @@ def predict_drum_sound(device, mel_transform, model_path, wav_path, sample_rate=
 
     with torch.no_grad(): #학습을 위한 기울기 계산 x
         outputs = model(features) #입력 데이터를 모델에 통과시켜 예측값 얻기
-        _, pred = torch.max(outputs, dim=1) #예측 확률 중 가장 높은 값 반환
+        predictions = (outputs > 0.3).float() 
     
-    predicted_label = class_labels[pred]
+    predicted_labels = []
+    for i, pred in enumerate(predictions[0]):
+        if pred.item() == 1.0:
+            predicted_labels.append(class_labels[i])
 
-    return predicted_label
+    return predicted_labels
 
 def CNN_inference(device, mel_transform, model_path, test_data_folder_path):
     # 폴더 내 모든 wav 파일 예측 수행

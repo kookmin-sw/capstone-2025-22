@@ -7,61 +7,64 @@ import torchaudio
 from model import MultiCNN
 from dataset import DrumDataset
 
-def train_one_epoch(model, dataloader, criterion, optimizer, device):
-    model.train() #모델을 학습 모드로 전환
-    total_loss = 0
-    correct = 0
-    total = 0
-
-    for features, labels in dataloader: #입력 데이터와 정답 레이블
-        #데이터를 cpu/gpu로 이동
-        features = features.to(device)
-        labels = labels.to(device)
-
+def train_one_epoch(model, train_loader, criterion, optimizer, device):
+    model.train()
+    running_loss = 0.0
+    total_samples = 0
+    correct_predictions = 0
+    
+    for inputs, labels in train_loader: #입력 데이터와 정답 레이블
+        inputs, labels = inputs.to(device), labels.to(device)
+        
+        # 순전파
         optimizer.zero_grad() #매 배치마다 기울기 초기화
-
-        #모델 예측, 손실 계산
-        outputs = model(features) #입력 데이터를 모델에 통과시켜 예측값 얻기
+        outputs = model(inputs)
+        
+        # 손실 계산
         loss = criterion(outputs, labels) #예측과 정답 비교해 오차 계산
-
+        
+        # 역전파
         loss.backward() #오차를 바탕으로 가중치(모델 파라미터)를 얼마나 업데이트할지 기울기 계산
         optimizer.step() #계산된 기울기를 이용해 가중치 갱신(실제 학습)
-
-        # 현재 배치의 오차 누적, 정확도 계산
-        total_loss += loss.item() * features.size(0)
-        _, pred = torch.max(outputs, dim=1) #예측 확률 중 가장 높은 값 반환
-        correct += (pred == labels).sum().item() #예측과 정답 비교해 맞은 개수 누적
-        total += labels.size(0)
+        
+        # 손실 누적
+        running_loss += loss.item() * inputs.size(0)
+        total_samples += inputs.size(0)
+        
+        # 다중 레이블 예측 정확도 계산
+        predictions = (outputs > 0.5).float()  # 임계값 0.5로 이진 예측
+        correct_predictions += (predictions == labels).float().sum().item()
+        
+    # 전체 에폭의 손실과 정확도 계산
+    epoch_loss = running_loss / total_samples
+    epoch_acc = correct_predictions / (total_samples * len(model.class_labels))  # 전체 예측 수로 나눔
     
-    # 한 epoch 동안의 평균 손실과 정확도 
-    avg_loss = total_loss / total
-    accuracy = correct / total
+    return epoch_loss, epoch_acc
 
-    return avg_loss, accuracy
-
-def validate(model, dataloader, criterion, device):
+def validate(model, val_loader, criterion, device):
     model.eval() #모델을 평가모드로 전환
-    total_loss = 0
-    correct = 0
-    total = 0
-
-    with torch.no_grad(): #학습을 위한 기울기 계산 x
-        for features, labels in dataloader:
-            features = features.to(device)
-            labels = labels.to(device)
-
-            outputs = model(features)
-            loss = criterion(outputs, labels)
-
-            total_loss += loss.item() * features.size(0)
-            _, pred = torch.max(outputs, dim=1)
-            correct += (pred == labels).sum().item()
-            total += labels.size(0)
+    running_loss = 0.0
+    total_samples = 0
+    correct_predictions = 0
     
-    avg_loss = total_loss / total
-    accuracy = correct / total
-
-    return avg_loss, accuracy
+    with torch.no_grad(): #학습을 위한 기울기 계산 x
+        for inputs, labels in val_loader:
+            inputs, labels = inputs.to(device), labels.to(device)
+            
+            outputs = model(inputs)
+            loss = criterion(outputs, labels)
+            
+            running_loss += loss.item() * inputs.size(0)
+            total_samples += inputs.size(0)
+            
+            # 다중 레이블 예측 정확도 계산
+            predictions = (outputs > 0.5).float()
+            correct_predictions += (predictions == labels).float().sum().item()
+    
+    val_loss = running_loss / total_samples
+    val_acc = correct_predictions / (total_samples * len(model.class_labels))
+    
+    return val_loss, val_acc
 
 def multiCNN_train(epochs, device, mel_transform):
     # 데이터셋 & 로더
@@ -71,10 +74,10 @@ def multiCNN_train(epochs, device, mel_transform):
     val_loader   = DataLoader(val_dataset, batch_size=16, shuffle=False)
 
     # 모델 생성
-    num_classes = len(train_dataset.class_to_idx)
+    num_classes = len(train_dataset.class_labels)
     model = MultiCNN(num_classes).to(device)
     # 손실함수와 옵티마이저
-    criterion = nn.CrossEntropyLoss() #손실함수 : 모델의 예측과 정답 비교해 오차 계산
+    criterion = nn.BCELoss()  #손실함수 : 모델의 예측과 정답 비교해 오차 계산. 다중 레이블 분류를 위해 Binary Cross Entropy Loss 사용
     optimizer = optim.Adam(model.parameters(), lr=1e-4) #옵티마이저 : 계산된 기울기(gradient)를 이용해 모델의 가중치 업데이트
 
     for epoch in range(epochs):

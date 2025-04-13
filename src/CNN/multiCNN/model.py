@@ -3,8 +3,10 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 class MultiCNN(nn.Module):
-    def __init__(self, num_classes = 4):
+    def __init__(self, num_classes=5):
         super(MultiCNN, self).__init__()
+        self.class_labels = ["KD", "SD", "CY", "TT", "HH"]  # 클래스 레이블 추가
+        self.num_classes = len(self.class_labels)
 
         self.conv1 = nn.Sequential(
             nn.Conv2d(1, 16, kernel_size=3, stride=1, padding=1), 
@@ -29,7 +31,9 @@ class MultiCNN(nn.Module):
             # nn.Linear(32 * 16 * 16, 128),
             nn.Linear(8192, 128),
             nn.ReLU(),
-            nn.Linear(128, num_classes)
+            nn.Linear(128, self.num_classes),
+            # 시그모이드 활성화 함수 추가 (다중 레이블 분류를 위해)
+            nn.Sigmoid()  # 각 클래스의 확률을 0~1 사이로 독립적으로 계산
         )
     
     def forward(self, x):
