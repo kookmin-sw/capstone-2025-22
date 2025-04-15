@@ -176,3 +176,5 @@ android/app/build.gradle.kts
 android/app/src/main/kotlin/com/example/temp_project/MainActivity.kt
 pubspec.lock
 macos/Flutter/ephemeral/Flutter-Generated.xcconfig
+
+.venv/*
