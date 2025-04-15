@@ -1,4 +1,4 @@
-rootProject.name = 'config-server'
+rootProject.name = 'app'
 include 'module'
 include 'common'
 include 'common-auth'
