@@ -8,5 +8,6 @@ import lombok.*;
 @AllArgsConstructor
 @ToString
 public class AudioMessageDto {
+    private String email;
     private String message;
 }

@@ -22,7 +22,7 @@ public class CustomConsumer {
     public void sendAudioConversionResult(@Payload final AudioMessageDto audioMessageDto) {
         OnsetDto.OnsetRequestDto requestDto = OnsetDto.OnsetRequestDto.fromMessageDto(audioMessageDto);
         audioModelClient.getOnsetFromWav(requestDto)
-                .doOnNext(res -> messagingTemplate.convertAndSend("/topic/onset", res))
+                .doOnNext(res -> messagingTemplate.convertAndSend("/topic/onset/" + audioMessageDto.getEmail(), res))
                 .subscribe();
     }
     @KafkaListener(topics = "sheet", groupId = "${spring.kafka.consumer.group-id}")

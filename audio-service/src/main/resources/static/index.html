@@ -29,7 +29,7 @@
     stompClient.connect({}, function (frame) {
         console.log('Connected: ' + frame);
 
-        stompClient.subscribe('/topic/onset', function (message) { // 구독 경로
+        stompClient.subscribe('/topic/onset/test', function (message) { // 구독 경로
             console.log("Received message:");
             console.log(message.body);
             const receivedMessage = JSON.parse(message.body);
@@ -50,6 +50,7 @@
                 const base64Data = e.target.result.split(',')[1]; // Base64 인코딩된 데이터
 
                 const message = {
+                    email: "test",
                     message: base64Data
                 };
 
