@@ -34,14 +34,19 @@ class _CountdownPageState extends State<CountdownPage>
   bool isCountingDown = false;
   bool _isPlaying = false;
   bool _isRecording = false;
-  double _currentPosition = 0.0;
-  double _totalDuration = 0.0;
+  final double _currentPosition = 0.0;
+  final double _totalDuration = 0.0;
+  String _currentSpeed = '1x'; // 현재 속도를 저장할 변수 추가
 
   late ap.AudioPlayer _audioPlayer;
   late fs.FlutterSoundRecorder _recorder;
   late AnimationController _overlayController;
   late Animation<double> _overlayAnimation;
-  late WebSocketChannel _channel;
+
+  Timer? _countdownTimer;
+
+  // WebSocket 관련 변수 주석 처리
+  // late WebSocketChannel _channel;
 
   @override
   void initState() {
@@ -51,8 +56,9 @@ class _CountdownPageState extends State<CountdownPage>
     _audioPlayer = ap.AudioPlayer();
 
     _recorder = fs.FlutterSoundRecorder();
-    _channel = WebSocketChannel.connect(
-        Uri.parse('ws://10.0.2.2:28080')); // 서버 URL 수정하기
+    // WebSocket 연결 주석 처리
+    // _channel = WebSocketChannel.connect(
+    //     Uri.parse('ws://10.0.2.2:28080')); // 서버 URL 수정하기
 
     // 녹음기 초기화
     _recorder.openRecorder();
@@ -81,23 +87,24 @@ class _CountdownPageState extends State<CountdownPage>
 
   @override
   void dispose() {
+    _countdownTimer?.cancel(); // 타이머 취소
     _recorder.closeRecorder(); // Recorder dispose 처리
     _audioPlayer.dispose(); // AudioPlayer dispose 처리
     _overlayController.dispose(); // AnimationController dispose 처리
-    _channel.sink.close(); // WebSocket 종료
+    // WebSocket 종료 주석 처리
+    // _channel.sink.close();
     super.dispose();
   }
 
   // 시범 연주를 시작하는 함수
   void _startAudio() async {
-    _audioPlayer.play(ap.AssetSource('assets/test/tom_mix.wav'));
-    _audioPlayer.onDurationChanged.listen((duration) {
-      setState(() {
-        _totalDuration = duration.inSeconds.toDouble();
-      });
-    });
+    // WAV 파일 재생
+    await _audioPlayer.play(ap.AssetSource('test/tom_mix.wav'));
 
-    _startCountdown(); // 시범 연주가 끝나면 바로 카운트다운 실행
+    // WAV 파일 재생이 끝날 때까지 대기
+    _audioPlayer.onPlayerComplete.listen((event) {
+      _startCountdown(); // WAV 파일 재생이 끝나면 카운트다운 시작
+    });
   }
 
   void _pauseAudio() async {
@@ -111,6 +118,17 @@ class _CountdownPageState extends State<CountdownPage>
     await _audioPlayer.seek(Duration(seconds: position.toInt()));
   }
 
+  // 녹음 시작 함수
+  void _startRecording() async {
+    if (_isRecording) return; // 이미 녹음 중이면 함수 종료
+
+    await _recorder.startRecorder(
+        toFile: 'drum_performance.aac'); // 드럼 연주 녹음 시작
+    setState(() {
+      _isRecording = true;
+    });
+  }
+
   // 카운트다운을 시작하는 함수
   void _startCountdown() {
     setState(() {
@@ -120,30 +138,25 @@ class _CountdownPageState extends State<CountdownPage>
 
     _overlayController.forward(); // 카운트다운 애니메이션 시작
 
-    Timer.periodic(const Duration(seconds: 1), (timer) {
+    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (countdown == 0) {
         timer.cancel();
         _overlayController.reverse().then((_) {
-          setState(() {
-            isCountingDown = false;
-          });
-          // 카운트다운 후 사용자 연주 시작
-          _startRecording(); // 사용자 연주 녹음 시작
+          if (mounted) {
+            setState(() {
+              isCountingDown = false;
+            });
+            // 카운트다운 후 사용자 연주 시작
+            _startRecording(); // 사용자 연주 녹음 시작
+          }
         });
       } else {
-        setState(() {
-          countdown--;
-        });
+        if (mounted) {
+          setState(() {
+            countdown--;
+          });
+        }
       }
-    });
-  }
-
-  // 녹음 시작 함수
-  void _startRecording() async {
-    await _recorder.startRecorder(
-        toFile: 'drum_performance.aac'); // 드럼 연주 녹음 시작
-    setState(() {
-      _isRecording = true;
     });
   }
 
@@ -166,7 +179,9 @@ class _CountdownPageState extends State<CountdownPage>
 
   // 녹음된 오디오 파일을 WebSocket을 통해 서버로 전송
   void _sendAudioToServer(List<int> bytes) {
-    _channel.sink.add(Uint8List.fromList(bytes)); // 오디오 파일을 서버로 전송
+    // WebSocket 전송 주석 처리
+    // _channel.sink.add(Uint8List.fromList(bytes));
+    print('서버 연결이 비활성화되어 있습니다.');
   }
 
   Widget buildNumber(int number) {
@@ -188,6 +203,48 @@ class _CountdownPageState extends State<CountdownPage>
               color: Colors.black.withOpacity(0.5),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSpeedButton(String speed, bool isSelected) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () {
+          double newSpeed = 1.0;
+          switch (speed) {
+            case '0.5x':
+              newSpeed = 0.5;
+              break;
+            case '1x':
+              newSpeed = 1.0;
+              break;
+            case '1.5x':
+              newSpeed = 1.5;
+              break;
+            case '2x':
+              newSpeed = 2.0;
+              break;
+          }
+          setState(() {
+            _audioPlayer.setPlaybackRate(newSpeed);
+            _currentSpeed = speed; // 현재 속도 업데이트
+          });
+          Navigator.of(context).pop();
+        },
+        borderRadius: BorderRadius.circular(8),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          child: Text(
+            speed,
+            style: TextStyle(
+              color: isSelected ? const Color(0xFFE5958B) : Colors.black87,
+              fontWeight: FontWeight.w500,
+              fontSize: 14,
+            ),
+          ),
         ),
       ),
     );
@@ -237,116 +294,178 @@ class _CountdownPageState extends State<CountdownPage>
                         ),
                       ),
                       const Spacer(),
-                      DropdownButton<String>(
-                        value: '1x', // 선택된 배속 값
-                        underline: const SizedBox(),
-                        items: ['0.5x', '1x', '1.5x', '2x'].map((speed) {
-                          return DropdownMenuItem(
-                            value: speed,
-                            child: Text(
-                              speed,
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color:
-                                    speed == '1x' ? Colors.red : Colors.black87,
+                      Positioned(
+                        right: 0,
+                        child: MenuAnchor(
+                          style: const MenuStyle(
+                            padding: WidgetStatePropertyAll(EdgeInsets.zero),
+                            backgroundColor:
+                                WidgetStatePropertyAll(Colors.transparent),
+                          ),
+                          menuChildren: [
+                            Container(
+                              margin: const EdgeInsets.only(top: 8),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 4, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(8),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.1),
+                                    blurRadius: 4,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  _buildSpeedButton('0.5x', false),
+                                  _buildSpeedButton('1x', true),
+                                  _buildSpeedButton('1.5x', false),
+                                  _buildSpeedButton('2x', false),
+                                ],
                               ),
                             ),
-                          );
-                        }).toList(),
-                        onChanged: (value) {
-                          // 박자 변경 시 처리 로직
-                          double newSpeed = 1.0;
-                          switch (value) {
-                            case '0.5x':
-                              newSpeed = 0.5;
-                              break;
-                            case '1x':
-                              newSpeed = 1.0;
-                              break;
-                            case '1.5x':
-                              newSpeed = 1.5;
-                              break;
-                            case '2x':
-                              newSpeed = 2.0;
-                              break;
-                          }
-                          _audioPlayer.setPlaybackRate(newSpeed); // 재생 속도 설정
-                          setState(() {
-                            _isPlaying = false;
-                            _currentPosition = 0.0; // 박자 변경 시 슬라이더 초기화
-                          });
-                        },
+                          ],
+                          builder: (context, controller, child) {
+                            return GestureDetector(
+                              onTap: () {
+                                if (controller.isOpen) {
+                                  controller.close();
+                                } else {
+                                  controller.open();
+                                }
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 12, vertical: 6),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(8),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color:
+                                          Colors.black.withValues(alpha: 0.1),
+                                      blurRadius: 4,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
+                                ),
+                                child: Text(
+                                  _currentSpeed, // 현재 속도 표시
+                                  style: const TextStyle(
+                                    color: Color(0xFFE5958B),
+                                    fontWeight: FontWeight.w500,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
                       ),
                     ],
                   ),
                 ),
                 Expanded(
-                  child: Center(
-                    child: Container(
-                      // margin: const EdgeInsets.symmetric(horizontal: 16),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Center(
-                        child: Image.asset(
-                          'assets/test/tom_mix.png', // 악보 이미지
-                          fit: BoxFit.contain,
-                        ),
+                  child: Container(
+                    margin: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Center(
+                      child: Image.asset(
+                        'assets/test/tom_mix.png',
+                        fit: BoxFit.contain,
                       ),
                     ),
                   ),
                 ),
-                const SizedBox(height: 16),
-                // 재생 컨트롤러
-                // 기존의 "Slider" 위젯과 다른 UI 요소들 수정:
                 Container(
-                  margin: const EdgeInsets.only(bottom: 24),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade200,
-                    borderRadius: BorderRadius.circular(24),
-                  ),
-                  child: Row(
-                    children: [
-                      IconButton(
-                        icon: Icon(
-                          _isPlaying ? Icons.pause : Icons.play_arrow,
-                          color: Colors.brown,
-                          size: 36,
-                        ),
-                        onPressed: () {
-                          if (_isPlaying) {
-                            _pauseAudio(); // 음성 정지 함수
-                          } else {
-                            _startAudio(); // 음성 시작 함수
-                          }
-                        },
+                  margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                  child: Center(
+                    child: Container(
+                      width: 450,
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.03),
+                        borderRadius: BorderRadius.circular(24),
                       ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Slider(
-                          value: _currentPosition,
-                          min: 0,
-                          max: _totalDuration,
-                          onChanged: (v) {
-                            // 슬라이더 이동 시 음악 진행 상태 업데이트
-                            _seekAudio(v);
-                          },
-                          activeColor: Color(0xffc06656),
-                        ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            height: 2,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(1),
+                            ),
+                            child: SliderTheme(
+                              data: SliderTheme.of(context).copyWith(
+                                activeTrackColor: const Color(0xFFE5958B),
+                                inactiveTrackColor: Colors.transparent,
+                                thumbColor: const Color(0xFFE5958B),
+                                trackHeight: 2.0,
+                                thumbShape: const RoundSliderThumbShape(
+                                  enabledThumbRadius: 4.0,
+                                ),
+                                overlayShape: const RoundSliderOverlayShape(
+                                  overlayRadius: 8.0,
+                                ),
+                              ),
+                              child: Slider(
+                                value: _currentPosition,
+                                min: 0,
+                                max: _totalDuration,
+                                onChanged: _seekAudio,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          Container(
+                            width: 48,
+                            height: 48,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: const Color(0xFFE5958B),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.1),
+                                  blurRadius: 4,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: Material(
+                              color: Colors.transparent,
+                              child: InkWell(
+                                borderRadius: BorderRadius.circular(24),
+                                onTap: () {
+                                  if (_isPlaying) {
+                                    _pauseAudio();
+                                  } else {
+                                    _startAudio();
+                                  }
+                                },
+                                child: Icon(
+                                  _isPlaying ? Icons.pause : Icons.play_arrow,
+                                  color: Colors.white,
+                                  size: 24,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(width: 8),
-                    ],
+                    ),
                   ),
                 ),
                 // 녹음 상태 표시
                 if (_isRecording) ...[
-                  ElevatedButton(
-                    onPressed: _stopRecording,
-                    child: Text('녹음 종료'),
-                  ),
+                  // 녹음 종료 버튼 삭제
                 ],
               ],
             ),
