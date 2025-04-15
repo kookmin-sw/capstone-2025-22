@@ -23,16 +23,14 @@ public class SheetPracticeRetrieveController {
      * @param userSheetId 악보 id
      * @param pageSize 조회할 연습 기록 최대 수
      * @param pageNumber pageSize*pageNumber 번째 연습기록부터 조회
-     * @param email 사용자 이메일
      * @return 악보 연습 목록 반환
     * */
     @GetMapping("/{userSheetId}/practices")
     private ResponseEntity<CustomResponseDto<List<SheetPracticeResponseDto>>> getPractices(
             @PathVariable("userSheetId") int userSheetId,
             @RequestParam("pageSize") int pageSize,
-            @RequestParam("pageNumber") int pageNumber,
-            @RequestParam("email") String email) {
-        List<SheetPracticeResponseDto> res = sheetPracticeRetrieveService.getSheetPracticeRecords(email, pageNumber, pageSize, userSheetId);
+            @RequestParam("pageNumber") int pageNumber) {
+        List<SheetPracticeResponseDto> res = sheetPracticeRetrieveService.getSheetPracticeRecords(pageNumber, pageSize, userSheetId);
         return ApiResponse.success(res);
     }
     /**
@@ -48,14 +46,12 @@ public class SheetPracticeRetrieveController {
     /**
      * 특정 악보의 대표 연습 정보 조회
      * @param userSheetId 사용자 악보 id
-     * @param email 사용자 이메일
      * @return 악보 대표 연습 정보 반환
     * */
     @GetMapping("/{userSheetId}/practices/representative")
     private ResponseEntity<CustomResponseDto<SheetPracticeRepresentResponse>> getRepresentativePractice(
-            @PathVariable("userSheetId") int userSheetId,
-            @RequestParam("email") String email) {
-        SheetPracticeRepresentResponse res = sheetPracticeRetrieveService.getRepresentSheetPractice(email, userSheetId);
+            @PathVariable("userSheetId") int userSheetId) {
+        SheetPracticeRepresentResponse res = sheetPracticeRetrieveService.getRepresentSheetPractice(userSheetId);
         return ApiResponse.success(res);
     }
 }
