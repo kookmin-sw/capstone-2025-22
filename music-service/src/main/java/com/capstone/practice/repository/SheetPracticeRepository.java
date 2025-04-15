@@ -15,12 +15,12 @@ import java.util.Optional;
 public interface SheetPracticeRepository extends JpaRepository<SheetPractice, Integer> {
     @Query("select sp " +
             "from SheetPractice sp " +
-            "where sp.userEmail=:email and sp.userSheet.userSheetId=:sheetId order by sp.createdDate DESC")
-    List<SheetPractice> findAllByEmailAndSheetId(@Param("email") String email, @Param("sheetId") Integer userSheetId, Pageable pageable);
+            "where sp.userSheet.userSheetId=:sheetId order by sp.createdDate DESC")
+    List<SheetPractice> findAllBySheetId(@Param("sheetId") Integer userSheetId, Pageable pageable);
     @Query("select sp " +
             "from SheetPractice sp " +
             "where sp.userSheet.userSheetId=:sheetId order by sp.createdDate DESC limit 1")
-    Optional<SheetPractice> findLastPracticeByEmailAndSheetId( @Param("sheetId") Integer userSheetId);
+    Optional<SheetPractice> findLastPracticeBySheetId( @Param("sheetId") Integer userSheetId);
     @Modifying
     @Query("DELETE FROM SheetPractice sp WHERE sp.userSheet.userSheetId = :userSheetId")
     void deletePracticeByUserSheetId(@Param("userSheetId") Integer userSheetId);
