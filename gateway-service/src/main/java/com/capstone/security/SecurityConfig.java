@@ -26,6 +26,7 @@ public class SecurityConfig {
             "/v3/api-docs/**",
             "/users/v3/api-docs",
             "/music/v3/api-docs",
+            "/ws/**",
     };
     private final String[] USER_WHITE_LIST = {
             "/users/nickname",
