@@ -65,8 +65,7 @@ class SheetManageControllerTest {
         SheetUpdateRequestDto requestDto = SheetUpdateRequestDto.builder()
                 .email(targetSheet.getUserEmail())
                 .name(newName).build();
-        List<SheetPractice> practiceList = sheetPracticeRepository.findAllByEmailAndSheetId(
-                targetSheet.getUserEmail(),
+        List<SheetPractice> practiceList = sheetPracticeRepository.findAllBySheetId(
                 targetSheet.getUserSheetId(),
                 PageRequest.of(0, 1));
         String lastPractice = practiceList.isEmpty() ? null : practiceList.get(0).getCreatedDate().toString();
@@ -89,8 +88,7 @@ class SheetManageControllerTest {
         SheetUpdateRequestDto requestDto = SheetUpdateRequestDto.builder()
                 .email(targetSheet.getUserEmail())
                 .color(newColor).build();
-        List<SheetPractice> practiceList = sheetPracticeRepository.findAllByEmailAndSheetId(
-                targetSheet.getUserEmail(),
+        List<SheetPractice> practiceList = sheetPracticeRepository.findAllBySheetId(
                 targetSheet.getUserSheetId(),
                 PageRequest.of(0, 1));
         String lastPractice = practiceList.isEmpty() ? null : practiceList.get(0).getCreatedDate().toString();
