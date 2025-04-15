@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        service: [auth-service, user-service, verification-service, gateway-service, music-service, discovery-service]
+        service: [auth-service, user-service, verification-service, gateway-service, music-service, discovery-service, audio-service]
 
     steps:
       # - uses: actions/checkout@v3
