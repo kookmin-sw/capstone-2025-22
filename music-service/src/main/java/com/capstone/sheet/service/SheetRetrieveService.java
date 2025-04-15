@@ -34,7 +34,7 @@ public class SheetRetrieveService {
     public List<SheetResponseDto> getSheetsByEmail(String email) {
         Stream<SheetResponseDto> userSheets = userSheetRepository.findAllByEmail(email).stream().map(userSheet -> {
             Pageable pageable = PageRequest.of(0, 1);
-            List<SheetPractice> lastPractice = sheetPracticeRepository.findAllByEmailAndSheetId(email, userSheet.getUserSheetId(), pageable);
+            List<SheetPractice> lastPractice = sheetPracticeRepository.findAllBySheetId(userSheet.getUserSheetId(), pageable);
             return lastPractice.isEmpty() ? SheetResponseDto.from(userSheet) : SheetResponseDto.from(userSheet, lastPractice.get(0).getCreatedDate());
         });
         return userSheets.toList();
@@ -48,7 +48,7 @@ public class SheetRetrieveService {
     public SheetDetailResponseDto getSheetById(int userSheetId) {
         UserSheet userSheet = userSheetRepository.findById(userSheetId)
                 .orElseThrow(() -> new DataNotFoundException("UserSheet not found"));
-        SheetPractice lastPractice = sheetPracticeRepository.findLastPracticeByEmailAndSheetId(userSheetId)
+        SheetPractice lastPractice = sheetPracticeRepository.findLastPracticeBySheetId(userSheetId)
                 .orElse(null);
         return lastPractice==null ?
                 SheetDetailResponseDto.from(userSheet, null) :

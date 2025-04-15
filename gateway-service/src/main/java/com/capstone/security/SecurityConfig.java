@@ -1,8 +1,8 @@
 package com.capstone.security;
 
-import io.swagger.v3.oas.models.servers.Server;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
 import org.springframework.security.config.web.server.SecurityWebFiltersOrder;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
@@ -23,13 +23,14 @@ public class SecurityConfig {
             "/swagger-ui/**",
             "/webjars/swagger-ui/**",
             "/swagger-resources/**",
-            "/v3/api-docs/**"
+            "/v3/api-docs/**",
+            "/users/v3/api-docs",
+            "/music/v3/api-docs",
     };
     private final String[] USER_WHITE_LIST = {
             "/users/nickname",
             "/users/email",
             "/users/password",
-            "/users/v3/api-docs",
     };
     private final String[] VERIFICATION_WHITE_LIST = {
             "/verification/**"
@@ -38,9 +39,9 @@ public class SecurityConfig {
             "/auth/**"
     };
     private final String[] MUSIC_WHITE_LIST = {
-            "/music/v3/api-docs",
+            "/sheets",
     };
-    private JwtAuthFilter jwtAuthFilter;
+    private final JwtAuthFilter jwtAuthFilter;
     public SecurityConfig(JwtAuthFilter jwtAuthFilter) {
         this.jwtAuthFilter = jwtAuthFilter;
     }
@@ -56,7 +57,7 @@ public class SecurityConfig {
                     exchange.pathMatchers(USER_WHITE_LIST).permitAll();
                     exchange.pathMatchers(VERIFICATION_WHITE_LIST).permitAll();
                     exchange.pathMatchers(AUTH_WHITE_LIST).permitAll();
-                    exchange.pathMatchers(MUSIC_WHITE_LIST).permitAll();
+                    exchange.pathMatchers(HttpMethod.GET, MUSIC_WHITE_LIST).permitAll();
                     exchange.anyExchange().authenticated();
                 });
         return http.build();
