@@ -24,7 +24,6 @@ public class CustomProvider {
                     log.error(error.getMessage());
                     return null;
                 }
-                log.info(audioMessageDto.toString());
                 return audioMessageDto.toString();
             }).get();
             return result != null;

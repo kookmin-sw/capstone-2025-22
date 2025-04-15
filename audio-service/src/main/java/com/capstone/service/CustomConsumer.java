@@ -2,13 +2,14 @@ package com.capstone.service;
 
 import com.capstone.client.AudioModelClient;
 import com.capstone.dto.AudioMessageDto;
-import com.capstone.dto.UserResponseDto;
+import com.capstone.dto.OnsetDto;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
-import reactor.core.publisher.Mono;
 
+@Slf4j
 @Service
 public class CustomConsumer {
     private final SimpMessagingTemplate messagingTemplate;
@@ -19,17 +20,10 @@ public class CustomConsumer {
     }
     @KafkaListener(topics = "audio", groupId = "${spring.kafka.consumer.group-id}")
     public void sendAudioConversionResult(@Payload final AudioMessageDto audioMessageDto) {
-        audioModelClient.testUserExists(audioMessageDto.getMessage())
-                .switchIfEmpty(Mono.just(new UserResponseDto()))
-                .doOnNext(res -> {
-                    if(res.getEmail()==null) {
-                        audioMessageDto.setMessage("no such user");
-                        messagingTemplate.convertAndSend("/topic/audio", audioMessageDto);
-                    }
-                    else messagingTemplate.convertAndSend("/topic/audio", audioMessageDto);
-                })
+        OnsetDto.OnsetRequestDto requestDto = OnsetDto.OnsetRequestDto.fromMessageDto(audioMessageDto);
+        audioModelClient.getOnsetFromWav(requestDto)
+                .doOnNext(res -> messagingTemplate.convertAndSend("/topic/onset/" + audioMessageDto.getEmail(), res))
                 .subscribe();
-//        messagingTemplate.convertAndSend("/topic/audio", audioMessageDto.toString());
     }
     @KafkaListener(topics = "sheet", groupId = "${spring.kafka.consumer.group-id}")
     public void sendSheetConversionResult(@Payload final AudioMessageDto audioMessageDto) {
