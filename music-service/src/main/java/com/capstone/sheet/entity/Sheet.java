@@ -19,6 +19,9 @@ public class Sheet {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int sheetId;
 
+    @Column
+    private String author;
+
     @Column(columnDefinition = "Text")
     private String sheetInfo;
 
