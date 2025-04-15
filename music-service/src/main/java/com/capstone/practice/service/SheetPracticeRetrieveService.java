@@ -23,19 +23,17 @@ public class SheetPracticeRetrieveService {
     }
     /**
      * 특정 사용자의 특정 악보 연습 기록을 모두 조회 (날짜순 내림차순 정렬)
-     * @param userEmail 사용자 이메일
      * @param pageNumber 조회할 기록의 최대 수
      * @param pageSize pageNumber*pageSize 번째 기록부터 조회
      * @param userSheetId 악보 id
      * @return 악보 연습 기록 목록 (최대 수 : pageNumber)
     * */
     public List<SheetPracticeResponseDto> getSheetPracticeRecords(
-            String userEmail,
             int pageNumber,
             int pageSize,
             int userSheetId){
         return sheetPracticeRepository
-                .findAllByEmailAndSheetId(userEmail, userSheetId, PageRequest.of(pageNumber, pageSize))
+                .findAllBySheetId(userSheetId, PageRequest.of(pageNumber, pageSize))
                 .stream().map(SheetPracticeResponseDto::from).toList();
     }
     /**
@@ -52,8 +50,8 @@ public class SheetPracticeRetrieveService {
     /**
      * 특정 악보 연습에 대한 대표 연습 정보 조회
     * */
-    public SheetPracticeRepresentResponse getRepresentSheetPractice(String userEmail, int userSheetId){
-        SheetPractice sheetPractice = sheetPracticeRepository.findLastPracticeByEmailAndSheetId(userSheetId)
+    public SheetPracticeRepresentResponse getRepresentSheetPractice(int userSheetId){
+        SheetPractice sheetPractice = sheetPracticeRepository.findLastPracticeBySheetId(userSheetId)
                 .orElseThrow(() -> new DataNotFoundException("practice record not exists"));
         UserSheet userSheet = userSheetRepository.findById(userSheetId)
                 .orElseThrow(() -> new DataNotFoundException("user sheet not found"));

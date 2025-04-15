@@ -61,7 +61,7 @@ public class SheetManageService {
         userSheet.setSheetName(newName);
         // get last practice date
         Pageable pageable = PageRequest.of(0, 1);
-        List<SheetPractice> lastPractice = sheetPracticeRepository.findAllByEmailAndSheetId(userEmail, userSheetId, pageable);
+        List<SheetPractice> lastPractice = sheetPracticeRepository.findAllBySheetId(userSheetId, pageable);
         return lastPractice.isEmpty() ? SheetResponseDto.from(userSheet) : SheetResponseDto.from(userSheet, lastPractice.get(0).getCreatedDate());
     }
     /**
@@ -84,7 +84,7 @@ public class SheetManageService {
         userSheet.setColor(color);
         // get last practice date
         Pageable pageable = PageRequest.of(0, 1);
-        List<SheetPractice> lastPractice = sheetPracticeRepository.findAllByEmailAndSheetId(userEmail, userSheetId, pageable);
+        List<SheetPractice> lastPractice = sheetPracticeRepository.findAllBySheetId(userSheetId, pageable);
         return lastPractice.isEmpty() ? SheetResponseDto.from(userSheet) : SheetResponseDto.from(userSheet, lastPractice.get(0).getCreatedDate());
     }
     /**
