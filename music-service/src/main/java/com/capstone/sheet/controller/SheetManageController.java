@@ -4,6 +4,7 @@ import com.capstone.enums.SuccessFlag;
 import com.capstone.exception.InvalidRequestException;
 import com.capstone.response.ApiResponse;
 import com.capstone.response.CustomResponseDto;
+import com.capstone.sheet.dto.SheetCreateRequestDto;
 import com.capstone.sheet.dto.SheetListRequestDto;
 import com.capstone.sheet.dto.SheetResponseDto;
 import com.capstone.sheet.dto.SheetUpdateRequestDto;
@@ -18,6 +19,17 @@ public class SheetManageController {
     public SheetManageController(SheetManageService sheetManageService) {
         this.sheetManageService = sheetManageService;
     }
+    /**
+     * 악보와 사용자 악보 생성
+     * @param requestDto 악보 및 사용자별 악보 정보
+     * @return SheetResponseDto
+    * */
+    @PostMapping("")
+    public ResponseEntity<CustomResponseDto<SheetResponseDto>> createSheet(
+            @RequestBody SheetCreateRequestDto requestDto) {
+        return ApiResponse.success(sheetManageService.createSheetAndUserSheet(requestDto));
+    }
+
     /**
      * 악보 이름 수정
      * @param userSheetId 사용자 악보 id

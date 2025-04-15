@@ -18,7 +18,6 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -52,31 +51,22 @@ class SheetPracticeRetrieveServiceTest {
     void getSheetPracticeRecords() {
         // given
         String email = TestDataGenerator.userEmails.get(0);
-        String ghostEmail = UUID.randomUUID().toString();
         UserSheet userSheet = userSheetRepository.findAllByEmail(email).get(0);
         int pageNumber = 0;
         int overBoundPageSize = Integer.MAX_VALUE;
         int pageSize = 3;
         // when
         List<SheetPracticeResponseDto> res = sheetPracticeRetrieveService.getSheetPracticeRecords(
-                email,
                 pageNumber,
                 pageSize,
                 userSheet.getUserSheetId());
         List<SheetPracticeResponseDto> lengthMustBeTen = sheetPracticeRetrieveService.getSheetPracticeRecords(
-                email,
                 pageNumber,
                 overBoundPageSize,
-                userSheet.getUserSheetId());
-        List<SheetPracticeResponseDto> mustBeZero = sheetPracticeRetrieveService.getSheetPracticeRecords(
-                ghostEmail,
-                pageNumber,
-                pageSize,
                 userSheet.getUserSheetId());
         // then
         assert res.size()==pageSize;
         assert lengthMustBeTen.size()==TestDataGenerator.sheetPracticesPerUserSheet;
-        assert mustBeZero.isEmpty();
     }
 
     @Test
@@ -85,7 +75,6 @@ class SheetPracticeRetrieveServiceTest {
         String email = TestDataGenerator.userEmails.get(0);
         UserSheet userSheet = userSheetRepository.findAllByEmail(email).get(0);
         SheetPracticeResponseDto sheetPractice = sheetPracticeRetrieveService.getSheetPracticeRecords(
-                email,
                 0,
                 1,
                 userSheet.getUserSheetId()).get(0);
@@ -109,13 +98,11 @@ class SheetPracticeRetrieveServiceTest {
                 .practiceInfo("info")
                 .build());
         // when
-        SheetPracticeRepresentResponse res = sheetPracticeRetrieveService.getRepresentSheetPractice(email, userSheet.getUserSheetId());
+        SheetPracticeRepresentResponse res = sheetPracticeRetrieveService.getRepresentSheetPractice(userSheet.getUserSheetId());
         // then
         assert res.getSheetName().equals(userSheet.getSheetName());
         assert res.getMaxScore() == Integer.MAX_VALUE;
         assert res.getUserSheetId() == userSheet.getUserSheetId();
-        assertThrows(DataNotFoundException.class, () -> {
-           sheetPracticeRetrieveService.getRepresentSheetPractice(email, ghostUserSheetId);
-        });
+        assertThrows(DataNotFoundException.class, () -> sheetPracticeRetrieveService.getRepresentSheetPractice(ghostUserSheetId));
     }
 }
