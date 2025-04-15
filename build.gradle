@@ -77,4 +77,10 @@ subprojects {
 		// actuator
 		implementation 'org.springframework.boot:spring-boot-starter-actuator'
 	}
+
+	tasks.withType(JavaCompile).tap {
+		configureEach {
+			options.encoding = 'UTF-8'
+		}
+	}
 }
