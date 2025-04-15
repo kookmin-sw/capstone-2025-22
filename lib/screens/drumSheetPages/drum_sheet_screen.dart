@@ -1,10 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:file_selector/file_selector.dart';
-import 'package:flutter/services.dart';
-import 'dart:math';
-import 'dart:io';
 
 import '../../models/sheet.dart';
 import 'widgets/sheet_card.dart';
@@ -783,42 +779,46 @@ class _SheetListScreenState extends State<SheetListScreen> {
                             _confirmPracticeStart(sheet);
                           }
                         },
-                        child: Stack(
-                          children: [
-                            SheetCard(sheet: sheet),
-                            if (_isSelectionMode)
-                              Positioned(
-                                bottom: 65,
-                                left: 0,
-                                right: 0,
-                                child: GestureDetector(
-                                  onTap: () => _onSheetSelected(sheet),
-                                  child: Container(
-                                    width: 28,
-                                    height: 28,
-                                    decoration: BoxDecoration(
-                                      shape: BoxShape.circle,
-                                      border: Border.all(
+                        child: SizedBox(
+                          width: 100,
+                          height: 150,
+                          child: Stack(
+                            children: [
+                              SheetCard(sheet: sheet),
+                              if (_isSelectionMode)
+                                Positioned(
+                                  bottom: 65,
+                                  left: 0,
+                                  right: 0,
+                                  child: GestureDetector(
+                                    onTap: () => _onSheetSelected(sheet),
+                                    child: Container(
+                                      width: 28,
+                                      height: 28,
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        border: Border.all(
+                                          color: sheet.isSelected
+                                              ? Colors.transparent
+                                              : Colors.black26,
+                                          width: 2,
+                                          style: sheet.isSelected
+                                              ? BorderStyle.none
+                                              : BorderStyle.solid,
+                                        ),
                                         color: sheet.isSelected
-                                            ? Colors.transparent
-                                            : Colors.black26,
-                                        width: 2,
-                                        style: sheet.isSelected
-                                            ? BorderStyle.none
-                                            : BorderStyle.solid,
+                                            ? Colors.black54
+                                            : Colors.transparent,
                                       ),
-                                      color: sheet.isSelected
-                                          ? Colors.black54
-                                          : Colors.transparent,
+                                      child: sheet.isSelected
+                                          ? const Icon(Icons.check,
+                                              color: Colors.white, size: 18)
+                                          : null,
                                     ),
-                                    child: sheet.isSelected
-                                        ? const Icon(Icons.check,
-                                            color: Colors.white, size: 18)
-                                        : null,
                                   ),
                                 ),
-                              ),
-                          ],
+                            ],
+                          ),
                         ),
                       )),
                 ],
