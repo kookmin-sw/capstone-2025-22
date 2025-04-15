@@ -5,6 +5,7 @@ ARG MODULE_NAME=verification-service
 ARG COMMON_MODULE1="common"
 ARG COMMON_MODULE2="common-auth"
 ARG COMMON_MODULE3="common-redis"
+ARG CONFIG_STORE="config-backend"
 WORKDIR /app
 # copy from root module
 COPY gradlew /app/
@@ -17,6 +18,8 @@ COPY /${MODULE_NAME} /app/module
 COPY /${COMMON_MODULE1} /app/${COMMON_MODULE1}
 COPY /${COMMON_MODULE2} /app/${COMMON_MODULE2}
 COPY /${COMMON_MODULE3} /app/${COMMON_MODULE3}
+# copy submodule
+COPY /${CONFIG_STORE} /app/${CONFIG_STORE}
 # ensure execute gradlew
 RUN chmod +x gradlew
 # build project
