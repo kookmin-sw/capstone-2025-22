@@ -3,6 +3,7 @@ package com.capstone.sheet.service;
 import com.capstone.data.TestDataGenerator;
 import com.capstone.exception.DataNotFoundException;
 import com.capstone.exception.InvalidRequestException;
+import com.capstone.sheet.dto.SheetCreateRequestDto;
 import com.capstone.sheet.dto.SheetResponseDto;
 import com.capstone.sheet.entity.UserSheet;
 import com.capstone.sheet.repository.UserSheetRepository;
@@ -43,6 +44,24 @@ class SheetManageServiceTest {
     @AfterEach
     void tearDown() {
         testDataGenerator.deleteAllTestData();
+    }
+
+    @Test
+    void createSheetTest_success(){
+        // given
+        SheetCreateRequestDto requestDto = SheetCreateRequestDto.builder()
+                .sheetName("test")
+                .sheetInfo("test")
+                .author("test")
+                .color("#FFFFFF")
+                .userEmail("test@test.com").build();
+        // when
+        SheetResponseDto res = sheetManageService.createSheetAndUserSheet(requestDto);
+        // then
+        assertNotNull(res);
+        assert res.getSheetName().equals(requestDto.getSheetName());
+        assert res.getAuthor().equals(requestDto.getAuthor());
+        assert res.getColor().equals(requestDto.getColor());
     }
 
     @Test
