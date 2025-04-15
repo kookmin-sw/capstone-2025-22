@@ -4,8 +4,11 @@ import com.capstone.exception.DataNotFoundException;
 import com.capstone.exception.InvalidRequestException;
 import com.capstone.practice.entity.SheetPractice;
 import com.capstone.practice.repository.SheetPracticeRepository;
+import com.capstone.sheet.dto.SheetCreateRequestDto;
 import com.capstone.sheet.dto.SheetResponseDto;
+import com.capstone.sheet.entity.Sheet;
 import com.capstone.sheet.entity.UserSheet;
+import com.capstone.sheet.repository.SheetRepository;
 import com.capstone.sheet.repository.UserSheetRepository;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -17,12 +20,26 @@ import java.util.List;
 @Service
 public class SheetManageService {
     UserSheetRepository userSheetRepository;
+    SheetRepository sheetRepository;
     SheetPracticeRepository sheetPracticeRepository;
     public SheetManageService(
             UserSheetRepository userSheetRepository,
+            SheetRepository sheetRepository,
             SheetPracticeRepository sheetPracticeRepository) {
         this.userSheetRepository = userSheetRepository;
+        this.sheetRepository = sheetRepository;
         this.sheetPracticeRepository = sheetPracticeRepository;
+    }
+    /**
+     * 악보 및 사용자 악보 생성
+     * @param requestDto 악보 및 사용자 정보
+     * @return SheetResponseDto
+    * */
+    @Transactional
+    public SheetResponseDto createSheetAndUserSheet(SheetCreateRequestDto requestDto) {
+        Sheet sheet = sheetRepository.save(requestDto.toSheet());
+        UserSheet userSheet = userSheetRepository.save(requestDto.toUserSheet(sheet));
+        return SheetResponseDto.from(userSheet);
     }
     /**
      * 사용자 이메일, 악보 id 기반으로 악보 이름 수정
