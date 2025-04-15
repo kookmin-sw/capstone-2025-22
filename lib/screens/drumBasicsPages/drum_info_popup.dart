@@ -8,8 +8,10 @@ class DrumInfoPopup extends StatefulWidget {
   const DrumInfoPopup({
     super.key,
     required this.title, // 팝업 제목 필수 입력
-    this.imagePath, // 이미지 경로 (선택 사항)
-  });
+    String? imagePath, // 이미지 경로를 선택적으로 받음
+  }) : imagePath = (title == '드럼 종류')
+            ? 'assets/images/drum_kit.jpg' // 제목이 '드럼 종류'일 때 기본 이미지 경로
+            : imagePath ?? 'assets/images/drum_kit.jpg';
 
   @override
   State<DrumInfoPopup> createState() => _DrumInfoPopupState();
@@ -133,6 +135,7 @@ class _DrumInfoPopupState extends State<DrumInfoPopup> {
 
   /// 이미지 (옵션)
   SizedBox _buildImage() {
+    print('Image path: ${widget.imagePath}');
     return widget.imagePath == null
         ? const SizedBox.shrink() // 이미지가 없으면 빈 위젯 return
         : SizedBox(
