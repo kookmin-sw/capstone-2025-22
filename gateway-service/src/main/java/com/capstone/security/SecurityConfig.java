@@ -1,5 +1,6 @@
 package com.capstone.security;
 
+import io.netty.handler.codec.http.cors.CorsConfig;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -10,6 +11,7 @@ import org.springframework.security.web.server.SecurityWebFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.reactive.CorsWebFilter;
 import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource;
+import org.springframework.web.server.ServerWebExchange;
 
 import java.util.List;
 
@@ -40,7 +42,7 @@ public class SecurityConfig {
             "/auth/**"
     };
     private final String[] MUSIC_WHITE_LIST = {
-            "/sheets",
+            "/sheets/**",
     };
     private final JwtAuthFilter jwtAuthFilter;
     public SecurityConfig(JwtAuthFilter jwtAuthFilter) {
@@ -65,13 +67,21 @@ public class SecurityConfig {
     }
     @Bean
     public CorsWebFilter corsWebFilter(){
-        CorsConfiguration config = new CorsConfiguration();
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        config.setAllowedHeaders(List.of("*"));
-        config.setExposedHeaders(List.of("*"));
-        config.setAllowedOriginPatterns(List.of("*"));
-        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE"));
-        source.registerCorsConfiguration("/**", config);
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource(){
+            @Override
+            public CorsConfiguration getCorsConfiguration(ServerWebExchange exchange) {
+                String path = exchange.getRequest().getURI().getPath();
+                if(path.startsWith("/ws")){
+                    return null;
+                }
+                CorsConfiguration config = new CorsConfiguration();
+                config.setAllowedHeaders(List.of("*"));
+                config.setExposedHeaders(List.of("*"));
+                config.setAllowedOriginPatterns(List.of("*"));
+                config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE"));
+                return config;
+            }
+        };
         return new CorsWebFilter(source);
     }
 }
