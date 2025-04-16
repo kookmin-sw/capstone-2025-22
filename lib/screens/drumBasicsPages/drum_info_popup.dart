@@ -10,8 +10,8 @@ class DrumInfoPopup extends StatefulWidget {
     required this.title, // 팝업 제목 필수 입력
     String? imagePath, // 이미지 경로를 선택적으로 받음
   }) : imagePath = (title == '드럼 종류')
-            ? 'assets/images/drum_kit.jpg' // 제목이 '드럼 종류'일 때 기본 이미지 경로
-            : imagePath ?? 'assets/images/drum_kit.jpg';
+            ? 'assets/images/drum_kit.png' // 제목이 '드럼 종류'일 때 기본 이미지 경로
+            : imagePath ?? 'assets/images/drum_kit.png';
 
   @override
   State<DrumInfoPopup> createState() => _DrumInfoPopupState();
