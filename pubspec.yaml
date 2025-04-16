@@ -46,8 +46,6 @@ dependencies:
   cupertino_icons: ^1.0.8
   flutter_riverpod: ^2.6.1 # 상태관리를 위한 패키지
   riverpod_annotation: ^2.6.1
-  just_audio: ^0.9.30 # Add the latest version of just_audio
-
 
 
 
