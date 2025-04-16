@@ -202,3 +202,6 @@ __pycache__/
 *.pyo
 *.pyd
 .Python
+macos/Flutter/ephemeral/Flutter-Generated.xcconfig
+
+.venv/*
