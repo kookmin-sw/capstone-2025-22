@@ -1,4 +1,5 @@
 import 'package:capstone_2025/screens/drumBasicsPages/drum_basics_page.dart';
+import 'package:capstone_2025/screens/drumPatternFillPages/pattern_fill_main.dart';
 import 'package:capstone_2025/screens/drumSheetPages/drum_sheet_screen.dart';
 import 'package:capstone_2025/screens/drumPatternFillPages/test.dart';
 import 'package:capstone_2025/screens/mainPages/my_page.dart';
@@ -23,7 +24,7 @@ class _NavigationScreensState extends State<NavigationScreens> {
       case 1: // 메트로놈
         return MyPage();
       case 2: // 패턴 및 필인 연습
-        return TestPage(); // 테스트 페이지. 수정 필요
+        return PatternFillMain(); // 테스트 페이지. 수정 필요
       case 3: // 악보 연습
         return DrumSheetScreen();
       case 4: // 마이페이지
