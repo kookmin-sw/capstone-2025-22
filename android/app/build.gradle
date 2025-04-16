@@ -5,10 +5,8 @@ plugins {
 }
 
 android {
+    namespace "com.example.capstone_2025"
     compileSdkVersion rootProject.findProperty("android.compileSdkOverride")?.toInteger() ?: 34
-
-
-    namespace = "com.example.capstone_2025"
 
     defaultConfig {
         applicationId = "com.example.capstone_2025"
