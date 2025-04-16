@@ -27,7 +27,7 @@ public class RouteLocatorConfig {
                 .route("user-service", r -> r.path("/users/**").uri(userServiceUrl))
                 .route("auth-service", r -> r.path("/auth/**").uri(authServiceUrl))
                 .route("verification-service", r -> r.path("/verification/**").uri(verificationServiceUrl))
-                .route("music-service", r-> r.path("/music/**").uri(musicServiceUrl))
+                .route("music-service", r-> r.path("/sheets/**").uri(musicServiceUrl))
                 .route("audio-service", r -> r.path("/ws/**").uri(audioServiceUrl))
                 .build();
     }
