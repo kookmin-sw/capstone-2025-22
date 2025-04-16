@@ -6,11 +6,11 @@ plugins {
 
 android {
     namespace "com.example.capstone_2025"
-    compileSdkVersion rootProject.findProperty("android.compileSdkOverride")?.toInteger() ?: 34
+    compileSdkVersion 35
 
     defaultConfig {
         applicationId = "com.example.capstone_2025"
-        minSdk = 21  // 최소 SDK 버전
+        minSdk = 24  // 최소 SDK 버전
         targetSdk = 35  // 최신 Android 버전 적용
         versionCode = 1
         versionName = "1.0"
