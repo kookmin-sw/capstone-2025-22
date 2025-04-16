@@ -15,41 +15,45 @@ class _PatternFillMainState extends State<PatternFillMain> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Expanded(
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            // crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Expanded(
-                flex: 3,
-                child: Center(
-                  child: linedText("LEVEL", 35, Colors.black54, Colors.white,
-                      5), // 테두리 있는 텍스트
-                ),
-              ),
-              Spacer(flex: 1),
-              Expanded(
-                flex: 20,
-                child: SingleChildScrollView(
-                  child: Column(
-                    children: [
-                      clickedListItem(context, 1, true, false),
-                      clickedListItem(context, 2, false, false),
-                      clickedListItem(context, 3, false, true),
-                      clickedListItem(context, 4, false, true),
-                      clickedListItem(context, 5, false, true),
-                      clickedListItem(context, 6, false, true),
-                      clickedListItem(context, 7, false, true),
-                      clickedListItem(context, 8, false, true),
-                      clickedListItem(context, 9, false, true),
-                    ],
+      body: Column(
+        children: [
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                // crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Expanded(
+                    flex: 3,
+                    child: Center(
+                      child: linedText("LEVEL", 35, Colors.black45,
+                          Colors.white, 5.5), // 테두리 있는 텍스트
+                    ),
                   ),
-                ),
-              )
-            ],
+                  Spacer(flex: 1),
+                  Expanded(
+                    flex: 20,
+                    child: SingleChildScrollView(
+                      child: Column(
+                        children: [
+                          clickedListItem(context, 1, true, false),
+                          clickedListItem(context, 2, false, false),
+                          clickedListItem(context, 3, false, true),
+                          clickedListItem(context, 4, false, true),
+                          clickedListItem(context, 5, false, true),
+                          clickedListItem(context, 6, false, true),
+                          clickedListItem(context, 7, false, true),
+                          clickedListItem(context, 8, false, true),
+                          clickedListItem(context, 9, false, true),
+                        ],
+                      ),
+                    ),
+                  )
+                ],
+              ),
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
@@ -60,11 +64,11 @@ class _PatternFillMainState extends State<PatternFillMain> {
     return InkWell(
       onTap: () {
         if (!isLevelLocked) {
+          openModal(context, index);
+          // 레벨 클리어 시 모달 열기
           // 레벨 잠금 해제
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => PatternFillScreen()),
-          );
+
+          // );
         }
       },
       child: patternFillList(
@@ -72,6 +76,92 @@ class _PatternFillMainState extends State<PatternFillMain> {
         index,
         isLevelCleared,
         isLevelLocked,
+      ),
+    );
+  }
+
+  Widget modalBtn(BuildContext context, String text, Color backgroundColor,
+      bool isTextblack) {
+    // 모달 버튼
+    return Container(
+      padding: const EdgeInsets.all(5),
+      margin: const EdgeInsets.only(left: 0, right: 0),
+      width: 155,
+      // MediaQuery.of(context).size.width * 0.168,
+      height: 57,
+      // MediaQuery.of(context).size.height * 0.135,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(15),
+      ),
+      child: Text(text,
+          style: TextStyle(
+              color: isTextblack ? Colors.black : Colors.white,
+              fontSize: 15,
+              fontWeight: FontWeight.w500)),
+    );
+  }
+
+  void openModal(BuildContext context, int index) {
+    // 모달 열기
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        alignment: Alignment.center,
+        insetPadding: EdgeInsets.symmetric(horizontal: 0, vertical: 0),
+        contentPadding: EdgeInsets.only(top: 20, bottom: 10),
+        content: SizedBox(
+          width: 380,
+          height: 170,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(top: 15, bottom: 5),
+                child: Text(
+                  'Basic Pattern $index',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 21,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF4A4A4A),
+                  ),
+                ),
+              ),
+              Text(
+                '연습을 시작하시겠습니까?',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 18,
+                  color: Color(0xFF4A4A4A),
+                ),
+              ),
+              const SizedBox(height: 20),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                    child: modalBtn(context, '취소',
+                        Color.fromARGB(255, 205, 203, 202), true),
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => PatternFillScreen()));
+                    },
+                    child: modalBtn(context, '확인', Color(0xffD97D6C), false),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
