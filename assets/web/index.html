@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Drum Sheet Viewer</title>
+  <script src="./js/opensheetmusicdisplay.min.js"></script>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      background: white;
+      display: flex;
+      justify-content: center;
+      overflow: hidden;
+    }
+    #osmd-container {
+      width: 100vw;
+      height: 100vh;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
+    }
+    .osmd-cursor {
+      display: none !important;
+    }
+  </style>
+</head>
+<body>
+  <div id="osmd-container"></div>
+
+  <script>
+    let osmd;
+    let xmlData = "";
+    let currentLine = 0;
+    let currentNoteIndex = 0;
+    let notePositions = [];
+    let isInitialized = false;
+    let isRendering = false;
+    let totalDuration = 0;
+    let startTime = 0;
+
+    const defaultOptions = {
+      autoResize: false,
+      drawingParameters: "compact",
+      drawPartNames: false,
+      drawTitle: false,
+      drawComposer: false,
+      drawMeasureNumbers: false,
+      drawTimeSignatures: true,
+      drawMetronomeMarks: true,
+      renderSingleHorizontalStaffline: false,
+      pageFormat: "Endless",
+      scale: 1.0,
+      followCursor: false,
+      measureNumberInterval: 4,
+      stretchLastSystemLine: true,
+      horizontalScrolling: false,
+      justifyLastLine: true,
+      spacingFactorSoftmax: 10,
+      spacingBetweenSystemLines: 0,
+      systemDistance: 0,
+      percussionOneLineDrumStyle: true,
+      percussionUseDrumClef: true,
+      defaultColorNotehead: "#000000",
+      defaultColorStem: "#000000",
+      defaultFontFamily: "Arial"
+    };
+
+    async function startOSMD(xml) {
+      try {
+        if (osmd) {
+          osmd.clear();
+        }
+        
+        xmlData = xml;
+        osmd = new opensheetmusicdisplay.OpenSheetMusicDisplay("osmd-container", defaultOptions);
+        
+        await osmd.load(xmlData);
+        if (!isRendering) {
+          isRendering = true;
+          await osmd.render();
+          calculateNotePositions();
+          isInitialized = true;
+          isRendering = false;
+          startTime = Date.now();
+        }
+      } catch (error) {
+        console.error('Error in startOSMD:', error);
+        isRendering = false;
+      }
+    }
+
+    function calculateNotePositions() {
+      try {
+        console.log("📏 Calculating note positions..."); // ✅ 시작 로그
+
+        notePositions = [];
+        if (!osmd?.graphic?.measureList?.[0]) return;
+
+        const measureList = osmd.graphic.measureList[0];
+        let totalWidth = 0;
+
+        measureList.forEach(measure => {
+          measure?.staffEntries?.forEach(staffEntry => {
+            if (staffEntry?.graphicalVoiceEntries) {
+              staffEntry.graphicalVoiceEntries.forEach(voiceEntry => {
+                if (voiceEntry?.notes) {
+                  voiceEntry.notes.forEach(note => {
+                    if (note?.boundingBox) {
+                      const absoluteX =
+                        measure.boundingBox.x +
+                        staffEntry.boundingBox.x +
+                        note.boundingBox.x;
+                      notePositions.push({
+                        x: absoluteX,
+                        width: note.boundingBox.width
+                    });
+                      totalWidth = Math.max(
+                        totalWidth,
+                        absoluteX + note.boundingBox.width
+                      );
+                    }
+                  });
+                }
+              });
+            }
+          });
+        });
+
+        notePositions.sort((a, b) => a.x - b.x);
+
+        // Calculate total duration based on tempo and number of notes
+        const tempo = 120; // BPM
+        const beatDuration = 60000 / tempo; // ms per beat
+        totalDuration = (beatDuration * notePositions.length) / 4; // 16th notes
+
+        console.log("🎯 Total notes found:", notePositions.length); // ✅ 완료 로그
+
+        return totalWidth;
+      } catch (error) {
+        console.error("Error calculating note positions:", error);
+        return 0;
+      }
+    }
+
+    async function loadLine(lineNumber) {
+      console.log("📥 loadLine called for line:", lineNumber);
+      if (!isInitialized || isRendering) return;
+
+      try {
+        currentLine = lineNumber;
+        currentNoteIndex = 0;
+        if (!osmd || !xmlData) return;
+
+        const measuresPerLine = 4;
+        const start = lineNumber * measuresPerLine;
+        const end = start + measuresPerLine;
+
+        isRendering = true;
+
+        osmd.setOptions({
+          ...defaultOptions,
+          drawFromMeasureNumber: start + 1,
+          drawUpToMeasureNumber: end,
+        });
+        await osmd.load(xmlData);
+        await osmd.render();
+        calculateNotePositions();
+        startTime = Date.now();
+      } catch (error) {
+        console.error('Error loading line:', error);
+      } finally {
+        isRendering = false;
+      }
+    }
+
+
+
+    function getNoteCountForLine(lineIndex) {
+      return notePositions.length;
+    }
+
+    function getTotalLineCount() {
+      if (!osmd?.sheet?.sourceMeasures) return 1;
+      return Math.ceil(osmd.sheet.sourceMeasures.length / 4);
+    }
+
+    function moveNextCursorStep() {
+      try {
+        console.log("➡️ Moving to note index:", currentNoteIndex);
+        if (currentNoteIndex < notePositions.length) {
+          const note = notePositions[currentNoteIndex];
+          currentNoteIndex++;
+          
+          const elapsedTime = Date.now() - startTime;
+          const progress = Math.min(elapsedTime / totalDuration, 1);
+          
+          const totalWidth = osmd.graphic.musicSystems[0].boundingBox.width;
+          const normalizedX = note.x / totalWidth;
+          
+          window.flutter_inappwebview.callHandler('onCursorStep', {
+            x: normalizedX,
+            totalWidth: totalWidth,
+            progress: progress
+          });
+        }
+      } catch (error) {
+        console.error('Error in moveNextCursorStep:', error);
+      }
+    }
+
+    window.addEventListener("flutterInAppWebViewPlatformReady", async function (_) {
+      try {
+        const xml = await window.flutter_inappwebview.callHandler("sendFileToOSMD");
+        if (xml) {
+          await startOSMD(xml);
+          await loadLine(0);
+        } else {
+          console.error('No XML data received');
+        }
+      } catch (error) {
+        console.error('Error in initialization:', error);
+      }
+    });
+  </script>
+</body>
+</html>

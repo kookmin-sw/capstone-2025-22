@@ -1,28 +1,29 @@
 import 'dart:io';
 import 'dart:async';
-import 'dart:typed_data';
+import 'package:capstone_2025/screens/mainPages/navigation_screens.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart';
 import 'package:audioplayers/audioplayers.dart' as ap;
 import 'package:flutter_sound/flutter_sound.dart' as fs;
-import 'package:web_socket_channel/web_socket_channel.dart';
-import 'package:capstone_2025/screens/mainPages/navigation_screens.dart';
+import 'package:capstone_2025/screens/drumPatternFillPages/pattern_fill_main.dart';
 
 class PatternFillScreen extends StatelessWidget {
-  const PatternFillScreen({super.key});
+  final String title;
+
+  const PatternFillScreen({super.key, required this.title});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       theme: ThemeData(scaffoldBackgroundColor: const Color(0xFFF2F1F3)),
-      home: const CountdownPage(),
-      debugShowCheckedModeBanner: false,
+      home: CountdownPage(title: title),
     );
   }
 }
 
 class CountdownPage extends StatefulWidget {
-  const CountdownPage({super.key});
+  final String title;
+
+  const CountdownPage({super.key, required this.title});
 
   @override
   State<CountdownPage> createState() => _CountdownPageState();
@@ -66,13 +67,17 @@ class _CountdownPageState extends State<CountdownPage>
     // playerState 업데이트
     _audioPlayer.onPlayerStateChanged.listen((state) {
       if (state == ap.PlayerState.playing) {
-        setState(() {
-          _isPlaying = true;
-        });
+        if (mounted) {
+          setState(() {
+            _isPlaying = true;
+          });
+        }
       } else {
-        setState(() {
-          _isPlaying = false;
-        });
+        if (mounted) {
+          setState(() {
+            _isPlaying = false;
+          });
+        }
       }
     });
 
@@ -109,9 +114,11 @@ class _CountdownPageState extends State<CountdownPage>
 
   void _pauseAudio() async {
     await _audioPlayer.pause();
-    setState(() {
-      _isPlaying = false;
-    });
+    if (mounted) {
+      setState(() {
+        _isPlaying = false;
+      });
+    }
   }
 
   void _seekAudio(double position) async {
@@ -124,17 +131,21 @@ class _CountdownPageState extends State<CountdownPage>
 
     await _recorder.startRecorder(
         toFile: 'drum_performance.aac'); // 드럼 연주 녹음 시작
-    setState(() {
-      _isRecording = true;
-    });
+    if (mounted) {
+      setState(() {
+        _isRecording = true;
+      });
+    }
   }
 
   // 카운트다운을 시작하는 함수
   void _startCountdown() {
-    setState(() {
-      isCountingDown = true;
-      countdown = 3;
-    });
+    if (mounted) {
+      setState(() {
+        isCountingDown = true;
+        countdown = 3;
+      });
+    }
 
     _overlayController.forward(); // 카운트다운 애니메이션 시작
 
@@ -163,9 +174,11 @@ class _CountdownPageState extends State<CountdownPage>
   // 녹음 종료 함수
   void _stopRecording() async {
     String? filePath = await _recorder.stopRecorder(); // 녹음 종료 후 파일 경로 반환
-    setState(() {
-      _isRecording = false;
-    });
+    if (mounted) {
+      setState(() {
+        _isRecording = false;
+      });
+    }
 
     // 녹음된 오디오 파일을 서버로 전송
     if (filePath != null) {
@@ -200,7 +213,7 @@ class _CountdownPageState extends State<CountdownPage>
             Shadow(
               offset: const Offset(2, 2),
               blurRadius: 4,
-              color: Colors.black.withOpacity(0.5),
+              color: Colors.black.withValues(alpha: 0.5),
             ),
           ],
         ),
@@ -228,10 +241,12 @@ class _CountdownPageState extends State<CountdownPage>
               newSpeed = 2.0;
               break;
           }
-          setState(() {
-            _audioPlayer.setPlaybackRate(newSpeed);
-            _currentSpeed = speed; // 현재 속도 업데이트
-          });
+          if (mounted) {
+            setState(() {
+              _audioPlayer.setPlaybackRate(newSpeed);
+              _currentSpeed = speed; // 현재 속도 업데이트
+            });
+          }
           Navigator.of(context).pop();
         },
         borderRadius: BorderRadius.circular(8),
@@ -263,50 +278,99 @@ class _CountdownPageState extends State<CountdownPage>
                 Padding(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                  child: Row(
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.home_filled),
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (_) => const NavigationScreens()),
-                          );
-                        },
-                      ),
-                      const Spacer(),
-                      Container(
-                        height: 50,
-                        padding: const EdgeInsets.symmetric(horizontal: 100),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFc06656),
-                          borderRadius: BorderRadius.circular(30),
+                  child: Stack(children: [
+                    Row(
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.home_filled),
+                          onPressed: () {
+                            // NavigationScreens 상태 업데이트. PatternFillMain 선택.
+                            final navigationScreensState =
+                                context.findAncestorStateOfType<
+                                    NavigationScreensState>();
+                            if (navigationScreensState != null) {
+                              navigationScreensState.setState(() {
+                                navigationScreensState.selectedIndex = 2;
+                                print(
+                                    "selectedIndex updated to: ${navigationScreensState.selectedIndex}");
+                              });
+                            }
+                            // 현재 화면을 제거하고 이전 화면으로 돌아가기
+                            if (Navigator.canPop(context)) {
+                              Navigator.pop(context); // 이전 화면으로 돌아감
+                            } else {
+                              print("더 이상 돌아갈 화면이 없습니다."); // 디버깅용 메시지
+                            }
+                          },
                         ),
-                        alignment: Alignment.center,
-                        child: const Text(
-                          'Basic Pattern 1',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 25,
+                        const Spacer(),
+                        Container(
+                          height: 50,
+                          padding: const EdgeInsets.symmetric(horizontal: 100),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFc06656),
+                            borderRadius: BorderRadius.circular(30),
+                          ),
+                          alignment: Alignment.center,
+                          child: Text(
+                            widget.title,
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 25,
+                            ),
                           ),
                         ),
-                      ),
-                      const Spacer(),
-                      Positioned(
-                        right: 0,
-                        child: MenuAnchor(
-                          style: const MenuStyle(
-                            padding: WidgetStatePropertyAll(EdgeInsets.zero),
-                            backgroundColor:
-                                WidgetStatePropertyAll(Colors.transparent),
+                        const Spacer(),
+                      ],
+                    ),
+                    Positioned(
+                      right: 0,
+                      child: MenuAnchor(
+                        style: const MenuStyle(
+                          padding: WidgetStatePropertyAll(EdgeInsets.zero),
+                          backgroundColor:
+                              WidgetStatePropertyAll(Colors.transparent),
+                        ),
+                        menuChildren: [
+                          Container(
+                            margin: const EdgeInsets.only(top: 8),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 4, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(8),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.1),
+                                  blurRadius: 4,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                _buildSpeedButton('0.5x', false),
+                                _buildSpeedButton('1x', true),
+                                _buildSpeedButton('1.5x', false),
+                                _buildSpeedButton('2x', false),
+                              ],
+                            ),
                           ),
-                          menuChildren: [
-                            Container(
-                              margin: const EdgeInsets.only(top: 8),
+                        ],
+                        builder: (context, controller, child) {
+                          return GestureDetector(
+                            onTap: () {
+                              if (controller.isOpen) {
+                                controller.close();
+                              } else {
+                                controller.open();
+                              }
+                            },
+                            child: Container(
                               padding: const EdgeInsets.symmetric(
-                                  horizontal: 4, vertical: 4),
+                                  horizontal: 12, vertical: 6),
                               decoration: BoxDecoration(
                                 color: Colors.white,
                                 borderRadius: BorderRadius.circular(8),
@@ -318,56 +382,20 @@ class _CountdownPageState extends State<CountdownPage>
                                   ),
                                 ],
                               ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  _buildSpeedButton('0.5x', false),
-                                  _buildSpeedButton('1x', true),
-                                  _buildSpeedButton('1.5x', false),
-                                  _buildSpeedButton('2x', false),
-                                ],
+                              child: Text(
+                                _currentSpeed, // 현재 속도 표시
+                                style: const TextStyle(
+                                  color: Color(0xFFE5958B),
+                                  fontWeight: FontWeight.w500,
+                                  fontSize: 14,
+                                ),
                               ),
                             ),
-                          ],
-                          builder: (context, controller, child) {
-                            return GestureDetector(
-                              onTap: () {
-                                if (controller.isOpen) {
-                                  controller.close();
-                                } else {
-                                  controller.open();
-                                }
-                              },
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 12, vertical: 6),
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(8),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color:
-                                          Colors.black.withValues(alpha: 0.1),
-                                      blurRadius: 4,
-                                      offset: const Offset(0, 2),
-                                    ),
-                                  ],
-                                ),
-                                child: Text(
-                                  _currentSpeed, // 현재 속도 표시
-                                  style: const TextStyle(
-                                    color: Color(0xFFE5958B),
-                                    fontWeight: FontWeight.w500,
-                                    fontSize: 14,
-                                  ),
-                                ),
-                              ),
-                            );
-                          },
-                        ),
+                          );
+                        },
                       ),
-                    ],
-                  ),
+                    ),
+                  ]),
                 ),
                 Expanded(
                   child: Container(
@@ -493,3 +521,5 @@ class _CountdownPageState extends State<CountdownPage>
     );
   }
 }
+
+class _NavigationScreensState {}
