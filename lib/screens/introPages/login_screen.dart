@@ -1,6 +1,8 @@
 import 'dart:convert'; // JSON 변환을 위한 패키지
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:http/http.dart' as http; // HTTP 요청을 위한 패키지
+import 'package:capstone_2025/services/api_func.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart'; // secure storage
 import 'package:capstone_2025/screens/introPages/sign_up_screen.dart';
 import 'package:capstone_2025/screens/introPages/find_pw_screen.dart';
@@ -8,7 +10,6 @@ import 'package:capstone_2025/screens/mainPages/navigation_screens.dart';
 import 'package:capstone_2025/screens/introPages/login_screen_google.dart';
 import 'package:capstone_2025/screens/introPages/widgets/build_text_field.dart';
 import 'package:capstone_2025/screens/introPages/widgets/intro_page_header.dart';
-import 'package:capstone_2025/screens/mainPages/navigation_screens.dart';
 
 /// 일반 로그인 화면
 class LoginScreen extends StatefulWidget {
@@ -68,28 +69,22 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _isLoading = true); // 로딩스피너 표시
 
     try {
-      // 서버에 로그인 요청 보내기
-      final response = await http.post(
-        Uri.parse('http://10.0.2.2:28080/auth/signin'),
-        headers: {
-          "Content-Type": "application/json",
-          "Accept": "application/json",
-        },
-        body: jsonEncode({'email': email, 'password': password}),
-      );
+      final Map<String, dynamic> requestBody = {
+        // HTTP 함수를 통해 보낼 request body
+        'email': email,
+        'password': password,
+      };
 
-      print("response.statusCode: ${response.statusCode}"); // 에러 코드 확인
-      print(response.body);
+      final userInfo = await postHTTP("/auth/signin", requestBody);
 
-      if (response.statusCode == 200) {
+      if (userInfo['errMessage'] == null) {
         // 로그인 성공 시
-        final data = jsonDecode(response.body);
-        await _saveUserData(data['body']); // Secure Storage에 사용자 정보 저장
+        saveUserData(userInfo); // Secure Storage에 사용자 정보 저장
 
         // 페이지 하단에 환영 메시지 출력
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('${data['body']['nickname']}님 환영합니다.')),
+            SnackBar(content: Text('${userInfo['nickname']}님 환영합니다.')),
           );
         }
 
@@ -102,18 +97,19 @@ class _LoginScreenState extends State<LoginScreen> {
         }
       } else {
         // 로그인 실패 시 에러 코드 처리
-        _handleError(response.statusCode);
+        print("로그인 실패: ${userInfo['errMessage']}");
+        setState(() => _errorMessage = ("로그인 실패: ${userInfo['errMessage']}"));
       }
-    } catch (e) {
+    } catch (error) {
       setState(() => _errorMessage = '네트워크 오류가 발생했습니다.');
-      print(e);
+      print(error);
     } finally {
       setState(() => _isLoading = false); // 로딩스피너 해제
     }
   }
 
   /// 로그인 성공 시 사용자 정보 저장
-  Future<void> _saveUserData(Map<String, dynamic> userData) async {
+  Future<void> saveUserData(Map<String, dynamic> userData) async {
     await _storage.deleteAll(); // 기존 데이터 초기화
 
     await _storage.write(key: 'user_email', value: userData['email']);
@@ -122,73 +118,66 @@ class _LoginScreenState extends State<LoginScreen> {
     await _storage.write(key: 'refresh_token', value: userData['refreshToken']);
   }
 
-  /// 에러 코드 처리
-  void _handleError(int statusCode) {
-    final Map<int, String> errorMessages = {
-      400: '아이디와 비밀번호를 입력하세요.',
-      403: '접근 권한이 없습니다.',
-      404: '사용자 정보를 찾을 수 없습니다.',
-      500: '서버 오류가 발생했습니다. 잠시 후 다시 시도하세요.',
-    };
-    setState(() =>
-        _errorMessage = (errorMessages[statusCode] ?? '알 수 없는 오류가 발생했습니다.'));
-  }
-
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20.0),
-          // 스크롤 가능
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                introPageHeader(
-                    title: '🥁알려드럼🥁', targetPage: LoginScreenGoogle()),
-                const SizedBox(height: 20),
-                SizedBox(
-                  width: 400, // 입력 필드의 최대 너비 설정
-                  child: Column(
-                    children: [
-                      buildTextField(
-                        // 아이디 입력 필드
-                        controller: _emailController,
-                        hint: '아이디(이메일)',
-                        obscureText: false, // 가려지지 않음
-                        suffixIcon: null,
-                      ),
-                      const SizedBox(height: 10),
-                      buildTextField(
-                        // 비밀번호 입력 필드
-                        controller: _passwordController,
-                        hint: '비밀번호',
-                        obscureText: !_isPasswordVisible, // 비밀번호 보기 상태 기능 활성화
-                        suffixIcon: IconButton(
-                          // 눈 모양 아이콘 클릭하면 비밀번호 보이게 함
-                          icon: Icon(_isPasswordVisible
-                              ? Icons.visibility
-                              : Icons.visibility_off),
-                          onPressed: () {
-                            // 아이콘 클릭할 때마다 상태 변경
-                            setState(
-                                () => _isPasswordVisible = !_isPasswordVisible);
-                          },
+    return ScreenUtilInit(
+      designSize: const Size(375, 812),
+      minTextAdapt: true,
+      splitScreenMode: true,
+      child: Scaffold(
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20.0),
+            // 스크롤 가능
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  introPageHeader(
+                      title: '🥁알려드럼🥁', targetPage: LoginScreenGoogle()),
+                  const SizedBox(height: 20),
+                  SizedBox(
+                    width: 400, // 입력 필드의 최대 너비 설정
+                    child: Column(
+                      children: [
+                        buildTextField(
+                          // 아이디 입력 필드
+                          controller: _emailController,
+                          hint: '아이디(이메일)',
+                          obscureText: false, // 가려지지 않음
+                          suffixIcon: null,
                         ),
-                      ),
-                      if (_errorMessage != null) _buildErrorMessage(),
-                      const SizedBox(height: 10),
-                      _isLoading
-                          ? const CircularProgressIndicator() // 로딩 중이면 로딩스피너 표시
-                          : _buildLoginButton(), // _isLoading이 false이면 로그인 버튼 활성화
-                      _buildBottomLinks(),
-                    ],
+                        const SizedBox(height: 10),
+                        buildTextField(
+                          // 비밀번호 입력 필드
+                          controller: _passwordController,
+                          hint: '비밀번호',
+                          obscureText: !_isPasswordVisible, // 비밀번호 보기 상태 기능 활성화
+                          suffixIcon: IconButton(
+                            // 눈 모양 아이콘 클릭하면 비밀번호 보이게 함
+                            icon: Icon(_isPasswordVisible
+                                ? Icons.visibility
+                                : Icons.visibility_off),
+                            onPressed: () {
+                              // 아이콘 클릭할 때마다 상태 변경
+                              setState(() =>
+                                  _isPasswordVisible = !_isPasswordVisible);
+                            },
+                          ),
+                        ),
+                        if (_errorMessage != null) _buildErrorMessage(),
+                        const SizedBox(height: 10),
+                        _isLoading
+                            ? const CircularProgressIndicator() // 로딩 중이면 로딩스피너 표시
+                            : _buildLoginButton(), // _isLoading이 false이면 로그인 버튼 활성화
+                        _buildBottomLinks(),
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
