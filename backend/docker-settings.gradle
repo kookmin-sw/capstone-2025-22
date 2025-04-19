@@ -1,0 +1,5 @@
+rootProject.name = 'app'
+include 'module'
+include 'common'
+include 'common-auth'
+include 'common-redis'
