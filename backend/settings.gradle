@@ -1,0 +1,13 @@
+rootProject.name = 'letmedrum'
+include 'common'
+include 'auth-service'
+include 'verification-service'
+include 'user-service'
+include 'gateway-service'
+include 'discovery-service'
+include 'audio-service'
+include 'music-service'
+include 'common-auth'
+include 'common-auth'
+include 'common-redis'
+
