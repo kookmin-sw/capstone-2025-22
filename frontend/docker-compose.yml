@@ -1,0 +1,174 @@
+x-common-variables: &common-variables
+  CLIENT_GATEWAY_SERVICE_URL: http://gateway-service:8080
+  SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/let_me_drum
+  SPRING_DATASOURCE_USERNAME: root
+  SPRING_DATASOURCE_PASSWORD: 1234
+  SPRING_DATA_REDIS_HOST: redis
+  EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://discovery-service:8761/eureka/
+  GATEWAY_SERVICE_URL: http://localhost:28080
+  CLIENT_MODEL_SERVICE_URL: http://model-server:8048
+  SERVER_MAX_HTTP_REQUEST_HEADER_SIZE: 10MB
+
+services:
+  auth-service:
+    image: louie8821/auth-service:test
+    container_name: auth-service
+    restart: unless-stopped
+    platform: linux/amd64
+    environment:
+      <<: *common-variables
+      AUTH_GOOGLE_CLIENT_ID: '637308987348-iilett3hur1ohas5r25fihlk7gdg5jci.apps.googleusercontent.com'
+      AUTH_GOOGLE_CLIENT_SECRET: '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'
+      AUTH_GOOGLE_CLIENT_REDIRECT_URI: 'http://10.0.2.2:28080'
+      # AUTH_GOOGLE_CLIENT_ID: "192735377707-2mo11es6vu2becaaomfrher8dvcdu8qs.apps.googleusercontent.com"
+      # AUTH_GOOGLE_CLIENT_SECRET: "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"
+      # AUTH_GOOGLE_REDIRECT_URI: "http://localhost:3000"
+    depends_on:
+      discovery-service:
+        condition: service_healthy
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+  user-service:
+    image: louie8821/user-service:test
+    container_name: user-service
+    restart: unless-stopped
+    platform: linux/amd64
+    environment:
+      <<: *common-variables
+    depends_on:
+      discovery-service:
+        condition: service_healthy
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+  verification-service:
+    image: louie8821/verification-service:test
+    container_name: verification-service
+    restart: unless-stopped
+    platform: linux/amd64
+    environment:
+      <<: *common-variables
+    depends_on:
+      discovery-service:
+        condition: service_healthy
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+  gateway-service:
+    image: louie8821/gateway-service:test
+    container_name: gateway-service
+    restart: unless-stopped
+    platform: linux/amd64
+    ports:
+      - '28080:8080'
+    environment:
+      <<: *common-variables
+    depends_on:
+      discovery-service:
+        condition: service_healthy
+  music-service:
+    image: louie8821/music-service:test
+    container_name: music-service
+    restart: unless-stopped
+    platform: linux/amd64
+    environment:
+      <<: *common-variables
+    depends_on:
+      discovery-service:
+        condition: service_healthy
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+  audio-service:
+    image: louie8821/audio-service:test
+    container_name: audio-service
+    restart: unless-stopped
+    platform: linux/amd64
+    environment:
+      <<: *common-variables
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: http://kafka:9092
+    depends_on:
+      - model-server
+      - kafka
+  model-server:
+    image: louie8821/model-server:test
+    container_name: model-server
+    restart: unless-stopped
+    platform: linux/amd64
+  discovery-service:
+    image: louie8821/discovery-service:test
+    container_name: discovery-service
+    restart: unless-stopped
+    platform: linux/amd64
+    ports:
+      - '28761:8761'
+    healthcheck:
+      test: ['CMD', 'curl', 'http://discovery-service:8761/actuator/health']
+      interval: 10s
+      retries: 20
+      timeout: 5s
+      start_period: 10s
+  db:
+    image: mysql:8.0
+    container_name: database_letmedrum
+    restart: unless-stopped
+    platform: linux/amd64
+    ports:
+      - '23306:3306'
+    environment:
+      MYSQL_ROOT_HOST: '%'
+      MYSQL_DATABASE: let_me_drum
+      MYSQL_ROOT_PASSWORD: 1234
+      TZ: Asia/Seoul
+    # volumes:
+    #   - ./db/mysql/data:/var/lib/mysql
+    #   - ./db/mysql/init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ['CMD', 'mysqladmin', 'ping', '--host', 'db']
+      interval: 10s
+      retries: 20
+      timeout: 5s
+      start_period: 10s
+  redis:
+    image: redis:6.2.6-alpine
+    command: redis-server /usr/local/etc/redis/redis.conf
+    volumes:
+      - ./redis/data:/data
+      - ./redis/config:/usr/local/etc/redis/redis.conf
+    restart: unless-stopped
+    platform: linux/amd64
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      retries: 20
+      timeout: 5s
+      start_period: 10s
+  zookeeper:
+    image: wurstmeister/zookeeper
+    container_name: zookeeper
+    restart: unless-stopped
+    ports:
+      - '2181:2181'
+  # 서비스 명
+  kafka:
+    image: wurstmeister/kafka
+    container_name: kafka
+    restart: unless-stopped
+    ports:
+      - '9092:9092'
+      - '29092:29092'
+    environment:
+      KAFKA_ADVERTISED_HOST_NAME: localhost
+      KAFKA_ADVERTISED_LISTENERS: INSIDE://:9092,OUTSIDE://localhost:29092
+      KAFKA_CREATE_TOPICS: 'Topic:1:1'
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INSIDE:PLAINTEXT,OUTSIDE:PLAINTEXT
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_INTER_BROKER_LISTENER_NAME: INSIDE
+      KAFKA_LISTENERS: INSIDE://:9092,OUTSIDE://:29092
+    depends_on:
+      - zookeeper
