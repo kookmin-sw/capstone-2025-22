@@ -1,0 +1,129 @@
+[33md302458[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mdrum-practice-pattern-fill[m[33m)[m style: 업로드 다이얼로그 UI 스타일 개선 - 버튼 스타일, 파일명 표시, 테두리 색상 수정
+[33m2294a67[m[33m ([m[1;31morigin/musicSheet[m[33m)[m feat: 악보 목록 페이지 ui 거의 완성
+[33mafe2d7c[m[33m ([m[1;32mdev[m[33m)[m Chore: gitignore
+[33m0846123[m Merge branch 'dev' of https://github.com/2025-LetMeDrum/frontend into dev
+[33md6232d5[m feat: 기존 비밀번호와 동일한지 확인하는 기능 추가
+[33m48dfb77[m Merge branch 'dev' of https://github.com/2025-LetMeDrum/frontend into dev
+[33mcf1d41b[m Feat: 드럼 기초 페이지 개발
+[33m8bb6a5a[m Refactor: edit_profile_screen 리팩토링
+[33mcb3487a[m Style: 옵션 메뉴 ui 수정
+[33mf440008[m Merge branch 'dev' of https://github.com/2025-LetMeDrum/frontend into dev
+[33mfd85cb3[m Refactor: 사용자 정보 수정 페이지 리팩토링
+[33ma7fe0c6[m feat: 비밀번호 변경 후 로그인페이지로 이동
+[33m541aacb[m chore: google 로그인 로직 잘못된 부분 수정
+[33m93edddd[m Merge branch 'dev' into my-page
+[33m0b04a0b[m chore: 시작 페이지 원상복귀
+[33ma9da6eb[m chore: 그래프 데이터 최신 5개 출력 및 점수 테이블 스크롤바 추가
+[33m6d8655c[m chore: 임시로 시작페이지 수정
+[33m529acb5[m chore: 잘못입력된 인자 수정
+[33mb1fce78[m chore: API 함수 사용 및 주석 추가
+[33m98be2c6[m chore: 주석 추가
+[33m64c01e6[m Refactor: find_pw_screen 리팩토링
+[33m6bb2c08[m chore: api 함수로 대체
+[33m7e2534f[m chore: 디버깅용 프린트문 활성화
+[33mdbd6b8a[m fix: 이전 사용자의 데이터가 남아 있는 문제 해결
+[33mc7cb39f[m Merge branch 'dev' of https://github.com/2025-LetMeDrum/frontend into dev
+[33m9fd331d[m chore: gitignore 수정
+[33me696284[m feat: 사용자 정보 수정 페이지
+[33md689eb1[m Feat: api 함수 생성 (GET, PUT, POST)
+[33mb4e2622[m chore: 제목 전달 로직 및 제목 디자인 수정
+[33md2265d5[m Merge branch 'my-page' into dev
+[33mbeb5b51[m chore: 프로필에 사용자 정보 뜨도록 정보 전달 로직 수정
+[33m3447b8d[m chore: 로그인 후 이동 페이지 수정
+[33m8094b89[m chore: 파일 삭제
+[33m34ae10a[m chore: 시작 페이지 수정
+[33m702363e[m chore: serverAddr 변수로 api 주소 변경
+[33m7a76bfb[m Refactor: login_screen 리팩토링
+[33m4516677[m Refactor: drum_info_popup 리팩토링
+[33m9a2133c[m Style: 스크롤바 그림자 추가
+[33mdb803dd[m Refactor: drum_info_popup 리팩토링
+[33m8e7c145[m Comment: 주석 수정
+[33m6766d15[m rename: drum_info_popup 위치 수정
+[33m8def81b[m Merge branch 'my-page2' into dev
+[33mcbb2120[m[33m ([m[1;31morigin/my-page2[m[33m, [m[1;32mmy-page2[m[33m)[m feat: 드럼 기초 팝업 창 완성
+[33m5a26469[m chore: 주석처리 및 코드 구조 수정
+[33ma28c7ad[m chore: ip주소 파일 생성
+[33m9196870[m feat: 로그인 성공 시 네비게이션 라우팅 수정
+[33m2714ed5[m feat: 드럼 기초 팝업 창 개발
+[33m764293a[m Merge branch 'dev' into my-page
+[33m8da7261[m chore: 악보명 musicsheet detail page로 넘기는 로직 추가
+[33m4fb2b1e[m Feat : 점수 그래프 로직 구체화
+[33m1f1d68d[m feat: 서버 주소 한 파일에 저장
+[33ma33db67[m Merge branch 'dev' of https://github.com/2025-LetMeDrum/frontend into dev
+[33m6a29209[m chore: 시작 페이지 navigaionScreens로 설정
+[33m51138a7[m feat : 악보 상세 페이지 개발
+[33mbcd7cc7[m feat: 데이터 저장 로직 및 UI 추가
+[33m1377a82[m chore: pubspec.yaml파일 ignore에서 예외처리
+[33mb941de0[m chore: 그래프용 패키지 추가
+[33mfeb2706[m chore: gitignore 수정
+[33m3b472de[m feat: 로그인 페이지
+[33m312ceb5[m chore: gitignore 수정
+[33mf2a7365[m design: ui 디자인 변경
+[33m71bbe3a[m chore: gitignore 수정
+[33mb3b5742[m feat: FindPwScreen 끝
+[33m89b82d4[m Merge branch 'dev' of https://github.com/2025-LetMeDrum/frontend into dev
+[33m404c963[m feat: 비밀번호 재설정 페이지 navigator 수정
+[33m27d7a17[m Merge branch 'dev' of https://github.com/2025-LetMeDrum/frontend into dev
+[33m114b28a[m chore: 로그인 성공 시 마이 페이지로 연결
+[33m834405e[m Merge branch 'dev' of https://github.com/2025-LetMeDrum/frontend into dev
+[33mbcedb74[m feat: navigator 수정
+[33ma2ffa99[m chore: 모달 페이지 연결 수정
+[33m4b7b774[m rename: 수정
+[33m33a8c1a[m Merge branch 'main-and-auth' into dev
+[33meee210d[m[33m ([m[1;31morigin/main-and-auth[m[33m, [m[1;32mmain-and-auth[m[33m)[m feat: 사용자 정보 수정 페이지
+[33m1a5f9a5[m Docs: 개발 계획 구상 및 메모
+[33m67386a8[m feat: 음악 리스트 및 회원 정보 모달 추가
+[33mf69bdbe[m feat: 사용자 정보 수정 페이지
+[33med1d9fd[m feat: secure storage에 정보 저장
+[33m478b6cb[m refactor: 본인 인증 페이지 수정
+[33m12d754b[m feat: 비밀번호 수정 본인인증 페이지
+[33mfdc0803[m feat: 로그인 페이지
+[33m9501e1a[m Chore: 개발 중 main페이지를 마이페이지로 임시 설정 및 캐시 재빌드
+[33ma67e351[m Feat: 마이페이지 화면 UI 구성
+[33m28d6328[m Feat: 네비게이션바 포함 메인 화면 상위 파일 생성
+[33m5300ab9[m Feat: navigation bar 위젯 생성
+[33m7d25927[m feat: 개인정보 수정 페이지 만듦
+[33mb6a0446[m chore: image_picker 패키지 설치
+[33mfe64933[m Merge branch 'main-and-auth' into dev
+[33mce80bdc[m chore: 에러 메세지 통합 및 에러처리 완성
+[33m3fe1480[m Merge branch 'main-and-auth' of https://github.com/2025-LetMeDrum/frontend into main-and-auth
+[33m979375a[m chore: gitignore file 업데이트
+[33mb508429[m Feat: 본인 확인 페이지 수정
+[33m4c55eb1[m chore: gitignore 추가
+[33mb2d016b[m chore: mac 경로로 수정
+[33m76c8459[m chore: gitignore file 항목 추가
+[33m01fff41[m chore: gradle 버전 수정
+[33m7e99b2a[m chore: google-service.json 파일 예외처리
+[33m725b1d3[m chore: SHA-1키 재등록 및 파일 수정
+[33m329d3d5[m chore: 에러 코드 반영
+[33m2d3b3da[m feat: 로그인 및 회원가입 페이지 완성
+[33mbab514e[m chore: 앱 가로 모드 코드 추가
+[33m67fd605[m chore: macOS 자동 생성 파일 및 VSCode 설정 파일 Git에서 제외
+[33mfb7c077[m chore: 충돌 해결 및 macos 폴더 추가'
+[33mfa295df[m chore: Xcode 파일 제거 및 .gitignore 적용
+[33mda5314d[m chore: gitignore 파일 항목 수정
+[33mc76d00e[m Merge branch 'main-and-auth' of https://github.com/2025-LetMeDrum/frontend into main-and-auth
+[33m49196c2[m  [feat] 새 비밀번호 설정 페이지 개발
+[33m239c600[m Merge branch 'main-and-auth' of https://github.com/2025-LetMeDrum/frontend into main-and-auth
+[33mc9bea78[m Feat: 회원가입 최종 제출 버튼 api 연결
+[33m87e467b[m chore: api 주소 추가
+[33mbb33f9a[m chore: gitignore 파일 요소 추가
+[33m260ea7d[m Merge branch 'main-and-auth' of https://github.com/2025-LetMeDrum/frontend into main-and-auth
+[33m340d22d[m chore: gitignore파일 요소 추갸
+[33m64fc02a[m 백엔드 도커 .gitignore에 추가
+[33mfb57ec5[m Chore: Ignore macos
+[33mdd82ad2[m Feat: 회원가입 기능 완성
+[33mb3a715c[m Merge branch 'main-and-auth' of https://github.com/2025-LetMeDrum/frontend into main-and-auth
+[33m317bb5c[m Chore: generated plugin registrant
+[33m8e948a0[m Feat: 앱을 가로 모드로 고정하는 기능 추가
+[33m6740c28[m Chore: 기타 파일들
+[33m9b83852[m Build: iOS 설정 관련 파일 추가
+[33m314e795[m Chore: Mac용 Java Home 경로 추가
+[33m74e2c0d[m Chore: gitignore 항목 추가
+[33m08d7190[m Chore: 코드 자동 포맷 설정 변경
+[33m463110e[m Chore: dart sdk 버전 범위 수정
+[33m8a57c72[m Refactor: buildTextField 위젯에 controller 인자 추가
+[33md16066f[m Feat: 로그인 페이지 수정
+[33m65cfb60[m Feat: 버튼 항상 활성화하기
+[33m8d7757e[m Refactor: 필요없는 import 삭제
+[33m9fe833c[m Fix: 중복�
