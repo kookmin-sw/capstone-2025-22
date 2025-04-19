@@ -1,0 +1,44 @@
+plugins {
+    id "com.android.application"
+    id "kotlin-android"
+    id "dev.flutter.flutter-gradle-plugin" // Flutter Gradle Plugin
+}
+
+android {
+    namespace "com.example.capstone_2025"
+    compileSdkVersion 35
+
+    defaultConfig {
+        applicationId = "com.example.capstone_2025"
+        minSdk = 24  // 최소 SDK 버전
+        targetSdk = 35  // 최신 Android 버전 적용
+        versionCode = 1
+        versionName = "1.0"
+    }
+
+    buildTypes {
+        release {
+            signingConfig = signingConfigs.debug
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+
+    kotlinOptions {
+        jvmTarget = "17"
+    }
+
+    testOptions {
+        unitTests.returnDefaultValues = true
+        unitTests.all {
+            ignoreFailures = true
+        }
+    }
+}
+
+flutter {
+    source = "../.."
+}
