@@ -1,4 +1,0 @@
-[submodule "config-backend"]
-	path = config-backend
-	url = https://github.com/2025-LetMeDrum/config-backend.git
-	branch = dev
