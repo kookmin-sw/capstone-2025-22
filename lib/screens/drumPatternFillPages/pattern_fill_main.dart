@@ -153,7 +153,8 @@ class _PatternFillMainState extends State<PatternFillMain> {
                       Navigator.push(
                           context,
                           MaterialPageRoute(
-                              builder: (context) => PatternFillScreen()));
+                              builder: (context) => PatternFillScreen(
+                                  title: 'Basic Pattern $index')));
                     },
                     child: modalBtn(context, '확인', Color(0xffD97D6C), false),
                   ),
@@ -221,7 +222,7 @@ class _PatternFillMainState extends State<PatternFillMain> {
                   ),
                   Padding(
                     padding: const EdgeInsets.only(right: 35),
-                    child: Container(
+                    child: SizedBox(
                       width: 50,
                       child: isLevelCleared
                           ? linedText(
