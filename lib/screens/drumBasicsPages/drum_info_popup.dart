@@ -4,14 +4,14 @@ import 'package:flutter/material.dart';
 class DrumInfoPopup extends StatefulWidget {
   final String title; // 팝업 제목
   final String? imagePath; // 이미지 경로
+  final String description; // 설명 텍스트 추가
 
   const DrumInfoPopup({
     super.key,
     required this.title, // 팝업 제목 필수 입력
-    String? imagePath, // 이미지 경로를 선택적으로 받음
-  }) : imagePath = (title == '드럼 종류')
-            ? 'assets/images/drum_kit.png' // 제목이 '드럼 종류'일 때 기본 이미지 경로
-            : imagePath ?? 'assets/images/drum_kit.png';
+    required this.imagePath, // 이미지 경로를 선택적으로 받음
+    required this.description, // 설명 텍스트 필수 입력
+  });
 
   @override
   State<DrumInfoPopup> createState() => _DrumInfoPopupState();
@@ -136,26 +136,27 @@ class _DrumInfoPopupState extends State<DrumInfoPopup> {
   /// 이미지 (옵션)
   SizedBox _buildImage() {
     print('Image path: ${widget.imagePath}');
-    return widget.imagePath == null
-        ? const SizedBox.shrink() // 이미지가 없으면 빈 위젯 return
-        : SizedBox(
-            width: 300, // 이미지 너비 설정
-            child: Image.asset(
-              widget.imagePath!, // 전달받은 이미지 경로 사용
-              fit: BoxFit.contain, // 이미지 비율 유지
-              // *주의: 이미지 크기가 고정되어 있으면 스크롤 불가
-            ),
-          );
+    // imagePath가 null이거나 빈 문자열인 경우 빈 위젯을 반환
+    if (widget.imagePath == null || widget.imagePath!.isEmpty) {
+      return const SizedBox.shrink(); // 이미지가 없으면 빈 위젯 return
+    }
+
+    return SizedBox(
+      width: 300, // 이미지 너비 설정
+      child: Image.asset(
+        widget.imagePath!, // 전달받은 이미지 경로 사용
+        fit: BoxFit.contain, // 이미지 비율 유지
+      ),
+    );
   }
 
   /// 설명 텍스트
   Padding _buildDescription() {
     return Padding(
       padding: const EdgeInsets.fromLTRB(10, 10, 30, 10), // 여백 추가
-      child: const Text(
-        // 스크롤 확인용 더미 텍스트
-        "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Nisl tincidunt eget nullam non. Quis hendrerit dolor magna eget est lorem ipsum dolor sit. Volutpat odio facilisis mauris sit amet massa. Commodo odio aenean sed adipiscing diam donec adipiscing tristique. Mi eget mauris pharetra et. Non tellus orci ac auctor augue. Elit at imperdiet dui accumsan sit. Ornare arcu dui vivamus arcu felis. Egestas integer eget aliquet nibh praesent. In hac habitasse platea dictumst quisque sagittis purus. Pulvinar elementum integer enim neque volutpat ac.Senectus et netus et malesuada. Nunc pulvinar sapien et ligula ullamcorper malesuada proin. Neque convallis a cras semper auctor. Libero id faucibus nisl tincidunt eget. Leo a diam sollicitudin tempor id. A lacus vestibulum sed arcu non odio euismod lacinia. In tellus integer feugiat scelerisque. Feugiat in fermentum posuere urna nec tincidunt praesent. Porttitor rhoncus dolor purus non enim praesent elementum facilisis. Nisi scelerisque eu ultrices vitae auctor eu augue ut lectus. Ipsum faucibus vitae aliquet nec ullamcorper sit amet risus. Et malesuada fames ac turpis egestas sed. Sit amet nisl suscipit adipiscing bibendum est ultricies. Arcu ac tortor dignissim convallis aenean et tortor at. Pretium viverra suspendisse potenti nullam ac tortor vitae purus. Eros donec ac odio tempor orci dapibus ultrices. Elementum nibh tellus molestie nunc. Et magnis dis parturient montes nascetur. Est placerat in egestas erat imperdiet. Consequat interdum varius sit amet mattis vulputate enim.Sit amet nulla facilisi morbi tempus. Nulla facilisi cras fermentum odio eu. Etiam erat velit scelerisque in dictum non consectetur a erat. Enim nulla aliquet porttitor lacus luctus accumsan tortor posuere. Ut sem nulla pharetra diam. Fames ac turpis egestas maecenas. Bibendum neque egestas congue quisque egestas diam. Laoreet id donec ultrices tincidunt arcu non sodales neque. Eget felis eget nunc lobortis mattis aliquam faucibus purus. Faucibus interdum posuere lorem ipsum dolor sit.",
-        style: TextStyle(fontSize: 14, color: Colors.black54),
+      child: Text(
+        widget.description, // 전달받은 설명 텍스트 사용
+        style: const TextStyle(fontSize: 14, color: Colors.black54),
         textAlign: TextAlign.center, // 가운데 정렬
       ),
     );

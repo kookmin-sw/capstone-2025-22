@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 Widget linedText(String text, double fontSize, Color borderColor,
     Color textColor, double strokeWidth) {
   return SizedBox(
-    height: fontSize + 10,
+    height: fontSize + 20,
     child: Stack(
       alignment: Alignment.center,
       children: [
