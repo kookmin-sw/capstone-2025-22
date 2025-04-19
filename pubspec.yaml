@@ -30,6 +30,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  xml: ^6.1.0 # xml 파일을 읽기 위한 패키지
   font_awesome_flutter: ^10.5.0 # google 아이콘 사용 위한 패키지
   google_sign_in: ^6.1.5 # google 로그인을 위한 패키지
   http: ^1.2.1
@@ -50,7 +51,9 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^5.0.0
-  image_picker: # 카메라, 앨범에서 사진을 가져오는 패키지
+  image_picker: ^1.0.7 # 카메라, 앨범에서 사진을 가져오는 패키지
+  flutter_inappwebview: ^6.0.0 # 웹뷰를 사용하기 위한 패키지
+  path_provider: ^2.1.2
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -66,6 +69,11 @@ flutter:
   assets:
     - assets/images/default_profile.jpg
     - assets/images/drum_kit.jpg
+    - assets/web/index.html
+    - assets/web/js/opensheetmusicdisplay.min.js
+    - assets/web/js/fileSelectAndLoadOSMD.js
+    - assets/music/demo.xml
+  
   #   - images/a_dot_burr.jpeg
   #   - images/a_dot_ham.jpeg
 
