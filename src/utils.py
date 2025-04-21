@@ -1,5 +1,8 @@
 import os
+import io
+import base64
 from pydub import AudioSegment
+import soundfile as sf
 import torchaudio
 import torch
 
@@ -39,26 +42,58 @@ def get_mel_transform(library, filepath=None):
             hop_length=hop_length,
             n_mels=n_mels,
         )
+
+def wav_file_to_base64(wav_path):
+    # 테스트용(wav_file -> base64 문자열로 변환)
+    with open(wav_path, "rb") as f:
+        audio_bytes = f.read()
+    encoded = base64.b64encode(audio_bytes).decode("utf-8")
+    return encoded
     
-def wav_to_mel(wav_path, mel_transform, sample_rate=44100):
-    waveform, sr = torchaudio.load(wav_path)
+def wav_to_mel(wav_file, mel_transform, sample_rate=44100):
+    ''' wav_file(base64 문자열 또는 파일 경로) -> 멜 스펙트로그램 '''
+    waveform = None
+    sr = None
+
+    if isinstance(wav_file, str):
+        # (1) .wav로 끝나면 파일 경로라고 간주
+        if wav_file.lower().endswith(".wav"):
+            print("wav_file is a file path")
+            if not os.path.exists(wav_file):
+                raise FileNotFoundError(f"'{wav_file}' 경로에 파일이 없습니다.")
+            waveform, sr = torchaudio.load(wav_file)
+
+        else: # (2) 그 외에는 base64 문자열이라고 간주
+            print("wav_file is a base64 string")
+            try:
+                decoded = base64.b64decode(wav_file)
+                buffer = io.BytesIO(decoded)
+                waveform, sr = sf.read(buffer) # [Time, Channel]
+                # [Channel, Time]로 바꿔주고, float32타입으로 변환해줘야 모델이 인식함
+                if waveform.ndim == 1:  # 모노
+                    waveform = torch.tensor(waveform).unsqueeze(0).float()
+                else: waveform = torch.tensor(waveform).T.float() # 스테레오
+            except Exception as e:
+                raise ValueError("base64 decoding 실패 또는 잘못된 형식입니다.") from e
+    else:
+        raise TypeError("wav_file은 base64 문자열 또는 파일 경로여야 합니다.")
     # print("Original waveform shape:", waveform.shape)
 
+    # 샘플레이트 맞추기
     if sr != sample_rate:
-        # 필요하면 리샘플링
         resampler = torchaudio.transforms.Resample(sr, sample_rate)
         waveform = resampler(waveform)
-        # print("Resampled waveform shape:", waveform.shape)
 
-    if waveform.shape[0] > 1: #1채널로 변환
+    # 모노 변환
+    if waveform.shape[0] > 1:
         waveform = torch.mean(waveform, dim=0, keepdim=True)
         # print("After mono conversion shape:", waveform.shape)
     
-    #MelSpectrogram 변환
+    # 멜 스펙트로그램으로 변환
     features = mel_transform(waveform)
     # print("After mel_transform shape:", features.shape)
-    
     return features
+
 
 
 def select_one_or_two_classes(logits):

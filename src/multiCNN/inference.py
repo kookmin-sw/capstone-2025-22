@@ -9,7 +9,7 @@ from model import MultiCNN
 
 MAX_FRAMES = 86
 
-def predict_drum_sound(device, mel_transform, model_path, wav_path, pool):
+def predict_drum_sound(device, mel_transform, model_path, wav_file, pool):
     class_labels = ["KD", "SD", "CY", "TT", "HH"]  # 5개 레이블
     
     # 모델 로드
@@ -18,7 +18,8 @@ def predict_drum_sound(device, mel_transform, model_path, wav_path, pool):
     model.load_state_dict(state)
     model.eval() #모델을 평가모드로 전환
 
-    features = utils.wav_to_mel(wav_path, mel_transform) #ex. [1, 128=n_mels, T]
+    # 오디오 파일(바이트 데이터 또는 파일 경로)을 멜스펙트로그램으로 변환
+    features = utils.wav_to_mel(wav_file, mel_transform) #ex. [1, 128=n_mels, T]
     # 고정 크기 변환
     _, _, T = features.shape
     if T < MAX_FRAMES:
@@ -54,6 +55,9 @@ def CNN_inference(device, mel_transform, model_path):
         _, filetype = os.path.splitext(test_audio)
         if filetype != ".wav":
             test_audio_path = utils.convert_to_wav(test_audio)
+        
+        #wav_file -> base64 문자열로 변환
+        test_audio_path = utils.wav_file_to_base64(test_audio_path)
         
         pred_label = predict_drum_sound(device, mel_transform, model_path, test_audio_path, pool)
 
