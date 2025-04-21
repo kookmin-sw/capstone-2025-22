@@ -67,8 +67,8 @@ def select_one_or_two_classes(logits):
     thresh = thresholds.view(1, -1).to(probs.device)
     preds = (probs > thresh).float()                # 클래스별 임계치 적용 (ex. [[0, 1, 0, 1, 0]])
 
-    print(probs)
-    print(preds)
+    # print(probs)
+    # print(preds)
     # 최소 1개, 최대 2개 보정
     for i in range(preds.size(0)):
         cnt = int(preds[i].sum().item())
