@@ -75,7 +75,7 @@ flutter:
   # To add assets to your application, add an assets section, like this:
   assets:
     - assets/images/default_profile.jpg
-    - assets/images/drum_kit.jpg
+    # - assets/images/drum_kit.jpg
     - assets/web/index.html
     - assets/web/js/opensheetmusicdisplay.min.js
     - assets/web/js/fileSelectAndLoadOSMD.js
