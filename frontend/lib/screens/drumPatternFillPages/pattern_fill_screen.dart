@@ -44,6 +44,8 @@ class _CountdownPageState extends State<CountdownPage>
 
   // WebSocket 관련 변수 주석 처리
   // late WebSocketChannel _channel;
+  StreamSubscription? _playerStateSubscription;
+  StreamSubscription? _playerCompleteSubscription;
 
   @override
   void initState() {
@@ -60,18 +62,13 @@ class _CountdownPageState extends State<CountdownPage>
     // 녹음기 초기화
     _recorder.openRecorder();
 
-    // playerState 업데이트
-    _audioPlayer.onPlayerStateChanged.listen((state) {
-      if (!mounted) return; // mounted 체크 추가
-      if (state == ap.PlayerState.playing) {
-        setState(() {
-          _isPlaying = true;
-        });
-      } else {
-        setState(() {
-          _isPlaying = false;
-        });
-      }
+    // playerState 업데이트 리스너 저장
+    _playerStateSubscription =
+        _audioPlayer.onPlayerStateChanged.listen((state) {
+      if (!mounted) return;
+      setState(() {
+        _isPlaying = state == ap.PlayerState.playing;
+      });
     });
 
     // 애니메이션 컨트롤러 초기화
@@ -85,12 +82,22 @@ class _CountdownPageState extends State<CountdownPage>
 
   @override
   void dispose() {
-    _countdownTimer?.cancel(); // 타이머 취소
-    _recorder.closeRecorder(); // Recorder dispose 처리
-    _audioPlayer.dispose(); // AudioPlayer dispose 처리
-    _overlayController.dispose(); // AnimationController dispose 처리
-    // WebSocket 종료 주석 처리
-    // _channel.sink.close();
+    // 모든 리스너 취소
+    _playerStateSubscription?.cancel();
+    _playerCompleteSubscription?.cancel();
+
+    // 타이머 취소
+    _countdownTimer?.cancel();
+
+    // 녹음기 정리
+    _recorder.closeRecorder();
+
+    // 오디오 플레이어 정리
+    _audioPlayer.dispose();
+
+    // 애니메이션 컨트롤러 정리
+    _overlayController.dispose();
+
     super.dispose();
   }
 
@@ -101,10 +108,10 @@ class _CountdownPageState extends State<CountdownPage>
     // WAV 파일 재생
     await _audioPlayer.play(ap.AssetSource('test/tom_mix.wav'));
 
-    // WAV 파일 재생이 끝날 때까지 대기
-    _audioPlayer.onPlayerComplete.listen((event) {
-      if (!mounted) return; // mounted 체크 추가
-      _startCountdown(); // WAV 파일 재생이 끝나면 카운트다운 시작
+    // WAV 파일 재생이 끝날 때까지 대기하는 리스너 저장
+    _playerCompleteSubscription = _audioPlayer.onPlayerComplete.listen((event) {
+      if (!mounted) return;
+      _startCountdown();
     });
   }
 
@@ -523,5 +530,3 @@ class _CountdownPageState extends State<CountdownPage>
     );
   }
 }
-
-class _NavigationScreensState {}
