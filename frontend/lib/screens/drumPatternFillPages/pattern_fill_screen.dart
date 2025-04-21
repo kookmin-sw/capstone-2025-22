@@ -1,8 +1,10 @@
 import 'dart:io';
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart' as ap;
 import 'package:flutter_sound/flutter_sound.dart' as fs;
+import 'package:stomp_dart_client/stomp_dart_client.dart';
 import 'package:capstone_2025/screens/mainPages/navigation_screens.dart';
 
 class PatternFillScreen extends StatelessWidget {
@@ -31,38 +33,46 @@ class _CountdownPageState extends State<CountdownPage>
   bool isCountingDown = false;
   bool _isPlaying = false;
   bool _isRecording = false;
-  final double _currentPosition = 0.0;
-  final double _totalDuration = 0.0;
-  String _currentSpeed = '1x'; // 현재 속도를 저장할 변수 추가
+  double _currentPosition = 0.0;
+  double _totalDuration = 0.0;
+  String _currentSpeed = '1x';
+  bool _showPracticeMessage = false;
+  String _recordingStatus = '';
 
   late ap.AudioPlayer _audioPlayer;
   late fs.FlutterSoundRecorder _recorder;
   late AnimationController _overlayController;
   late Animation<double> _overlayAnimation;
+  late StompClient _stompClient;
 
   Timer? _countdownTimer;
+  Timer? _practiceMessageTimer;
+  Timer? _positionUpdateTimer;
 
-  // WebSocket 관련 변수 주석 처리
-  // late WebSocketChannel _channel;
   StreamSubscription? _playerStateSubscription;
   StreamSubscription? _playerCompleteSubscription;
+  StreamSubscription? _positionSubscription;
 
   @override
   void initState() {
     super.initState();
 
-    // audioPlayer 초기화
     _audioPlayer = ap.AudioPlayer();
-
     _recorder = fs.FlutterSoundRecorder();
-    // WebSocket 연결 주석 처리
-    // _channel = WebSocketChannel.connect(
-    //     Uri.parse('ws://10.0.2.2:28080')); // 서버 URL 수정하기
-
-    // 녹음기 초기화
     _recorder.openRecorder();
 
-    // playerState 업데이트 리스너 저장
+    _overlayController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 500),
+    );
+    _overlayAnimation =
+        Tween<double>(begin: 0.0, end: 1.0).animate(_overlayController);
+
+    _setupAudioListeners();
+    _setupWebSocket();
+  }
+
+  void _setupAudioListeners() {
     _playerStateSubscription =
         _audioPlayer.onPlayerStateChanged.listen((state) {
       if (!mounted) return;
@@ -71,49 +81,141 @@ class _CountdownPageState extends State<CountdownPage>
       });
     });
 
-    // 애니메이션 컨트롤러 초기화
-    _overlayController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 500),
+    _positionSubscription = _audioPlayer.onPositionChanged.listen((position) {
+      if (!mounted) return;
+      setState(() {
+        _currentPosition = position.inSeconds.toDouble();
+      });
+    });
+
+    _audioPlayer.onDurationChanged.listen((duration) {
+      if (!mounted) return;
+      setState(() {
+        _totalDuration = duration.inSeconds.toDouble();
+      });
+    });
+  }
+
+  void _setupWebSocket() {
+    _stompClient = StompClient(
+      config: StompConfig(
+        url: 'ws://10.0.2.2:28080/ws/audio',
+        onConnect: (StompFrame frame) {
+          _stompClient.subscribe(
+            destination: '/topic/onset/test@example.com',
+            callback: (frame) {
+              if (frame.body != null) {
+                final response = json.decode(frame.body!);
+                print('Received onset data: ${response['onsets']}');
+              }
+            },
+          );
+        },
+        onWebSocketError: (dynamic error) => print('WebSocket error: $error'),
+      ),
     );
-    _overlayAnimation =
-        Tween<double>(begin: 0.0, end: 0.5).animate(_overlayController);
+    _stompClient.activate();
   }
 
-  @override
-  void dispose() {
-    // 모든 리스너 취소
-    _playerStateSubscription?.cancel();
-    _playerCompleteSubscription?.cancel();
-
-    // 타이머 취소
-    _countdownTimer?.cancel();
-
-    // 녹음기 정리
-    _recorder.closeRecorder();
-
-    // 오디오 플레이어 정리
-    _audioPlayer.dispose();
-
-    // 애니메이션 컨트롤러 정리
-    _overlayController.dispose();
-
-    super.dispose();
-  }
-
-  // 시범 연주를 시작하는 함수
   void _startAudio() async {
-    if (!mounted) return; // mounted 체크 추가
+    if (!mounted) return;
 
-    // WAV 파일 재생
+    // 시범 연주 시작 메시지 표시
+    setState(() {
+      _showPracticeMessage = true;
+    });
+    _overlayController.forward();
+
+    // 0.5초 후 메시지 숨기기
+    await Future.delayed(const Duration(milliseconds: 1000));
+
+    if (!mounted) return;
+
+    _overlayController.reverse().then((_) {
+      if (!mounted) return;
+      setState(() {
+        _showPracticeMessage = false;
+      });
+    });
+
+    // 메시지가 사라진 후 바로 시범 연주 시작
     await _audioPlayer.play(ap.AssetSource('test/tom_mix.wav'));
 
-    // WAV 파일 재생이 끝날 때까지 대기하는 리스너 저장
-    _playerCompleteSubscription?.cancel();
+    // 시범 연주가 끝나면 카운트다운 시작
     _playerCompleteSubscription = _audioPlayer.onPlayerComplete.listen((event) {
       if (!mounted) return;
       _startCountdown();
     });
+  }
+
+  StreamSubscription<fs.RecordingDisposition>? _recorderSubscription;
+
+  void _startRecording() async {
+    if (_isRecording || !mounted) return;
+
+    try {
+      await _recorder.startRecorder(
+        toFile: 'drum_performance.aac',
+        codec: fs.Codec.aacADTS,
+      );
+
+      // 녹음 데이터를 실시간으로 전송
+      print("녹음 전");
+      _recorderSubscription = _recorder.onProgress!.listen((e) {
+        if (e.decibels == null) print("데시벨 0임.");
+        if (!mounted || e.decibels == null) return;
+        _sendAudioData(e.decibels!);
+        setState(() {
+          _recordingStatus = '녹음 중... 데시벨: ${e.decibels!.toStringAsFixed(2)}';
+        });
+      });
+
+      setState(() {
+        _isRecording = true;
+        _recordingStatus = '녹음 시작됨';
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _recordingStatus = '녹음 시작 실패: $e';
+      });
+    }
+  }
+
+  void _sendAudioData(double decibels) {
+    if (_stompClient.connected) {
+      final message = {
+        'email': 'test@example.com',
+        'message': base64Encode([decibels.toInt()]),
+      };
+
+      _stompClient.send(
+        destination: '/app/audio/forwarding',
+        body: json.encode(message),
+        headers: {
+          'content-type': 'application/json',
+        },
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    _countdownTimer?.cancel();
+    _practiceMessageTimer?.cancel();
+    _positionUpdateTimer?.cancel();
+
+    _playerStateSubscription?.cancel();
+    _playerCompleteSubscription?.cancel();
+    _positionSubscription?.cancel();
+    _recorderSubscription?.cancel();
+
+    _recorder.closeRecorder();
+    _audioPlayer.dispose();
+    _overlayController.dispose();
+    _stompClient.deactivate();
+
+    super.dispose();
   }
 
   void _pauseAudio() async {
@@ -129,78 +231,40 @@ class _CountdownPageState extends State<CountdownPage>
     await _audioPlayer.seek(Duration(seconds: position.toInt()));
   }
 
-  // 녹음 시작 함수
-  void _startRecording() async {
-    if (_isRecording || !mounted) return; // mounted 체크 추가
-
-    await _recorder.startRecorder(
-        toFile: 'drum_performance.aac'); // 드럼 연주 녹음 시작
-    setState(() {
-      _isRecording = true;
-    });
-  }
-
   // 카운트다운을 시작하는 함수
   void _startCountdown() {
-    if (!mounted) return; // mounted 체크 추가
+    if (!mounted) return;
 
     setState(() {
       isCountingDown = true;
       countdown = 3;
     });
 
-    _overlayController.forward(); // 카운트다운 애니메이션 시작
+    _overlayController.forward();
 
     _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (!mounted) {
-        // mounted 체크 추가
         timer.cancel();
         return;
       }
 
       if (countdown == 0) {
         timer.cancel();
-        _overlayController.reverse().then((_) {
-          if (!mounted) return; // mounted 체크 추가
+        _overlayController.reverse().then((_) async {
+          if (!mounted) return;
           setState(() {
             isCountingDown = false;
           });
-          // 카운트다운 후 사용자 연주 시작
-          _startRecording(); // 사용자 연주 녹음 시작
+
+          // 카운트다운이 끝나면 바로 사용자 녹음 시작
+          _startRecording();
         });
       } else {
-        if (!mounted) return;
         setState(() {
           countdown--;
         });
       }
     });
-  }
-
-  // 녹음 종료 함수
-  void _stopRecording() async {
-    if (!mounted) return; // mounted 체크 추가
-
-    String? filePath = await _recorder.stopRecorder(); // 녹음 종료 후 파일 경로 반환
-    setState(() {
-      _isRecording = false;
-    });
-
-    // 녹음된 오디오 파일을 서버로 전송
-    if (filePath != null) {
-      File file = File(filePath);
-      List<int> bytes = await file.readAsBytes();
-
-      // 서버로 오디오 파일 전송
-      _sendAudioToServer(bytes);
-    }
-  }
-
-  // 녹음된 오디오 파일을 WebSocket을 통해 서버로 전송
-  void _sendAudioToServer(List<int> bytes) {
-    // WebSocket 전송 주석 처리
-    // _channel.sink.add(Uint8List.fromList(bytes));
-    print('서버 연결이 비활성화되어 있습니다.');
   }
 
   Widget buildNumber(int number) {
@@ -289,28 +353,23 @@ class _CountdownPageState extends State<CountdownPage>
                       children: [
                         IconButton(
                           icon: const Icon(Icons.home_filled),
-                          onPressed: () async {
+                          onPressed: () {
                             // 오디오 재생 중지
                             if (_isPlaying) {
-                              await _audioPlayer.stop();
+                              _audioPlayer.stop();
+                            }
+
+                            // 녹음 중지
+                            if (_isRecording) {
+                              _recorder.stopRecorder();
                             }
 
                             // 리소스 정리
                             _playerStateSubscription?.cancel();
                             _playerCompleteSubscription?.cancel();
                             _countdownTimer?.cancel();
-
-                            // 녹음 중지
-                            if (_isRecording) {
-                              await _recorder.stopRecorder();
-                            }
-                            await _recorder.closeRecorder();
-
-                            // 상태 초기화
-                            setState(() {
-                              _isPlaying = false;
-                              _isRecording = false;
-                            });
+                            _practiceMessageTimer?.cancel();
+                            _positionUpdateTimer?.cancel();
 
                             // NavigationScreens 상태 업데이트
                             WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -342,7 +401,7 @@ class _CountdownPageState extends State<CountdownPage>
                           alignment: Alignment.center,
                           child: Text(
                             widget.title,
-                            style: TextStyle(
+                            style: const TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.bold,
                               fontSize: 25,
@@ -411,7 +470,7 @@ class _CountdownPageState extends State<CountdownPage>
                                 ],
                               ),
                               child: Text(
-                                _currentSpeed, // 현재 속도 표시
+                                _currentSpeed,
                                 style: const TextStyle(
                                   color: Color(0xFFE5958B),
                                   fontWeight: FontWeight.w500,
@@ -514,23 +573,46 @@ class _CountdownPageState extends State<CountdownPage>
                               ),
                             ),
                           ),
+                          if (_recordingStatus.isNotEmpty) ...[
+                            const SizedBox(height: 16),
+                            Text(
+                              _recordingStatus,
+                              style: const TextStyle(
+                                color: Color(0xFFE5958B),
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
                         ],
                       ),
                     ),
                   ),
                 ),
-                // 녹음 상태 표시
-                if (_isRecording) ...[
-                  // 녹음 종료 버튼 삭제
-                ],
               ],
             ),
           ),
+          if (_showPracticeMessage)
+            FadeTransition(
+              opacity: _overlayAnimation,
+              child: Container(
+                color: Colors.black.withOpacity(0.9),
+                alignment: Alignment.center,
+                child: const Text(
+                  '시범 연주를 시작하겠습니다',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
           if (isCountingDown)
             FadeTransition(
               opacity: _overlayAnimation,
               child: Container(
-                color: Colors.black.withValues(alpha: 0.9), // 어두운 반투명 오버레이
+                color: Colors.black.withOpacity(0.9),
                 alignment: Alignment.center,
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
