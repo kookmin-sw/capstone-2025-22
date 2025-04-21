@@ -30,7 +30,6 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  xml: ^6.1.0 # xml 파일을 읽기 위한 패키지
   font_awesome_flutter: ^10.5.0 # google 아이콘 사용 위한 패키지
   google_sign_in: ^6.1.5 # google 로그인을 위한 패키지
   http: ^1.2.1
