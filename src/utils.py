@@ -9,7 +9,6 @@ import torch
 import librosa
 import numpy as np
 import matplotlib.pyplot as plt
-from io import BytesIO
 import torch.nn.functional as F
 
 def convert_to_wav(path):
@@ -58,13 +57,13 @@ def wav_to_mel(wav_file, mel_transform, sample_rate=44100):
     if isinstance(wav_file, str):
         # (1) .wav로 끝나면 파일 경로라고 간주
         if wav_file.lower().endswith(".wav"):
-            print("wav_file is a file path")
+            # print("wav_file is a file path")
             if not os.path.exists(wav_file):
                 raise FileNotFoundError(f"'{wav_file}' 경로에 파일이 없습니다.")
             waveform, sr = torchaudio.load(wav_file)
 
         else: # (2) 그 외에는 base64 문자열이라고 간주
-            print("wav_file is a base64 string")
+            # print("wav_file is a base64 string")
             try:
                 decoded = base64.b64decode(wav_file)
                 buffer = io.BytesIO(decoded)
