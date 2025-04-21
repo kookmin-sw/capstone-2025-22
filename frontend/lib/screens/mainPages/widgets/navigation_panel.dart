@@ -66,7 +66,7 @@ class NavigationPanel extends StatelessWidget {
 
           // 네비게이션 버튼 박스
           Container(
-            padding: EdgeInsets.symmetric(horizontal: 15, vertical: 15),
+            padding: EdgeInsets.symmetric(horizontal: 15, vertical: 17),
             margin: EdgeInsets.only(top: 4, bottom: 4, left: 25, right: 15),
             decoration: BoxDecoration(
               color: isSelected
@@ -87,7 +87,7 @@ class NavigationPanel extends StatelessWidget {
             child: Row(
               // 네비게이션 버튼 아이콘, 타이틀
               children: [
-                SizedBox(width: 15),
+                SizedBox(width: 10),
                 IconTheme(
                   data: IconThemeData(
                     color: isSelected ? Color(0XFFD97D6C) : Color(0XFF646464),

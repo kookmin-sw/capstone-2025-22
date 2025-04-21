@@ -2,6 +2,8 @@ import 'package:capstone_2025/screens/drumSheetPages/drum_sheet_player.dart';
 import 'package:capstone_2025/screens/mainPages/navigation_screens.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:capstone_2025/screens/mainPages/navigation_screens.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -11,7 +13,11 @@ void main() {
     DeviceOrientation.landscapeLeft,
     DeviceOrientation.landscapeRight,
   ]).then((_) {
-    runApp(const MyApp());
+    runApp(
+      ProviderScope(
+        child: const MyApp(),
+      ),
+    );
   });
 }
 
@@ -24,7 +30,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       // 페이지 공통 백그라운드 컬러 지정
       theme: ThemeData(scaffoldBackgroundColor: Color(0xFFF2F1F3)),
-      home: DrumSheetPlayer(),
+      home: NavigationScreens(),
     );
   }
 }

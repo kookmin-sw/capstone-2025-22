@@ -84,16 +84,16 @@ class _PatternFillMainState extends State<PatternFillMain> {
       bool isTextblack) {
     // 모달 버튼
     return Container(
-      padding: const EdgeInsets.all(5),
+      padding: const EdgeInsets.all(0),
       margin: const EdgeInsets.only(left: 0, right: 0),
-      width: 155,
+      width: 140,
       // MediaQuery.of(context).size.width * 0.168,
-      height: 57,
+      height: 45,
       // MediaQuery.of(context).size.height * 0.135,
       alignment: Alignment.center,
       decoration: BoxDecoration(
         color: backgroundColor,
-        borderRadius: BorderRadius.circular(15),
+        borderRadius: BorderRadius.circular(13),
       ),
       child: Text(text,
           style: TextStyle(
@@ -109,35 +109,36 @@ class _PatternFillMainState extends State<PatternFillMain> {
       context: context,
       builder: (context) => AlertDialog(
         alignment: Alignment.center,
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(17),
+        ),
         insetPadding: EdgeInsets.symmetric(horizontal: 0, vertical: 0),
-        contentPadding: EdgeInsets.only(top: 20, bottom: 10),
-        content: SizedBox(
-          width: 380,
-          height: 170,
+        contentPadding: EdgeInsets.only(top: 35, bottom: 0),
+        content: Container(
+          width: 320,
+          height: 140,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Padding(
-                padding: const EdgeInsets.only(top: 15, bottom: 5),
-                child: Text(
-                  'Basic Pattern $index',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 21,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF4A4A4A),
-                  ),
+              Text(
+                'Basic Pattern $index',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 19,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF4A4A4A),
                 ),
               ),
               Text(
                 '연습을 시작하시겠습니까?',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  fontSize: 18,
+                  fontSize: 16.5,
                   color: Color(0xFF4A4A4A),
                 ),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 30),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -145,9 +146,14 @@ class _PatternFillMainState extends State<PatternFillMain> {
                     onPressed: () {
                       Navigator.of(context).pop();
                     },
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.all(0),
+                      minimumSize: const Size(0, 0),
+                    ),
                     child: modalBtn(context, '취소',
-                        Color.fromARGB(255, 205, 203, 202), true),
+                        Color.fromARGB(255, 222, 221, 221), true),
                   ),
+                  const SizedBox(width: 10),
                   TextButton(
                     onPressed: () {
                       Navigator.push(
@@ -156,6 +162,10 @@ class _PatternFillMainState extends State<PatternFillMain> {
                               builder: (context) => PatternFillScreen(
                                   title: 'Basic Pattern $index')));
                     },
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.all(0),
+                      minimumSize: const Size(0, 0),
+                    ),
                     child: modalBtn(context, '확인', Color(0xffD97D6C), false),
                   ),
                 ],
