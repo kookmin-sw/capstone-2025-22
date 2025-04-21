@@ -178,3 +178,4 @@ pubspec.lock
 macos/Flutter/ephemeral/Flutter-Generated.xcconfig
 
 .venv/*
+pubspec.lock
