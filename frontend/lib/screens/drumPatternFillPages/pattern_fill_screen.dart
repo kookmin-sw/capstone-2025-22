@@ -1,10 +1,9 @@
 import 'dart:io';
 import 'dart:async';
-import 'package:capstone_2025/screens/mainPages/navigation_screens.dart';
 import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart' as ap;
 import 'package:flutter_sound/flutter_sound.dart' as fs;
-import 'package:capstone_2025/screens/drumPatternFillPages/pattern_fill_main.dart';
+import 'package:capstone_2025/screens/mainPages/navigation_screens.dart';
 
 class PatternFillScreen extends StatelessWidget {
   final String title;
@@ -13,10 +12,7 @@ class PatternFillScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      theme: ThemeData(scaffoldBackgroundColor: const Color(0xFFF2F1F3)),
-      home: CountdownPage(title: title),
-    );
+    return CountdownPage(title: title);
   }
 }
 
@@ -66,18 +62,15 @@ class _CountdownPageState extends State<CountdownPage>
 
     // playerState 업데이트
     _audioPlayer.onPlayerStateChanged.listen((state) {
+      if (!mounted) return; // mounted 체크 추가
       if (state == ap.PlayerState.playing) {
-        if (mounted) {
-          setState(() {
-            _isPlaying = true;
-          });
-        }
+        setState(() {
+          _isPlaying = true;
+        });
       } else {
-        if (mounted) {
-          setState(() {
-            _isPlaying = false;
-          });
-        }
+        setState(() {
+          _isPlaying = false;
+        });
       }
     });
 
@@ -103,82 +96,86 @@ class _CountdownPageState extends State<CountdownPage>
 
   // 시범 연주를 시작하는 함수
   void _startAudio() async {
+    if (!mounted) return; // mounted 체크 추가
+
     // WAV 파일 재생
     await _audioPlayer.play(ap.AssetSource('test/tom_mix.wav'));
 
     // WAV 파일 재생이 끝날 때까지 대기
     _audioPlayer.onPlayerComplete.listen((event) {
+      if (!mounted) return; // mounted 체크 추가
       _startCountdown(); // WAV 파일 재생이 끝나면 카운트다운 시작
     });
   }
 
   void _pauseAudio() async {
+    if (!mounted) return; // mounted 체크 추가
     await _audioPlayer.pause();
-    if (mounted) {
-      setState(() {
-        _isPlaying = false;
-      });
-    }
+    setState(() {
+      _isPlaying = false;
+    });
   }
 
   void _seekAudio(double position) async {
+    if (!mounted) return; // mounted 체크 추가
     await _audioPlayer.seek(Duration(seconds: position.toInt()));
   }
 
   // 녹음 시작 함수
   void _startRecording() async {
-    if (_isRecording) return; // 이미 녹음 중이면 함수 종료
+    if (_isRecording || !mounted) return; // mounted 체크 추가
 
     await _recorder.startRecorder(
         toFile: 'drum_performance.aac'); // 드럼 연주 녹음 시작
-    if (mounted) {
-      setState(() {
-        _isRecording = true;
-      });
-    }
+    setState(() {
+      _isRecording = true;
+    });
   }
 
   // 카운트다운을 시작하는 함수
   void _startCountdown() {
-    if (mounted) {
-      setState(() {
-        isCountingDown = true;
-        countdown = 3;
-      });
-    }
+    if (!mounted) return; // mounted 체크 추가
+
+    setState(() {
+      isCountingDown = true;
+      countdown = 3;
+    });
 
     _overlayController.forward(); // 카운트다운 애니메이션 시작
 
     _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) {
+        // mounted 체크 추가
+        timer.cancel();
+        return;
+      }
+
       if (countdown == 0) {
         timer.cancel();
         _overlayController.reverse().then((_) {
-          if (mounted) {
-            setState(() {
-              isCountingDown = false;
-            });
-            // 카운트다운 후 사용자 연주 시작
-            _startRecording(); // 사용자 연주 녹음 시작
-          }
+          if (!mounted) return; // mounted 체크 추가
+          setState(() {
+            isCountingDown = false;
+          });
+          // 카운트다운 후 사용자 연주 시작
+          _startRecording(); // 사용자 연주 녹음 시작
         });
       } else {
-        if (mounted) {
-          setState(() {
-            countdown--;
-          });
-        }
+        setState(() {
+          countdown--;
+        });
       }
     });
   }
 
   // 녹음 종료 함수
   void _stopRecording() async {
+    if (!mounted) return; // mounted 체크 추가
+
     String? filePath = await _recorder.stopRecorder(); // 녹음 종료 후 파일 경로 반환
-    if (mounted) {
-      setState(() {
-        _isRecording = false;
-      });
-    }
+    setState(() {
+      _isRecording = false;
+    });
 
     // 녹음된 오디오 파일을 서버로 전송
     if (filePath != null) {
@@ -284,23 +281,28 @@ class _CountdownPageState extends State<CountdownPage>
                         IconButton(
                           icon: const Icon(Icons.home_filled),
                           onPressed: () {
-                            // NavigationScreens 상태 업데이트. PatternFillMain 선택.
+                            // NavigationScreens 상태 업데이트
                             final navigationScreensState =
                                 context.findAncestorStateOfType<
                                     NavigationScreensState>();
                             if (navigationScreensState != null) {
                               navigationScreensState.setState(() {
                                 navigationScreensState.selectedIndex = 2;
-                                print(
-                                    "selectedIndex updated to: ${navigationScreensState.selectedIndex}");
                               });
                             }
+
+                            // 디버그 정보 출력
+                            print(
+                                'Current route: ${ModalRoute.of(context)?.settings.name}');
+                            print(
+                                'Is current route active: ${ModalRoute.of(context)?.isActive}');
+                            print('Can pop: ${Navigator.canPop(context)}');
+
                             // 현재 화면을 제거하고 이전 화면으로 돌아가기
-                            if (Navigator.canPop(context)) {
-                              Navigator.pop(context); // 이전 화면으로 돌아감
-                            } else {
-                              print("더 이상 돌아갈 화면이 없습니다."); // 디버깅용 메시지
-                            }
+                            Navigator.of(context).popUntil((route) {
+                              print('Route name: ${route.settings.name}');
+                              return route.isFirst;
+                            });
                           },
                         ),
                         const Spacer(),
