@@ -109,6 +109,7 @@ class _CountdownPageState extends State<CountdownPage>
     await _audioPlayer.play(ap.AssetSource('test/tom_mix.wav'));
 
     // WAV 파일 재생이 끝날 때까지 대기하는 리스너 저장
+    _playerCompleteSubscription?.cancel();
     _playerCompleteSubscription = _audioPlayer.onPlayerComplete.listen((event) {
       if (!mounted) return;
       _startCountdown();
@@ -168,6 +169,7 @@ class _CountdownPageState extends State<CountdownPage>
           _startRecording(); // 사용자 연주 녹음 시작
         });
       } else {
+        if (!mounted) return;
         setState(() {
           countdown--;
         });
@@ -287,29 +289,46 @@ class _CountdownPageState extends State<CountdownPage>
                       children: [
                         IconButton(
                           icon: const Icon(Icons.home_filled),
-                          onPressed: () {
-                            // NavigationScreens 상태 업데이트
-                            final navigationScreensState =
-                                context.findAncestorStateOfType<
-                                    NavigationScreensState>();
-                            if (navigationScreensState != null) {
-                              navigationScreensState.setState(() {
-                                navigationScreensState.selectedIndex = 2;
-                              });
+                          onPressed: () async {
+                            // 오디오 재생 중지
+                            if (_isPlaying) {
+                              await _audioPlayer.stop();
                             }
 
-                            // 디버그 정보 출력
-                            print(
-                                'Current route: ${ModalRoute.of(context)?.settings.name}');
-                            print(
-                                'Is current route active: ${ModalRoute.of(context)?.isActive}');
-                            print('Can pop: ${Navigator.canPop(context)}');
+                            // 리소스 정리
+                            _playerStateSubscription?.cancel();
+                            _playerCompleteSubscription?.cancel();
+                            _countdownTimer?.cancel();
 
-                            // 현재 화면을 제거하고 이전 화면으로 돌아가기
-                            Navigator.of(context).popUntil((route) {
-                              print('Route name: ${route.settings.name}');
-                              return route.isFirst;
+                            // 녹음 중지
+                            if (_isRecording) {
+                              await _recorder.stopRecorder();
+                            }
+                            await _recorder.closeRecorder();
+
+                            // 상태 초기화
+                            setState(() {
+                              _isPlaying = false;
+                              _isRecording = false;
                             });
+
+                            // NavigationScreens 상태 업데이트
+                            WidgetsBinding.instance.addPostFrameCallback((_) {
+                              final navigationScreensState =
+                                  context.findAncestorStateOfType<
+                                      NavigationScreensState>();
+                              if (navigationScreensState != null &&
+                                  navigationScreensState.mounted) {
+                                navigationScreensState.setState(() {
+                                  navigationScreensState.selectedIndex = 2;
+                                });
+                              }
+                            });
+
+                            // 네비게이션 처리
+                            if (Navigator.canPop(context)) {
+                              Navigator.of(context).pop();
+                            }
                           },
                         ),
                         const Spacer(),
