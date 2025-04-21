@@ -56,7 +56,6 @@ dev_dependencies:
   image_picker: ^1.0.7 # 카메라, 앨범에서 사진을 가져오는 패키지
   flutter_inappwebview: ^6.0.0 # 웹뷰를 사용하기 위한 패키지
   path_provider: ^2.1.2
-  image_picker: # 카메라, 앨범에서 사진을 가져오는 패키지
   build_runner:
   custom_lint:
   riverpod_generator: ^2.6.5
