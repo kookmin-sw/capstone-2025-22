@@ -44,7 +44,6 @@ android/key.properties
 android/local.properties
 android/**/GeneratedPluginRegistrant.java
 android/**/gradle-wrapper.jar
-android/gradle.properties
 android/app/proguard-rules.pro
 
 # Android NDK 및 CMake 관련 빌드 파일
@@ -144,7 +143,6 @@ gradle-app.setting
 .project
 .classpath
 *.hprof  # Java heap dump
-android/gradle.properties
 android/app/build.gradle
 android/gradle/wrapper/gradle-wrapper.properties
 
