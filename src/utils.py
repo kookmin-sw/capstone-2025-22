@@ -67,6 +67,8 @@ def select_one_or_two_classes(logits):
     thresh = thresholds.view(1, -1).to(probs.device)
     preds = (probs > thresh).float()                # 클래스별 임계치 적용 (ex. [[0, 1, 0, 1, 0]])
 
+    print(probs)
+    print(preds)
     # 최소 1개, 최대 2개 보정
     for i in range(preds.size(0)):
         cnt = int(preds[i].sum().item())
@@ -111,6 +113,6 @@ def visualize_mel_spectrogram(wav_path):
 
     # 멜 스펙트로그램 형태 정보 출력
     print(f"PyTorch Mel Spectrogram: {mel_spec_torch.shape} - 채널 {mel_spec_torch.shape[0]}, 특성 {mel_spec_torch.shape[1]}, 시간 프레임 {mel_spec_torch.shape[2]}")
-
+    print("KD, SD, CY, TT, HH")
     return mel_spec_torch
 
