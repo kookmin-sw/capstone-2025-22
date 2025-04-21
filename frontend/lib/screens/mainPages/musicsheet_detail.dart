@@ -87,7 +87,7 @@ class _MusicsheetDetailState extends State<MusicsheetDetail> {
 
               // 그래프 속성
               gridData: FlGridData(
-                show: false, // 그리드 라인 제거
+                show: true, // 그리드 라인 제거
                 drawVerticalLine: true, // 세로선 그리기
                 drawHorizontalLine: true, // 가로선 그리기
                 getDrawingHorizontalLine: (value) => FlLine(
@@ -113,16 +113,7 @@ class _MusicsheetDetailState extends State<MusicsheetDetail> {
                     getTitlesWidget: (value, meta) {
                       if (value > 100) {
                         // 점수 태그 추가
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 5),
-                          child: Text(
-                            "점수",
-                            style: TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
-                                color: const Color.fromARGB(255, 46, 45, 45)),
-                          ),
-                        ); // 100점 초과 값 숨김
+                        return Container(); // 100점 초과 값 숨김
                       }
                       if (value == getMinY()) return Container(); // 최소값 숨김
                       return Text(
@@ -132,7 +123,7 @@ class _MusicsheetDetailState extends State<MusicsheetDetail> {
                             fontSize: 12, color: Colors.grey.shade700),
                       );
                     },
-                    interval: 5, // 0~100 점수 기준
+                    interval: 10, // 0~100 점수 기준
                   ),
                 ),
                 rightTitles: AxisTitles(
@@ -151,38 +142,48 @@ class _MusicsheetDetailState extends State<MusicsheetDetail> {
                 LineChartBarData(
                   spots: generateChartData(),
                   isCurved: false,
-                  gradient: LinearGradient(
-                    // 그래프 그라데이션
-                    colors: [Colors.orange.shade700, Colors.orange.shade400],
-                  ),
-                  barWidth: 3,
+                  color: Color(0xffD97D6C), // 그래프 색상
+                  barWidth: 2,
                   isStrokeCapRound: true,
-                  belowBarData: BarAreaData(
-                    show: true,
-                    gradient: LinearGradient(
-                      colors: [
-                        Colors.orange.withOpacity(0.2),
-                        Colors.transparent
-                      ],
-                    ),
-                  ),
                 ),
               ],
               lineTouchData: LineTouchData(
                 // 점 클릭 시 툴팁
                 touchTooltipData: LineTouchTooltipData(
-                  getTooltipColor: (LineBarSpot spot) =>
-                      Colors.amberAccent.withOpacity(0.5),
+                  getTooltipColor: (LineBarSpot spot) => Colors.white,
+                  tooltipRoundedRadius: 12,
+                  tooltipPadding:
+                      EdgeInsets.symmetric(horizontal: 25, vertical: 5),
                   getTooltipItems: (List<LineBarSpot> touchedSpots) {
                     return touchedSpots.map((spot) {
+                      // TextSpan으로 여러 스타일을 적용
                       return LineTooltipItem(
-                        // 상세 정보 - 마지막 5개 데이터
-                        '${lastFive[(spot.x).toInt()]['연습 날짜']}\n점수: ${spot.y.toInt()}점',
-                        const TextStyle(
+                        // 날짜와 점수 두 부분으로 나누기
+                        '',
+                        TextStyle(
                           color: Colors.black,
                           fontWeight: FontWeight.w500,
                           fontSize: 10,
                         ),
+                        // 여러 스타일을 적용할 수 있는 TextSpan 사용
+                        textAlign: TextAlign.center,
+                        children: [
+                          TextSpan(
+                            text: '${spot.y.toInt()}점',
+                            style: TextStyle(
+                              fontSize: 16, // 점수는 크게
+                              color: Color(0xffD97D6C), // 점수는 주황색
+                              fontWeight: FontWeight.bold, // 점수는 볼드체
+                            ),
+                          ),
+                          TextSpan(
+                            text: '\n${lastFive[(spot.x).toInt()]['연습 날짜']}',
+                            style: TextStyle(
+                              fontSize: 10, // 날짜는 작게
+                              color: Colors.black, // 날짜는 검은색
+                            ),
+                          ),
+                        ],
                       );
                     }).toList();
                   },
@@ -321,6 +322,9 @@ class _MusicsheetDetailState extends State<MusicsheetDetail> {
                             Expanded(
                               flex: 20,
                               child: Container(
+                                child: Image.asset(
+                                  'assets/images/image.png', // 악보 이미지 임시 업로드 - 나중에 실제 악보로 변경 예정
+                                ),
                                 decoration: BoxDecoration(
                                   color: Colors.white,
                                   borderRadius: BorderRadius.circular(9),

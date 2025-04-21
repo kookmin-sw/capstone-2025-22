@@ -1,12 +1,17 @@
+import 'dart:ffi';
+
 import 'package:capstone_2025/screens/drumBasicsPages/drum_basics_page.dart';
 import 'package:capstone_2025/screens/drumPatternFillPages/pattern_fill_main.dart';
 import 'package:capstone_2025/screens/drumSheetPages/drum_sheet_screen.dart';
 import 'package:capstone_2025/screens/mainPages/my_page.dart';
 import 'package:capstone_2025/screens/mainPages/widgets/navigation_panel.dart';
+import 'package:capstone_2025/screens/metronomePages/metronome.dart';
 import 'package:flutter/material.dart';
 
 class NavigationScreens extends StatefulWidget {
-  const NavigationScreens({super.key});
+  final int firstSelectedIndex; // 선택된 메뉴 인덱스
+
+  const NavigationScreens({super.key, this.firstSelectedIndex = 4});
 
   @override
   NavigationScreensState createState() => NavigationScreensState();
@@ -15,13 +20,13 @@ class NavigationScreens extends StatefulWidget {
 class NavigationScreensState extends State<NavigationScreens> {
   int selectedIndex = 4; // 선택된 메뉴 인덱스 - default: 4
 
-  // 선택된 인덱스에 따라 오른쪽 화면을 변경하는 함수 - 추후 변경 필요
+  // 선택된 인덱스에 따라 오른쪽 화면을 변경하는 함수
   Widget _getPage(int index) {
     switch (index) {
       case 0: // 드럼 기초
         return DrumBasicsPage();
       case 1: // 메트로놈
-        return MyPage();
+        return Metronome();
       case 2: // 패턴 및 필인 연습
         return PatternFillMain();
       case 3: // 악보 연습
