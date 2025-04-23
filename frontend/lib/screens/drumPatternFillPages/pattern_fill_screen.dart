@@ -2,9 +2,11 @@ import 'dart:io';
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:audioplayers/audioplayers.dart' as ap;
 import 'package:flutter_sound/flutter_sound.dart' as fs;
 import 'package:stomp_dart_client/stomp_dart_client.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:capstone_2025/screens/mainPages/navigation_screens.dart';
 
 class PatternFillScreen extends StatelessWidget {
@@ -38,28 +40,39 @@ class _CountdownPageState extends State<CountdownPage>
   String _currentSpeed = '1x';
   bool _showPracticeMessage = false;
   String _recordingStatus = '';
+  String _userEmail = '';
+  List<dynamic> _detectedOnsets = [];
 
   late ap.AudioPlayer _audioPlayer;
   late fs.FlutterSoundRecorder _recorder;
   late AnimationController _overlayController;
   late Animation<double> _overlayAnimation;
   late StompClient _stompClient;
+  final _storage = const FlutterSecureStorage();
+  String? _recordingPath;
 
   Timer? _countdownTimer;
   Timer? _practiceMessageTimer;
   Timer? _positionUpdateTimer;
+  Timer? _recordingDataTimer;
 
   StreamSubscription? _playerStateSubscription;
   StreamSubscription? _playerCompleteSubscription;
   StreamSubscription? _positionSubscription;
+  StreamSubscription<fs.RecordingDisposition>? _recorderSubscription;
 
   @override
   void initState() {
     super.initState();
+    _initializeData();
+  }
+
+  Future<void> _initializeData() async {
+    _userEmail = await _storage.read(key: 'user_email') ?? 'test@example.com';
 
     _audioPlayer = ap.AudioPlayer();
     _recorder = fs.FlutterSoundRecorder();
-    _recorder.openRecorder();
+    await _initRecorder();
 
     _overlayController = AnimationController(
       vsync: this,
@@ -70,6 +83,13 @@ class _CountdownPageState extends State<CountdownPage>
 
     _setupAudioListeners();
     _setupWebSocket();
+  }
+
+  Future<void> _initRecorder() async {
+    await _recorder.openRecorder();
+    // Get application documents directory for storing recordings
+    final appDocDir = await getApplicationDocumentsDirectory();
+    _recordingPath = '${appDocDir.path}/drum_performance.wav';
   }
 
   void _setupAudioListeners() {
@@ -101,19 +121,39 @@ class _CountdownPageState extends State<CountdownPage>
       config: StompConfig(
         url: 'ws://10.0.2.2:28080/ws/audio',
         onConnect: (StompFrame frame) {
+          print('WebSocket connected successfully!');
           _stompClient.subscribe(
-            destination: '/topic/onset/test@example.com',
+            destination: '/topic/onset/$_userEmail',
             callback: (frame) {
               if (frame.body != null) {
                 final response = json.decode(frame.body!);
-                print('Received onset data: ${response['onsets']}');
+                print('Received WebSocket data:');
+                print('Full response: $response');
+
+                if (response.containsKey('onsets')) {
+                  setState(() {
+                    _detectedOnsets = response['onsets'];
+                  });
+                  print('Onsets: ${response['onsets']}');
+                }
+                print('Timestamp: ${DateTime.now()}');
+              } else {
+                print('Received empty WebSocket frame');
               }
             },
           );
         },
-        onWebSocketError: (dynamic error) => print('WebSocket error: $error'),
+        onWebSocketError: (dynamic error) {
+          print('WebSocket error: $error');
+          print('Error occurred at: ${DateTime.now()}');
+        },
+        onDisconnect: (frame) {
+          print('WebSocket disconnected at: ${DateTime.now()}');
+        },
       ),
     );
+
+    // Activate WebSocket connection
     _stompClient.activate();
   }
 
@@ -126,7 +166,7 @@ class _CountdownPageState extends State<CountdownPage>
     });
     _overlayController.forward();
 
-    // 0.5초 후 메시지 숨기기
+    // 1초 후 메시지 숨기기 (0.5초에서 1초로 조정)
     await Future.delayed(const Duration(milliseconds: 1000));
 
     if (!mounted) return;
@@ -148,54 +188,83 @@ class _CountdownPageState extends State<CountdownPage>
     });
   }
 
-  StreamSubscription<fs.RecordingDisposition>? _recorderSubscription;
-
   void _startRecording() async {
     if (_isRecording || !mounted) return;
 
     try {
+      print("Starting recording to $_recordingPath");
       await _recorder.startRecorder(
-        toFile: 'drum_performance.aac',
-        codec: fs.Codec.aacADTS,
+        toFile: _recordingPath,
+        codec: fs.Codec.pcm16WAV,
       );
-
-      // 녹음 데이터를 실시간으로 전송
-      print("녹음 전");
-      _recorderSubscription = _recorder.onProgress!.listen((e) {
-        if (e.decibels == null) print("데시벨 0임.");
-        if (!mounted || e.decibels == null) return;
-        _sendAudioData(e.decibels!);
-        setState(() {
-          _recordingStatus = '녹음 중... 데시벨: ${e.decibels!.toStringAsFixed(2)}';
-        });
-      });
 
       setState(() {
         _isRecording = true;
         _recordingStatus = '녹음 시작됨';
       });
+
+      // Set up timer to send recording data every second
+      _recordingDataTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+        _sendRecordingData();
+      });
     } catch (e) {
-      if (!mounted) return;
       setState(() {
         _recordingStatus = '녹음 시작 실패: $e';
       });
+      print('Recording error: $e');
     }
   }
 
-  void _sendAudioData(double decibels) {
-    if (_stompClient.connected) {
-      final message = {
-        'email': 'test@example.com',
-        'message': base64Encode([decibels.toInt()]),
-      };
+  void _stopRecording() async {
+    if (!_isRecording || !mounted) return;
 
-      _stompClient.send(
-        destination: '/app/audio/forwarding',
-        body: json.encode(message),
-        headers: {
-          'content-type': 'application/json',
-        },
-      );
+    _recordingDataTimer?.cancel();
+    await _recorder.stopRecorder();
+
+    // Send final recording data
+    _sendRecordingData();
+
+    setState(() {
+      _isRecording = false;
+      _recordingStatus = '녹음 완료';
+    });
+  }
+
+  void _sendRecordingData() async {
+    if (!_stompClient.connected) {
+      print('WebSocket is not connected!');
+      return;
+    }
+
+    try {
+      final file = File(_recordingPath!);
+      if (await file.exists()) {
+        final bytes = await file.readAsBytes();
+        final base64String = base64Encode(bytes);
+
+        final message = {
+          'email': _userEmail,
+          'message': base64String,
+        };
+
+        print('Sending WebSocket data at: ${DateTime.now()}');
+
+        _stompClient.send(
+          destination: '/app/audio/forwarding',
+          body: json.encode(message),
+          headers: {
+            'content-type': 'application/json',
+          },
+        );
+
+        setState(() {
+          _recordingStatus = '녹음 중... 데이터 전송됨';
+        });
+      } else {
+        print('Recording file not found: $_recordingPath');
+      }
+    } catch (e) {
+      print('Error sending recording data: $e');
     }
   }
 
@@ -204,22 +273,30 @@ class _CountdownPageState extends State<CountdownPage>
     _countdownTimer?.cancel();
     _practiceMessageTimer?.cancel();
     _positionUpdateTimer?.cancel();
+    _recordingDataTimer?.cancel();
 
     _playerStateSubscription?.cancel();
     _playerCompleteSubscription?.cancel();
     _positionSubscription?.cancel();
     _recorderSubscription?.cancel();
 
+    if (_isRecording) {
+      _recorder.stopRecorder();
+    }
+
     _recorder.closeRecorder();
     _audioPlayer.dispose();
     _overlayController.dispose();
-    _stompClient.deactivate();
+
+    if (_stompClient.connected) {
+      _stompClient.deactivate();
+    }
 
     super.dispose();
   }
 
   void _pauseAudio() async {
-    if (!mounted) return; // mounted 체크 추가
+    if (!mounted) return;
     await _audioPlayer.pause();
     setState(() {
       _isPlaying = false;
@@ -227,7 +304,7 @@ class _CountdownPageState extends State<CountdownPage>
   }
 
   void _seekAudio(double position) async {
-    if (!mounted) return; // mounted 체크 추가
+    if (!mounted) return;
     await _audioPlayer.seek(Duration(seconds: position.toInt()));
   }
 
@@ -361,7 +438,7 @@ class _CountdownPageState extends State<CountdownPage>
 
                             // 녹음 중지
                             if (_isRecording) {
-                              _recorder.stopRecorder();
+                              _stopRecording();
                             }
 
                             // 리소스 정리
@@ -438,10 +515,12 @@ class _CountdownPageState extends State<CountdownPage>
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                _buildSpeedButton('0.5x', false),
-                                _buildSpeedButton('1x', true),
-                                _buildSpeedButton('1.5x', false),
-                                _buildSpeedButton('2x', false),
+                                _buildSpeedButton(
+                                    '0.5x', _currentSpeed == '0.5x'),
+                                _buildSpeedButton('1x', _currentSpeed == '1x'),
+                                _buildSpeedButton(
+                                    '1.5x', _currentSpeed == '1.5x'),
+                                _buildSpeedButton('2x', _currentSpeed == '2x'),
                               ],
                             ),
                           ),
@@ -491,11 +570,34 @@ class _CountdownPageState extends State<CountdownPage>
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: Center(
-                      child: Image.asset(
-                        'assets/test/tom_mix.png',
-                        fit: BoxFit.contain,
-                      ),
+                    child: Stack(
+                      children: [
+                        Center(
+                          child: Image.asset(
+                            'assets/test/tom_mix.png',
+                            fit: BoxFit.contain,
+                          ),
+                        ),
+                        if (_detectedOnsets.isNotEmpty)
+                          Positioned(
+                            bottom: 10,
+                            left: 10,
+                            child: Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: Colors.black.withValues(alpha: 0.7),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text(
+                                '감지된 온셋: ${_detectedOnsets.length}개',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
                   ),
                 ),
@@ -532,46 +634,55 @@ class _CountdownPageState extends State<CountdownPage>
                                 ),
                               ),
                               child: Slider(
-                                value: _currentPosition,
+                                value: _currentPosition.clamp(
+                                    0, _totalDuration > 0 ? _totalDuration : 1),
                                 min: 0,
-                                max: _totalDuration,
+                                max: _totalDuration > 0 ? _totalDuration : 1,
                                 onChanged: _seekAudio,
                               ),
                             ),
                           ),
                           const SizedBox(height: 16),
-                          Container(
-                            width: 48,
-                            height: 48,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: const Color(0xFFE5958B),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.1),
-                                  blurRadius: 4,
-                                  offset: const Offset(0, 2),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Container(
+                                width: 48,
+                                height: 48,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: const Color(0xFFE5958B),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color:
+                                          Colors.black.withValues(alpha: 0.1),
+                                      blurRadius: 4,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
                                 ),
-                              ],
-                            ),
-                            child: Material(
-                              color: Colors.transparent,
-                              child: InkWell(
-                                borderRadius: BorderRadius.circular(24),
-                                onTap: () {
-                                  if (_isPlaying) {
-                                    _pauseAudio();
-                                  } else {
-                                    _startAudio();
-                                  }
-                                },
-                                child: Icon(
-                                  _isPlaying ? Icons.pause : Icons.play_arrow,
-                                  color: Colors.white,
-                                  size: 24,
+                                child: Material(
+                                  color: Colors.transparent,
+                                  child: InkWell(
+                                    borderRadius: BorderRadius.circular(24),
+                                    onTap: () {
+                                      if (_isRecording) {
+                                        _stopRecording();
+                                      } else {
+                                        _startAudio();
+                                      }
+                                    },
+                                    child: Icon(
+                                      _isRecording
+                                          ? Icons.stop
+                                          : Icons.play_arrow,
+                                      color: Colors.white,
+                                      size: 24,
+                                    ),
+                                  ),
                                 ),
                               ),
-                            ),
+                            ],
                           ),
                           if (_recordingStatus.isNotEmpty) ...[
                             const SizedBox(height: 16),
@@ -596,7 +707,7 @@ class _CountdownPageState extends State<CountdownPage>
             FadeTransition(
               opacity: _overlayAnimation,
               child: Container(
-                color: Colors.black.withOpacity(0.9),
+                color: Colors.black.withValues(alpha: 0.9),
                 alignment: Alignment.center,
                 child: const Text(
                   '시범 연주를 시작하겠습니다',
@@ -612,7 +723,7 @@ class _CountdownPageState extends State<CountdownPage>
             FadeTransition(
               opacity: _overlayAnimation,
               child: Container(
-                color: Colors.black.withOpacity(0.9),
+                color: Colors.black.withValues(alpha: 0.9),
                 alignment: Alignment.center,
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
