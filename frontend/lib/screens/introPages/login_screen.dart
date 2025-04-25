@@ -84,7 +84,7 @@ class _LoginScreenState extends State<LoginScreen> {
         // 페이지 하단에 환영 메시지 출력
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('${userInfo['nickname']}님 환영합니다.')),
+            SnackBar(content: Text('${userInfo['body']['nickname']}님 환영합니다.')),
           );
         }
 
@@ -111,6 +111,7 @@ class _LoginScreenState extends State<LoginScreen> {
   /// 로그인 성공 시 사용자 정보 저장
   Future<void> saveUserData(Map<String, dynamic> userData) async {
     await _storage.deleteAll(); // 기존 데이터 초기화
+    userData = userData['body'];
 
     await _storage.write(key: 'user_email', value: userData['email']);
     await _storage.write(key: 'nick_name', value: userData['nickname']);
