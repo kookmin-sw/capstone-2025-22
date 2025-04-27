@@ -1,0 +1,108 @@
+{
+    "version": "1.0",
+    "truncation": null,
+    "padding": null,
+    "added_tokens": [
+        {
+            "id": 0,
+            "content": "[PAD]",
+            "single_word": false,
+            "lstrip": false,
+            "rstrip": false,
+            "normalized": false,
+            "special": true
+        },
+        {
+            "id": 1,
+            "content": "[BOS]",
+            "single_word": false,
+            "lstrip": false,
+            "rstrip": false,
+            "normalized": false,
+            "special": true
+        },
+        {
+            "id": 2,
+            "content": "[EOS]",
+            "single_word": false,
+            "lstrip": false,
+            "rstrip": false,
+            "normalized": false,
+            "special": true
+        }
+    ],
+    "normalizer": null,
+    "pre_tokenizer": {
+        "type": "Sequence",
+        "pretokenizers": [
+            {
+                "type": "Split",
+                "pattern": {
+                    "String": "+"
+                },
+                "behavior": "Removed",
+                "invert": false
+            },
+            {
+                "type": "Split",
+                "pattern": {
+                    "String": "|"
+                },
+                "behavior": "Isolated",
+                "invert": false
+            },
+            {
+                "type": "Split",
+                "pattern": {
+                    "String": "\n"
+                },
+                "behavior": "Removed",
+                "invert": false
+            }
+        ]
+    },
+    "post_processor": null,
+    "decoder": null,
+    "model": {
+        "type": "WordLevel",
+        "vocab": {
+            "[PAD]": 0,
+            "[BOS]": 1,
+            "[EOS]": 2,
+            "+": 3,
+            "|": 4,
+            "barline": 5,
+            "clef-percussion":6,
+
+            "note-eighth": 7,
+            "note-eighth.": 8,
+            "note-half": 9,
+            "note-half.": 10,
+            "note-quarter": 11,
+            "note-quarter.": 12,
+            "note-sixteenth": 13,
+            "note-sixteenth.": 14,
+            "note-thirty_second": 15,
+            "note-thirty_second.": 16,
+            "note-whole": 17,
+            "note-whole.": 18,
+
+            "rest-eighth": 19,
+            "rest-eighth.": 20,
+            "rest-half": 21,
+            "rest-half.": 22,
+            "rest-quarter": 23,
+            "rest-quarter.": 24,
+            "rest-sixteenth": 25,
+            "rest-sixteenth.": 26,
+            "rest-thirty_second": 27,
+            "rest-thirty_second.": 28,
+            "rest-whole": 29,
+            "rest-whole.": 30,
+
+            "timeSignature-4/4": 31,
+            "<unk>": 32
+        },
+        "unk_token": "<unk>"
+    }
+}
