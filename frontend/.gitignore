@@ -52,7 +52,6 @@ android/key.properties
 android/local.properties
 android/**/GeneratedPluginRegistrant.java
 android/**/gradle-wrapper.jar
-android/gradle.properties
 android/app/proguard-rules.pro
 android/app/build.gradle
 android/build.gradle
@@ -157,7 +156,6 @@ gradle-app.setting
 .project
 .classpath
 *.hprof  # Java heap dump
-android/gradle.properties
 android/app/build.gradle
 android/gradle/wrapper/gradle-wrapper.properties
 android/build.gradle.kts
