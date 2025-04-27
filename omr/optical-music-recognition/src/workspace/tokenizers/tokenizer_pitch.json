@@ -1,0 +1,50 @@
+{
+    "version": "1.0",
+    "truncation": null,
+    "padding": null,
+    "normalizer": null,
+    "pre_tokenizer": {
+        "type": "Sequence",
+        "pretokenizers": [
+            {
+                "type": "Split",
+                "pattern": {
+                    "String": "+"
+                },
+                "behavior": "Removed",
+                "invert": false
+            },
+            {
+                "type": "Split",
+                "pattern": {
+                    "String": "\n"
+                },
+                "behavior": "Removed",
+                "invert": false
+            }
+        ]
+    },
+    "post_processor": null,
+    "decoder": null,
+    "model": {
+        "type": "WordLevel",
+        "vocab": {
+            "nonote": 0,
+            "note-D4": 1,
+            "note-E4": 2,
+            "note-F4": 3,
+            "note-G4": 4,
+            "note-A4": 5,
+            "note-B4": 6,
+            "note-C5": 7,
+            "note-D5": 8,
+            "note-E5": 9,
+            "note-F5": 10,
+            "note-G5": 11,
+            "note-A5": 12,
+            "note-B5": 13,
+            "<unk>":14
+        },
+        "unk_token": "<unk>"
+    }
+}

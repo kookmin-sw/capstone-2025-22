@@ -1,0 +1,12 @@
+version: "3"
+
+services:
+  osmd-ddm:
+    container_name: osmd-ddm
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - /app/node_modules
+      - ${DATASET_PATH}:/app/dataset
+    entrypoint: node src/generateImages_browserless.mjs ./dataset png ${PAGE_WIDTH}

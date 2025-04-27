@@ -1,0 +1,41 @@
+#*************************************************
+#****************datasets args********************
+#*************************************************
+filepaths:
+  model_path:
+    base: ddm-omr/workspace/models
+    model: ddm-omr/workspace/models/omr
+  feature_path:
+    base: ../data/processed-feature
+    seq: ../data/processed-feature/sequence-annotation
+  raw_path:
+    osmd: D:/PSY/Semester0501/Capstone_Project/optical-music-recognition/data/raw/osmd-dataset-v1.0.1
+    # "D:\PSY\Semester0501\Capstone_Project\optical-music-recognition\ddm-omr\osmd"
+    # ./data/raw/osmd-dataset-v1.0.1
+    # ../data/raw/osmd-dataset-v1.0.1 (기존에 상대 경로로 설정)
+  test_path: ../data/test/test_omr
+  test_demo: ../data/test
+
+jsonkeys:
+  measure_list: measureList
+
+measure: measure
+measure_height: 120
+
+score_width: 1024
+
+channels: 1
+max_height: 128
+max_width: 256
+max_seq_len: 24
+
+batch_size: 16
+epoch: 200
+
+# augmentation args
+augment:
+  awgn_sigma: 0.04
+  et_small_alpha_training: 16
+  et_small_sigma_evaluation: 10
+  et_large_alpha_training: 1000
+  et_large_sigma_evaluation: 80
