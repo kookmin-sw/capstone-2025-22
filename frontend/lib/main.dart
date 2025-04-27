@@ -1,4 +1,5 @@
 import 'package:capstone_2025/screens/drumSheetPages/drum_sheet_player.dart';
+import 'package:capstone_2025/screens/introPages/login_screen_google.dart';
 import 'package:capstone_2025/screens/mainPages/navigation_screens.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -30,7 +31,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       // 페이지 공통 백그라운드 컬러 지정
       theme: ThemeData(scaffoldBackgroundColor: Color(0xFFF2F1F3)),
-      home: NavigationScreens(),
+      home: LoginScreenGoogle(),
     );
   }
 }
