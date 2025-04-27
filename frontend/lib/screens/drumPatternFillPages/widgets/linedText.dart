@@ -2,31 +2,32 @@ import 'package:flutter/material.dart';
 
 Widget linedText(String text, double fontSize, Color borderColor,
     Color textColor, double strokeWidth) {
-  return SizedBox(
-    height: fontSize + 20,
-    child: Stack(
-      alignment: Alignment.center,
-      children: [
-        Text(
-          text,
-          style: TextStyle(
-            fontSize: fontSize,
-            fontWeight: FontWeight.bold,
-            foreground: Paint()
-              ..style = PaintingStyle.stroke
-              ..strokeWidth = strokeWidth
-              ..color = borderColor,
-          ),
+  return Stack(
+    alignment: Alignment.topCenter, // 텍스트의 위쪽 여백을 없애기 위한 설정
+    children: [
+      Text(
+        text,
+        style: TextStyle(
+          fontSize: fontSize,
+          fontWeight: FontWeight.bold,
+          foreground: Paint()
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = strokeWidth
+            ..color = borderColor,
+          height: 1.0, // line height를 1로 설정하여 불필요한 여백을 제거
         ),
-        Text(
-          text,
-          style: TextStyle(
-            fontSize: fontSize,
-            fontWeight: FontWeight.bold,
-            color: textColor,
-          ),
+        textAlign: TextAlign.center,
+      ),
+      Text(
+        text,
+        style: TextStyle(
+          fontSize: fontSize,
+          fontWeight: FontWeight.bold,
+          color: textColor,
+          height: 1.0, // line height를 1로 설정하여 불필요한 여백을 제거
         ),
-      ],
-    ),
+        textAlign: TextAlign.center,
+      ),
+    ],
   );
 }
