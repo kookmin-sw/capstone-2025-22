@@ -5,10 +5,10 @@ import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:audioplayers/audioplayers.dart' as ap;
 import 'package:flutter_sound/flutter_sound.dart' as fs;
-import 'package:stomp_dart_client/stomp_dart_client.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter_sound/public/flutter_sound_recorder.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:stomp_dart_client/stomp_dart_client.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:capstone_2025/screens/mainPages/navigation_screens.dart';
 
 // 패턴 및 필인 시작 화면
@@ -40,35 +40,28 @@ class _CountdownPageState extends State<CountdownPage>
   bool isCountingDown = false;
   bool _isPlaying = false;
   bool _isRecording = false;
-  double _currentPosition = 0.0;
-  double _totalDuration = 0.0;
-  String _currentSpeed = '1x';
   bool _showPracticeMessage = false;
-  String _recordingStatus = '';
-  String _userEmail = '';
-  List<dynamic> _detectedOnsets = [];
   bool _webSocketConnected = false;
 
-  // 오디오 관련 객체
-  late ap.AudioPlayer _audioPlayer;
+  double _currentPosition = 0.0;
+  double _totalDuration = 0.0;
+
+  String _currentSpeed = '1x';
+  String _recordingStatusMessage = '';
+  String _userEmail = '';
+  String? _recordingPath; // 녹음 파일 경로
+
+  List<dynamic> _detectedOnsets = [];
+
+  // 객체들
+  late ap.AudioPlayer _audioPlayer; // 오디오
   late fs.FlutterSoundRecorder _recorder;
-
-  // 애니메이션
-  late AnimationController _overlayController;
+  late AnimationController _overlayController; // 애니메이션
   late Animation<double> _overlayAnimation;
+  late StompClient _stompClient; // 웹소켓 클라이언트
 
-  // 웹소켓 클라이언드
-  late StompClient _stompClient;
-
-  // 웹소켓 재연결 관련 변수
-  int _reconnectAttemps = 0;
-  final int _maxReconnectAttempts = 5;
-
-  // 사용자 정보 저장용 스토리지
+  // 저장소
   final _storage = const FlutterSecureStorage();
-
-  // 녹음 파일 경로
-  String? _recordingPath;
 
   // 타이머들
   Timer? _countdownTimer;
@@ -81,6 +74,10 @@ class _CountdownPageState extends State<CountdownPage>
   StreamSubscription? _playerCompleteSubscription;
   StreamSubscription? _positionSubscription;
   StreamSubscription<fs.RecordingDisposition>? _recorderSubscription;
+
+  // 웹소켓 재연결 관련 변수
+  int _reconnectAttemps = 0;
+  final int _maxReconnectAttempts = 5;
 
   @override
   void initState() {
@@ -156,35 +153,14 @@ class _CountdownPageState extends State<CountdownPage>
     // WebSocket 설정
     _stompClient = StompClient(
       config: StompConfig(
-        url: 'ws://10.0.2.2:28080/ws/audio',
+        url: 'http://10.0.2.2:28080/ws/audio', // url 수정
         onConnect: (StompFrame frame) {
           print('✅ WebSocket 연결 완료!');
           _webSocketConnected = true;
           _reconnectAttemps = 0; // 연결 성공했으니 재시도 카운트 초기화
-
-          // 연결 후 구독
-          _stompClient.subscribe(
-            destination: '/topic/onset/$_userEmail',
-            callback: (frame) {
-              if (frame.body != null) {
-                final response = json.decode(frame.body!);
-                print('📦 WebSocket 데이터 수신 완료: $response');
-
-                if (response.containsKey('onsets')) {
-                  setState(() {
-                    _detectedOnsets = response['onsets'];
-                  });
-                  print('🎯 감지된 온셋 수: ${response['onsets']}');
-                }
-              } else {
-                print('⚠️ 빈 WebSocket 프레임 수신');
-              }
-            },
-          );
+          _subscribeToTopic();
         },
-        beforeConnect: () async {
-          print('🌐 WebSocket 연결 시도 중...');
-        },
+        beforeConnect: () async => print('🌐 WebSocket 연결 시도 중...'),
         // 오류 발생했을 때
         onWebSocketError: (dynamic error) {
           print('❌ WebSocket 오류 발생: $error');
@@ -199,9 +175,30 @@ class _CountdownPageState extends State<CountdownPage>
         stompConnectHeaders: {}, // 이거도 가능
       ),
     );
-
     // WebSocket 연결 시도
     _stompClient.activate();
+  }
+
+  // 연결 후 구독
+  void _subscribeToTopic() {
+    _stompClient.subscribe(
+      destination: '/topic/onset/$_userEmail',
+      callback: (frame) {
+        if (frame.body != null) {
+          final response = json.decode(frame.body!);
+          print('📦 WebSocket 데이터 수신 완료: $response');
+
+          if (response.containsKey('onsets')) {
+            setState(() {
+              _detectedOnsets = response['onsets'];
+            });
+            print('🎯 감지된 온셋 수: ${response['onsets']}');
+          }
+        } else {
+          print('⚠️ 빈 WebSocket 프레임 수신');
+        }
+      },
+    );
   }
 
   // 웹소켓 연결 실패 시 재시도하는 함수
@@ -219,25 +216,19 @@ class _CountdownPageState extends State<CountdownPage>
   }
 
   // 시범 연주를 재생하는 함수
-  void _startAudio() async {
+  Future<void> _startAudio() async {
     if (!mounted) return;
 
     // 시범 연주 시작 메시지 표시
-    setState(() {
-      _showPracticeMessage = true;
-    });
+    setState(() => _showPracticeMessage = true);
     _overlayController.forward(); // 메시지를 페이드 인 애니메이션으로 보여줌
 
     // 1초 후 메시지 숨기기
     await Future.delayed(const Duration(milliseconds: 1000));
 
     if (!mounted) return;
-
     _overlayController.reverse().then((_) {
-      if (!mounted) return;
-      setState(() {
-        _showPracticeMessage = false; // 메시지 숨김
-      });
+      if (mounted) setState(() => _showPracticeMessage = false); // 메시지 숨김
     });
 
     // 메시지가 사라진 후 바로 시범 연주 오디오 재생
@@ -245,8 +236,7 @@ class _CountdownPageState extends State<CountdownPage>
 
     // 시범 연주가 끝나면 카운트다운 시작
     _playerCompleteSubscription = _audioPlayer.onPlayerComplete.listen((event) {
-      if (!mounted) return;
-      _startCountdown(); // 카운트다운 시작
+      if (mounted) _startCountdown(); // 카운트다운 시작
     });
   }
 
@@ -257,15 +247,12 @@ class _CountdownPageState extends State<CountdownPage>
     // WebSocket 연결 확인
     if (!_webSocketConnected) {
       print('❌ 녹음을 시작할 수 없습니다: WebSocket이 연결되지 않았습니다.');
-      setState(() {
-        _recordingStatus = 'WebSocket 연결이 필요합니다!';
-      });
+      setState(() => _recordingStatusMessage = 'WebSocket 연결이 필요합니다!');
       return;
     }
 
     try {
       print("🎙️ 녹음을 시작합니다. 저장 경로: $_recordingPath");
-
       await _recorder.startRecorder(
         toFile: _recordingPath,
         codec: fs.Codec.pcm16WAV, // wav 형식으로 녹음 저장
@@ -273,23 +260,19 @@ class _CountdownPageState extends State<CountdownPage>
         numChannels: 1,
         bitRate: 16000,
       );
-
       setState(() {
         _isRecording = true;
-        _recordingStatus = '녹음이 시작되었습니다.';
+        _recordingStatusMessage = '녹음이 시작되었습니다.';
       });
     } catch (e) {
-      setState(() {
-        _recordingStatus = '녹음 시작 실패: $e';
-      });
+      setState(() => _recordingStatusMessage = '녹음 시작 실패: $e');
       print('❌ 녹음 중 오류 발생: $e');
     }
   }
 
   // 녹음을 중단하는 함수
-  void _stopRecording() async {
+  Future<void> _stopRecording() async {
     if (!_isRecording || !mounted) return;
-
     _recordingDataTimer?.cancel(); // 데이터 전송 타이머 중지
     await _recorder.stopRecorder(); // 녹음기 종료
 
@@ -298,14 +281,14 @@ class _CountdownPageState extends State<CountdownPage>
 
     setState(() {
       _isRecording = false;
-      _recordingStatus = '녹음이 완료되었습니다.';
+      _recordingStatusMessage = '녹음이 완료되었습니다.';
     });
 
     print('🎙️ 녹음 종료');
   }
 
   // 녹음된 데이터를 WebSocket을 통해 서버로 전송하는 함수
-  void _sendRecordingData() async {
+  Future<void> _sendRecordingData() async {
     if (!_stompClient.connected) {
       print('❌ WebSocket 연결이 되지 않아 데이터 전송 실패');
       return;
@@ -314,71 +297,22 @@ class _CountdownPageState extends State<CountdownPage>
     try {
       final file = File(_recordingPath!);
       if (await file.exists()) {
-        final bytes = await file.readAsBytes();
-        final base64String = base64Encode(bytes);
-
-        final message = {
-          'email': _userEmail,
-          'message': base64String,
-        };
-
+        final base64String = base64Encode(await file.readAsBytes());
+        final message = {'email': _userEmail, 'message': base64String};
         print('📤 녹음 데이터 전송: ${DateTime.now()}');
 
         _stompClient.send(
           destination: '/app/audio/forwarding',
           body: json.encode(message),
-          headers: {
-            'content-type': 'application/json',
-          },
+          headers: {'content-type': 'application/json'},
         );
-
-        setState(() {
-          _recordingStatus = '녹음 데이터 전송 중...';
-        });
+        setState(() => _recordingStatusMessage = '녹음 데이터 전송 중...');
       } else {
         print('⚠️ 녹음 파일이 존재하지 않습니다: $_recordingPath');
       }
     } catch (e) {
       print('❌ 녹음 데이터 전송 중 오류 발생: $e');
     }
-  }
-
-  // 페이지가 종료될 때 리소스 해제하는 함수
-  @override
-  void dispose() {
-    // 모든 타이머 및 스트림 정리
-    _countdownTimer?.cancel();
-    _practiceMessageTimer?.cancel();
-    _positionUpdateTimer?.cancel();
-    _recordingDataTimer?.cancel();
-
-    _playerStateSubscription?.cancel();
-    _playerCompleteSubscription?.cancel();
-    _positionSubscription?.cancel();
-    _recorderSubscription?.cancel();
-
-    if (_isRecording) {
-      _recorder.stopRecorder();
-    }
-
-    _recorder.closeRecorder(); // 녹음기 닫기
-    _audioPlayer.dispose(); // 오디오플레이어 정리
-    _overlayController.dispose(); // 애니메이션 컨트롤러
-
-    if (_stompClient.connected) {
-      _stompClient.deactivate(); // 웹소켓 연결 해제
-    }
-
-    super.dispose();
-  }
-
-  // 오디오를 일시정지하는 함수
-  void _pauseAudio() async {
-    if (!mounted) return;
-    await _audioPlayer.pause(); // 오디오 일시정지
-    setState(() {
-      _isPlaying = false;
-    });
   }
 
   // 오디오 재생 위치 이동하는 함수
@@ -390,7 +324,6 @@ class _CountdownPageState extends State<CountdownPage>
   // 3초 카운트다운 후 녹음 시작하는 함수
   void _startCountdown() {
     if (!mounted) return;
-
     setState(() {
       isCountingDown = true;
       countdown = 3; // 카운트다운 3초로 시작
@@ -408,23 +341,77 @@ class _CountdownPageState extends State<CountdownPage>
         timer.cancel();
         _overlayController.reverse().then((_) async {
           if (!mounted) return;
-          setState(() {
-            isCountingDown = false;
-          });
-
+          setState(() => isCountingDown = false);
           _startRecording(); // 카운트다운 종료 후 녹음 시작
         });
       } else {
-        setState(() {
-          countdown--;
-        });
+        setState(() => countdown--);
       }
     });
   }
 
+  // 페이지가 종료될 때 리소스 해제하는 함수
+  @override
+  void dispose() {
+    _countdownTimer?.cancel();
+    _practiceMessageTimer?.cancel();
+    _positionUpdateTimer?.cancel();
+    _recordingDataTimer?.cancel();
+    _playerStateSubscription?.cancel();
+    _playerCompleteSubscription?.cancel();
+    _positionSubscription?.cancel();
+    _recorderSubscription?.cancel();
+
+    if (_isRecording) _recorder.stopRecorder();
+
+    _recorder.closeRecorder(); // 녹음기 닫기
+    _audioPlayer.dispose(); // 오디오플레이어 정리
+    _overlayController.dispose(); // 애니메이션 컨트롤러
+
+    if (_stompClient.connected) _stompClient.deactivate(); // 웹소켓 연결 해제
+
+    super.dispose();
+  }
+
+  // 재생 속도 선택 버튼을 만드는 위젯
+  Widget _buildSpeedButton(String speed, bool isSelected) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () {
+          double newSpeed = switch (speed) {
+            '0.5x' => 0.5,
+            '1x' => 1.0,
+            '1.5x' => 1.5,
+            '2x' => 2.0,
+            _ => 1.0,
+          };
+          if (mounted) {
+            setState(() {
+              _audioPlayer.setPlaybackRate(newSpeed); // 오디오 재생 속도 변경
+              _currentSpeed = speed; // 현재 속도 업데이트
+            });
+          }
+          Navigator.of(context).pop(); // 속도 변경 후 팝업 닫기
+        },
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          child: Text(
+            speed,
+            style: TextStyle(
+              color: isSelected ? const Color(0xFFE5958B) : Colors.black87,
+              fontWeight: FontWeight.w500,
+              fontSize: 14,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   // 카운트다운 숫자를 그리는 위젯
-  Widget buildNumber(int number) {
-    final isHighlighted = number == countdown;
+  Widget _buildCountdownNumber(int number) {
+    final bool isHighlighted = number == countdown;
 
     return AnimatedOpacity(
       duration: const Duration(milliseconds: 300),
@@ -442,51 +429,6 @@ class _CountdownPageState extends State<CountdownPage>
               color: Colors.black.withValues(alpha: 0.5),
             ),
           ],
-        ),
-      ),
-    );
-  }
-
-  // 재생 속도 선택 버튼을 만드는 위젯
-  Widget _buildSpeedButton(String speed, bool isSelected) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: () {
-          double newSpeed = 1.0;
-          switch (speed) {
-            case '0.5x':
-              newSpeed = 0.5;
-              break;
-            case '1x':
-              newSpeed = 1.0;
-              break;
-            case '1.5x':
-              newSpeed = 1.5;
-              break;
-            case '2x':
-              newSpeed = 2.0;
-              break;
-          }
-          if (mounted) {
-            setState(() {
-              _audioPlayer.setPlaybackRate(newSpeed); // 오디오 재생 속도 변경
-              _currentSpeed = speed; // 현재 속도 업데이트
-            });
-          }
-          Navigator.of(context).pop(); // 속도 변경 후 팝업 닫기
-        },
-        borderRadius: BorderRadius.circular(8),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          child: Text(
-            speed,
-            style: TextStyle(
-              color: isSelected ? const Color(0xFFE5958B) : Colors.black87,
-              fontWeight: FontWeight.w500,
-              fontSize: 14,
-            ),
-          ),
         ),
       ),
     );
@@ -515,14 +457,9 @@ class _CountdownPageState extends State<CountdownPage>
                           icon: const Icon(Icons.home_filled),
                           onPressed: () {
                             // 오디오 재생 중이면 정지
-                            if (_isPlaying) {
-                              _audioPlayer.stop();
-                            }
-
+                            if (_isPlaying) _audioPlayer.stop();
                             // 녹음 중이면 정지
-                            if (_isRecording) {
-                              _stopRecording();
-                            }
+                            if (_isRecording) _stopRecording();
 
                             // 리소스 해제
                             _playerStateSubscription?.cancel();
@@ -785,10 +722,10 @@ class _CountdownPageState extends State<CountdownPage>
                           ),
 
                           // 현재 녹음 상태 표시
-                          if (_recordingStatus.isNotEmpty) ...[
+                          if (_recordingStatusMessage.isNotEmpty) ...[
                             const SizedBox(height: 16),
                             Text(
-                              _recordingStatus,
+                              _recordingStatusMessage,
                               style: const TextStyle(
                                 color: Color(0xFFE5958B),
                                 fontSize: 14,
@@ -833,11 +770,11 @@ class _CountdownPageState extends State<CountdownPage>
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    buildNumber(3),
+                    _buildCountdownNumber(3),
                     const SizedBox(width: 150),
-                    buildNumber(2),
+                    _buildCountdownNumber(2),
                     const SizedBox(width: 150),
-                    buildNumber(1),
+                    _buildCountdownNumber(1),
                   ],
                 ),
               ),
