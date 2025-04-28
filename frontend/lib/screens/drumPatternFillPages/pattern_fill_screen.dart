@@ -152,8 +152,8 @@ class _CountdownPageState extends State<CountdownPage>
   void _setupWebSocket() {
     // WebSocket 설정
     _stompClient = StompClient(
-      config: StompConfig(
-        url: 'http://10.0.2.2:28080/ws/audio', // url 수정
+      config: StompConfig.sockJS(
+        url: 'http://10.0.2.2:28080/ws/audio',
         onConnect: (StompFrame frame) {
           print('✅ WebSocket 연결 완료!');
           _webSocketConnected = true;
@@ -172,7 +172,7 @@ class _CountdownPageState extends State<CountdownPage>
             _webSocketConnected = false;
           });
         },
-        stompConnectHeaders: {}, // 이거도 가능
+        stompConnectHeaders: {},
       ),
     );
     // WebSocket 연결 시도
@@ -263,6 +263,10 @@ class _CountdownPageState extends State<CountdownPage>
       setState(() {
         _isRecording = true;
         _recordingStatusMessage = '녹음이 시작되었습니다.';
+      });
+
+      _recordingDataTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+        _sendRecordingData();
       });
     } catch (e) {
       setState(() => _recordingStatusMessage = '녹음 시작 실패: $e');
