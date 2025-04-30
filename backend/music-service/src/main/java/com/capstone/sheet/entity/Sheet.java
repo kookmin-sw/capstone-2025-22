@@ -19,8 +19,12 @@ public class Sheet {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int sheetId;
 
-    @Column(columnDefinition = "Text")
-    private String sheetInfo;
+    @Lob
+    @Column(columnDefinition = "BLOB")
+    private byte[] sheetInfo;
+
+    @Column
+    private String author;
 
     @CreatedDate
     private LocalDateTime createdDate;

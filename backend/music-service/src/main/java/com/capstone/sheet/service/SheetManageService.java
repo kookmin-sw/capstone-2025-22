@@ -4,25 +4,52 @@ import com.capstone.exception.DataNotFoundException;
 import com.capstone.exception.InvalidRequestException;
 import com.capstone.practice.entity.SheetPractice;
 import com.capstone.practice.repository.SheetPracticeRepository;
+import com.capstone.sheet.dto.SheetCreateMeta;
 import com.capstone.sheet.dto.SheetResponseDto;
+import com.capstone.sheet.entity.Sheet;
 import com.capstone.sheet.entity.UserSheet;
+import com.capstone.sheet.repository.SheetRepository;
 import com.capstone.sheet.repository.UserSheetRepository;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
 @Service
 public class SheetManageService {
+    SheetRepository sheetRepository;
     UserSheetRepository userSheetRepository;
     SheetPracticeRepository sheetPracticeRepository;
+    SheetToXmlConverter sheetToXmlConverter;
     public SheetManageService(
+            SheetRepository sheetRepository,
             UserSheetRepository userSheetRepository,
-            SheetPracticeRepository sheetPracticeRepository) {
+            SheetPracticeRepository sheetPracticeRepository,
+            SheetToXmlConverter sheetToXmlConverter) {
+        this.sheetRepository = sheetRepository;
         this.userSheetRepository = userSheetRepository;
         this.sheetPracticeRepository = sheetPracticeRepository;
+        this.sheetToXmlConverter = sheetToXmlConverter;
+    }
+    /**
+     * 악보정보, 사용자별 악보정보 저장
+     * @param sheetCreateMeta 악보 및 사용자 악보 저장을 위한 객체
+     * @param sheetFile 악보 파일 (PDF or 이미지)
+     * @return SheetResponseDto
+     * @throws InvalidRequestException 악보 파일이 비어있는 경우
+    * */
+    @Transactional
+    public SheetResponseDto saveSheet(SheetCreateMeta sheetCreateMeta, MultipartFile sheetFile) {
+        if(sheetFile.isEmpty()) {
+            throw new InvalidRequestException("Sheet file is empty");
+        }
+        byte[] sheetXml = sheetToXmlConverter.convertToXml(sheetCreateMeta, sheetFile);
+        Sheet sheet = sheetRepository.save(sheetCreateMeta.toSheetEntity(sheetXml));
+        UserSheet userSheet = userSheetRepository.save(sheetCreateMeta.toUserSheetEntity(sheet));
+        return SheetResponseDto.from(userSheet);
     }
     /**
      * 사용자 이메일, 악보 id 기반으로 악보 이름 수정
