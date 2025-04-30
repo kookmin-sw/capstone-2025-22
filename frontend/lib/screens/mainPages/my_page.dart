@@ -70,27 +70,39 @@ class _MyPageState extends State<MyPage> {
     String? storedUserName = await storage.read(key: 'nick_name');
     String? storedAccessToken = await storage.read(key: 'access_token');
 
-    Map<String, String> queryParam = {
+    Map<String, String> infoQueryParam = {
       "email": storedEmail ?? "",
     };
-
-    Map<String, dynamic> reqHeader = {
-      "authorization": storedAccessToken ?? "",
-    };
-    // print("storedAccessToken: ${storedAccessToken}");
-
-    if (queryParam["email"] == "") {
+    if (infoQueryParam["email"] == "") {
       print("이메일 정보가 없습니다.");
       return;
     }
-    var clientInfo = await getHTTP("/user/email", queryParam);
-    print(clientInfo);
+
+    Map<String, String> imgReqHeader = {
+      "authorization": storedAccessToken ?? "",
+    };
+    if (storedAccessToken == null) {
+      print("액세스 토큰 정보가 없습니다.");
+      return;
+    }
+
+    Map<String, String> imgReqBody = {
+      "nickname": storedUserName ?? "",
+    };
+
+    var clientInfo = await getHTTP("/users/email", infoQueryParam);
+    var profileImgInfo = await putHTTP("/users/profile", null, imgReqBody,
+        reqHeader: imgReqHeader);
 
     setState(() {
       // 사용자 정보 업데이트
       email = storedEmail;
       userName = storedUserName;
-      profileImage = clientInfo["profileImage"];
+      if (profileImgInfo['errMessage'] == null) {
+        profileImage = profileImgInfo["body"]["profileImg"];
+      } else {
+        print("프로필 이미지 정보가 없습니다.");
+      }
     });
   }
 
