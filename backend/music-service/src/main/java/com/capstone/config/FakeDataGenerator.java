@@ -11,6 +11,7 @@ import jakarta.annotation.PostConstruct;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -47,7 +48,7 @@ public class FakeDataGenerator {
         for (int i=0; i<count; i++){
             Sheet sheet = sheetRepository.save(
                     Sheet.builder()
-                            .sheetInfo(faker.lorem().paragraph(10))
+                            .sheetInfo(faker.lorem().paragraph(10).getBytes(StandardCharsets.UTF_8))
                             .build()
             );
             sheets.add(sheet);
