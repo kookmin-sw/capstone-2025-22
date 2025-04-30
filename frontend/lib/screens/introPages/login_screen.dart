@@ -79,7 +79,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
       if (userInfo['errMessage'] == null) {
         // 로그인 성공 시
-        saveUserData(userInfo); // Secure Storage에 사용자 정보 저장
+        await saveUserData(userInfo); // Secure Storage에 사용자 정보 저장
 
         // 페이지 하단에 환영 메시지 출력
         if (mounted) {
@@ -117,6 +117,13 @@ class _LoginScreenState extends State<LoginScreen> {
     await _storage.write(key: 'nick_name', value: userData['nickname']);
     await _storage.write(key: 'access_token', value: userData['accessToken']);
     await _storage.write(key: 'refresh_token', value: userData['refreshToken']);
+
+    print("정보 저장");
+    print("email: ${userData['email']}");
+    print("nickname: ${userData['nickname']}");
+    print("access_token: ${userData['accessToken']}");
+    print("refresh_token: ${userData['refreshToken']}");
+    print("정보 출력 끝 ------------------");
   }
 
   @override
