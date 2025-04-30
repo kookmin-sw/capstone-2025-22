@@ -4,12 +4,14 @@ import com.capstone.enums.SuccessFlag;
 import com.capstone.exception.InvalidRequestException;
 import com.capstone.response.ApiResponse;
 import com.capstone.response.CustomResponseDto;
+import com.capstone.sheet.dto.SheetCreateMeta;
 import com.capstone.sheet.dto.SheetListRequestDto;
 import com.capstone.sheet.dto.SheetResponseDto;
 import com.capstone.sheet.dto.SheetUpdateRequestDto;
 import com.capstone.sheet.service.SheetManageService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/sheets")
@@ -17,6 +19,17 @@ public class SheetManageController {
     private final SheetManageService sheetManageService;
     public SheetManageController(SheetManageService sheetManageService) {
         this.sheetManageService = sheetManageService;
+    }
+    /**
+     * 악보 생성
+     * @param sheetCreateMeta 악보 생성을 위한 정보들
+     * @param sheetFile 악보 파일 (pdf 혹은 이미지)
+    * */
+    @PostMapping
+    public ResponseEntity<CustomResponseDto<SheetResponseDto>> createSheet(
+            @RequestPart("sheetCreateMeta") SheetCreateMeta sheetCreateMeta,
+            @RequestPart("sheetFile") MultipartFile sheetFile){
+        return ApiResponse.success(sheetManageService.saveSheet(sheetCreateMeta, sheetFile));
     }
     /**
      * 악보 이름 수정
