@@ -17,6 +17,9 @@ COPY /${MODULE_NAME} /app/module
 COPY /${COMMON_MODULE1} /app/${COMMON_MODULE1}
 COPY /${COMMON_MODULE2} /app/${COMMON_MODULE2}
 COPY /${COMMON_MODULE3} /app/${COMMON_MODULE3}
+# copy config module
+ARG CONFIG_MODULE="config-backend"
+COPY /${CONFIG_MODULE} /app/${CONFIG_MODULE}
 # ensure execute gradlew
 RUN chmod +x gradlew
 # build project
