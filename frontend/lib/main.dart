@@ -38,7 +38,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       // 페이지 공통 백그라운드 컬러 지정
       theme: ThemeData(scaffoldBackgroundColor: Color(0xFFF2F1F3)),
-      home: DrumSheetPlayer(),
+      home: NavigationScreens(),
     );
   }
 }
