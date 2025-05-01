@@ -22,9 +22,9 @@ import static org.junit.jupiter.api.Assertions.*;
 @SpringBootTest
 @Transactional
 @ActiveProfiles("test")
-class SheetManageServiceTest {
+class SheetUpdateServiceTest {
     @Autowired
-    private SheetManageService sheetManageService;
+    private SheetUpdateService sheetUpdateService;
 
     @Autowired
     private SheetRetrieveService sheetRetrieveService;
@@ -54,11 +54,11 @@ class SheetManageServiceTest {
         // when
         List<UserSheet> userSheets = userSheetRepository.findAllByEmail(email);
         UserSheet userSheet = userSheets.get(0);
-        SheetResponseDto res = sheetManageService.updateSheetName(email, newName, userSheet.getUserSheetId());
+        SheetResponseDto res = sheetUpdateService.updateSheetName(email, newName, userSheet.getUserSheetId());
         // then
         assert res.getSheetName().equals(newName);
         assertThrows(InvalidRequestException.class, () -> {
-            sheetManageService.updateSheetName(ghostEmail, newName, userSheet.getUserSheetId());
+            sheetUpdateService.updateSheetName(ghostEmail, newName, userSheet.getUserSheetId());
         });
     }
 
@@ -71,11 +71,11 @@ class SheetManageServiceTest {
         // when
         List<UserSheet> userSheets = userSheetRepository.findAllByEmail(email);
         UserSheet userSheet = userSheets.get(0);
-        SheetResponseDto res = sheetManageService.updateSheetColor(email, newColor, userSheet.getUserSheetId());
+        SheetResponseDto res = sheetUpdateService.updateSheetColor(email, newColor, userSheet.getUserSheetId());
         // then
         assert res.getColor().equals(newColor);
         assertThrows(InvalidRequestException.class, () -> {
-            sheetManageService.updateSheetName(ghostEmail, newColor, userSheet.getUserSheetId());
+            sheetUpdateService.updateSheetName(ghostEmail, newColor, userSheet.getUserSheetId());
         });
     }
 
@@ -91,14 +91,14 @@ class SheetManageServiceTest {
                 .toList();
         // then
         assertThrows(DataNotFoundException.class, () -> {
-            sheetManageService.deleteSheetByIdList(email, List.of(-1));
+            sheetUpdateService.deleteSheetByIdList(email, List.of(-1));
         });
         assertThrows(InvalidRequestException.class, () -> {
-            sheetManageService.deleteSheetByIdList(ghostEmail, userSheetIds);
+            sheetUpdateService.deleteSheetByIdList(ghostEmail, userSheetIds);
         });
         assertTrue(() -> {
             if(sheetRetrieveService.getSheetsByEmail(email).size()!=userSheetIds.size()) return false;
-            sheetManageService.deleteSheetByIdList(email, userSheetIds);
+            sheetUpdateService.deleteSheetByIdList(email, userSheetIds);
             return sheetRetrieveService.getSheetsByEmail(email).isEmpty();
         });
     }
