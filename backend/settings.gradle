@@ -1,4 +1,4 @@
-rootProject.name = 'letmedrum'
+rootProject.name = 'backend'
 include 'common'
 include 'auth-service'
 include 'verification-service'
