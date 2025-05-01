@@ -7,10 +7,7 @@ import org.apache.tomcat.util.http.fileupload.FileUtils;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -59,6 +56,19 @@ public class SheetToXmlConverter {
                 "louie8821/audiveris:drum"};
     }
 
+    private void consumeStream(InputStream stream) {
+        new Thread(() -> {
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(stream))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    log.info("[Docker] {}", line);
+                }
+            } catch (IOException e) {
+                log.warn("Failed to consume stream: {}", e.getMessage());
+            }
+        }).start();
+    }
+
     /**
      * Function to execute docker instructions and return results
      * @param inputPath path of input file
@@ -72,7 +82,9 @@ public class SheetToXmlConverter {
         Path outputFile;
         try{
             Process process = builder.start();
-            process.waitFor(3, TimeUnit.SECONDS);
+            consumeStream(process.getInputStream());  // stdout
+            consumeStream(process.getErrorStream());  // stderr
+            process.waitFor(3, TimeUnit.MINUTES);
             outputFile = Paths.get(outputPath, outputFileName);
             return Files.readAllBytes(outputFile);
         }catch (IOException | InterruptedException e){
