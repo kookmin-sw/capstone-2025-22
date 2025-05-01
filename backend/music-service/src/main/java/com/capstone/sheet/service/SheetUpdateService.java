@@ -12,12 +12,12 @@ import com.capstone.sheet.repository.SheetRepository;
 import com.capstone.sheet.repository.UserSheetRepository;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 @Service
 public class SheetUpdateService {
@@ -37,14 +37,11 @@ public class SheetUpdateService {
         this.sheetToXmlConverter = sheetToXmlConverter;
     }
 
-    @Async
     @Transactional
     public void updateSheetInfo(Sheet sheet, SheetCreateMeta sheetCreateMeta, MultipartFile sheetFile) {
         byte[] sheetXml = sheetToXmlConverter.convertToXml(sheetCreateMeta, sheetFile);
-        int rowCnt = sheetRepository.updateSheetInfo(sheet.getSheetId(), sheetXml);
-        if(rowCnt<=0){
-            throw new DataNotFoundException("Sheet Not Found");
-        }
+        Sheet toUpdate = sheetRepository.findById(sheet.getSheetId()).orElseThrow(() -> new DataNotFoundException("Sheet Not Found"));
+        toUpdate.setSheetInfo(sheetXml);
     }
 
     /**

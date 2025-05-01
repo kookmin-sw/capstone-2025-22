@@ -26,11 +26,11 @@ public class SheetCreateService {
      * */
     @Transactional
     public Sheet saveSheet() {
-        return sheetRepository.save(Sheet.create());
+        return sheetRepository.saveAndFlush(Sheet.create());
     }
 
     @Transactional
     public UserSheet saveUserSheet(SheetCreateMeta sheetCreateMeta, Sheet sheet){
-        return userSheetRepository.save(sheetCreateMeta.toUserSheetEntity(sheet));
+        return userSheetRepository.saveAndFlush(sheetCreateMeta.toUserSheetEntity(sheet));
     }
 }
