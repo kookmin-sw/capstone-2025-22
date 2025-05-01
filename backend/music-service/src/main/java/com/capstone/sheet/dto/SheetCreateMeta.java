@@ -12,12 +12,6 @@ public class SheetCreateMeta {
     String userEmail;
     String fileExtension;
 
-    public Sheet toSheetEntity(byte[] sheetInfo){
-        return Sheet.builder()
-                .sheetInfo(sheetInfo)
-                .build();
-    }
-
     public UserSheet toUserSheetEntity(Sheet sheet){
         return UserSheet.builder()
                 .sheetName(sheetName)

@@ -28,4 +28,8 @@ public class Sheet {
 
     @CreatedDate
     private LocalDateTime createdDate;
+
+    public static Sheet create(){
+        return Sheet.builder().build();
+    }
 }
