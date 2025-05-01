@@ -3,17 +3,27 @@ package com.capstone.sheet.service;
 import com.capstone.data.TestDataGenerator;
 import com.capstone.exception.DataNotFoundException;
 import com.capstone.exception.InvalidRequestException;
+import com.capstone.sheet.dto.SheetCreateMeta;
 import com.capstone.sheet.dto.SheetResponseDto;
+import com.capstone.sheet.entity.Sheet;
 import com.capstone.sheet.entity.UserSheet;
+import com.capstone.sheet.repository.SheetRepository;
 import com.capstone.sheet.repository.UserSheetRepository;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.core.io.DefaultResourceLoader;
+import org.springframework.core.io.ResourceLoader;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
 
@@ -27,7 +37,13 @@ class SheetUpdateServiceTest {
     private SheetUpdateService sheetUpdateService;
 
     @Autowired
+    private SheetCreateService sheetCreateService;
+
+    @Autowired
     private SheetRetrieveService sheetRetrieveService;
+
+    @Autowired
+    private SheetRepository sheetRepository;
 
     @Autowired
     private UserSheetRepository userSheetRepository;
@@ -35,14 +51,48 @@ class SheetUpdateServiceTest {
     @Autowired
     private TestDataGenerator testDataGenerator;
 
+    ResourceLoader resourceLoader;
+    MultipartFile sheetFilePDF;
+
     @BeforeEach
-    void setUp() {
+    void setUp() throws IOException {
+        resourceLoader = new DefaultResourceLoader();
+        File originFile = resourceLoader.getResource("classpath:sheet/sheet.pdf").getFile();
+        FileInputStream input = new FileInputStream(originFile);
+        sheetFilePDF = new MockMultipartFile(
+                originFile.getName(),   // file name
+                originFile.getName(),   // origin file name
+                "application/pdf",      // content type
+                input                   // input
+        );
         testDataGenerator.generateTestData();
     }
 
     @AfterEach
     void tearDown() {
         testDataGenerator.deleteAllTestData();
+    }
+
+    @Test
+    void updateSheetInfoTest()  {
+        // given
+        Sheet sheet = sheetCreateService.saveSheet();
+        SheetCreateMeta meta = SheetCreateMeta.builder()
+                .sheetName("sheetName")
+                .color("#ffffffff")
+                .fileExtension("pdf")
+                .isOwner(true)
+                .userEmail("test@test.com").build();
+
+        // when
+        sheetUpdateService.updateSheetInfo(sheet, meta, sheetFilePDF);
+
+        // then
+        assertTrue(() -> {
+            Sheet updatedSheet = sheetRepository.findById(sheet.getSheetId()).orElse(null);
+            if(updatedSheet==null) return false;
+            return updatedSheet.getSheetInfo() != null;
+        });
     }
 
     @Test

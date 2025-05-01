@@ -1,0 +1,99 @@
+package com.capstone.sheet.service;
+
+import com.capstone.data.TestDataGenerator;
+import com.capstone.sheet.dto.SheetCreateMeta;
+import com.capstone.sheet.dto.SheetResponseDto;
+import com.capstone.sheet.entity.UserSheet;
+import com.capstone.sheet.repository.SheetRepository;
+import com.capstone.sheet.repository.UserSheetRepository;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.core.io.DefaultResourceLoader;
+import org.springframework.core.io.ResourceLoader;
+import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.util.List;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.awaitility.Awaitility.await;
+
+@SpringBootTest
+@ActiveProfiles("test")
+class SheetManageServiceTest {
+    @Autowired
+    private SheetManageService sheetManageService;
+
+    @Autowired
+    private SheetRepository sheetRepository;
+
+    @Autowired
+    private UserSheetRepository userSheetRepository;
+
+    @Autowired
+    private TestDataGenerator testDataGenerator;
+
+    ResourceLoader resourceLoader;
+    MultipartFile sheetFilePDF;
+
+    @BeforeEach
+    void setUp() throws IOException {
+        resourceLoader = new DefaultResourceLoader();
+        File originFile = resourceLoader.getResource("classpath:sheet/sheet.pdf").getFile();
+        FileInputStream input = new FileInputStream(originFile);
+        sheetFilePDF = new MockMultipartFile(
+                originFile.getName(),   // file name
+                originFile.getName(),   // origin file name
+                "application/pdf",      // content type
+                input                   // input
+        );
+        testDataGenerator.generateTestData();
+    }
+
+    @AfterEach
+    void tearDown() {
+        testDataGenerator.deleteAllTestData();
+    }
+
+    private boolean waitUntilConditionMet(long timeout, TimeUnit unit, Supplier<Boolean> condition) throws InterruptedException {
+        long endTime = System.currentTimeMillis() + unit.toMillis(timeout);
+        while (System.currentTimeMillis() < endTime) {
+            if (condition.get()) {
+                return true;
+            }
+            Thread.sleep(500); // 0.5초 간격으로 재시도
+        }
+        return false;
+    }
+
+    @Test
+    void saveSheetAndUserSheet_success() {
+        // given
+        SheetCreateMeta meta = SheetCreateMeta.builder()
+                .sheetName(UUID.randomUUID().toString())
+                .color("#ffffffff")
+                .fileExtension("pdf")
+                .isOwner(true)
+                .userEmail("test@test.com").build();
+        // when
+        SheetResponseDto res = sheetManageService.saveSheetAndUserSheet(meta, sheetFilePDF);
+        // then
+        assert res.getSheetName().equals(meta.getSheetName());
+        await().atMost(2, TimeUnit.MINUTES).untilAsserted(() -> {
+            List<UserSheet> userSheets = userSheetRepository.findAllBySheetName(res.getSheetName());
+            assertEquals(1, userSheets.size());
+            assertNotNull(userSheets.get(0).getSheet().getSheetInfo());
+            assertTrue(userSheets.get(0).getSheet().getSheetInfo().length > 0);
+        });
+    }
+}
