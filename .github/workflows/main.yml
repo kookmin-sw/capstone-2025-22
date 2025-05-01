@@ -12,7 +12,6 @@ jobs:
     strategy:
       matrix:
         service: [auth-service, user-service, verification-service, gateway-service, music-service, discovery-service]
-#        service: [music-service]
     steps:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -22,16 +21,16 @@ jobs:
         with:
           token: ${{ secrets.ACCESS_TOKEN }}
 
-      - name: set config file key
-        run : |
+      - name: set config file key # xx-service -> XX_SERVICE_CONFIG
+        run: |
           SERVICE_NAME=$(echo ${{ matrix.service }} | tr '-' '_' | tr '[:lower:]' '[:upper:]')
           echo "SERVICE_SECRET=${SERVICE_NAME}_CONFIG" >> $GITHUB_ENV
 
       - name: copy config files
         run: |
-          mkdir -p config-backend/dev config-backend/dev/${{ matrix.service }}
-          echo "${{ secrets[env.SERVICE_SECRET] }}" | base64 --decode > config-backend/dev/${{ matrix.service }}/application.yml
-          echo "${{ secrets.COMMON_YML }}" | base64 --decode > config-backend/dev/common.yml
+          mkdir -p backend/config-backend/dev backend/config-backend/dev/${{ matrix.service }}
+          echo "${{ secrets[env.SERVICE_SECRET] }}" | base64 --decode > backend/config-backend/dev/${{ matrix.service }}/application.yml
+          echo "${{ secrets.COMMON_YML }}" | base64 --decode > backend/config-backend/dev/common.yml
 
       - name: Set version tag
         run: echo "VERSION_TAG=$(date +%Y%m%d-%H%M%S)" >> $GITHUB_ENV
@@ -45,9 +44,9 @@ jobs:
       - name: Build Docker Image
         uses: docker/build-push-action@v5
         with:
-          context: .
-          file: ${{ matrix.service }}/Dockerfile
+          context: backend
+          file: backend/${{ matrix.service }}/Dockerfile
           push: true
-          tags: ${{ secrets.DOCKER_USERNAME }}/${{ matrix.service }}:test
+          tags: ${{ secrets.DOCKER_USERNAME }}/${{ matrix.service }}:tmp
           cache-from: type=gha
           cache-to: type=gha,mode=max
