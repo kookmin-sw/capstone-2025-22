@@ -12,4 +12,6 @@ import java.util.List;
 public interface UserSheetRepository extends JpaRepository<UserSheet, Integer> {
     @Query("select u from UserSheet u where u.userEmail=:email")
     List<UserSheet> findAllByEmail(@Param("email") String email);
+
+    List<UserSheet> findAllBySheetName(String sheetName);
 }
