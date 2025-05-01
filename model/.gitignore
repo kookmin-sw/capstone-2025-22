@@ -1,0 +1,9 @@
+**/*.wav
+**/*.xml
+**/*.pt
+
+.DS_Store
+**/__pycache__
+etc/**
+test.py
+data/**

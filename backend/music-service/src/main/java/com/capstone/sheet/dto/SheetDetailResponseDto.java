@@ -14,7 +14,7 @@ public class SheetDetailResponseDto {
     String sheetName;
     LocalDateTime lastPracticeDate;
     String color;
-    String sheetInfo;
+    byte[] sheetInfo;
 
     public static SheetDetailResponseDto from(UserSheet userSheet, LocalDateTime lastPracticeDate) {
         return SheetDetailResponseDto.builder()
