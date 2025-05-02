@@ -36,6 +36,9 @@ jobs:
       - name: Set version tag
         run: echo "VERSION_TAG=$(date +%Y%m%d-%H%M%S)" >> $GITHUB_ENV
 
+      - name: Pull Audiveris image
+        run: docker pull louie8821/audiveris:drum
+
       - name: Docker Hub Login
         uses: docker/login-action@v3
         with:
