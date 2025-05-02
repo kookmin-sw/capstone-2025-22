@@ -11,6 +11,7 @@ import com.capstone.sheet.entity.UserSheet;
 import com.capstone.sheet.repository.UserSheetRepository;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -49,6 +50,7 @@ class SheetPracticeRetrieveServiceTest {
     }
 
     @Test
+    @DisplayName("악보 연습 목록 조회 테스트")
     void getSheetPracticeRecords() {
         // given
         String email = TestDataGenerator.userEmails.get(0);
@@ -80,6 +82,7 @@ class SheetPracticeRetrieveServiceTest {
     }
 
     @Test
+    @DisplayName("악보 연습 상세 정보 조회 테스트")
     void getDetailSheetPracticeRecord() {
         // given
         String email = TestDataGenerator.userEmails.get(0);
@@ -97,6 +100,7 @@ class SheetPracticeRetrieveServiceTest {
     }
 
     @Test
+    @DisplayName("악보 대표 연습 정보 조회 테스트")
     void getSheetPresentRepresentRecordTest(){
         // given
         String email = TestDataGenerator.userEmails.get(0);
@@ -117,5 +121,25 @@ class SheetPracticeRetrieveServiceTest {
         assertThrows(DataNotFoundException.class, () -> {
            sheetPracticeRetrieveService.getRepresentSheetPractice(email, ghostUserSheetId);
         });
+    }
+
+    @Test
+    @DisplayName("악보 대표 연습 정보 목록 조회 테스트")
+    void getSheetPresentRepresentRecordListTest(){
+        // given
+        String email = TestDataGenerator.userEmails.get(0);
+        String ghostEmail = UUID.randomUUID().toString();
+        // when
+        List<SheetPracticeRepresentResponse> res = sheetPracticeRetrieveService.getRepresentSheetPractices(email);
+        List<SheetPracticeRepresentResponse> mustEmpty = sheetPracticeRetrieveService.getRepresentSheetPractices(ghostEmail);
+        // then
+        assert res.size() == TestDataGenerator.userSheetsPerUser;
+        assertTrue(() -> {
+            for(SheetPracticeRepresentResponse practice : res){
+                if(practice.getMaxScore()!=100) return false;
+            }
+            return true;
+        });
+        assert mustEmpty.isEmpty();
     }
 }

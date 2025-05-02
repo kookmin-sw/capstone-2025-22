@@ -61,4 +61,13 @@ public class SheetPracticeRetrieveService {
                 .orElseThrow(() -> new DataNotFoundException("can't find max score"));
         return SheetPracticeRepresentResponse.from(userSheet, maxScore, sheetPractice.getCreatedDate());
     }
+    /** 
+     * 대표 악보 연습 정보 목록 조회
+     * @param userEmail 사용자 이메일
+     * @return List of SheetPracticeRepresentResponse
+    * */
+    public List<SheetPracticeRepresentResponse> getRepresentSheetPractices(String userEmail){
+        return userSheetRepository.findAllByEmail(userEmail)
+                .stream().map(userSheet -> getRepresentSheetPractice(userEmail, userSheet.getUserSheetId())).toList();
+    }
 }
