@@ -1,10 +1,6 @@
 # Build Stage
 FROM openjdk:17-jdk-slim AS builder
 LABEL authors="kym8821"
-ARG MODULE_NAME=audio-service
-ARG COMMON_MODULE1="common"
-ARG COMMON_MODULE2="common-auth"
-ARG COMMON_MODULE3="common-redis"
 WORKDIR /app
 # copy from root module
 COPY gradlew /app/
@@ -12,11 +8,18 @@ COPY gradle /app/gradle/
 COPY build.gradle /app/
 COPY docker-settings.gradle /app/settings.gradle
 # copy from sub module
+ARG MODULE_NAME=audio-service
 COPY /${MODULE_NAME} /app/module
 # copy from common module
+ARG COMMON_MODULE1="common"
+ARG COMMON_MODULE2="common-auth"
+ARG COMMON_MODULE3="common-redis"
 COPY /${COMMON_MODULE1} /app/${COMMON_MODULE1}
 COPY /${COMMON_MODULE2} /app/${COMMON_MODULE2}
 COPY /${COMMON_MODULE3} /app/${COMMON_MODULE3}
+# copy config module
+ARG CONFIG_MODULE="config-backend"
+COPY /${CONFIG_MODULE} /app/${CONFIG_MODULE}
 # ensure execute gradlew
 RUN chmod +x gradlew
 # build project

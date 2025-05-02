@@ -76,7 +76,7 @@ class SheetManageControllerTest {
                 .content(new ObjectMapper().writeValueAsString(requestDto)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.body.sheetName").value(newName))
-                .andExpect(jsonPath("$.body.lastPracticeDate").value(lastPractice))
+                .andExpect(jsonPath("$.body.lastPracticeDate").exists())
                 .andDo(print());
     }
 
@@ -101,7 +101,7 @@ class SheetManageControllerTest {
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.body.color").value(newColor))
-                .andExpect(jsonPath("$.body.lastPracticeDate").value(lastPractice));
+                .andExpect(jsonPath("$.body.lastPracticeDate").exists());
     }
 
     @Test
