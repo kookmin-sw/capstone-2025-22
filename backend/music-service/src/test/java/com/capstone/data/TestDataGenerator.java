@@ -76,12 +76,12 @@ public class TestDataGenerator {
     public List<SheetPractice> generateTestSheetPractices(String email, List<UserSheet> userSheets){
         List<SheetPractice> res = new ArrayList<>(List.of());
         for(UserSheet userSheet : userSheets) {
-            for(int i=0; i<10; i++) {
+            for(int i=1; i<=10; i++) {
                 SheetPractice practice = sheetPracticeRepository.save(
                         SheetPractice.builder()
                                 .practiceInfo("practiceInfo")
                                 .userEmail(email)
-                                .score(90)
+                                .score(i*10)
                                 .createdDate(LocalDateTime.now())
                                 .userSheet(userSheet).build()
                 );
