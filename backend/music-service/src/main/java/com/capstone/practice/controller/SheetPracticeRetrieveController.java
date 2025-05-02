@@ -58,4 +58,14 @@ public class SheetPracticeRetrieveController {
         SheetPracticeRepresentResponse res = sheetPracticeRetrieveService.getRepresentSheetPractice(email, userSheetId);
         return ApiResponse.success(res);
     }
+    /**
+     * 특정 사용자의 대표 연습 정보 목록 조회
+     * @param email 사용자 이메일
+     * @return 악보 대표 연습 정보 목록
+    * */
+    @GetMapping("/practices/representative")
+    public ResponseEntity<CustomResponseDto<List<SheetPracticeRepresentResponse>>> getRepresentativePractices(@RequestParam("email") String email){
+        List<SheetPracticeRepresentResponse> res = sheetPracticeRetrieveService.getRepresentSheetPractices(email);
+        return ApiResponse.success(res);
+    }
 }
