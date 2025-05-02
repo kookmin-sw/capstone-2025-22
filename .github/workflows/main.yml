@@ -2,6 +2,7 @@ on:
   push:
     branches:
       - master
+      - backend/master
   pull_request:
     branches:
       - master
@@ -47,6 +48,6 @@ jobs:
           context: backend
           file: backend/${{ matrix.service }}/Dockerfile
           push: true
-          tags: ${{ secrets.DOCKER_USERNAME }}/${{ matrix.service }}:tmp
+          tags: ${{ secrets.DOCKER_USERNAME }}/${{ matrix.service }}:test-latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
