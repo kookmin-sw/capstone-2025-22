@@ -4,6 +4,7 @@ import com.capstone.data.TestDataGenerator;
 import com.capstone.enums.SuccessFlag;
 import com.capstone.practice.entity.SheetPractice;
 import com.capstone.practice.repository.SheetPracticeRepository;
+import com.capstone.sheet.dto.SheetCreateMeta;
 import com.capstone.sheet.dto.SheetListRequestDto;
 import com.capstone.sheet.dto.SheetUpdateRequestDto;
 import com.capstone.sheet.entity.UserSheet;
@@ -16,19 +17,28 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.core.io.DefaultResourceLoader;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.awaitility.Awaitility.await;
 
 @SpringBootTest
 @ActiveProfiles("test")
@@ -57,9 +67,51 @@ class SheetManageControllerTest {
     }
 
     @Test
+    @DisplayName("악보 정보 저장 성공 테스트")
+    void createSheet_success() throws Exception {
+        // given
+        String email = TestDataGenerator.userEmails.get(0);
+        String sheetName = UUID.randomUUID().toString();
+        File originFile = new DefaultResourceLoader().getResource("classpath:sheet/sheet.pdf").getFile();
+        SheetCreateMeta meta = SheetCreateMeta.builder()
+                .sheetName(sheetName)
+                .userEmail(email)
+                .isOwner(true)
+                .fileExtension("pdf")
+                .color("#ffffffff")
+                .build();
+        MockMultipartFile sheetFilePDF = new MockMultipartFile(
+                "sheetFile",
+                originFile.getName(),
+                "application/pdf",
+                new FileInputStream(originFile)                   // input
+        );
+        MockMultipartFile metaPart = new MockMultipartFile(
+                "sheetCreateMeta",
+                "",
+                "application/json",
+                new ObjectMapper().writeValueAsString(meta).getBytes()
+        );
+        // when & then
+        mockMvc.perform(multipart("/sheets")
+                        .file(sheetFilePDF)
+                        .file(metaPart))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.body.sheetName").value(sheetName))
+                .andDo(print());
+        // 비동기 처리 완료 대기
+        await().atMost(2, TimeUnit.MINUTES).untilAsserted(() -> {
+            List<UserSheet> userSheets = userSheetRepository.findAllBySheetName(sheetName);
+            assertEquals(1, userSheets.size());
+            assertNotNull(userSheets.get(0).getSheet().getSheetInfo());
+            assertTrue(userSheets.get(0).getSheet().getSheetInfo().length > 0);
+        });
+    }
+
+    @Test
     @DisplayName("이름 변경 성공 테스트")
     void updateSheetName_success() throws Exception {
-        // given : set request dto
+        // given
         UserSheet targetSheet = userSheetRepository.findAll().get(0);
         String newName = UUID.randomUUID().toString();
         SheetUpdateRequestDto requestDto = SheetUpdateRequestDto.builder()
@@ -69,7 +121,6 @@ class SheetManageControllerTest {
                 targetSheet.getUserEmail(),
                 targetSheet.getUserSheetId(),
                 PageRequest.of(0, 1));
-        String lastPractice = practiceList.isEmpty() ? null : practiceList.get(0).getCreatedDate().toString();
         // when & then
         mockMvc.perform(put("/sheets/{userSheetId}/name", targetSheet.getUserSheetId())
                 .contentType(MediaType.APPLICATION_JSON)
@@ -83,7 +134,7 @@ class SheetManageControllerTest {
     @Test
     @DisplayName("색상 변경 성공 테스트")
     void updateSheetColor_success() throws Exception {
-        // given : set request dto
+        // given
         UserSheet targetSheet = userSheetRepository.findAll().get(0);
         String newColor = UUID.randomUUID().toString();
         SheetUpdateRequestDto requestDto = SheetUpdateRequestDto.builder()
@@ -93,7 +144,6 @@ class SheetManageControllerTest {
                 targetSheet.getUserEmail(),
                 targetSheet.getUserSheetId(),
                 PageRequest.of(0, 1));
-        String lastPractice = practiceList.isEmpty() ? null : practiceList.get(0).getCreatedDate().toString();
         // when & then
         mockMvc.perform(put("/sheets/{userSheetId}/color", targetSheet.getUserSheetId())
                         .contentType(MediaType.APPLICATION_JSON)
@@ -102,6 +152,7 @@ class SheetManageControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.body.color").value(newColor))
                 .andExpect(jsonPath("$.body.lastPracticeDate").exists());
+
     }
 
     @Test
