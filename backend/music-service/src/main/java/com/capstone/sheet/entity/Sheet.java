@@ -20,7 +20,7 @@ public class Sheet {
     private int sheetId;
 
     @Lob
-    @Column(columnDefinition = "BLOB")
+    @Column(columnDefinition = "MEDIUMBLOB")
     private byte[] sheetInfo;
 
     @Column
