@@ -49,7 +49,7 @@ class _DrumSheetPlayerState extends State<DrumSheetPlayer> {
     // OSMDService 초기화할 때 onDataLoaded 연결
     osmdService = OSMDService(
       onDataLoaded: ({
-        required String base64Image,
+        required Uint8List base64Image,
         required Map<String, dynamic> json,
         required double bpm,
         required double canvasWidth,
@@ -59,12 +59,11 @@ class _DrumSheetPlayerState extends State<DrumSheetPlayer> {
           final int totalLines = (json['lineCount'] is int)
               ? json['lineCount'] as int
               : (json['lineCount'] ?? 1).toInt();
-          final lines = await SheetInfo.splitLinesFromSheetImage(
-            base64Decode(base64Image),
-            totalLines,
-          );
+          final List<Uint8List> lineImages =
+              (json['lineImages'] as List<dynamic>)
+                  .map((e) => base64Decode(e))
+                  .toList();
 
-          // SheetInfo 만들고 PlaybackController에 세팅
           final sheetInfo = SheetInfo(
             id: '', // 일단 빈 값 (추후 백엔드 연동시 수정)
             title: '그라데이션',
@@ -74,9 +73,9 @@ class _DrumSheetPlayerState extends State<DrumSheetPlayer> {
             cursorList: (json['cursorList'] as List<dynamic>)
                 .map((e) => Cursor.fromJson(e))
                 .toList(),
-            sheetImage: base64Decode(base64Image),
+            fullSheetImage: base64Image,
             xmlData: json['xmlData'] as String?,
-            lineImages: lines,
+            lineImages: lineImages,
             createdDate: DateTime.now(),
           );
 
@@ -86,12 +85,10 @@ class _DrumSheetPlayerState extends State<DrumSheetPlayer> {
             playbackController
                 .calculateTotalDurationFromCursorList(bpm); // 총 재생시간 계산
 
-            playbackController.sheetImage = sheetInfo.lineImages.isNotEmpty
-                ? sheetInfo.lineImages[0]
-                : null;
-            playbackController.nextSheetImage = sheetInfo.lineImages.length > 1
-                ? sheetInfo.lineImages[1]
-                : null;
+            playbackController.currentLineImage =
+                lineImages.isNotEmpty ? lineImages[0] : null;
+            playbackController.nextLineImage =
+                lineImages.length > 1 ? lineImages[1] : null;
           });
         } catch (e, st) {
           debugPrint('🔴 onDataLoaded error: $e\n$st');
@@ -299,79 +296,79 @@ class _DrumSheetPlayerState extends State<DrumSheetPlayer> {
                   ),
                 ),
                 const SizedBox(height: 24),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    // 현재 줄 악보
-                    Container(
-                      height: imageHeight,
-                      margin:
-                          const EdgeInsets.only(bottom: 12), // 현재 줄과 다음 줄 간격
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(5),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.08),
-                            blurRadius: 6,
-                            offset: Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(5),
-                        child: Stack(
-                          children: [
-                            CursorWidget(
-                              cursor: playbackController.currentCursor,
-                              imageWidth: MediaQuery.of(context).size.width,
-                              canvasWidth: playbackController.canvasWidth,
-                            ),
-                            if (playbackController.sheetImage != null)
-                              Image.memory(
-                                playbackController.sheetImage!,
-                                width: double.infinity,
-                                height: imageHeight,
-                                fit: BoxFit.fitWidth,
-                              ),
-                          ],
-                        ),
-                      ),
-                    ),
+                // Column(
+                //   crossAxisAlignment: CrossAxisAlignment.stretch,
+                //   children: [
+                //     // 현재 줄 악보
+                //     Container(
+                //       height: imageHeight,
+                //       margin:
+                //           const EdgeInsets.only(bottom: 12), // 현재 줄과 다음 줄 간격
+                //       decoration: BoxDecoration(
+                //         color: Colors.white,
+                //         borderRadius: BorderRadius.circular(5),
+                //         boxShadow: [
+                //           BoxShadow(
+                //             color: Colors.black.withOpacity(0.08),
+                //             blurRadius: 6,
+                //             offset: Offset(0, 4),
+                //           ),
+                //         ],
+                //       ),
+                //       child: ClipRRect(
+                //         borderRadius: BorderRadius.circular(5),
+                //         child: Stack(
+                //           children: [
+                //             CursorWidget(
+                //               cursor: playbackController.currentCursor,
+                //               imageWidth: MediaQuery.of(context).size.width,
+                //               canvasWidth: playbackController.canvasWidth,
+                //             ),
+                //             if (playbackController.currentLineImage != null)
+                //               Image.memory(
+                //                 playbackController.currentLineImage!,
+                //                 width: double.infinity,
+                //                 height: imageHeight,
+                //                 fit: BoxFit.fitWidth,
+                //               ),
+                //           ],
+                //         ),
+                //       ),
+                //     ),
 
-                    // 👀 다음 줄 미리보기
-                    if (playbackController.nextSheetImage != null)
-                      Container(
-                        height: imageHeight,
-                        margin: const EdgeInsets.only(bottom: 5),
-                        decoration: BoxDecoration(
-                          // 흰색의 100% → 예: 80% 불투명(20% 투명)으로 조절
-                          color: Colors.white.withOpacity(0.8),
-                          borderRadius: BorderRadius.circular(5),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.08),
-                              blurRadius: 6,
-                              offset: Offset(0, 4),
-                            ),
-                          ],
-                        ),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(5),
-                          child: Opacity(
-                            // 악보만 50% 투명
-                            opacity: 0.5,
-                            child: Image.memory(
-                              playbackController.nextSheetImage!,
-                              width: double.infinity,
-                              height: imageHeight,
-                              fit: BoxFit.fitWidth,
-                            ),
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
+                //     // 👀 다음 줄 미리보기
+                //     if (playbackController.nextLineImage != null)
+                //       Container(
+                //         height: imageHeight,
+                //         margin: const EdgeInsets.only(bottom: 5),
+                //         decoration: BoxDecoration(
+                //           // 흰색의 100% → 예: 80% 불투명(20% 투명)으로 조절
+                //           color: Colors.white.withOpacity(0.8),
+                //           borderRadius: BorderRadius.circular(5),
+                //           boxShadow: [
+                //             BoxShadow(
+                //               color: Colors.black.withOpacity(0.08),
+                //               blurRadius: 6,
+                //               offset: Offset(0, 4),
+                //             ),
+                //           ],
+                //         ),
+                //         child: ClipRRect(
+                //           borderRadius: BorderRadius.circular(5),
+                //           child: Opacity(
+                //             // 악보만 50% 투명
+                //             opacity: 0.5,
+                //             child: Image.memory(
+                //               playbackController.nextLineImage!,
+                //               width: double.infinity,
+                //               height: imageHeight,
+                //               fit: BoxFit.fitWidth,
+                //             ),
+                //           ),
+                //         ),
+                //       ),
+                //   ],
+                // ),
 
                 Spacer(flex: 2),
 

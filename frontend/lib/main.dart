@@ -65,8 +65,9 @@ class _MyAppState extends State<MyApp> {
     //   home: _isLoggedIn! ? NavigationScreens() : LoginScreenGoogle(),
     // );
     return MaterialApp(
-      theme: ThemeData(scaffoldBackgroundColor: const Color(0xFFF2F1F3)),
-      home: const NavigationScreens(),
+      // 페이지 공통 백그라운드 컬러 지정
+      theme: ThemeData(scaffoldBackgroundColor: Color(0xFFF2F1F3)),
+      home: DrumSheetPlayer(),
     );
   }
 }

@@ -35,8 +35,8 @@ class PlaybackController {
 
   // 줄별 악보 이미지 관련
   List<Uint8List> lineImages = []; // 줄 단위로 잘라낸 악보 이미지들
-  Uint8List? sheetImage; // 현재 줄의 악보 이미지 (줄 넘어갈 때마다 바뀜)
-  Uint8List? nextSheetImage; // 다음 줄 미리보기 악보 이미지
+  Uint8List? currentLineImage; // 현재 줄의 악보 이미지 (줄 넘어갈 때마다 바뀜)
+  Uint8List? nextLineImage; // 다음 줄 미리보기 악보 이미지
 
   // 콜백 함수들
   Function(double)? onProgressUpdate;
@@ -54,8 +54,8 @@ class PlaybackController {
 
     lineCursorLists = _splitCursorByLine(sheetInfo!);
     currentPage = 0; // 현재 페이지 초기화
-    sheetImage = lineImages.isNotEmpty ? lineImages[0] : null;
-    nextSheetImage = lineImages.length > 1 ? lineImages[1] : null;
+    currentLineImage = lineImages.isNotEmpty ? lineImages[0] : null;
+    nextLineImage = lineImages.length > 1 ? lineImages[1] : null;
 
     _initializeCursorController(); // 커서 컨트롤러 초기화
     if (lineCursorLists.isNotEmpty && lineCursorLists[0].isNotEmpty) {
@@ -147,7 +147,7 @@ class PlaybackController {
     }
 
     currentPage++; // 다음 줄로 이동
-    sheetImage = lineImages[currentPage]; // 현재 줄 이미지 교체
+    currentLineImage = lineImages[currentPage]; // 현재 줄 이미지 교체
     _cursorController?.stop();
     _initializeCursorController(); // 커서 컨트롤러 초기화
     _cursorController?.start();
@@ -159,9 +159,9 @@ class PlaybackController {
 
     // 다음 줄 미리보기 이미지 설정
     if (currentPage + 1 < lineImages.length) {
-      nextSheetImage = lineImages[currentPage + 1];
+      nextLineImage = lineImages[currentPage + 1];
     } else {
-      nextSheetImage = null; // 마지막 줄이면 nextSheetImage 없앰
+      nextLineImage = null; // 마지막 줄이면 nextSheetImage 없앰
     }
 
     onPageChange?.call(currentPage); // 줄 이동 콜백 호출
@@ -223,8 +223,8 @@ class PlaybackController {
     currentPage = 0; // 첫 번째 줄로 이동
 
     if (lineImages.isNotEmpty) {
-      sheetImage = lineImages[0];
-      nextSheetImage = lineImages.length > 1 ? lineImages[1] : null;
+      currentLineImage = lineImages[0];
+      nextLineImage = lineImages.length > 1 ? lineImages[1] : null;
     }
 
     onProgressUpdate?.call(currentProgress); // 진행바 0으로 초기화
