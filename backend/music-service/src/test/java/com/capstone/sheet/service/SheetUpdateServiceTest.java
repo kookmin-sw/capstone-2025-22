@@ -14,6 +14,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.mock.web.MockMultipartFile;
@@ -28,11 +29,15 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.when;
 
 @SpringBootTest
 @Transactional
 @ActiveProfiles("test")
 class SheetUpdateServiceTest {
+    @MockBean
+    SheetToXmlConverter converter;
+
     @Autowired
     private SheetUpdateService sheetUpdateService;
 
@@ -83,6 +88,9 @@ class SheetUpdateServiceTest {
                 .fileExtension("pdf")
                 .isOwner(true)
                 .userEmail("test@test.com").build();
+
+        // stub
+        when(converter.convertToXml(meta, sheetFilePDF)).thenReturn(new byte[100]);
 
         // when
         sheetUpdateService.updateSheetInfo(sheet, meta, sheetFilePDF);

@@ -11,6 +11,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.mock.web.MockMultipartFile;
@@ -23,19 +24,19 @@ import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Supplier;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.when;
 import static org.awaitility.Awaitility.await;
 
 @SpringBootTest
 @ActiveProfiles("test")
 class SheetManageServiceTest {
-    @Autowired
-    private SheetManageService sheetManageService;
+    @MockBean
+    SheetToXmlConverter converter;
 
     @Autowired
-    private SheetRepository sheetRepository;
+    private SheetManageService sheetManageService;
 
     @Autowired
     private UserSheetRepository userSheetRepository;
@@ -65,17 +66,6 @@ class SheetManageServiceTest {
         testDataGenerator.deleteAllTestData();
     }
 
-    private boolean waitUntilConditionMet(long timeout, TimeUnit unit, Supplier<Boolean> condition) throws InterruptedException {
-        long endTime = System.currentTimeMillis() + unit.toMillis(timeout);
-        while (System.currentTimeMillis() < endTime) {
-            if (condition.get()) {
-                return true;
-            }
-            Thread.sleep(500); // 0.5초 간격으로 재시도
-        }
-        return false;
-    }
-
     @Test
     void saveSheetAndUserSheet_success() {
         // given
@@ -85,11 +75,13 @@ class SheetManageServiceTest {
                 .fileExtension("pdf")
                 .isOwner(true)
                 .userEmail("test@test.com").build();
+        // stub
+        when(converter.convertToXml(meta, sheetFilePDF)).thenReturn(new byte[100]);
         // when
         SheetResponseDto res = sheetManageService.saveSheetAndUserSheet(meta, sheetFilePDF);
         // then
         assert res.getSheetName().equals(meta.getSheetName());
-        await().atMost(2, TimeUnit.MINUTES).untilAsserted(() -> {
+        await().atMost(1, TimeUnit.MINUTES).untilAsserted(() -> {
             List<UserSheet> userSheets = userSheetRepository.findAllBySheetName(res.getSheetName());
             assertEquals(1, userSheets.size());
             assertNotNull(userSheets.get(0).getSheet().getSheetInfo());

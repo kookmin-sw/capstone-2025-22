@@ -4,12 +4,12 @@ import com.capstone.sheet.dto.SheetCreateMeta;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.mock.web.MockMultipartFile;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
@@ -17,11 +17,14 @@ import java.io.FileInputStream;
 import java.io.IOException;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doReturn;
 
-@ExtendWith(SpringExtension.class)
+@SpringBootTest
+@ActiveProfiles("test")
 class SheetToXmlConverterTest {
 
-    @InjectMocks
+    @SpyBean
     private SheetToXmlConverter converter;
 
     ResourceLoader resourceLoader;
@@ -63,6 +66,8 @@ class SheetToXmlConverterTest {
                 .fileExtension("pdf")
                 .build();
         MultipartFile sheetFile = this.sheetFilePDF;
+        // stub
+        doReturn(new byte[100]).when(converter).processConvert(anyString(), anyString());
         // when
         byte[] res = converter.convertToXml(sheetCreateMeta, sheetFile);
         // then

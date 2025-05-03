@@ -53,6 +53,7 @@ public class SheetToXmlConverter {
                 "docker", "run", "--rm",
                 "-v", String.format("%s:/input", inputPath),
                 "-v", String.format("%s:/output", outputPath),
+                "-v", "/var/run/docker.sock:/var/run/docker.sock",
                 "louie8821/audiveris:drum"};
     }
 
@@ -75,7 +76,7 @@ public class SheetToXmlConverter {
      * @param outputPath path to save output files (mxl, xml)
      * @return byte array of xml file
     * */
-    private byte[] processConvert(String inputPath, String outputPath){
+    public byte[] processConvert(String inputPath, String outputPath){
         ProcessBuilder builder = new ProcessBuilder();
         builder.command(commandBuilder(inputPath, outputPath));
         String outputFileName = "output.xml";
@@ -89,6 +90,7 @@ public class SheetToXmlConverter {
             return Files.readAllBytes(outputFile);
         }catch (IOException | InterruptedException e){
             String errorMessage = "SheetToXmlConverter.convert : " + e.getMessage();
+            e.printStackTrace();
             log.error(errorMessage);
             throw new InternalServerException(errorMessage);
         }
