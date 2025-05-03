@@ -203,3 +203,5 @@ __pycache__/
 macos/Flutter/ephemeral/Flutter-Generated.xcconfig
 
 .venv/*
+
+*.hprof
