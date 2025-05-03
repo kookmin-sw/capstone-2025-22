@@ -23,8 +23,8 @@ class _LoginScreenGoogleState extends State<LoginScreenGoogle> {
   // GoogleSignIn 인스턴스 생성 (전역 변수)
   final GoogleSignIn _googleSignIn = GoogleSignIn(
     scopes: ['email', 'profile', 'openid'], // Google 로그인 시 필요한 scope
-    serverClientId:
-        "637308987348-iilett3hur1ohas5r25fihlk7gdg5jci.apps.googleusercontent.com",
+    serverClientId: // web client id
+        "181628362307-2o025ta4bgqqqdtki2f5r6bkmerh9722.apps.googleusercontent.com",
     forceCodeForRefreshToken: true, // refresh token 받기 위해 필요
   );
 

@@ -1,22 +1,79 @@
-import 'package:capstone_2025/screens/drumPatternFillPages/pattern_fill_main.dart';
 import 'package:capstone_2025/screens/drumPatternFillPages/pattern_fill_screen.dart';
-import 'package:capstone_2025/screens/drumPatternFillPages/widgets/innerShadow.dart';
-import 'package:capstone_2025/screens/drumPatternFillPages/widgets/linedText.dart';
+import 'package:capstone_2025/widgets/innerShadow.dart';
+import 'package:capstone_2025/widgets/linedText.dart';
+import 'package:capstone_2025/screens/drumSheetPages/widgets/resultText.dart';
 import 'package:capstone_2025/screens/mainPages/musicsheet_detail.dart';
 import 'package:capstone_2025/screens/mainPages/navigation_screens.dart';
+import 'package:capstone_2025/widgets/openSheetModal.dart';
 import 'package:flutter/material.dart';
 
-class PracticeResult extends StatefulWidget {
-  const PracticeResult({super.key});
+class PracticeResultMS extends StatefulWidget {
+  const PracticeResultMS({super.key});
 
   @override
-  State<PracticeResult> createState() => _PracticeResultState();
+  State<PracticeResultMS> createState() => _PracticeResultMSState();
 }
 
-class _PracticeResultState extends State<PracticeResult> {
-  int idx = 9; // 패턴 번호
-  bool lvCleared = true; // 레벨 클리어 여부
-  int score = 80; // 점수
+class _PracticeResultMSState extends State<PracticeResultMS> {
+  int score = 70; // 점수
+  late bool isPerfect = (score == 100); // 퍼펙트 여부
+  String musicTitle = "그라데이션"; // 제목
+  String musicArtist = "10cm"; // 아티스트
+
+  Widget resultKeyword(int score) {
+    var keyword;
+    var txtColor;
+    var borderColor;
+
+    if (isPerfect) {
+      keyword = "PERFECT";
+      txtColor = Color(0xffFD9B8A);
+      borderColor = Color(0xffB95D4C);
+    } else if (score >= 80) {
+      keyword = "GREAT";
+      txtColor = Color(0xffFFE89B);
+      borderColor = Color(0xffF1B45F);
+    } else if (score >= 60) {
+      keyword = "GOOD";
+      txtColor = Color(0xffB6FF9B);
+      borderColor = Color(0xff73CA5D);
+    } else if (score >= 40) {
+      keyword = "SOSO";
+      txtColor = Color(0xff8ABCFD);
+      borderColor = Color(0xff4C7FB9);
+    } else {
+      keyword = "BAD";
+      txtColor = Color(0xffA2A2A2);
+      borderColor = Color(0xff646464);
+    }
+
+    return ResultText(
+        keyword: keyword, txtColor: txtColor, borderColor: borderColor);
+  }
+
+  Widget resultScore(int score) {
+    Color txtColor;
+    Color borderColor;
+    if (isPerfect) {
+      txtColor = Color(0xffFD9B8A);
+      borderColor = Color(0xffB95D4C);
+    } else if (score >= 60) {
+      txtColor = Color(0xffFFE89B);
+      borderColor = Color(0xffF1B45F);
+    } else {
+      txtColor = Color(0xffD9D9D9);
+      borderColor = Color(0xff949494);
+    }
+
+    return linedText(
+      '$score',
+      95,
+      borderColor,
+      txtColor,
+      9.5,
+    );
+    ;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -47,7 +104,9 @@ class _PracticeResultState extends State<PracticeResult> {
                 padding: EdgeInsets.symmetric(
                   // padding으로 사이즈 조절
                   vertical: MediaQuery.of(context).size.height * 0.08,
-                  horizontal: MediaQuery.of(context).size.width * 0.12,
+                  horizontal: isPerfect
+                      ? MediaQuery.of(context).size.width * 0.08
+                      : MediaQuery.of(context).size.width * 0.1,
                 ),
                 child: Container(
                   // 결과창 container
@@ -79,8 +138,8 @@ class _PracticeResultState extends State<PracticeResult> {
                         ),
                       ),
                       Padding(
-                        padding: const EdgeInsets.symmetric(
-                            vertical: 30, horizontal: 70),
+                        padding: EdgeInsets.symmetric(
+                            vertical: 30, horizontal: (isPerfect) ? 55 : 70),
                         child: Column(
                           // 결과창 내부 요소들
                           children: [
@@ -90,71 +149,20 @@ class _PracticeResultState extends State<PracticeResult> {
                               children: [
                                 Padding(
                                   padding: EdgeInsets.only(
-                                      left: lvCleared ? 10 : 20),
+                                      left: isPerfect ? 10 : 30),
                                   child: Column(
                                     // 성공 여부 텍스트
                                     children: [
                                       SizedBox(
                                         child: linedText(
-                                            "Basic Pattern $idx",
+                                            "$musicTitle - $musicArtist",
                                             32,
                                             Colors.black.withOpacity(0.3),
                                             Colors.white,
                                             7),
                                       ),
                                       SizedBox(height: 10),
-                                      lvCleared
-                                          ? Stack(children: [
-                                              Text(
-                                                "CLEAR",
-                                                style: TextStyle(
-                                                  fontSize: 90,
-                                                  fontWeight: FontWeight.bold,
-                                                  color: Colors.transparent,
-                                                  shadows: [
-                                                    Shadow(
-                                                      offset: Offset(4, 4),
-                                                      blurRadius: 35,
-                                                      color: Colors.black
-                                                          .withOpacity(0.7),
-                                                    ),
-                                                  ],
-                                                  height: 1,
-                                                ),
-                                              ),
-                                              linedText(
-                                                "CLEAR",
-                                                90,
-                                                Color(0xffB95D4C),
-                                                Color(0xffFD9B8A),
-                                                9.5,
-                                              ),
-                                            ])
-                                          : Stack(children: [
-                                              Text(
-                                                "FAIL",
-                                                style: TextStyle(
-                                                  fontSize: 95,
-                                                  fontWeight: FontWeight.bold,
-                                                  color: Colors.transparent,
-                                                  shadows: [
-                                                    Shadow(
-                                                      offset: Offset(4, 4),
-                                                      blurRadius: 35,
-                                                      color: Colors.black
-                                                          .withOpacity(0.7),
-                                                    ),
-                                                  ],
-                                                  height: 1,
-                                                ),
-                                              ),
-                                              linedText(
-                                                  "FAIL",
-                                                  95,
-                                                  Color(0xff4C7FB9),
-                                                  Color(0xff8ABCFD),
-                                                  9.5),
-                                            ]),
+                                      resultKeyword(score),
                                     ],
                                   ),
                                 ),
@@ -168,8 +176,9 @@ class _PracticeResultState extends State<PracticeResult> {
                                     borderRadius: BorderRadius.circular(38),
                                   ),
                                   child: Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                        vertical: 10, horizontal: 85),
+                                    padding: EdgeInsets.symmetric(
+                                        vertical: 10,
+                                        horizontal: ((isPerfect) ? 70 : 90)),
                                     child: Column(children: [
                                       linedText(
                                         'SCORE',
@@ -196,42 +205,22 @@ class _PracticeResultState extends State<PracticeResult> {
                                             ],
                                           ),
                                         ),
-                                        lvCleared
-                                            ? linedText(
-                                                '$score',
-                                                95,
-                                                Color(0xffF1B45F),
-                                                Color(0xffFFE89B),
-                                                9.5,
-                                              )
-                                            : linedText(
-                                                '$score',
-                                                95,
-                                                Color(0xff949494),
-                                                Color(0xffD9D9D9),
-                                                9.5,
-                                              ),
+                                        resultScore(score),
                                       ])
                                     ]),
                                   ),
                                 ),
                               ],
                             ),
-                            SizedBox(height: 10),
+                            SizedBox(height: 15),
                             ButtonForm(
                               btnName: "상세 기록 확인하기",
                               buttonColor: Color(0xff949494),
                               borderColor: Color.fromARGB(255, 104, 104, 104),
                               shadowColor: Color.fromARGB(255, 177, 177, 177),
-                              width: MediaQuery.of(context).size.width * 0.65,
+                              width: MediaQuery.of(context).size.width * 0.75,
                               clickedFunc: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) =>
-                                        MusicsheetDetail(songTitle: "Test"),
-                                  ),
-                                );
+                                openMusicSheet(context);
                               },
                               btnIcon: Icons.insert_drive_file_rounded,
                             ),
@@ -239,7 +228,7 @@ class _PracticeResultState extends State<PracticeResult> {
                             Row(
                               children: [
                                 Expanded(
-                                  flex: 12,
+                                  flex: 1,
                                   child: Material(
                                     type: MaterialType.transparency,
                                     child: ButtonForm(
@@ -250,22 +239,15 @@ class _PracticeResultState extends State<PracticeResult> {
                                           Color.fromARGB(255, 248, 180, 168)
                                               .withOpacity(0.5),
                                       clickedFunc: () {
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (context) =>
-                                                PatternFillScreen(
-                                              title: "$idx",
-                                            ),
-                                          ),
-                                        );
+                                        openModal(
+                                            context, musicTitle, musicArtist);
                                       },
                                     ),
                                   ),
                                 ),
                                 SizedBox(width: 15),
                                 Expanded(
-                                  flex: 10,
+                                  flex: 1,
                                   child: Material(
                                     type: MaterialType.transparency,
                                     child: ButtonForm(
@@ -281,55 +263,13 @@ class _PracticeResultState extends State<PracticeResult> {
                                           MaterialPageRoute(
                                             builder: (context) =>
                                                 NavigationScreens(
-                                              firstSelectedIndex: 2,
+                                              firstSelectedIndex: 3,
                                             ),
                                           ),
                                         );
                                       },
                                     ),
                                   ),
-                                ),
-                                SizedBox(width: 15),
-                                Expanded(
-                                  flex: 12,
-                                  child: Stack(children: [
-                                    ButtonForm(
-                                      btnName: '다음 단계',
-                                      buttonColor: Color(0xFFFFE89B),
-                                      borderColor: Color(0xFFF1B45F),
-                                      shadowColor:
-                                          Color.fromARGB(255, 243, 235, 211),
-                                      clickedFunc: lvCleared
-                                          ? () {
-                                              Navigator.push(
-                                                context,
-                                                MaterialPageRoute(
-                                                  builder: (context) =>
-                                                      PatternFillScreen(
-                                                    title: "${idx + 1}",
-                                                  ),
-                                                ),
-                                              );
-                                            }
-                                          : null,
-                                    ),
-                                    if (!lvCleared)
-                                      Container(
-                                        width: double.infinity,
-                                        height: 60,
-                                        decoration: BoxDecoration(
-                                          color: Colors.black26,
-                                          borderRadius:
-                                              BorderRadius.circular(20),
-                                        ),
-                                        child: Center(
-                                            child: Icon(
-                                          Icons.lock,
-                                          size: 30,
-                                          color: Colors.white,
-                                        )),
-                                      ),
-                                  ]),
                                 ),
                               ],
                             )
@@ -424,28 +364,102 @@ class ButtonForm extends StatelessWidget {
         ],
       ),
     );
-    // return ElevatedButton(
-    //   style: ElevatedButton.styleFrom(
-    //     shape: RoundedRectangleBorder(
-    //       borderRadius: BorderRadius.circular(18.0),
-    //       side: BorderSide(color: borderColor, width: 3),
-    //     ),
-    //     backgroundColor: buttonColor,
-    //   ),
-    //   onPressed: clickedFunc,
-    //   child: Row(
-    //     mainAxisAlignment: MainAxisAlignment.center,
-    //     children: [
-    //       if (btnIcon != null)
-    //         Icon(
-    //           btnIcon,
-    //           size: 30,
-    //           color: Colors.white,
-    //         ),
-    //       if (btnIcon != null) SizedBox(width: 15),
-    //       linedText("$btnName", 20, borderColor, Colors.white, 4),
-    //     ],
-    //   ),
-    // );
   }
+}
+
+Widget modalBtn(BuildContext context, String text, Color backgroundColor,
+    bool isTextblack) {
+  // 모달 버튼
+  return Container(
+    width: 155,
+    // MediaQuery.of(context).size.width * 0.168,
+    height: 50,
+    // MediaQuery.of(context).size.height * 0.135,
+    alignment: Alignment.center,
+    decoration: BoxDecoration(
+      color: backgroundColor,
+      borderRadius: BorderRadius.circular(15),
+    ),
+    child: Text(text,
+        style: TextStyle(
+            color: isTextblack ? Colors.black : Colors.white,
+            fontSize: 15,
+            fontWeight: FontWeight.w500)),
+  );
+}
+
+void openModal(
+  BuildContext context,
+  String musicTitle,
+  String musicArtist,
+) {
+  // 모달 열기
+  showDialog(
+    context: context,
+    builder: (context) => AlertDialog(
+      alignment: Alignment.center,
+      insetPadding: EdgeInsets.zero,
+      contentPadding: EdgeInsets.only(top: 20, bottom: 20),
+      backgroundColor: Colors.white,
+      content: SizedBox(
+        width: 360,
+        height: 130,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SizedBox(
+              height: 15,
+            ),
+            Text(
+              '다시 시작하시겠습니까?',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 18.5,
+                color: Color(0xFF4A4A4A),
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 20),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextButton(
+                  style: TextButton.styleFrom(
+                    padding: EdgeInsets.zero,
+                    minimumSize: Size(0, 0),
+                  ),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  child: modalBtn(
+                      context, '취소', Color.fromARGB(255, 205, 203, 202), true),
+                ),
+                SizedBox(width: 10),
+                TextButton(
+                  style: TextButton.styleFrom(
+                    padding: EdgeInsets.zero,
+                    minimumSize: Size(0, 0),
+                  ),
+                  onPressed: () {
+                    // 다시하기 처리
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => PatternFillScreen(
+                          // 나중에 민지가 만든 페이지로 연결
+                          title: "$musicTitle - $musicArtist",
+                        ),
+                      ),
+                    );
+                  },
+                  child: modalBtn(context, '확인', Color(0xffD97D6C), false),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
 }
