@@ -39,9 +39,14 @@ public class SheetUpdateService {
 
     @Transactional
     public void updateSheetInfo(Sheet sheet, SheetCreateMeta sheetCreateMeta, MultipartFile sheetFile) {
-        byte[] sheetXml = sheetToXmlConverter.convertToXml(sheetCreateMeta, sheetFile);
-        Sheet toUpdate = sheetRepository.findById(sheet.getSheetId()).orElseThrow(() -> new DataNotFoundException("Sheet Not Found"));
-        toUpdate.setSheetInfo(sheetXml);
+        try {
+            byte[] sheetXml = sheetToXmlConverter.convertToXml(sheetCreateMeta, sheetFile);
+            Sheet toUpdate = sheetRepository.findById(sheet.getSheetId()).orElseThrow(() -> new DataNotFoundException("Sheet Not Found"));
+            toUpdate.setSheetInfo(sheetXml);
+        }catch (Exception e){
+            userSheetRepository.deleteAllBySheet(sheet);
+            sheetRepository.deleteById(sheet.getSheetId());
+        }
     }
 
     /**

@@ -102,7 +102,7 @@ public class SheetToXmlConverter {
      * @param sheetFile sheet file data
      * @return byte array of sheet xml
     * */
-    public byte[] convertToXml(SheetCreateMeta sheetCreateMeta, MultipartFile sheetFile) {
+    public byte[] convertToXml(SheetCreateMeta sheetCreateMeta, MultipartFile sheetFile) throws InternalServerException{
         Path target;
         String tmpDir = System.getProperty("java.io.tmpdir");
         Path sheetDir = Paths.get(tmpDir,"sheet", sheetCreateMeta.getUserEmail());

@@ -1,5 +1,6 @@
 package com.capstone.sheet.repository;
 
+import com.capstone.sheet.entity.Sheet;
 import com.capstone.sheet.entity.UserSheet;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -14,4 +15,6 @@ public interface UserSheetRepository extends JpaRepository<UserSheet, Integer> {
     List<UserSheet> findAllByEmail(@Param("email") String email);
 
     List<UserSheet> findAllBySheetName(String sheetName);
+
+    void deleteAllBySheet(Sheet sheet);
 }
