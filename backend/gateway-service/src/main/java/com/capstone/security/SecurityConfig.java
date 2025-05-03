@@ -11,6 +11,7 @@ import org.springframework.security.web.server.SecurityWebFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.reactive.CorsWebFilter;
 import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource;
+import org.springframework.web.server.ServerWebExchange;
 
 import java.util.List;
 
@@ -34,6 +35,8 @@ public class SecurityConfig {
             "/auth/**",
             // verification service
             "/verification/**",
+            // socket
+            "/ws/**",
     };
     private final String[] WHITE_LIST_GET = {
             // music service
@@ -61,13 +64,21 @@ public class SecurityConfig {
     }
     @Bean
     public CorsWebFilter corsWebFilter(){
-        CorsConfiguration config = new CorsConfiguration();
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        config.setAllowedHeaders(List.of("*"));
-        config.setExposedHeaders(List.of("*"));
-        config.setAllowedOriginPatterns(List.of("*"));
-        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE"));
-        source.registerCorsConfiguration("/**", config);
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource(){
+            @Override
+            public CorsConfiguration getCorsConfiguration(ServerWebExchange exchange) {
+                String path = exchange.getRequest().getURI().getPath();
+                if(path.startsWith("/ws")){
+                    return null;
+                }
+                CorsConfiguration config = new CorsConfiguration();
+                config.setAllowedHeaders(List.of("*"));
+                config.setExposedHeaders(List.of("*"));
+                config.setAllowedOriginPatterns(List.of("*"));
+                config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE"));
+                return config;
+            }
+        };
         return new CorsWebFilter(source);
     }
 }

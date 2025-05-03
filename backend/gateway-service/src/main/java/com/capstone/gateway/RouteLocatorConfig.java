@@ -18,13 +18,16 @@ public class RouteLocatorConfig {
     private String verificationServiceUrl;
     @Value("${client.music-service-url}")
     private String musicServiceUrl;
+    @Value("${client.audio-service-url}")
+    private String audioServiceUrl;
     @Bean
     public RouteLocator routeLocator(RouteLocatorBuilder builder) {
         return builder.routes()
                 .route("user-service", r -> r.path("/users/**").uri(userServiceUrl))
                 .route("auth-service", r -> r.path("/auth/**").uri(authServiceUrl))
                 .route("verification-service", r -> r.path("/verification/**").uri(verificationServiceUrl))
-                .route("music-service", r-> r.path("/sheets/**").uri(musicServiceUrl))
+                .route("music-service", r-> r.path("/sheets/**", "/music/**").uri(musicServiceUrl))
+                .route("audio-service", r-> r.path("/audio/**", "/ws/**").uri(audioServiceUrl))
                 .build();
     }
 }
