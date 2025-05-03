@@ -10,6 +10,9 @@ import com.capstone.sheet.dto.SheetResponseDto;
 import com.capstone.sheet.dto.SheetUpdateRequestDto;
 import com.capstone.sheet.service.SheetManageService;
 import com.capstone.sheet.service.SheetUpdateService;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Encoding;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -28,7 +31,7 @@ public class SheetManageController {
      * @param sheetCreateMeta 악보 생성을 위한 정보들
      * @param sheetFile 악보 파일 (pdf 혹은 이미지)
     * */
-    @PostMapping
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<CustomResponseDto<SheetResponseDto>> createSheet(
             @RequestPart("sheetCreateMeta") SheetCreateMeta sheetCreateMeta,
             @RequestPart("sheetFile") MultipartFile sheetFile){
