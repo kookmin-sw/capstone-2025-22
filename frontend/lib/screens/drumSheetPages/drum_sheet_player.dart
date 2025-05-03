@@ -1,10 +1,13 @@
-// 🎵 drum_sheet_player.dart — 네가 만든 UI 그대로, 로직만 안정화
-
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_inappwebview/flutter_inappwebview.dart';
+import '../../models/sheet_info.dart';
+import '../../models/cursor.dart';
+import './widgets/cursor_widget.dart';
 import 'playback_controller.dart';
+import './widgets/confirmation_dialog.dart';
+import '../../services/osmd_service.dart';
 
 class DrumSheetPlayer extends StatefulWidget {
   const DrumSheetPlayer({super.key});
@@ -14,27 +17,95 @@ class DrumSheetPlayer extends StatefulWidget {
 }
 
 class _DrumSheetPlayerState extends State<DrumSheetPlayer> {
-  late InAppWebViewController webViewController;
   late PlaybackController playbackController;
-  bool isWebViewReady = false;
-  double imageHeight = 120;
+  late OSMDService osmdService;
 
   @override
   void initState() {
     super.initState();
+
     playbackController = PlaybackController()
       ..onProgressUpdate = (progress) {
-        setState(() {});
+        setState(() {
+          // 진행 바 위치 업데이트
+        });
       }
       ..onPlaybackStateChange = (isPlaying) {
-        setState(() {});
+        setState(() {
+          // 재생 / 일시정지 아이콘 상태 변경
+        });
       }
       ..onCountdownUpdate = (count) {
-        setState(() {});
+        setState(() {
+          // 카운트다운 숫자 표시
+        });
       }
-      ..onPageChange = (page) {
-        setState(() {});
+      ..onPageChange = (page) async {
+        setState(() {
+          // 현재 재생 중인 줄 (page) 업데이트
+        });
       };
+
+    // OSMDService 초기화할 때 onDataLoaded 연결
+    osmdService = OSMDService(
+      onDataLoaded: ({
+        required String base64Image,
+        required Map<String, dynamic> json,
+        required double bpm,
+        required double canvasWidth,
+        required double canvasHeight,
+      }) async {
+        try {
+          final int totalLines = (json['lineCount'] is int)
+              ? json['lineCount'] as int
+              : (json['lineCount'] ?? 1).toInt();
+          final lines = await SheetInfo.splitLinesFromSheetImage(
+            base64Decode(base64Image),
+            totalLines,
+          );
+
+          // SheetInfo 만들고 PlaybackController에 세팅
+          final sheetInfo = SheetInfo(
+            id: '', // 일단 빈 값 (추후 백엔드 연동시 수정)
+            title: '그라데이션',
+            artist: '10CM',
+            bpm: bpm.toInt(),
+            canvasHeight: canvasHeight,
+            cursorList: (json['cursorList'] as List<dynamic>)
+                .map((e) => Cursor.fromJson(e))
+                .toList(),
+            sheetImage: base64Decode(base64Image),
+            xmlData: json['xmlData'] as String?,
+            lineImages: lines,
+            createdDate: DateTime.now(),
+          );
+
+          setState(() {
+            playbackController.loadSheetInfo(sheetInfo);
+            playbackController.canvasWidth = canvasWidth;
+            playbackController
+                .calculateTotalDurationFromCursorList(bpm); // 총 재생시간 계산
+
+            playbackController.sheetImage = sheetInfo.lineImages.isNotEmpty
+                ? sheetInfo.lineImages[0]
+                : null;
+            playbackController.nextSheetImage = sheetInfo.lineImages.length > 1
+                ? sheetInfo.lineImages[1]
+                : null;
+          });
+        } catch (e, st) {
+          debugPrint('🔴 onDataLoaded error: $e\n$st');
+        }
+      },
+    );
+    Future.microtask(() async {
+      final xmlData = await rootBundle.load('assets/music/demo.xml');
+      if (!mounted) return;
+      await osmdService.startOSMDService(
+        xmlData: xmlData.buffer.asUint8List(),
+        pageWidth: 1080,
+      );
+    });
   }
 
   @override
@@ -45,10 +116,11 @@ class _DrumSheetPlayerState extends State<DrumSheetPlayer> {
 
   @override
   Widget build(BuildContext context) {
-    final nextPage =
-        (playbackController.currentPage + 1) % playbackController.totalLines;
-    String sheetName = '그라데이션';
-    String artistName = '10CM';
+    final imageHeight =
+        MediaQuery.of(context).size.height * 0.27; // 악보 이미지 영역 높이
+    if (playbackController.sheetInfo == null) {
+      return const Center(child: CircularProgressIndicator());
+    }
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
@@ -58,7 +130,7 @@ class _DrumSheetPlayerState extends State<DrumSheetPlayer> {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 40),
             child: Column(
               children: [
-                // 🎵 상단 컨트롤 바
+                // 🎵 상단 컨트롤 바 (홈버튼, 제목, 재생, 속도)
                 SizedBox(
                   height: 60,
                   child: Stack(
@@ -69,8 +141,30 @@ class _DrumSheetPlayerState extends State<DrumSheetPlayer> {
                             child: Row(
                               children: [
                                 const SizedBox(width: 30),
-                                const Icon(Icons.home,
-                                    size: 30, color: Color(0xff646464)),
+                                // 홈 버튼 눌렀을 때
+                                GestureDetector(
+                                  onTap: () {
+                                    showDialog(
+                                      context: context,
+                                      barrierDismissible: true,
+                                      builder: (_) => ConfirmationDialog(
+                                        message: "메인으로 이동하시겠습니까?",
+                                        onConfirm: () {
+                                          Navigator.of(context).pop();
+                                          // TODO: 메인 이동 로직
+                                        },
+                                        onCancel: () {
+                                          Navigator.of(context).pop();
+                                          playbackController
+                                              .stopPlayback(); // 취소하면 정지 상태
+                                        },
+                                      ),
+                                    );
+                                  },
+                                  child: const Icon(Icons.home,
+                                      size: 30, color: Color(0xff646464)),
+                                ),
+
                                 const SizedBox(width: 30),
                                 Expanded(
                                   child: Container(
@@ -86,7 +180,7 @@ class _DrumSheetPlayerState extends State<DrumSheetPlayer> {
                                           width: 2),
                                     ),
                                     child: Text(
-                                      '$sheetName - $artistName',
+                                      '${playbackController.sheetInfo!.title} - ${playbackController.sheetInfo!.artist}',
                                       overflow: TextOverflow.ellipsis,
                                       textAlign: TextAlign.center,
                                       style: const TextStyle(
@@ -115,9 +209,27 @@ class _DrumSheetPlayerState extends State<DrumSheetPlayer> {
                                   children: [
                                     Padding(
                                       padding: const EdgeInsets.only(right: 20),
-                                      child: GestureDetector(
-                                        onTap: () =>
-                                            playbackController.resetToStart(),
+                                      child: // 리셋 버튼 눌렀을 때
+                                          GestureDetector(
+                                        onTap: () {
+                                          showDialog(
+                                            context: context,
+                                            barrierDismissible: true,
+                                            builder: (_) => ConfirmationDialog(
+                                              message: "처음부터 다시 연주하시겠습니까?",
+                                              onConfirm: () {
+                                                Navigator.of(context).pop();
+                                                playbackController
+                                                    .resetToStart(); // 리셋 로직 실행
+                                              },
+                                              onCancel: () {
+                                                Navigator.of(context).pop();
+                                                playbackController
+                                                    .stopPlayback(); // 취소하면 정지 상태
+                                              },
+                                            ),
+                                          );
+                                        },
                                         child: const Icon(Icons.replay,
                                             size: 28, color: Color(0xff646464)),
                                       ),
@@ -187,155 +299,147 @@ class _DrumSheetPlayerState extends State<DrumSheetPlayer> {
                   ),
                 ),
                 const SizedBox(height: 24),
-
-                // 📄 악보 표시 영역
                 Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Stack(
-                      children: [
-                        Container(
-                          height: imageHeight,
-                          width: double.infinity,
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(12),
+                    // 현재 줄 악보
+                    Container(
+                      height: imageHeight,
+                      margin:
+                          const EdgeInsets.only(bottom: 12), // 현재 줄과 다음 줄 간격
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(5),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.08),
+                            blurRadius: 6,
+                            offset: Offset(0, 4),
                           ),
-                          clipBehavior: Clip.hardEdge,
-                          child: InAppWebView(
-                            initialFile: 'assets/web/index.html',
-                            onWebViewCreated: (controller) async {
-                              webViewController = controller;
-                              playbackController.webViewController = controller;
-                              await InAppWebViewController
-                                  .clearAllCache(); // 나중에 지우기
-                              controller.addJavaScriptHandler(
-                                handlerName: 'sendFileToOSMD',
-                                callback: (args) async {
-                                  String xml = await rootBundle
-                                      .loadString('assets/music/demo.xml');
-                                  return xml;
-                                },
-                              );
-                              controller.addJavaScriptHandler(
-                                handlerName: 'onCursorStep',
-                                callback: (args) {
-                                  final cursorData = args[0];
-                                  setState(() {
-                                    playbackController.currentProgress =
-                                        cursorData['x'] ?? 0.0;
-                                  });
-                                  return null;
-                                },
-                              );
-                            },
-                            onLoadStop: (controller, url) async {
-                              isWebViewReady = true;
-                              print("✅ WebView load complete");
-                              print(
-                                  "📄 Loading line: ${playbackController.currentPage}");
-                              await controller.evaluateJavascript(
-                                source:
-                                    'loadLine(${playbackController.currentPage});',
-                              );
-                              await controller.evaluateJavascript(
-                                  source: 'osmd.cursor.hide();');
-                            },
-                          ),
-                        ),
-                        Positioned(
-                          top: 0,
-                          left: MediaQuery.of(context).size.width *
-                              playbackController.currentProgress,
-                          child: Container(
-                            width: 30,
-                            height: imageHeight,
-                            color: const Color(0xffeb8e8e).withOpacity(0.4),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-
-                    // 다음 악보 흐릿하게
-                    Opacity(
-                      opacity: 0.3,
-                      child: SizedBox(
-                        height: imageHeight,
-                        child: InAppWebView(
-                          initialFile: 'assets/web/index.html',
-                          onWebViewCreated: (controller) async {
-                            controller.addJavaScriptHandler(
-                              handlerName: 'sendFileToOSMD',
-                              callback: (args) async {
-                                String xml = await rootBundle
-                                    .loadString('assets/music/demo.xml');
-                                return xml;
-                              },
-                            );
-                            await controller.evaluateJavascript(
-                              source: 'loadLine($nextPage);',
-                            );
-                          },
+                        ],
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(5),
+                        child: Stack(
+                          children: [
+                            CursorWidget(
+                              cursor: playbackController.currentCursor,
+                              imageWidth: MediaQuery.of(context).size.width,
+                              canvasWidth: playbackController.canvasWidth,
+                            ),
+                            if (playbackController.sheetImage != null)
+                              Image.memory(
+                                playbackController.sheetImage!,
+                                width: double.infinity,
+                                height: imageHeight,
+                                fit: BoxFit.fitWidth,
+                              ),
+                          ],
                         ),
                       ),
                     ),
+
+                    // 👀 다음 줄 미리보기
+                    if (playbackController.nextSheetImage != null)
+                      Container(
+                        height: imageHeight,
+                        margin: const EdgeInsets.only(bottom: 5),
+                        decoration: BoxDecoration(
+                          // 흰색의 100% → 예: 80% 불투명(20% 투명)으로 조절
+                          color: Colors.white.withOpacity(0.8),
+                          borderRadius: BorderRadius.circular(5),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.08),
+                              blurRadius: 6,
+                              offset: Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(5),
+                          child: Opacity(
+                            // 악보만 50% 투명
+                            opacity: 0.5,
+                            child: Image.memory(
+                              playbackController.nextSheetImage!,
+                              width: double.infinity,
+                              height: imageHeight,
+                              fit: BoxFit.fitWidth,
+                            ),
+                          ),
+                        ),
+                      ),
                   ],
                 ),
 
-                const Spacer(),
+                Spacer(flex: 2),
 
-                // 📊 진행 바
-                Column(
-                  children: [
-                    Container(
-                      height: 7,
-                      margin: const EdgeInsets.symmetric(horizontal: 120),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        boxShadow: [
-                          BoxShadow(
-                            color: const Color(0xffd9d9d9),
-                            blurRadius: 4,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                        borderRadius: BorderRadius.circular(20),
+                // 📊 진행 바 + 시간 Row
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 120), // 좌우 마진
+                  child: Row(
+                    children: [
+                      // 현재 재생 시간
+                      Text(
+                        '${playbackController.currentDuration.inMinutes}:'
+                        '${(playbackController.currentDuration.inSeconds % 60).toString().padLeft(2, '0')}',
+                        style: const TextStyle(fontSize: 13),
                       ),
-                      width: double.infinity,
-                      alignment: Alignment.centerLeft,
-                      child: FractionallySizedBox(
-                        widthFactor:
-                            playbackController.currentDuration.inMilliseconds /
-                                playbackController.totalDuration.inMilliseconds,
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(20),
-                          child: Container(
-                            height: 7,
-                            decoration:
-                                const BoxDecoration(color: Color(0xffEB8E8E)),
+
+                      const SizedBox(width: 18), // 시간과 바 사이 간격
+
+                      // 진행 바
+                      Expanded(
+                        child: Container(
+                          height: 7,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(0xffd9d9d9),
+                                blurRadius: 4,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: FractionallySizedBox(
+                            alignment: Alignment.centerLeft,
+                            widthFactor: (playbackController
+                                        .totalDuration.inMilliseconds ==
+                                    0)
+                                ? 0.0
+                                : (playbackController
+                                            .currentDuration.inMilliseconds /
+                                        playbackController
+                                            .totalDuration.inMilliseconds)
+                                    .clamp(0.0, 1.0),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(20),
+                              child: Container(
+                                  height: 7, color: const Color(0xffEB8E8E)),
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 10),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 122),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            '${playbackController.currentDuration.inMinutes}:${(playbackController.currentDuration.inSeconds % 60).toString().padLeft(2, '0')}',
-                            style: const TextStyle(fontSize: 12),
-                          ),
-                          const Text('1:00', style: TextStyle(fontSize: 12)),
-                        ],
+
+                      const SizedBox(width: 18), // 바와 전체 시간 사이 간격
+
+                      // 전체 재생 시간
+                      Text(
+                        '${playbackController.totalDuration.inMinutes}:'
+                        '${(playbackController.totalDuration.inSeconds % 60).toString().padLeft(2, '0')}',
+                        style: const TextStyle(fontSize: 13),
                       ),
-                    )
-                  ],
+                    ],
+                  ),
                 ),
               ],
             ),
           ),
+
+          // ⏱️ 카운트다운 오버레이
           if (playbackController.isCountingDown)
             Container(
               color: Colors.black.withOpacity(0.6),
