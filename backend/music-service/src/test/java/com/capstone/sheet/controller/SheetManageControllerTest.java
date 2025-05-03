@@ -9,6 +9,7 @@ import com.capstone.sheet.dto.SheetListRequestDto;
 import com.capstone.sheet.dto.SheetUpdateRequestDto;
 import com.capstone.sheet.entity.UserSheet;
 import com.capstone.sheet.repository.UserSheetRepository;
+import com.capstone.sheet.service.SheetToXmlConverter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -17,33 +18,34 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.core.io.DefaultResourceLoader;
-import org.springframework.core.io.ResourceLoader;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 import static org.awaitility.Awaitility.await;
+import static org.mockito.Mockito.when;
 
 @SpringBootTest
 @ActiveProfiles("test")
 @AutoConfigureMockMvc
 class SheetManageControllerTest {
+    @MockBean
+    SheetToXmlConverter converter;
+
     @Autowired
     private MockMvc mockMvc;
 
@@ -92,6 +94,9 @@ class SheetManageControllerTest {
                 "application/json",
                 new ObjectMapper().writeValueAsString(meta).getBytes()
         );
+        // stub
+        when(converter.convertToXml(meta, sheetFilePDF)).thenReturn(new byte[100]);
+
         // when & then
         mockMvc.perform(multipart("/sheets")
                         .file(sheetFilePDF)
@@ -99,8 +104,7 @@ class SheetManageControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.body.sheetName").value(sheetName))
                 .andDo(print());
-        // 비동기 처리 완료 대기
-        await().atMost(2, TimeUnit.MINUTES).untilAsserted(() -> {
+        await().atMost(1, TimeUnit.MINUTES).untilAsserted(() -> {
             List<UserSheet> userSheets = userSheetRepository.findAllBySheetName(sheetName);
             assertEquals(1, userSheets.size());
             assertNotNull(userSheets.get(0).getSheet().getSheetInfo());
