@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:capstone_2025/screens/drumPatternFillPages/widgets/innerShadow.dart';
-import 'package:capstone_2025/screens/drumPatternFillPages/widgets/linedText.dart';
+import 'package:capstone_2025/widgets/innerShadow.dart';
+import 'package:capstone_2025/widgets/linedText.dart';
 import 'package:capstone_2025/screens/drumPatternFillPages/pattern_fill_screen.dart';
 
 class PatternFillMain extends StatefulWidget {
@@ -84,11 +84,9 @@ class _PatternFillMainState extends State<PatternFillMain> {
       bool isTextblack) {
     // 모달 버튼
     return Container(
-      padding: const EdgeInsets.all(5),
-      margin: const EdgeInsets.only(left: 0, right: 0),
-      width: 155,
+      width: 150,
       // MediaQuery.of(context).size.width * 0.168,
-      height: 57,
+      height: 53,
       // MediaQuery.of(context).size.height * 0.135,
       alignment: Alignment.center,
       decoration: BoxDecoration(
@@ -110,15 +108,15 @@ class _PatternFillMainState extends State<PatternFillMain> {
       builder: (context) => AlertDialog(
         alignment: Alignment.center,
         insetPadding: EdgeInsets.symmetric(horizontal: 0, vertical: 0),
-        contentPadding: EdgeInsets.only(top: 20, bottom: 10),
+        backgroundColor: Colors.white,
         content: SizedBox(
-          width: 380,
-          height: 170,
+          width: 315,
+          height: 140,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Padding(
-                padding: const EdgeInsets.only(top: 15, bottom: 5),
+                padding: const EdgeInsets.only(top: 10, bottom: 0),
                 child: Text(
                   'Basic Pattern $index',
                   textAlign: TextAlign.center,
@@ -139,16 +137,25 @@ class _PatternFillMainState extends State<PatternFillMain> {
               ),
               const SizedBox(height: 20),
               Row(
-                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   TextButton(
+                    style: TextButton.styleFrom(
+                      padding: EdgeInsets.zero,
+                      minimumSize: Size(0, 0),
+                    ),
                     onPressed: () {
                       Navigator.of(context).pop();
                     },
                     child: modalBtn(context, '취소',
                         Color.fromARGB(255, 205, 203, 202), true),
                   ),
+                  SizedBox(width: 15),
                   TextButton(
+                    style: TextButton.styleFrom(
+                      padding: EdgeInsets.zero,
+                      minimumSize: Size(0, 0),
+                    ),
                     onPressed: () {
                       Navigator.of(context).pop();
                       Navigator.of(context).push(
