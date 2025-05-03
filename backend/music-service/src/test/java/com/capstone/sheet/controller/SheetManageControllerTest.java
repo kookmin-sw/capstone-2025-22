@@ -50,6 +50,9 @@ class SheetManageControllerTest {
     private MockMvc mockMvc;
 
     @Autowired
+    private ObjectMapper objectMapper;
+
+    @Autowired
     private UserSheetRepository userSheetRepository;
 
     @Autowired
@@ -121,14 +124,11 @@ class SheetManageControllerTest {
         SheetUpdateRequestDto requestDto = SheetUpdateRequestDto.builder()
                 .email(targetSheet.getUserEmail())
                 .name(newName).build();
-        List<SheetPractice> practiceList = sheetPracticeRepository.findAllByEmailAndSheetId(
-                targetSheet.getUserEmail(),
-                targetSheet.getUserSheetId(),
-                PageRequest.of(0, 1));
+        String body = objectMapper.writeValueAsString(requestDto);
         // when & then
         mockMvc.perform(put("/sheets/{userSheetId}/name", targetSheet.getUserSheetId())
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(new ObjectMapper().writeValueAsString(requestDto)))
+                .content(body))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.body.sheetName").value(newName))
                 .andExpect(jsonPath("$.body.lastPracticeDate").exists())
