@@ -9,7 +9,7 @@ class OSMDService {
   HeadlessInAppWebView? headlessWebView; // 숨겨진 WebView
 
   void Function({
-    required String base64Image,
+    required Uint8List base64Image,
     required Map<String, dynamic> json,
     required double bpm,
     required double canvasWidth,
@@ -51,7 +51,6 @@ class OSMDService {
           callback: (args) {
             // args[0]이 Base64 String
             final String base64Image = args[0] as String;
-            final Uint8List imageBytes = base64Decode(base64Image);
 
             // args[1]이 info Map
             final Map<String, dynamic> info =
@@ -64,20 +63,13 @@ class OSMDService {
             final List<dynamic> cursorJson =
                 info['cursorList'] as List<dynamic>;
 
-            print(
-                '📌 [DART/OSMDService] cursorJson length: ${cursorJson.length}');
-            print(
-                '📌 [DART/OSMDService] sample cursorJson[0]: ${cursorJson[0]}');
-
-            if (onDataLoaded != null) {
-              onDataLoaded!(
-                base64Image: base64Image, // 혹은 imageBytes로 바꿔 넘겨도 됨
-                json: info,
-                bpm: bpm,
-                canvasWidth: canvasWidth,
-                canvasHeight: canvasHeight,
-              );
-            }
+            onDataLoaded!(
+              base64Image: base64Decode(base64Image), // String 타입이면
+              json: info,
+              bpm: bpm,
+              canvasWidth: canvasWidth,
+              canvasHeight: canvasHeight,
+            );
           },
         );
       },
