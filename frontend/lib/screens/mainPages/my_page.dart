@@ -1,3 +1,4 @@
+import 'package:capstone_2025/screens/introPages/login_screen_google.dart';
 import 'package:capstone_2025/screens/introPages/set_new_pw_screen.dart';
 import 'package:capstone_2025/screens/mainPages/edit_profile_screen.dart';
 import 'package:capstone_2025/screens/mainPages/musicsheet_detail.dart';
@@ -158,6 +159,8 @@ class _MyPageState extends State<MyPage> {
     );
   }
 
+  void logout() {}
+
   // 모달 메뉴 아이템
   Widget _buildMenuItem(
       BuildContext context, String text, IconData icon, Function action) {
@@ -210,6 +213,14 @@ class _MyPageState extends State<MyPage> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(10),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.2),
+            spreadRadius: 1,
+            blurRadius: 5,
+            offset: Offset(0, 3),
+          ),
+        ],
       ),
       child: Row(
         children: [
@@ -259,6 +270,15 @@ class _MyPageState extends State<MyPage> {
               ],
             ),
           ),
+          GestureDetector(
+            // 로그아웃 버튼
+            onTap: () {
+              openModal(context);
+            },
+            child: FaIcon(FontAwesomeIcons.rightFromBracket,
+                size: 30, color: Colors.black38),
+          ),
+          SizedBox(width: 10),
         ],
       ),
     );
@@ -396,6 +416,99 @@ Widget _buildListCell(String text, {int flex = 1}) {
       child: Text(
         text,
         style: TextStyle(fontSize: 16),
+      ),
+    ),
+  );
+}
+
+Widget modalBtn(BuildContext context, String text, Color backgroundColor,
+    bool isTextblack) {
+  // 모달 버튼
+  return Container(
+    width: 155,
+    // MediaQuery.of(context).size.width * 0.168,
+    height: 50,
+    // MediaQuery.of(context).size.height * 0.135,
+    alignment: Alignment.center,
+    decoration: BoxDecoration(
+      color: backgroundColor,
+      borderRadius: BorderRadius.circular(15),
+    ),
+    child: Text(text,
+        style: TextStyle(
+            color: isTextblack ? Colors.black : Colors.white,
+            fontSize: 15,
+            fontWeight: FontWeight.w500)),
+  );
+}
+
+void openModal(
+  BuildContext context,
+) {
+  // 모달 열기
+  showDialog(
+    context: context,
+    builder: (context) => AlertDialog(
+      alignment: Alignment.center,
+      insetPadding: EdgeInsets.zero,
+      contentPadding: EdgeInsets.only(top: 20, bottom: 20),
+      backgroundColor: Colors.white,
+      content: SizedBox(
+        width: 360,
+        height: 130,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SizedBox(
+              height: 15,
+            ),
+            Text(
+              '로그아웃 하시겠습니까?',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 18.5,
+                color: Color(0xFF4A4A4A),
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 20),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextButton(
+                  style: TextButton.styleFrom(
+                    padding: EdgeInsets.zero,
+                    minimumSize: Size(0, 0),
+                  ),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  child: modalBtn(
+                      context, '취소', Color.fromARGB(255, 205, 203, 202), true),
+                ),
+                SizedBox(width: 10),
+                TextButton(
+                  style: TextButton.styleFrom(
+                    padding: EdgeInsets.zero,
+                    minimumSize: Size(0, 0),
+                  ),
+                  onPressed: () {
+                    // 로그아웃 처리
+                    storage.deleteAll();
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => LoginScreenGoogle(),
+                      ),
+                    );
+                  },
+                  child: modalBtn(context, '확인', Color(0xffD97D6C), false),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     ),
   );
