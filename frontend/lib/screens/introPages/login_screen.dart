@@ -79,7 +79,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
       if (userInfo['errMessage'] == null) {
         // 로그인 성공 시
-        saveUserData(userInfo); // Secure Storage에 사용자 정보 저장
+        await saveUserData(userInfo); // Secure Storage에 사용자 정보 저장
 
         // 페이지 하단에 환영 메시지 출력
         if (mounted) {

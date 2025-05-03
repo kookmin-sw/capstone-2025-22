@@ -1,3 +1,5 @@
+import 'package:capstone_2025/widgets/linedText.dart';
+import 'package:capstone_2025/widgets/openSheetModal.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -59,7 +61,7 @@ class _MusicsheetDetailState extends State<MusicsheetDetail> {
   Widget _buildGraph() {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.grey.shade200, // 배경색 추가
+        color: Colors.white, // 배경색 추가
         borderRadius: BorderRadius.circular(9),
         boxShadow: [
           BoxShadow(
@@ -83,7 +85,7 @@ class _MusicsheetDetailState extends State<MusicsheetDetail> {
               maxY: 105,
 
               // 배경색
-              backgroundColor: Colors.grey.shade200,
+              backgroundColor: Colors.grey.shade100,
 
               // 그래프 속성
               gridData: FlGridData(
@@ -136,7 +138,13 @@ class _MusicsheetDetailState extends State<MusicsheetDetail> {
                   sideTitles: SideTitles(showTitles: false), // 아래쪽 축 제거
                 ),
               ),
-              borderData: FlBorderData(show: true),
+              borderData: FlBorderData(
+                show: true,
+                border: Border(
+                  left: BorderSide(color: Colors.black26, width: 2),
+                  bottom: BorderSide(color: Colors.black26, width: 2),
+                ),
+              ),
               lineBarsData: [
                 // 그래프 데이터
                 LineChartBarData(
@@ -205,7 +213,7 @@ class _MusicsheetDetailState extends State<MusicsheetDetail> {
         padding: const EdgeInsets.only(
           left: 20,
           right: 20,
-          top: 10,
+          top: 15,
         ),
         child: Column(
           children: [
@@ -224,31 +232,14 @@ class _MusicsheetDetailState extends State<MusicsheetDetail> {
                   Expanded(
                     // 노래 제목
                     child: Center(
-                        child: Stack(
-                      children: [
-                        // 외곽선 텍스트
-                        Text(
-                          widget.songTitle,
-                          style: TextStyle(
-                            fontSize: 27,
-                            fontWeight: FontWeight.w900,
-                            foreground: Paint()
-                              ..style = PaintingStyle.stroke
-                              ..strokeWidth = 4 // 외곽선 두께
-                              ..color = Colors.black54, // 외곽선 색상
-                          ),
-                        ),
-                        // 내부 색상 텍스트
-                        Text(
-                          widget.songTitle,
-                          style: const TextStyle(
-                            fontSize: 27,
-                            fontWeight: FontWeight.w900,
-                            color: Colors.white, // 내부 색상
-                          ),
-                        ),
-                      ],
-                    )),
+                      child: linedText(
+                        widget.songTitle,
+                        27,
+                        Colors.black54,
+                        Colors.white,
+                        4,
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -311,37 +302,51 @@ class _MusicsheetDetailState extends State<MusicsheetDetail> {
                       ),
                     ),
                     SizedBox(width: 5),
-                    Expanded(
-                      // 악보 출력 예정 공간
-                      flex: 3,
-                      child: Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            Expanded(
-                              flex: 20,
-                              child: Container(
-                                child: Image.asset(
-                                  'assets/images/image.png', // 악보 이미지 임시 업로드 - 나중에 실제 악보로 변경 예정
-                                ),
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(9),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black.withOpacity(0.2),
-                                      blurRadius: 3,
-                                      spreadRadius: 1.5,
-                                      offset: Offset(2, 2),
+                    Stack(
+                      children: [
+                        Expanded(
+                          // 악보 출력 예정 공간
+                          flex: 3,
+                          child: Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                Expanded(
+                                  flex: 20,
+                                  child: Container(
+                                    child: Image.asset(
+                                      'assets/images/image.png', // 악보 이미지 임시 업로드 - 나중에 실제 악보로 변경 예정
                                     ),
-                                  ],
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(9),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black.withOpacity(0.2),
+                                          blurRadius: 3,
+                                          spreadRadius: 1.5,
+                                          offset: Offset(2, 2),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
                                 ),
-                              ),
+                              ],
                             ),
-                          ],
+                          ),
                         ),
-                      ),
+                        Positioned(
+                          // 악보 확대 버튼
+                          top: MediaQuery.of(context).size.height * 0.765,
+                          right: MediaQuery.of(context).size.height * 0.035,
+                          child: IconButton(
+                            onPressed: () => openMusicSheet(context),
+                            icon: FaIcon(FontAwesomeIcons.expand,
+                                size: 28, color: Color(0xffD97D6C)),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
