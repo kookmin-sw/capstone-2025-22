@@ -94,13 +94,16 @@ class _SheetListScreenState extends State<SheetListScreen> {
     }
   }
 
-  Future<Sheet> addSheet(String title) async {
+  Future<Sheet> addSheet(String title, String artist) async {
     final response = await http.post(
       Uri.parse('http://10.0.2.2:28080/sheets'),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
       },
-      body: jsonEncode(<String, String>{'title': title}),
+      body: jsonEncode(<String, String>{
+        'title': title,
+        'artist': artist,
+      }),
     );
 
     if (response.statusCode == 201) {
@@ -729,11 +732,19 @@ class _SheetListScreenState extends State<SheetListScreen> {
                         showDialog(
                           context: context,
                           builder: (_) => AddSheetDialog(
-                            onSubmit: (sheetName) async {
-                              final newSheet = await addSheet(sheetName);
-                              setState(() {
-                                _sheets.add(newSheet);
-                              });
+                            onSubmit: (sheetName, artistName) async {
+                              try {
+                                final newSheet =
+                                    await addSheet(sheetName, artistName);
+                                setState(() {
+                                  _sheets.add(newSheet);
+                                });
+                              } catch (e) {
+                                // 오류 처리
+                                // ignore: use_build_context_synchronously
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text('Error: $e')));
+                              }
                             },
                           ),
                         );
