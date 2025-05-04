@@ -11,6 +11,9 @@ import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.attribute.PosixFilePermission;
+import java.nio.file.attribute.PosixFilePermissions;
+import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
@@ -25,6 +28,7 @@ public class SheetToXmlConverter {
     private void writeFile(Path target, MultipartFile sheetFile) throws IOException {
         try(OutputStream fos = Files.newOutputStream(target)) {
             fos.write(sheetFile.getBytes());
+            fos.flush();
         }
     }
 
@@ -50,10 +54,11 @@ public class SheetToXmlConverter {
     * */
     private String[] commandBuilder(String inputPath, String outputPath){
         return new String[]{
-                "docker", "run", "--rm",
-                "-v", String.format("%s:/input", inputPath),
-                "-v", String.format("%s:/output", outputPath),
-                "-v", "/var/run/docker.sock:/var/run/docker.sock",
+                "docker", "run", "--rm", "--privileged",
+                "-v", String.format("%s:/input:rw", inputPath),
+                "-v", String.format("%s:/output:rw", outputPath),
+//                "-v", "/var/run/docker.sock:/var/run/docker.sock",
+                "--user", "root",
                 "louie8821/audiveris:drum"};
     }
 
@@ -79,6 +84,7 @@ public class SheetToXmlConverter {
     public byte[] processConvert(String inputPath, String outputPath){
         ProcessBuilder builder = new ProcessBuilder();
         builder.command(commandBuilder(inputPath, outputPath));
+        log.info(Arrays.toString(builder.command().toArray()));
         String outputFileName = "output.xml";
         Path outputFile;
         try{
@@ -96,32 +102,52 @@ public class SheetToXmlConverter {
         }
     }
 
+    public String getBasePath(){
+        String os = System.getProperty("os.name").toLowerCase();
+        String basePath;
+
+        if (os.contains("win")) {
+            basePath = "C:\\data"; // 또는 도커 볼륨 마운트 경로에 맞춰서 지정
+        } else {
+            basePath = "/data";
+        }
+        return basePath;
+    }
+
     /**
      * Score file life cycle management and xml conversion functions
      * @param sheetCreateMeta metadata of sheet
      * @param sheetFile sheet file data
      * @return byte array of sheet xml
     * */
-    public byte[] convertToXml(SheetCreateMeta sheetCreateMeta, MultipartFile sheetFile) throws InternalServerException{
+    public byte[] convertToXml(SheetCreateMeta sheetCreateMeta, MultipartFile sheetFile) throws InternalServerException {
         Path target;
-        String tmpDir = System.getProperty("java.io.tmpdir");
-        Path sheetDir = Paths.get(tmpDir,"sheet", sheetCreateMeta.getUserEmail());
+        String tmpDir = getBasePath();
+        Path sheetDir = Paths.get(tmpDir, "sheet", sheetCreateMeta.getUserEmail());
+        Path inputDirPath = Paths.get(sheetDir.toString(), "input");
+        Path outputDirPath = Paths.get(sheetDir.toString(), "output");
+
         try {
-            Files.createDirectories(sheetDir);
-            target = Files.createTempFile(
-                    sheetDir,
-                    "sheet_",
-                    "."+ sheetCreateMeta.getFileExtension());
+            // 디렉토리 생성 확인
+            Files.createDirectories(inputDirPath);
+            Files.createDirectories(outputDirPath);
+
+            // 입력 파일 저장
+            target = inputDirPath.resolve("input." + sheetCreateMeta.getFileExtension());
             writeFile(target, sheetFile);
-            String inputPath = sheetDir.toString();
-            String outputPath = Paths.get(sheetDir.toString(), "output").toString();
+
+            log.info("Input file exists: {} (size: {})", Files.exists(target), Files.size(target));
+            String inputPath = inputDirPath.toAbsolutePath().toString();
+            String outputPath = outputDirPath.toAbsolutePath().toString();
+
             return processConvert(inputPath, outputPath);
-        }catch (IOException e){
+        } catch (IOException e) {
             String errorMessage = "SheetToXmlConverter.convertToXml : " + e.getMessage();
             log.error(errorMessage);
             throw new InternalServerException(errorMessage);
-        }finally {
+        } finally {
             deleteDirectory(sheetDir);
         }
     }
+
 }
