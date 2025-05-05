@@ -205,3 +205,6 @@ macos/Flutter/ephemeral/Flutter-Generated.xcconfig
 .venv/*
 
 *.hprof
+
+.metadata
+android/gradle.properties
