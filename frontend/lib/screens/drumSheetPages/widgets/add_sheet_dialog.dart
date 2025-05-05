@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:file_selector/file_selector.dart';
 import 'dart:math';
 import 'dart:io';
+import 'dart:async';
 
 class AddSheetDialog extends StatefulWidget {
-  final Function(String) onSubmit;
+  final Function(String, String) onSubmit;
 
   const AddSheetDialog({super.key, required this.onSubmit});
 
@@ -15,6 +16,9 @@ class AddSheetDialog extends StatefulWidget {
 class _AddSheetDialogState extends State<AddSheetDialog> {
   final TextEditingController _sheetNameController = TextEditingController();
   final TextEditingController _artistNameController = TextEditingController();
+
+  bool _isNextButtonEnabled = false; // 완료 버튼 상태 관리
+
   String? _selectedFilePath;
   String _fileSize = '';
   int _currentStep = 0;
@@ -24,6 +28,15 @@ class _AddSheetDialogState extends State<AddSheetDialog> {
     _sheetNameController.dispose();
     _artistNameController.dispose();
     super.dispose();
+  }
+
+  // 값이 변경될 때마다 실시간으로 상태를 업데이트
+  void _onTextChanged() {
+    setState(() {
+      // 악보명과 가수명이 모두 입력되었을 때만 '완료' 버튼을 활성화
+      _isNextButtonEnabled = _sheetNameController.text.isNotEmpty &&
+          _artistNameController.text.isNotEmpty;
+    });
   }
 
   String _formatFileSize(int bytes) {
@@ -240,6 +253,9 @@ class _AddSheetDialogState extends State<AddSheetDialog> {
             controller: _sheetNameController,
             keyboardType: TextInputType.text,
             textInputAction: TextInputAction.next,
+            onChanged: (text) {
+              setState(() {}); // 값 변경 시 상태를 즉시 갱신
+            },
             decoration: const InputDecoration(
               hintText: '악보명',
               hintStyle: TextStyle(
@@ -297,6 +313,9 @@ class _AddSheetDialogState extends State<AddSheetDialog> {
             controller: _artistNameController,
             keyboardType: TextInputType.text,
             textInputAction: TextInputAction.done,
+            onChanged: (text) {
+              setState(() {}); // 값 변경 시 상태를 즉시 갱신
+            },
             decoration: const InputDecoration(
               hintText: '가수명',
               hintStyle: TextStyle(
@@ -319,7 +338,10 @@ class _AddSheetDialogState extends State<AddSheetDialog> {
           previousText: '이전',
           onNext: _artistNameController.text.isNotEmpty
               ? () {
-                  widget.onSubmit(_sheetNameController.text);
+                  widget.onSubmit(
+                    _sheetNameController.text, // 악보명
+                    _artistNameController.text, // 가수명
+                  );
                   Navigator.of(context).pop();
                 }
               : null,
