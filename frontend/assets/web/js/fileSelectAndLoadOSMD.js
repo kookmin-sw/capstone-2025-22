@@ -23,7 +23,7 @@ const defaultOptions = {
   renderSingleHorizontalStaffline: false,
 };
 
-// 전체 캔버스에서 한 번만 이미지 생성 (비동기 Blob 사용)
+// 전체 캔버스에서 한 번만 이미지 생성
 async function createSheetImage(fullCanvas) {
   return fullCanvas.toDataURL("image/png").split(",")[1].trim();
 }
@@ -52,12 +52,6 @@ async function cropLineImages(fullCanvas) {
     const h = Math.min(Math.ceil(nextY - y), fullCanvas.height - y);
     const x = 0;
     const w = fullCanvas.width;
-
-    // 🔍 캔버스에 붉은 사각형 테두리 표시
-    const debugCtx = fullCanvas.getContext("2d");
-    debugCtx.strokeStyle = "red";
-    debugCtx.lineWidth = 5;
-    debugCtx.strokeRect(x, y, w, h);
 
     const off = document.createElement("canvas");
     off.width = w;
@@ -133,14 +127,10 @@ window.startOSMDFromFlutter = async function () {
     ...defaultOptions,
     drawFromMeasureNumber: 1,
     drawUpToMeasureNumber: Number.MAX_SAFE_INTEGER,
-    drawingParameters: "custom",
   });
 
   osmd.EngravingRules.RenderXMeasuresPerLineAkaSystem = 4;
   osmd.EngravingRules.FixSystemDistance = true;
-  osmd.EngravingRules.SystemDistance = 250;
-  osmd.EngravingRules.PageTopMargin = 100;
-  osmd.EngravingRules.PageBottomMargin = 100;
 
   await osmd.load(xmlText, "");
   window.osmd = osmd;
@@ -168,21 +158,11 @@ window.startOSMDFromFlutter = async function () {
   const fullCanvas = container.querySelector("#osmdCanvasVexFlowBackendCanvas1");
   console.log("🖼️ fullCanvas size:", fullCanvas?.width, fullCanvas?.height);
 
-  if (!fullCanvas || fullCanvas.width === 0 || fullCanvas.height === 0) {
-    console.error("⚠️ fullCanvas invalid:", fullCanvas);
-    return;
-  }
-
-  // 📌 전체 시스템 BoundingBox를 캔버스에 시각화
-  const ctx = fullCanvas.getContext("2d");
-  ctx.strokeStyle = "blue";
-  ctx.lineWidth = 4;
-
   window._osmdFullCanvas = fullCanvas;
   const sheetImage = await createSheetImage(fullCanvas);
   console.log("🖼️ sheetImage Base64 length:", sheetImage.length);
 
-  // JS에서 Bounding Box 기준으로 줄별 이미지(Base64) 생성
+  // 악보 줄별 이미지 생성
   const lineImages = await cropLineImages(fullCanvas);
 
   // 커서 리스트 수집
