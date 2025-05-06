@@ -19,32 +19,34 @@ class DrumSheetPlayer extends StatefulWidget {
 class _DrumSheetPlayerState extends State<DrumSheetPlayer> {
   late PlaybackController playbackController;
   late OSMDService osmdService;
+  bool _isControllerInitialized = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_isControllerInitialized) {
+      final imageHeight = MediaQuery.of(context).size.height * 0.27;
+      playbackController = PlaybackController(imageHeight: imageHeight)
+        ..onProgressUpdate = (progress) {
+          setState(() {});
+        }
+        ..onPlaybackStateChange = (isPlaying) {
+          setState(() {});
+        }
+        ..onCountdownUpdate = (count) {
+          setState(() {});
+        }
+        ..onPageChange = (page) async {
+          setState(() {});
+        };
+      _isControllerInitialized = true;
+      // osmdService 초기화도 여기에 넣어도 됩니다.
+    }
+  }
 
   @override
   void initState() {
     super.initState();
-
-    playbackController = PlaybackController()
-      ..onProgressUpdate = (progress) {
-        setState(() {
-          // 진행 바 위치 업데이트
-        });
-      }
-      ..onPlaybackStateChange = (isPlaying) {
-        setState(() {
-          // 재생 / 일시정지 아이콘 상태 변경
-        });
-      }
-      ..onCountdownUpdate = (count) {
-        setState(() {
-          // 카운트다운 숫자 표시
-        });
-      }
-      ..onPageChange = (page) async {
-        setState(() {
-          // 현재 재생 중인 줄 (page) 업데이트
-        });
-      };
 
     // OSMDService 초기화할 때 onDataLoaded 연결
     osmdService = OSMDService(
@@ -54,6 +56,7 @@ class _DrumSheetPlayerState extends State<DrumSheetPlayer> {
         required double bpm,
         required double canvasWidth,
         required double canvasHeight,
+        required List<dynamic> lineBounds,
       }) async {
         try {
           final int totalLines = (json['lineCount'] is int)
@@ -296,79 +299,82 @@ class _DrumSheetPlayerState extends State<DrumSheetPlayer> {
                   ),
                 ),
                 const SizedBox(height: 24),
-                // Column(
-                //   crossAxisAlignment: CrossAxisAlignment.stretch,
-                //   children: [
-                //     // 현재 줄 악보
-                //     Container(
-                //       height: imageHeight,
-                //       margin:
-                //           const EdgeInsets.only(bottom: 12), // 현재 줄과 다음 줄 간격
-                //       decoration: BoxDecoration(
-                //         color: Colors.white,
-                //         borderRadius: BorderRadius.circular(5),
-                //         boxShadow: [
-                //           BoxShadow(
-                //             color: Colors.black.withOpacity(0.08),
-                //             blurRadius: 6,
-                //             offset: Offset(0, 4),
-                //           ),
-                //         ],
-                //       ),
-                //       child: ClipRRect(
-                //         borderRadius: BorderRadius.circular(5),
-                //         child: Stack(
-                //           children: [
-                //             CursorWidget(
-                //               cursor: playbackController.currentCursor,
-                //               imageWidth: MediaQuery.of(context).size.width,
-                //               canvasWidth: playbackController.canvasWidth,
-                //             ),
-                //             if (playbackController.currentLineImage != null)
-                //               Image.memory(
-                //                 playbackController.currentLineImage!,
-                //                 width: double.infinity,
-                //                 height: imageHeight,
-                //                 fit: BoxFit.fitWidth,
-                //               ),
-                //           ],
-                //         ),
-                //       ),
-                //     ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // 현재 줄 악보
+                    Container(
+                      height: imageHeight,
+                      margin:
+                          const EdgeInsets.only(bottom: 12), // 현재 줄과 다음 줄 간격
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(5),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.08),
+                            blurRadius: 6,
+                            offset: Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(5),
+                        child: Stack(
+                          children: [
+                            if (playbackController.isPlaying ||
+                                playbackController.isCountingDown)
+                              CursorWidget(
+                                cursor: playbackController.currentCursor,
+                                imageWidth: MediaQuery.of(context).size.width,
+                                canvasWidth: playbackController.canvasWidth,
+                                height: imageHeight,
+                              ),
+                            if (playbackController.currentLineImage != null)
+                              Image.memory(
+                                playbackController.currentLineImage!,
+                                width: double.infinity,
+                                height: imageHeight,
+                                fit: BoxFit.fitWidth,
+                              ),
+                          ],
+                        ),
+                      ),
+                    ),
 
-                //     // 👀 다음 줄 미리보기
-                //     if (playbackController.nextLineImage != null)
-                //       Container(
-                //         height: imageHeight,
-                //         margin: const EdgeInsets.only(bottom: 5),
-                //         decoration: BoxDecoration(
-                //           // 흰색의 100% → 예: 80% 불투명(20% 투명)으로 조절
-                //           color: Colors.white.withOpacity(0.8),
-                //           borderRadius: BorderRadius.circular(5),
-                //           boxShadow: [
-                //             BoxShadow(
-                //               color: Colors.black.withOpacity(0.08),
-                //               blurRadius: 6,
-                //               offset: Offset(0, 4),
-                //             ),
-                //           ],
-                //         ),
-                //         child: ClipRRect(
-                //           borderRadius: BorderRadius.circular(5),
-                //           child: Opacity(
-                //             // 악보만 50% 투명
-                //             opacity: 0.5,
-                //             child: Image.memory(
-                //               playbackController.nextLineImage!,
-                //               width: double.infinity,
-                //               height: imageHeight,
-                //               fit: BoxFit.fitWidth,
-                //             ),
-                //           ),
-                //         ),
-                //       ),
-                //   ],
-                // ),
+                    // 👀 다음 줄 미리보기
+                    if (playbackController.nextLineImage != null)
+                      Container(
+                        height: imageHeight,
+                        margin: const EdgeInsets.only(bottom: 5),
+                        decoration: BoxDecoration(
+                          // 흰색의 100% → 예: 80% 불투명(20% 투명)으로 조절
+                          color: Colors.white.withOpacity(0.8),
+                          borderRadius: BorderRadius.circular(5),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.08),
+                              blurRadius: 6,
+                              offset: Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(5),
+                          child: Opacity(
+                            // 악보만 50% 투명
+                            opacity: 0.5,
+                            child: Image.memory(
+                              playbackController.nextLineImage!,
+                              width: double.infinity,
+                              height: imageHeight,
+                              fit: BoxFit.fitWidth,
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
 
                 Spacer(flex: 2),
 

@@ -19,6 +19,14 @@ class CursorController {
     this.speed = 1.0,
   });
 
+  // 현재 커서 가져오기
+  Cursor? getCurrentCursor() {
+    if (_currentIndex >= 0 && _currentIndex < cursorList.length) {
+      return cursorList[_currentIndex];
+    }
+    return null;
+  }
+
   // 재생 시작 (처음부터)
   void start() {
     if (cursorList.isEmpty) return;
@@ -50,6 +58,14 @@ class CursorController {
   //  일시정지
   void stop() {
     _timer?.cancel();
+  }
+
+  // 재시작작
+  void resume() {
+    // 이미 currentIndex가 마지막으로 멈춘 상태이므로
+    // 다음 스텝 예약만 해 주면 됨
+    _timer?.cancel();
+    _scheduleNextStep();
   }
 
   // 처음부터 재시작

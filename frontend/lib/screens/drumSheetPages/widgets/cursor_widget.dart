@@ -11,7 +11,7 @@ class PositionedContainer extends Positioned {
     double? height,
   }) : super(
           left: cursor.x,
-          top: cursor.y + cursor.h - (height ?? cursor.h),
+          top: cursor.y,
           child: Container(
             height: height ?? cursor.h,
             width: cursor.w,
@@ -43,18 +43,30 @@ class CursorWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    double adjustedX;
-
-    if (cursor.xRatio != null && canvasWidth != null && imageWidth != null) {
-      adjustedX = cursor.xRatio! * imageWidth!;
-    } else if (cursor.xRatio != null && imageWidth != null) {
-      adjustedX = cursor.xRatio! * imageWidth!;
+    // 1) X 위치 계산: ratio 기반으로 canvasWidth 쓰기
+    final double adjustedX;
+    if (cursor.xRatio != null && canvasWidth != null) {
+      adjustedX = cursor.xRatio! * canvasWidth!;
     } else {
       adjustedX = cursor.x;
     }
 
+    // 2) Y 위치 계산: yRatio가 있으면 height(=imageHeight)*yRatio, 없으면 cursor.y
+    final double adjustedY;
+    if (cursor.yRatio != null && height != null) {
+      adjustedY = cursor.yRatio! * height!;
+    } else {
+      adjustedY = cursor.y;
+    }
+
+    // 3) adjustedCursor 로 치환
+    final adjustedCursor = cursor.copyWith(
+      x: adjustedX,
+      y: adjustedY,
+    );
+
     return PositionedContainer(
-      cursor: cursor.copyWith(x: adjustedX),
+      cursor: adjustedCursor,
       decoration: decoration,
       height: height,
     );
