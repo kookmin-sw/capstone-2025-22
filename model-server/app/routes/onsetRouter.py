@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException
-from models import AudioRequest, AudioResponse
+from schema import AudioRequest, AudioResponse, PredictResponse
 from services.onsetDetectService import detect_onset
 import io, base64
 

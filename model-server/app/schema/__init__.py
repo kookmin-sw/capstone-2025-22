@@ -1,2 +1,2 @@
-from .AudioResponse import AudioResponse
-from .AudioRequest import AudioRequest
+from .AudioResponse import AudioResponse, PredictResponse
+from .AudioRequest import AudioRequest, PredictRequest
