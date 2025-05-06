@@ -14,6 +14,7 @@ class OSMDService {
     required double bpm,
     required double canvasWidth,
     required double canvasHeight,
+    required List<dynamic> lineBounds,
   })? onDataLoaded; // JS에서 악보 이미지, 데이터 전달받으면 Flutter로 넘겨줄 콜백
 
   OSMDService({required this.onDataLoaded});
@@ -47,7 +48,7 @@ class OSMDService {
             });
 
         controller.addJavaScriptHandler(
-          handlerName: 'getDataFromOSMD', // JS에서 요청하면 악보 렌더링 후 받은 데이터 보내줌줌
+          handlerName: 'getDataFromOSMD', // JS에서 요청하면 악보 렌더링 후 받은 데이터 보내줌
           callback: (args) {
             // args[0]이 Base64 String
             final String base64Image = args[0] as String;
@@ -62,6 +63,8 @@ class OSMDService {
                 (info['canvasHeight'] as num).toDouble();
             final List<dynamic> cursorJson =
                 info['cursorList'] as List<dynamic>;
+            final List<dynamic> lineBounds =
+                info['lineBounds'] as List<dynamic>;
 
             onDataLoaded!(
               base64Image: base64Decode(base64Image), // String 타입이면
@@ -69,6 +72,7 @@ class OSMDService {
               bpm: bpm,
               canvasWidth: canvasWidth,
               canvasHeight: canvasHeight,
+              lineBounds: lineBounds,
             );
           },
         );
@@ -87,8 +91,3 @@ class OSMDService {
     await localhostServer.close();
   }
 }
-
-/***
- assets/web/index.html 로드할 수 있도록 로컬 서버 띄우고
- headlessWebview로 화면에 보이지 않고 렌더링만 수행하는 용도
-  ***/
