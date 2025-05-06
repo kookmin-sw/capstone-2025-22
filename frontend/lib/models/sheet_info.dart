@@ -3,7 +3,6 @@ import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:xml/xml.dart';
 import './cursor.dart';
-import '../services/crop_lines.dart';
 
 // 악보 종류 (서버 제공/사용자 업로드)
 enum SheetType {
@@ -35,7 +34,7 @@ class SheetInfo {
     required this.createdDate,
   });
 
-  // 🛠️ JSON -> 객체로 변환
+  // JSON -> 객체로 변환
   factory SheetInfo.fromJson(Map<String, dynamic> json) {
     return SheetInfo(
       id: json['id'] ?? '',
@@ -61,7 +60,7 @@ class SheetInfo {
     );
   }
 
-  // 🛠️ 객체 -> JSON으로 변환
+  // 객체 -> JSON으로 변환
   Map<String, dynamic> toJson() {
     return {
       'id': id,
@@ -78,7 +77,7 @@ class SheetInfo {
     };
   }
 
-  // 🛠️ 복제 (copyWith)
+  // 복제 (copyWith)
   SheetInfo copyWith({
     String? id,
     String? title,

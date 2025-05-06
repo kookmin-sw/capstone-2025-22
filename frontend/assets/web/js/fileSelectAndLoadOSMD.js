@@ -17,9 +17,9 @@ const defaultOptions = {
   drawClef: false,
   drawTimeSignature: false,
   drawPartNames: false,
-  drawingParameters: "default",
+  drawingParameters: "compact",
   drawMeasureNumbers: true,
-  pageBackgroundColor: "#FFFFFF",
+  pageBackgroundColor: "transparent",
   renderSingleHorizontalStaffline: false,
 };
 
@@ -28,43 +28,100 @@ async function createSheetImage(fullCanvas) {
   return fullCanvas.toDataURL("image/png").split(",")[1].trim();
 }
 
-async function cropLineImages(fullCanvas) {
-  const pages = window.osmd?.GraphicSheet?.MusicPages || [];
-  if (pages.length === 0) {
-    console.error("❗ MusicPages를 찾을 수 없습니다.");
-    return [];
-  }
+function getScale(osmd, fullCanvas) {
+  // 1️⃣ unit(px) ← OSMD 내부 단위(1 space) ↔ 픽셀 변환 계수
+  let unitPx =
+        osmd.drawer?.unitInPixels // (구버전 dev-build)
+     ?? (typeof opensheetmusicdisplay !== 'undefined' // (정식 번들)
+         ? opensheetmusicdisplay.unitInPixels
+         : undefined);
+  if (unitPx == null) unitPx = 10; // 🔙 최후의 안전값
 
-  const systems = pages.flatMap(p => p.MusicSystems);
-  console.log("✅ 전체 시스템 수:", systems.length);
+  // 2️⃣ 확대 / 축소 배율
+  const zoom = osmd.Zoom || 1;
 
-  const MARGIN = 10;
-  const lineImages = [];
+  // 3️⃣ Hi-DPI(레티나) 캔버스 → CSS 픽셀 보정
+  const cssFactor = fullCanvas.width /
+                    fullCanvas.getBoundingClientRect().width;
 
+  return unitPx * zoom * cssFactor; // 최종 스케일
+}
+
+// 시스템(줄) 단위 PNG 자르기 + 줄별 bbox(절대좌표)까지 반환
+async function cropLineImages(fullCanvas, osmd) {
+  // 모든 페이지의 MusicSystem 을 1차원 배열로
+  const systems = osmd.GraphicSheet.MusicPages.flatMap(p => p.MusicSystems);
+  const images = [];
+  const bounds  = []; // 줄별 [top, bot] 절대좌표 저장
+
+  // 스케일 계산
+  const scale = getScale(osmd, fullCanvas);
+  const cssFactor = fullCanvas.width / fullCanvas.getBoundingClientRect().width;
+
+  // 첫 시스템의 절대 Y → 잘라낼 때의 기준점(offset)
+  const topOffset = systems[0].PositionAndShape.AbsolutePosition.y * scale;
+
+  // ─── 시스템을 순회하면서 한 줄씩 자르기 ───
   for (let i = 0; i < systems.length; i++) {
-    const shape = systems[i].PositionAndShape;
-    const y = Math.max((shape.AbsolutePosition.y) - MARGIN, 0);
-    const nextSystem = systems[i + 1];
-    const nextY = nextSystem
-      ? (nextSystem.PositionAndShape.AbsolutePosition.y)
-      : fullCanvas.height;
-  
-    const h = Math.min(Math.ceil(nextY - y), fullCanvas.height - y);
-    const x = 0;
-    const w = fullCanvas.width;
+    const system = systems[i];
+    const sysPosY  = system.PositionAndShape.AbsolutePosition.y * scale;
+    const sysBotY  = sysPosY + system.PositionAndShape.Size.height * scale;
 
-    const off = document.createElement("canvas");
-    off.width = w;
-    off.height = h;
-    off.getContext("2d").drawImage(fullCanvas, x, y, w, h, 0, 0, w, h);
+    let minY = Infinity; // 가장 높은(위) 음표
+    let maxY = -Infinity; // 가장 낮은(아래) 음표
+    let noteCount = 0;
 
-    const base64 = off.toDataURL("image/png").split(',')[1].trim();
-    console.log(`📏 crop region[${i}]: x=${x}, y=${y}, w=${w}, h=${h}, len=${base64.length}`);
+    // skyline / bottomline 기반 음표 영역 탐색
+    for (const gm of system.GraphicalMeasures.flat()) {
+      for (const se of (gm.staffEntries ?? [])) {
+        const seAbsY = se.PositionAndShape.AbsolutePosition.y * scale;
+
+        // staffEntry 내부 상대좌표 → 절대좌표 변환
+        const top = seAbsY + se.getSkylineMin() * scale;
+        const bottom = seAbsY + se.getBottomlineMax() * scale;
+        if (Number.isFinite(top) && Number.isFinite(bottom)) {
+          minY = Math.min(minY, top);
+          maxY = Math.max(maxY, bottom);
+          noteCount++; // 하나라도 잡히면 '음표 있음' 표시
+        }
+      }
+    }
+
+    // 음표 bbox 와 시스템 bbox 중 더 넓은 쪽을 자르기 범위로
+    const cropTop = noteCount ? Math.min(minY, sysPosY) : sysPosY;
+    const cropBot = noteCount ? Math.max(maxY, sysBotY) : sysBotY;
+
+    const y = Math.round(cropTop - topOffset); // 캔버스에서의 시작 Y
+    const height = Math.round(cropBot - cropTop);
+    const width = fullCanvas.width;
+
+    console.log(`[crop] line ${i}: y=${y}, h=${height}, canvasH=${fullCanvas.height}`);
+
+    // 캔버스 바깥 범위 방지
+    if (height <= 0 || y + height > fullCanvas.height) {
+      console.warn(`⚠️ skip line ${i} (out of canvas)`);
+      continue;
+    }
+
+    // 잘라서 임시 캔버스에 복사 → Base64 PNG
+    const tmp = document.createElement('canvas');
+    tmp.width = width;  tmp.height = height;
+    tmp.getContext('2d').drawImage(
+      fullCanvas, 0, y, width, height,
+      0, 0, width, height
+    );
+    images.push(tmp.toDataURL('image/png').split(',')[1]);
+    // 절대좌표 -> 이미지 내부 좌표로 변경
+    bounds.push({ 
+      top: (cropTop - topOffset) / cssFactor,
+      bot: (cropBot - topOffset) / cssFactor
+    });
     
-    lineImages.push(base64);
+    // 2줄마다 한 번씩 이벤트루프 양보 (UI 프리징 방지)
+    if (i % 2 === 1) await new Promise(requestAnimationFrame); 
   }
-
-  return lineImages;
+  console.log(`✅ 생성된 이미지 수: ${images.length}`);
+  return { images, bounds };
 }
 
 function extractBPMFromXML(xmlText) {
@@ -76,42 +133,64 @@ function extractBPMFromXML(xmlText) {
   }
 }
 
-function getCursorList(osmdCursor) {
+function getCursorList(osmdCursor, lineBounds) {
   const cursorList = [];
   osmdCursor.show();
   try {
     while (!osmdCursor.iterator.endReached) {
       // 직접 박자 정보(ts)와 커서 Element 위치를 수집
-      cursorList.push(getCursorInfo(osmdCursor));
+      const cursorInfo = getCursorInfo(osmdCursor, lineBounds);
+      cursorList.push(cursorInfo);
       osmdCursor.next();              
     }
   } catch (e) {
     console.error("❗ 커서 위치 수집 중 오류 발생", e);
   }
   osmdCursor.hide();
+  console.log(`📊 Total cursors generated: ${cursorList.length}`);
   return cursorList;
 }
 
 // 커서 위치·크기·타임스탬프 한꺼번에 계산
-function getCursorInfo(osmdCursor) {
+function getCursorInfo(osmdCursor, lineBounds) {
   const fullCanvas = window._osmdFullCanvas;
   const canvasRect = fullCanvas.getBoundingClientRect();
   const elRect = osmdCursor.cursorElement.getBoundingClientRect();
+  const cssFactor = fullCanvas.width / canvasRect.width;
 
-  // CSS 상의 logical px → 캔버스 기준 상대 좌표
-  const x = elRect.left - canvasRect.left + (cursorWidth / 2);
-  const y = elRect.top - canvasRect.top - (cursorHeight / 2);
+  // ② CSS logical px → 캔버스 실제 px
+  const xCss = (elRect.left - canvasRect.left) + cursorWidth/2;
+  const yCss = (elRect.top  - canvasRect.top ) - cursorHeight/2;
+  const x    = xCss * cssFactor;
+  const y    = yCss * cssFactor;
+
   const ts = osmdCursor.iterator.currentTimeStamp.realValue;
-  const xRatio = x / canvasRect.width;
+  const measureNumber = osmdCursor.iterator.CurrentMeasureIndex ?? -1;
 
-  return { x, y, w: cursorWidth, h: cursorHeight, ts, xRatio };
+  const measuresPerLine = osmd.EngravingRules.RenderXMeasuresPerLineAkaSystem || 4;
+  const lineIndex = Math.floor(measureNumber / measuresPerLine);
+
+  const xRatio = x / fullCanvas.width;
+
+  // 1) lineBounds 에서 이 커서가 속한 줄의 CSS logical 픽셀 경계 꺼내기
+  //    lineBounds 배열에는 { top: cssPx, bot: cssPx } 형태로 저장되어 있습니다.
+  const { top: cropTopCss = 0, bot: cropBotCss = canvasRect.height } =
+  lineBounds[lineIndex] || {};
+
+  // 2) CSS logical 좌표(yCss) 기준, 줄 안에서의 상대 위치 비율 계산
+  //    (cropBotCss - cropTopCss) 이 0 이 아닌 경우만 계산
+  const yRatio =
+  cropBotCss > cropTopCss
+    ? (yCss - cropTopCss) / (cropBotCss - cropTopCss)
+    : 0;
+
+  return { x, y, w: cursorWidth, h: cursorHeight, ts, xRatio, yRatio, measureNumber, lineIndex };
 }
 
 window.startOSMDFromFlutter = async function () {
   if (isRendered) {
     return;
   }
-
   // MusicXML 불러오기 (Flutter → JS)
   const xmlText = await window.flutter_inappwebview.callHandler("sendFileToOSMD");
   xmlData = xmlText; // 전역 저장
@@ -138,36 +217,21 @@ window.startOSMDFromFlutter = async function () {
   osmd.cursor.reset()
   osmd.cursor.hide();
 
-  await new Promise(resolve => setTimeout(resolve, 100));
+  await new Promise(resolve => setTimeout(resolve, 100)); // JS 이벤트 루프 돌기
   await new Promise(requestAnimationFrame);
   await new Promise(requestAnimationFrame);
-  console.log("📏 전체 마디 수:", osmd.Sheet.SourceMeasures.length);
-
-  const musicSystems = osmd.GraphicSheet?.MusicPages?.[0]?.MusicSystems || [];
-  console.log(`🧱 전체 시스템 개수: ${musicSystems.length}`);
-
-  musicSystems.forEach((sys, i) => {
-    const shape = sys.PositionAndShape;
-    const absX = shape.AbsolutePosition.x.toFixed(2);
-    const absY = shape.AbsolutePosition.y.toFixed(2);
-    const w = shape.Size.width.toFixed(2);
-    const h = shape.Size.height.toFixed(2);
-    console.log(`📌 system[${i}] - absX: ${absX}, absY: ${absY}, width: ${w}, height: ${h}`);
-  });
 
   const fullCanvas = container.querySelector("#osmdCanvasVexFlowBackendCanvas1");
-  console.log("🖼️ fullCanvas size:", fullCanvas?.width, fullCanvas?.height);
-
   window._osmdFullCanvas = fullCanvas;
+
+  // 전체 악보 이미지 
   const sheetImage = await createSheetImage(fullCanvas);
-  console.log("🖼️ sheetImage Base64 length:", sheetImage.length);
 
-  // 악보 줄별 이미지 생성
-  const lineImages = await cropLineImages(fullCanvas);
-
-  // 커서 리스트 수집
-  const cursorList = getCursorList(osmd.cursor);
-
+  // ▸ 줄별 PNG + bbox 얻기
+  const { images: lineImages, bounds: lineBounds } = await cropLineImages(fullCanvas, osmd);
+  
+  const cursorList = getCursorList(osmd.cursor, lineBounds);
+  
   // 악보 줄 수: MusicXML의 <measure> 태그 개수를 세어서 4마디씩 나눈 줄 수로 계산
   const parser = new DOMParser();
   const xmlDoc = parser.parseFromString(xmlText, 'application/xml');
@@ -175,11 +239,8 @@ window.startOSMDFromFlutter = async function () {
   const measuresPerLine = osmd.EngravingRules.RenderXMeasuresPerLineAkaSystem || 4;
   const systemCount = Math.ceil(measures.length / measuresPerLine);
 
-  console.log(`📈 계산된 줄 수: ${systemCount}, 생성된 줄 이미지 수: ${lineImages.length}`);
-
   // XML 데이터 (Flutter에서 받아온 원본)
   const xmlBase64 = btoa(unescape(encodeURIComponent(xmlText)));
-
 
   window.flutter_inappwebview.callHandler("getDataFromOSMD", 
     sheetImage,
@@ -189,7 +250,8 @@ window.startOSMDFromFlutter = async function () {
       canvasWidth: fullCanvas.width,
       canvasHeight: fullCanvas.height,
       xmlData: xmlBase64,
-      lineImages: lineImages,
+      lineImages,
+      lineBounds,
       lineCount: systemCount,
     }
   );
