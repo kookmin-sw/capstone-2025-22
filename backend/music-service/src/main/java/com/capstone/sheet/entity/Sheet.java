@@ -24,6 +24,9 @@ public class Sheet {
     private byte[] sheetInfo;
 
     @Column
+    private String sheetJson;
+
+    @Column
     private String author;
 
     @CreatedDate

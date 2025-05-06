@@ -6,10 +6,13 @@ import com.capstone.practice.entity.SheetPractice;
 import com.capstone.practice.repository.SheetPracticeRepository;
 import com.capstone.sheet.dto.SheetCreateMeta;
 import com.capstone.sheet.dto.SheetResponseDto;
+import com.capstone.sheet.dto.musicXml.PartInfo;
 import com.capstone.sheet.entity.Sheet;
 import com.capstone.sheet.entity.UserSheet;
 import com.capstone.sheet.repository.SheetRepository;
 import com.capstone.sheet.repository.UserSheetRepository;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -20,29 +23,23 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 @Service
+@RequiredArgsConstructor
 public class SheetUpdateService {
-    SheetRepository sheetRepository;
-    UserSheetRepository userSheetRepository;
-    SheetPracticeRepository sheetPracticeRepository;
-    SheetToXmlConverter sheetToXmlConverter;
-
-    public SheetUpdateService(
-            SheetRepository sheetRepository,
-            UserSheetRepository userSheetRepository,
-            SheetPracticeRepository sheetPracticeRepository,
-            SheetToXmlConverter sheetToXmlConverter) {
-        this.sheetRepository = sheetRepository;
-        this.userSheetRepository = userSheetRepository;
-        this.sheetPracticeRepository = sheetPracticeRepository;
-        this.sheetToXmlConverter = sheetToXmlConverter;
-    }
+    private final SheetRepository sheetRepository;
+    private final UserSheetRepository userSheetRepository;
+    private final SheetPracticeRepository sheetPracticeRepository;
+    private final SheetToXmlConverter sheetToXmlConverter;
+    private final SheetXmlInfoParser sheetXmlInfoParser;
+    private final ObjectMapper objectMapper;
 
     @Transactional
     public void updateSheetInfo(Sheet sheet, SheetCreateMeta sheetCreateMeta, MultipartFile sheetFile) {
         try {
             byte[] sheetXml = sheetToXmlConverter.convertToXml(sheetCreateMeta, sheetFile);
+            String partInfoListString = objectMapper.writeValueAsString(sheetXmlInfoParser.parseXmlInfo(sheetXml));
             Sheet toUpdate = sheetRepository.findById(sheet.getSheetId()).orElseThrow(() -> new DataNotFoundException("Sheet Not Found"));
             toUpdate.setSheetInfo(sheetXml);
+            toUpdate.setSheetJson(partInfoListString);
         }catch (Exception e){
             userSheetRepository.deleteAllBySheet(sheet);
             sheetRepository.deleteById(sheet.getSheetId());
