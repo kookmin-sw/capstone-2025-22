@@ -1,3 +1,5 @@
+import 'package:capstone_2025/services/api_func.dart';
+import 'package:capstone_2025/services/storage_service.dart';
 import 'package:capstone_2025/widgets/linedText.dart';
 import 'package:capstone_2025/widgets/openSheetModal.dart';
 import 'package:fl_chart/fl_chart.dart';
@@ -6,9 +8,9 @@ import 'package:flutter/services.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class MusicsheetDetail extends StatefulWidget {
-  final String songTitle; // 추가: 노래 제목 받기
+  final String songID; // 노래 ID
 
-  const MusicsheetDetail({super.key, required this.songTitle});
+  const MusicsheetDetail({super.key, required this.songID});
 
   @override
   State<MusicsheetDetail> createState() => _MusicsheetDetailState();
@@ -33,6 +35,30 @@ class _MusicsheetDetailState extends State<MusicsheetDetail> {
     {'연습 날짜': "2025.03.12", '점수': "98"},
     {'연습 날짜': "2025.03.15", '점수': "100"},
   ];
+
+  void createDetailList() async {
+    String? email = await storage.read(key: "user_email");
+    final response = await getHTTP(
+      '/sheets/${widget.songID}/practices',
+      {"pageSize": 100, "pageNumber": 0, "email": email},
+    );
+
+    if (response['errMessage'] == null) {
+      List<dynamic> rawData = response['body'];
+      setState(() {
+        scoreData = rawData.map<Map<String, String>>((item) {
+          final rawDate = DateTime.tryParse(item['createdDate'] ?? '');
+          final formattedDate = rawDate != null
+              ? "${rawDate.year.toString().padLeft(4, '0')}.${rawDate.month.toString().padLeft(2, '0')}.${rawDate.day.toString().padLeft(2, '0')}"
+              : '';
+          return {
+            '연습 날짜': formattedDate,
+            '점수': item['score'].toString(),
+          };
+        }).toList();
+      });
+    }
+  }
 
   List<Map<String, String>> lastFive = []; // 그래프에 출력할 마지막 5개 데이터
 
@@ -233,7 +259,7 @@ class _MusicsheetDetailState extends State<MusicsheetDetail> {
                     // 노래 제목
                     child: Center(
                       child: linedText(
-                        widget.songTitle,
+                        widget.songID,
                         27,
                         Colors.black54,
                         Colors.white,
