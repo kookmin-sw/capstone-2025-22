@@ -21,6 +21,7 @@ class _MyPageState extends State<MyPage> {
   void initState() {
     super.initState();
     _loadUserData(); // 페이지가 열릴 때 사용자 데이터 불러오기
+    _createInfoList(); // 악보 연습 기록 불러오기
   }
 
   bool isSheetMusicUploaded = true; // 업로드된 악보 존재하는지
@@ -36,33 +37,34 @@ class _MyPageState extends State<MyPage> {
     size: 25,
   );
 
-  List<Map<String, String>> sheetMusicData = [
-    {
-      "악보명": "그라데이션",
-      "마지막 연습 날짜": "2025.01.18",
-      "최고 점수": "100",
-    },
-    {
-      "악보명": "Hi Bully",
-      "마지막 연습 날짜": "2025.02.10",
-      "최고 점수": "95",
-    },
-    {
-      "악보명": "한 페이지가 될 수 있게",
-      "마지막 연습 날짜": "2025.02.11",
-      "최고 점수": "90",
-    },
-    {
-      "악보명": "개화",
-      "마지막 연습 날짜": "2025.02.12",
-      "최고 점수": "85",
-    },
-    {
-      "악보명": "곰 세 마리",
-      "마지막 연습 날짜": "2025.02.17",
-      "최고 점수": "80",
-    },
-  ];
+  List<Map<String, String>> sheetMusicData = []; // 악보 연습 기록 데이터
+  // List<Map<String, String>> sheetMusicData = [
+  //   {
+  //     "악보명": "그라데이션",
+  //     "마지막 연습 날짜": "2025.01.18",
+  //     "최고 점수": "100",
+  //   },
+  //   {
+  //     "악보명": "Hi Bully",
+  //     "마지막 연습 날짜": "2025.02.10",
+  //     "최고 점수": "95",
+  //   },
+  //   {
+  //     "악보명": "한 페이지가 될 수 있게",
+  //     "마지막 연습 날짜": "2025.02.11",
+  //     "최고 점수": "90",
+  //   },
+  //   {
+  //     "악보명": "개화",
+  //     "마지막 연습 날짜": "2025.02.12",
+  //     "최고 점수": "85",
+  //   },
+  //   {
+  //     "악보명": "곰 세 마리",
+  //     "마지막 연습 날짜": "2025.02.17",
+  //     "최고 점수": "80",
+  //   },
+  // ];
 
   // Secure Storage에서 데이터 불러와서 상태 업데이트
   Future<void> _loadUserData() async {
@@ -105,6 +107,39 @@ class _MyPageState extends State<MyPage> {
         print("프로필 이미지 정보가 없습니다.");
       }
     });
+  }
+
+  void _createInfoList() async {
+    final response = await getHTTP(
+      '/sheets/practices/representative',
+      {'email': email},
+    );
+
+    if (response['errMessage'] == null) {
+      // 악보 연습 기록이 존재하는 경우
+      setState(() {
+        isSheetMusicUploaded = true;
+        sheetMusicData =
+            (response['body'] as List).map<Map<String, String>>((item) {
+          final rawDate = DateTime.tryParse(item['lastPracticeDate'] ?? '');
+          final formattedDate = rawDate != null
+              ? "${rawDate.year.toString().padLeft(4, '0')}.${rawDate.month.toString().padLeft(2, '0')}.${rawDate.day.toString().padLeft(2, '0')}"
+              : '';
+          return {
+            "id": item["userSheetId"].toString(),
+            "악보명": item["sheetName"],
+            "마지막 연습 날짜": formattedDate,
+            "최고 점수": item["maxScore"].toString(),
+          };
+        }).toList();
+      });
+    } else {
+      // 악보 연습 기록이 없는 경우
+      setState(() {
+        isSheetMusicUploaded = false;
+        sheetMusicData = [];
+      });
+    }
   }
 
   // 회원정보 수정 화면으로 이동
@@ -364,9 +399,9 @@ class _MyPageState extends State<MyPage> {
                 child: Row(
                   children: [
                     // 테이블 셀 내용
-                    _buildListCell(item["악보명"]!, flex: 1),
-                    _buildListCell(item["마지막 연습 날짜"]!, flex: 1),
-                    _buildListCell(item["최고 점수"]!, flex: 1),
+                    _buildListCell(item["악보명"] ?? "", flex: 1),
+                    _buildListCell(item["마지막 연습 날짜"] ?? "-", flex: 1),
+                    _buildListCell(item["maxScore"]!, flex: 1),
                     Expanded(
                       // 상세 기록 버튼
                       flex: 1,
@@ -376,7 +411,7 @@ class _MyPageState extends State<MyPage> {
                             context,
                             MaterialPageRoute(
                               builder: (context) => MusicsheetDetail(
-                                songTitle: item["악보명"]!,
+                                songID: item["id"]!,
                               ),
                             ),
                           ),
