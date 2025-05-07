@@ -1,12 +1,8 @@
-import 'package:capstone_2025/screens/drumBasicsPages/drum_basics_page.dart';
-import 'package:capstone_2025/screens/drumPatternFillPages/practice_result_PP.dart';
-import 'package:capstone_2025/screens/drumSheetPages/drum_sheet_player.dart';
-import 'package:capstone_2025/screens/drumSheetPages/practice_result_MS.dart';
 import 'package:capstone_2025/screens/introPages/login_screen_google.dart';
 import 'package:capstone_2025/screens/mainPages/navigation_screens.dart';
+import 'package:capstone_2025/services/api_func.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:capstone_2025/screens/mainPages/navigation_screens.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
@@ -44,15 +40,32 @@ class _MyAppState extends State<MyApp> {
   }
 
   Future<void> _checkLoginStatus() async {
-    final token = await _storage.read(key: 'access_token'); // 자동 로그인 여부
-    setState(() {
-      _isLoggedIn = token != null && token.isNotEmpty;
-    });
+    try {
+      final token = await _storage.read(key: 'access_token');
+      if (token == null || token.isEmpty) {
+        setState(() {
+          _isLoggedIn = false;
+        });
+        return;
+      }
+      final response = await postHTTP('/auth/token', {},
+          reqHeader: {'authorization': token});
+      final isTokenValid = response['status'] == 200;
+      setState(() {
+        _isLoggedIn = token.isNotEmpty && isTokenValid;
+      });
+    } catch (e) {
+      print("자동 로그인 중 예외 발생: $e");
+      setState(() {
+        _isLoggedIn = false;
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    // if (_isLoggedIn == null) { // 자동로그인 로직
+    // if (_isLoggedIn == null) {
+    //   // 자동로그인 로직
     //   return const MaterialApp(
     //     home: Scaffold(
     //       body: Center(child: CircularProgressIndicator()),
@@ -65,9 +78,8 @@ class _MyAppState extends State<MyApp> {
     //   home: _isLoggedIn! ? NavigationScreens() : LoginScreenGoogle(),
     // );
     return MaterialApp(
-      // 페이지 공통 백그라운드 컬러 지정
-      theme: ThemeData(scaffoldBackgroundColor: Color(0xFFF2F1F3)),
-      home: DrumSheetPlayer(),
-    );
+        // 임시 코드
+        theme: ThemeData(scaffoldBackgroundColor: Color(0xFFF2F1F3)),
+        home: LoginScreenGoogle());
   }
 }
