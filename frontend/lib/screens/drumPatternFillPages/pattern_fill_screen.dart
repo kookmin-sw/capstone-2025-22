@@ -2,14 +2,15 @@ import 'dart:io';
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:audioplayers/audioplayers.dart' as ap;
 import 'package:flutter_sound/flutter_sound.dart' as fs;
-import 'package:flutter_sound/public/flutter_sound_recorder.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:stomp_dart_client/stomp_dart_client.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:capstone_2025/screens/mainPages/navigation_screens.dart';
+import 'package:flutter/services.dart';
+
+// Import the DrumRecordingWidget
+import 'package:capstone_2025/widgets/drum_recording_widget.dart'; // 경로는 실제 프로젝트에 맞게 수정해야 합니다
 
 // 패턴 및 필인 시작 화면
 class PatternFillScreen extends StatelessWidget {
@@ -36,48 +37,29 @@ class CountdownPage extends StatefulWidget {
 class _CountdownPageState extends State<CountdownPage>
     with SingleTickerProviderStateMixin {
   // 상태 변수 선언
-  int countdown = 3;
-  bool isCountingDown = false;
   bool _isPlaying = false;
-  bool _isRecording = false;
   bool _showPracticeMessage = false;
-  bool _webSocketConnected = false;
-
   double _currentPosition = 0.0;
   double _totalDuration = 0.0;
-
   String _currentSpeed = '1x';
-  String _recordingStatusMessage = '';
-  String _userEmail = '';
-  String? _recordingPath; // 녹음 파일 경로
-
   List<dynamic> _detectedOnsets = [];
 
-  // 객체들
-  late ap.AudioPlayer _audioPlayer; // 오디오
-  late fs.FlutterSoundRecorder _recorder;
-  late AnimationController _overlayController; // 애니메이션
-  late Animation<double> _overlayAnimation;
-  late StompClient _stompClient; // 웹소켓 클라이언트
+  // DrumRecordingWidget에 대한 키 생성
+  final GlobalKey<DrumRecordingWidgetState> _drumRecordingKey = GlobalKey();
 
-  // 저장소
-  final _storage = const FlutterSecureStorage();
+  // 객체들
+  late ap.AudioPlayer _audioPlayer;
+  late AnimationController _overlayController;
+  late Animation<double> _overlayAnimation;
 
   // 타이머들
-  Timer? _countdownTimer;
   Timer? _practiceMessageTimer;
   Timer? _positionUpdateTimer;
-  Timer? _recordingDataTimer;
 
   // 스트림 구독들
   StreamSubscription? _playerStateSubscription;
   StreamSubscription? _playerCompleteSubscription;
   StreamSubscription? _positionSubscription;
-  StreamSubscription<fs.RecordingDisposition>? _recorderSubscription;
-
-  // 웹소켓 재연결 관련 변수
-  int _reconnectAttemps = 0;
-  final int _maxReconnectAttempts = 5;
 
   @override
   void initState() {
@@ -91,35 +73,9 @@ class _CountdownPageState extends State<CountdownPage>
     _overlayAnimation =
         Tween<double>(begin: 0.0, end: 1.0).animate(_overlayController);
 
-    // 필요한 데이터 초기화
-    _initializeData();
-  }
-
-  Future<void> _initializeData() async {
-    // 저장된 이메일 불러오기 (없으면 기본값)
-    _userEmail = await _storage.read(key: 'user_email') ?? 'test@example.com';
-
+    // 오디오 플레이어 초기화
     _audioPlayer = ap.AudioPlayer();
-    _recorder = fs.FlutterSoundRecorder();
-
-    await _initRecorder();
-
     _setupAudioListeners();
-    _setupWebSocket();
-  }
-
-  Future<void> _initRecorder() async {
-    // 마이크 권한 요청
-    var status = await Permission.microphone.request();
-    if (status != PermissionStatus.granted) {
-      throw RecordingPermissionException('마이크 권한이 부여되지 않았습니다.');
-    }
-
-    await _recorder.openRecorder();
-
-    // 녹음 파일 저장 경로 설정
-    final appDocDir = await getApplicationDocumentsDirectory();
-    _recordingPath = '${appDocDir.path}/drum_performance.wav';
   }
 
   void _setupAudioListeners() {
@@ -149,232 +105,55 @@ class _CountdownPageState extends State<CountdownPage>
     });
   }
 
-  void _setupWebSocket() {
-    // WebSocket 설정
-    _stompClient = StompClient(
-      config: StompConfig.sockJS(
-        url: 'http://10.0.2.2:28080/ws/audio',
-        onConnect: (StompFrame frame) {
-          print('✅ WebSocket 연결 완료!');
-          _webSocketConnected = true;
-          _reconnectAttemps = 0; // 연결 성공했으니 재시도 카운트 초기화
-          _subscribeToTopic();
-        },
-        beforeConnect: () async => print('🌐 WebSocket 연결 시도 중...'),
-        // 오류 발생했을 때
-        onWebSocketError: (dynamic error) {
-          print('❌ WebSocket 오류 발생: $error');
-          _retryWebSocketConnect();
-        },
-        onDisconnect: (frame) {
-          print('🔌 WebSocket 연결 끊어짐');
-          setState(() {
-            _webSocketConnected = false;
-          });
-        },
-        stompConnectHeaders: {},
-      ),
-    );
-    // WebSocket 연결 시도
-    _stompClient.activate();
-  }
-
-  // 연결 후 구독
-  void _subscribeToTopic() {
-    _stompClient.subscribe(
-      destination: '/topic/onset/$_userEmail',
-      callback: (frame) {
-        if (frame.body != null) {
-          final response = json.decode(frame.body!);
-          print('📦 WebSocket 데이터 수신 완료: $response');
-
-          if (response.containsKey('onsets')) {
-            setState(() {
-              _detectedOnsets = response['onsets'];
-            });
-            print('🎯 감지된 온셋 수: ${response['onsets']}');
-          }
-        } else {
-          print('⚠️ 빈 WebSocket 프레임 수신');
-        }
-      },
-    );
-  }
-
-  // 웹소켓 연결 실패 시 재시도하는 함수
-  void _retryWebSocketConnect() {
-    if (_reconnectAttemps < _maxReconnectAttempts) {
-      _reconnectAttemps++;
-      Future.delayed(const Duration(seconds: 3), () {
-        print(
-            '🔁 WebSocket 재연결 시도 ($_reconnectAttemps/$_maxReconnectAttempts)...');
-        _stompClient.activate();
-      });
-    } else {
-      print('❌ WebSocket 재연결 실패 - 최대 시도 초과');
-    }
-  }
-
   // 시범 연주를 재생하는 함수
   Future<void> _startAudio() async {
     if (!mounted) return;
 
     // 시범 연주 시작 메시지 표시
     setState(() => _showPracticeMessage = true);
-    _overlayController.forward(); // 메시지를 페이드 인 애니메이션으로 보여줌
+    _overlayController.forward();
 
     // 1초 후 메시지 숨기기
     await Future.delayed(const Duration(milliseconds: 1000));
 
     if (!mounted) return;
     _overlayController.reverse().then((_) {
-      if (mounted) setState(() => _showPracticeMessage = false); // 메시지 숨김
+      if (mounted) setState(() => _showPracticeMessage = false);
     });
 
-    // 메시지가 사라진 후 바로 시범 연주 오디오 재생
+    // 시범 연주 오디오 재생
     await _audioPlayer.play(ap.AssetSource('test/tom_mix.wav'));
+
+    // 시범 연주의 총 길이를 저장 및 출력
+    _audioPlayer.onDurationChanged.listen((duration) {
+      if (mounted) {
+        _totalDuration = duration.inSeconds.toDouble();
+        print('🎵 시범 연주 총 길이: ${_totalDuration.toStringAsFixed(2)}초');
+      }
+    });
 
     // 시범 연주가 끝나면 카운트다운 시작
     _playerCompleteSubscription = _audioPlayer.onPlayerComplete.listen((event) {
-      if (mounted) _startCountdown(); // 카운트다운 시작
-    });
-  }
+      if (mounted) {
+        print('⏱️ 시범 연주 종료! (총 길이: ${_totalDuration.toStringAsFixed(2)}초)');
 
-  // 사용자 연주 녹음을 시작하는 함수
-  void _startRecording() async {
-    if (_isRecording || !mounted) return;
-
-    // WebSocket 연결 확인
-    if (!_webSocketConnected) {
-      print('❌ 녹음을 시작할 수 없습니다: WebSocket이 연결되지 않았습니다.');
-      setState(() => _recordingStatusMessage = 'WebSocket 연결이 필요합니다!');
-      return;
-    }
-
-    try {
-      print("🎙️ 녹음을 시작합니다. 저장 경로: $_recordingPath");
-      await _recorder.startRecorder(
-        toFile: _recordingPath,
-        codec: fs.Codec.pcm16WAV, // wav 형식으로 녹음 저장
-        sampleRate: 16000,
-        numChannels: 1,
-        bitRate: 16000,
-      );
-      setState(() {
-        _isRecording = true;
-        _recordingStatusMessage = '녹음이 시작되었습니다.';
-      });
-
-      _recordingDataTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
-        _sendRecordingData();
-      });
-    } catch (e) {
-      setState(() => _recordingStatusMessage = '녹음 시작 실패: $e');
-      print('❌ 녹음 중 오류 발생: $e');
-    }
-  }
-
-  // 녹음을 중단하는 함수
-  Future<void> _stopRecording() async {
-    if (!_isRecording || !mounted) return;
-    _recordingDataTimer?.cancel(); // 데이터 전송 타이머 중지
-    await _recorder.stopRecorder(); // 녹음기 종료
-
-    // 마지막 녹음 데이터 서버로 전송
-    _sendRecordingData();
-
-    setState(() {
-      _isRecording = false;
-      _recordingStatusMessage = '녹음이 완료되었습니다.';
-    });
-
-    print('🎙️ 녹음 종료');
-  }
-
-  // 녹음된 데이터를 WebSocket을 통해 서버로 전송하는 함수
-  Future<void> _sendRecordingData() async {
-    if (!_stompClient.connected) {
-      print('❌ WebSocket 연결이 되지 않아 데이터 전송 실패');
-      return;
-    }
-
-    try {
-      final file = File(_recordingPath!);
-      if (await file.exists()) {
-        final base64String = base64Encode(await file.readAsBytes());
-        final message = {'email': _userEmail, 'message': base64String};
-        print('📤 녹음 데이터 전송: ${DateTime.now()}');
-
-        _stompClient.send(
-          destination: '/app/audio/forwarding',
-          body: json.encode(message),
-          headers: {'content-type': 'application/json'},
-        );
-        setState(() => _recordingStatusMessage = '녹음 데이터 전송 중...');
-      } else {
-        print('⚠️ 녹음 파일이 존재하지 않습니다: $_recordingPath');
+        // DrumRecordingWidget의 카운트다운 시작
+        final drumRecordingState = _drumRecordingKey.currentState;
+        if (drumRecordingState != null) {
+          drumRecordingState.startCountdown(
+            onCountdownComplete: () {
+              drumRecordingState.startRecording();
+            },
+          );
+        }
       }
-    } catch (e) {
-      print('❌ 녹음 데이터 전송 중 오류 발생: $e');
-    }
+    });
   }
 
   // 오디오 재생 위치 이동하는 함수
   void _seekAudio(double position) async {
     if (!mounted) return;
     await _audioPlayer.seek(Duration(seconds: position.toInt())); // 재생 위치 이동
-  }
-
-  // 3초 카운트다운 후 녹음 시작하는 함수
-  void _startCountdown() {
-    if (!mounted) return;
-    setState(() {
-      isCountingDown = true;
-      countdown = 3; // 카운트다운 3초로 시작
-    });
-
-    _overlayController.forward(); // 카운트다운 페이드 인
-
-    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (!mounted) {
-        timer.cancel();
-        return;
-      }
-
-      if (countdown == 0) {
-        timer.cancel();
-        _overlayController.reverse().then((_) async {
-          if (!mounted) return;
-          setState(() => isCountingDown = false);
-          _startRecording(); // 카운트다운 종료 후 녹음 시작
-        });
-      } else {
-        setState(() => countdown--);
-      }
-    });
-  }
-
-  // 페이지가 종료될 때 리소스 해제하는 함수
-  @override
-  void dispose() {
-    _countdownTimer?.cancel();
-    _practiceMessageTimer?.cancel();
-    _positionUpdateTimer?.cancel();
-    _recordingDataTimer?.cancel();
-    _playerStateSubscription?.cancel();
-    _playerCompleteSubscription?.cancel();
-    _positionSubscription?.cancel();
-    _recorderSubscription?.cancel();
-
-    if (_isRecording) _recorder.stopRecorder();
-
-    _recorder.closeRecorder(); // 녹음기 닫기
-    _audioPlayer.dispose(); // 오디오플레이어 정리
-    _overlayController.dispose(); // 애니메이션 컨트롤러
-
-    if (_stompClient.connected) _stompClient.deactivate(); // 웹소켓 연결 해제
-
-    super.dispose();
   }
 
   // 재생 속도 선택 버튼을 만드는 위젯
@@ -413,29 +192,19 @@ class _CountdownPageState extends State<CountdownPage>
     );
   }
 
-  // 카운트다운 숫자를 그리는 위젯
-  Widget _buildCountdownNumber(int number) {
-    final bool isHighlighted = number == countdown;
+  // 페이지가 종료될 때 리소스 해제하는 함수
+  @override
+  void dispose() {
+    _practiceMessageTimer?.cancel();
+    _positionUpdateTimer?.cancel();
+    _playerStateSubscription?.cancel();
+    _playerCompleteSubscription?.cancel();
+    _positionSubscription?.cancel();
 
-    return AnimatedOpacity(
-      duration: const Duration(milliseconds: 300),
-      opacity: isHighlighted ? 1.0 : 0.3,
-      child: Text(
-        number.toString(),
-        style: TextStyle(
-          fontSize: 100,
-          fontWeight: FontWeight.bold,
-          color: isHighlighted ? Colors.red : Colors.white,
-          shadows: [
-            Shadow(
-              offset: const Offset(2, 2),
-              blurRadius: 4,
-              color: Colors.black.withValues(alpha: 0.5),
-            ),
-          ],
-        ),
-      ),
-    );
+    _audioPlayer.dispose(); // 오디오플레이어 정리
+    _overlayController.dispose(); // 애니메이션 컨트롤러
+
+    super.dispose();
   }
 
   @override
@@ -462,13 +231,18 @@ class _CountdownPageState extends State<CountdownPage>
                           onPressed: () {
                             // 오디오 재생 중이면 정지
                             if (_isPlaying) _audioPlayer.stop();
-                            // 녹음 중이면 정지
-                            if (_isRecording) _stopRecording();
+
+                            // DrumRecordingWidget의 녹음 중지
+                            final drumRecordingState =
+                                _drumRecordingKey.currentState;
+                            if (drumRecordingState != null &&
+                                drumRecordingState.isRecording) {
+                              drumRecordingState.stopRecording();
+                            }
 
                             // 리소스 해제
                             _playerStateSubscription?.cancel();
                             _playerCompleteSubscription?.cancel();
-                            _countdownTimer?.cancel();
                             _practiceMessageTimer?.cancel();
                             _positionUpdateTimer?.cancel();
 
@@ -706,14 +480,19 @@ class _CountdownPageState extends State<CountdownPage>
                                   child: InkWell(
                                     borderRadius: BorderRadius.circular(24),
                                     onTap: () {
-                                      if (_isRecording) {
-                                        _stopRecording();
+                                      final drumRecordingState =
+                                          _drumRecordingKey.currentState;
+                                      if (drumRecordingState != null &&
+                                          drumRecordingState.isRecording) {
+                                        drumRecordingState.stopRecording();
                                       } else {
                                         _startAudio();
                                       }
                                     },
                                     child: Icon(
-                                      _isRecording
+                                      _drumRecordingKey
+                                                  .currentState?.isRecording ??
+                                              false
                                           ? Icons.stop
                                           : Icons.play_arrow,
                                       color: Colors.white,
@@ -726,10 +505,13 @@ class _CountdownPageState extends State<CountdownPage>
                           ),
 
                           // 현재 녹음 상태 표시
-                          if (_recordingStatusMessage.isNotEmpty) ...[
+                          if (_drumRecordingKey.currentState
+                                  ?.recordingStatusMessage.isNotEmpty ??
+                              false) ...[
                             const SizedBox(height: 16),
                             Text(
-                              _recordingStatusMessage,
+                              _drumRecordingKey
+                                  .currentState!.recordingStatusMessage,
                               style: const TextStyle(
                                 color: Color(0xFFE5958B),
                                 fontSize: 14,
@@ -764,25 +546,30 @@ class _CountdownPageState extends State<CountdownPage>
               ),
             ),
 
-          // 오버레이 - 카운트다운 숫자 표시
-          if (isCountingDown)
-            FadeTransition(
-              opacity: _overlayAnimation,
-              child: Container(
-                color: Colors.black.withValues(alpha: 0.9),
-                alignment: Alignment.center,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    _buildCountdownNumber(3),
-                    const SizedBox(width: 150),
-                    _buildCountdownNumber(2),
-                    const SizedBox(width: 150),
-                    _buildCountdownNumber(1),
-                  ],
-                ),
-              ),
+          // DrumRecordingWidget 추가 (보이지 않지만 기능 사용)
+          Offstage(
+            offstage: true, // UI를 화면에 표시하지 않음
+            child: DrumRecordingWidget(
+              key: _drumRecordingKey,
+              title: widget.title,
+              xmlFilePath: 'assets/test/tom_mix.xml',
+              audioFilePath: 'assets/test/tom_mix.wav',
+              onRecordingComplete: (onsets) {
+                setState(() {
+                  _detectedOnsets = onsets;
+                });
+              },
+              onOnsetsReceived: (onsets) {
+                setState(() {
+                  _detectedOnsets = onsets;
+                });
+              },
             ),
+          ),
+
+          // DrumRecordingWidget의 카운트다운 오버레이 표시
+          if (_drumRecordingKey.currentState != null)
+            _drumRecordingKey.currentState!.buildCountdownOverlay(),
         ],
       ),
     );
