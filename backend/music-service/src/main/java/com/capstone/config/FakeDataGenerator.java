@@ -12,6 +12,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.stereotype.Component;
 
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -37,8 +38,12 @@ public class FakeDataGenerator {
     public void init() throws Exception {
         Faker faker = new Faker(Locale.KOREAN);
         if(sheetRepository.count() > 10) return;
-        byte[] sheetXml = Files.readAllBytes(new DefaultResourceLoader().getResource("classpath:sheets/sheet.xml")
-                .getFile().toPath());
+        byte[] sheetXml;
+        try (InputStream inputStream = new DefaultResourceLoader()
+                .getResource("classpath:sheets/sheet.xml")
+                .getInputStream()) {
+            sheetXml = inputStream.readAllBytes();
+        }
         String testUser = "test@test.com";
         List<Sheet> sheets = generateSheets(faker, sheetXml, 10);
         List<UserSheet> userSheets = generateUserSheets(faker, sheets, testUser);
