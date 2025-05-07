@@ -1,6 +1,7 @@
 import 'dart:io'; // 파일 및 디렉토리 관련 기능 제공
 import 'dart:convert'; // JSON 인코딩 및 디코딩을 위해 필요
 import 'dart:typed_data'; // 바이트 데이터를 다루기 위해 필요
+import 'package:capstone_2025/services/api_func.dart';
 import 'package:flutter/material.dart'; // Flutter UI 요소 사용
 import 'package:http/http.dart' as http; // HTTP 요청 위해 사용
 import 'package:http_parser/http_parser.dart'; // HTTP 요청에서 파일 업로드 시 사용
@@ -81,15 +82,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   /// 서버에서 프로필 사진 가져오는 함수(api 사용)
   Future<void> _fetchUserProfile() async {
     try {
-      final uri = Uri.parse('$baseUrl/user/email?email=$email');
-      final response = await http.get(
-        uri,
-        headers: {'authorization': 'Bearer $accessToken'},
-      );
+      final response = await putHTTP(
+          '/users/profile', {}, {'nickname': nickName},
+          reqHeader: {'authorization': accessToken});
 
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        final body = data['body'];
+      if (response['errorMessage'] == null) {
+        final body = response['body'];
         await _handleProfileImage(body['profileImage']);
       }
     } catch (e) {
@@ -232,7 +230,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   /// 사용자 정보 업데이트 API 호출 (닉네임, 프로필 사진)
   Future<void> _updateUserProfile() async {
-    final url = Uri.parse('$baseUrl/user/profile'); // 요청 경로
+    final url = Uri.parse('$baseUrl/users/profile'); // 요청 경로
 
     try {
       var request = http.MultipartRequest('PUT', url);
@@ -310,9 +308,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           // 원형 프로필 이미지
           radius: 50, // 원형 프로필 이미지 크기 (반지름 50)
           backgroundImage: _profileImage != null
-              ? MemoryImage(_profileImageBytes!) // 메모리에서 바로 이미지 표시
-              : const AssetImage(defaultProfileImagePath)
-                  as ImageProvider, // 기본 이미지
+              ? FileImage(_profileImage!)
+              : (_profileImageBytes != null && _profileImageBytes!.isNotEmpty)
+                  ? MemoryImage(_profileImageBytes!)
+                  : const AssetImage(defaultProfileImagePath) as ImageProvider,
         ),
         GestureDetector(
           // 터치 이벤트 감지 (카메라 아이콘 클릭)
