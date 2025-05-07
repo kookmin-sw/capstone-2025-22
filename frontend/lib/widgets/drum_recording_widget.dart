@@ -51,17 +51,19 @@ class DrumRecordingWidget extends StatefulWidget {
 class DrumRecordingWidgetState extends State<DrumRecordingWidget>
     with SingleTickerProviderStateMixin {
   // WebSocket 관련
-  late StompClient _stompClient;
+  StompClient? _stompClient;
   bool _webSocketConnected = false;
   int _reconnectAttemps = 0;
   final int _maxReconnectAttempts = 5;
   String _userEmail = '';
   final _storage = const FlutterSecureStorage();
+  Function? _stompUnsubscribe;
+  bool _isDisposed = false;
 
   // 녹음 관련
   bool isRecording = false;
   String? _recordingPath;
-  late fs.FlutterSoundRecorder _recorder;
+  fs.FlutterSoundRecorder? _recorder;
   String recordingStatusMessage = '';
   Timer? _recordingDataTimer;
   StreamSubscription<fs.RecordingDisposition>? _recorderSubscription;
@@ -102,6 +104,8 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
   }
 
   Future<void> _initializeData() async {
+    if (_isDisposed) return;
+
     // 저장된 이메일 불러오기
     _userEmail = await _storage.read(key: 'user_email') ?? 'test@example.com';
 
@@ -114,13 +118,15 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
   }
 
   Future<void> _initRecorder() async {
+    if (_isDisposed) return;
+
     // 마이크 권한 요청
     var status = await Permission.microphone.request();
     if (status != PermissionStatus.granted) {
       throw RecordingPermissionException('마이크 권한이 부여되지 않았습니다.');
     }
 
-    await _recorder.openRecorder();
+    await _recorder?.openRecorder();
 
     // 녹음 파일 저장 경로 설정
     final appDocDir = await getApplicationDocumentsDirectory();
@@ -128,6 +134,8 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
   }
 
   Future<void> _setupWebSocket() async {
+    if (_isDisposed) return;
+
     final token = await _storage.read(key: 'access_token');
     print('🔑 WebSocket 연결 시도 - 토큰: $token');
 
@@ -136,6 +144,8 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
       config: StompConfig.sockJS(
         url: 'http://34.68.164.98:28080/ws/audio',
         onConnect: (StompFrame frame) {
+          if (_isDisposed) return;
+
           print('✅ WebSocket 연결 완료!');
           setState(() {
             _webSocketConnected = true;
@@ -146,38 +156,51 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
         beforeConnect: () async => print('🌐 WebSocket 연결 시도 중...'),
         onWebSocketError: (dynamic error) {
           print('❌ WebSocket 오류 발생: $error');
-          _retryWebSocketConnect();
+          if (!_isDisposed) {
+            _retryWebSocketConnect();
+          }
         },
         onDisconnect: (frame) {
           print('🔌 WebSocket 연결 끊어짐');
-          setState(() {
-            _webSocketConnected = false;
-          });
+          if (!_isDisposed) {
+            setState(() {
+              _webSocketConnected = false;
+            });
+          }
         },
         stompConnectHeaders: {
           'Authorization': token ?? '',
         },
       ),
     );
-    _stompClient.activate();
+
+    if (!_isDisposed) {
+      _stompClient?.activate();
+    }
   }
 
   void _subscribeToTopic() {
-    _stompClient.subscribe(
+    if (_isDisposed || _stompClient == null) return;
+
+    _stompUnsubscribe = _stompClient!.subscribe(
       destination: '/topic/onset/$_userEmail',
       callback: (frame) {
+        if (_isDisposed) return;
+
         if (frame.body != null) {
           final response = json.decode(frame.body!);
           print('📦 WebSocket 데이터 수신 완료: $response');
 
           if (response.containsKey('onsets')) {
-            setState(() {
-              _detectedOnsets = response['onsets'];
-            });
+            if (!_isDisposed) {
+              setState(() {
+                _detectedOnsets = response['onsets'];
+              });
+            }
             print('🎯 감지된 온셋 수: ${response['onsets']}');
 
             // 부모 위젯에 콜백으로 알림
-            if (widget.onOnsetsReceived != null) {
+            if (widget.onOnsetsReceived != null && !_isDisposed) {
               widget.onOnsetsReceived!(_detectedOnsets);
             }
           }
@@ -189,12 +212,16 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
   }
 
   void _retryWebSocketConnect() {
+    if (_isDisposed) return;
+
     if (_reconnectAttemps < _maxReconnectAttempts) {
       _reconnectAttemps++;
       Future.delayed(const Duration(seconds: 3), () {
+        if (_isDisposed) return;
+
         print(
             '🔁 WebSocket 재연결 시도 ($_reconnectAttemps/$_maxReconnectAttempts)...');
-        _stompClient.activate();
+        _stompClient?.activate();
       });
     } else {
       print('❌ WebSocket 재연결 실패 - 최대 시도 초과');
@@ -202,6 +229,8 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
   }
 
   Future<void> _parseMusicXML() async {
+    if (_isDisposed) return;
+
     try {
       final xmlString = await rootBundle.loadString(widget.xmlFilePath);
       final document = XmlDocument.parse(xmlString);
@@ -231,7 +260,7 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
 
   /// 카운트다운 애니메이션 시작
   void startCountdown({Function? onCountdownComplete}) {
-    if (!mounted) return;
+    if (!mounted || _isDisposed) return;
 
     setState(() {
       isCountingDown = true;
@@ -241,7 +270,7 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
     _overlayController.forward(); // 카운트다운 페이드 인
 
     _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (!mounted) {
+      if (!mounted || _isDisposed) {
         timer.cancel();
         return;
       }
@@ -249,7 +278,7 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
       if (countdown == 0) {
         timer.cancel();
         _overlayController.reverse().then((_) async {
-          if (!mounted) return;
+          if (!mounted || _isDisposed) return;
           setState(() => isCountingDown = false);
 
           // 카운트다운 완료 시 콜백 호출
@@ -265,7 +294,7 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
 
   /// 오디오 녹음 시작
   void startRecording() async {
-    if (isRecording || !mounted) return;
+    if (isRecording || !mounted || _isDisposed || _recorder == null) return;
 
     // WebSocket 연결 확인
     if (!_webSocketConnected) {
@@ -276,18 +305,21 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
 
     try {
       print("🎙️ 녹음을 시작합니다. 저장 경로: $_recordingPath");
-      await _recorder.startRecorder(
+      await _recorder!.startRecorder(
         toFile: _recordingPath,
         codec: fs.Codec.pcm16WAV,
         sampleRate: 16000,
         numChannels: 1,
         bitRate: 16000,
       );
-      setState(() {
-        isRecording = true;
-        _currentMeasure = 0;
-        recordingStatusMessage = '녹음이 시작되었습니다.';
-      });
+
+      if (!_isDisposed) {
+        setState(() {
+          isRecording = true;
+          _currentMeasure = 0;
+          recordingStatusMessage = '녹음이 시작되었습니다.';
+        });
+      }
 
       // 박자와 BPM에 따른 마디당 시간 계산
       final secondsPerMeasure = (_beatsPerMeasure * 60.0) / _baseBpm;
@@ -295,51 +327,66 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
       // 마디마다 녹음 데이터 전송
       _recordingDataTimer =
           Timer.periodic(Duration(seconds: secondsPerMeasure.toInt()), (timer) {
+        if (_isDisposed) {
+          timer.cancel();
+          return;
+        }
+
         _sendRecordingData();
 
         // 부모 위젯에 현재 마디 정보 업데이트
-        if (widget.onMeasureUpdate != null) {
+        if (widget.onMeasureUpdate != null && !_isDisposed) {
           widget.onMeasureUpdate!(_currentMeasure + 1, _totalMeasures);
         }
       });
 
       // 총 재생 시간 후 녹음 중지
       Future.delayed(Duration(seconds: _totalDuration.toInt()), () {
-        if (isRecording) {
+        if (isRecording && !_isDisposed) {
           stopRecording();
         }
       });
     } catch (e) {
-      setState(() => recordingStatusMessage = '녹음 시작 실패: $e');
+      if (!_isDisposed) {
+        setState(() => recordingStatusMessage = '녹음 시작 실패: $e');
+      }
       print('❌ 녹음 중 오류 발생: $e');
     }
   }
 
   /// 오디오 녹음 중지
   Future<void> stopRecording() async {
-    if (!isRecording || !mounted) return;
+    if (!isRecording || !mounted || _isDisposed || _recorder == null) return;
+
     _recordingDataTimer?.cancel(); // 데이터 전송 타이머 중지
-    await _recorder.stopRecorder(); // 녹음기 종료
 
-    // 마지막 녹음 데이터 서버로 전송
-    _sendRecordingData();
+    try {
+      await _recorder!.stopRecorder(); // 녹음기 종료
 
-    setState(() {
-      isRecording = false;
-      recordingStatusMessage = '녹음이 완료되었습니다.';
-    });
+      // 마지막 녹음 데이터 서버로 전송
+      _sendRecordingData();
 
-    print('🎙️ 녹음 종료');
+      if (!_isDisposed) {
+        setState(() {
+          isRecording = false;
+          recordingStatusMessage = '녹음이 완료되었습니다.';
+        });
+      }
 
-    // 부모 위젯에 결과 전달
-    if (widget.onRecordingComplete != null) {
-      widget.onRecordingComplete!(_detectedOnsets);
+      print('🎙️ 녹음 종료');
+
+      // 부모 위젯에 결과 전달
+      if (widget.onRecordingComplete != null && !_isDisposed) {
+        widget.onRecordingComplete!(_detectedOnsets);
+      }
+    } catch (e) {
+      print('❌ 녹음 종료 중 오류 발생: $e');
     }
   }
 
   /// WebSocket을 통해 녹음 데이터를 서버로 전송
   Future<void> _sendRecordingData() async {
-    if (!_stompClient.connected) {
+    if (_isDisposed || _stompClient == null || !_stompClient!.connected) {
       print('❌ 데이터 전송 실패: WebSocket이 연결되지 않았습니다.');
       return;
     }
@@ -357,19 +404,22 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
         print(
             '📤 녹음 데이터 전송: ${DateTime.now()} (마디: ${_currentMeasure + 1}/$_totalMeasures)');
 
-        _stompClient.send(
+        _stompClient!.send(
           destination: '/app/audio/forwarding',
           body: json.encode(message),
           headers: {'content-type': 'application/json'},
         );
-        setState(() => recordingStatusMessage =
-            '녹음 데이터 전송 중... (마디: ${_currentMeasure + 1}/$_totalMeasures)');
+
+        if (!_isDisposed) {
+          setState(() => recordingStatusMessage =
+              '녹음 데이터 전송 중... (마디: ${_currentMeasure + 1}/$_totalMeasures)');
+        }
 
         // 다음 마디로 이동
         _currentMeasure++;
 
         // 마지막 마디에 도달하면 녹음 중지
-        if (_currentMeasure >= _totalMeasures) {
+        if (_currentMeasure >= _totalMeasures && !_isDisposed) {
           stopRecording();
         }
       } else {
@@ -380,31 +430,6 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
     }
   }
 
-  /// 카운트다운 숫자를 표시하는 위젯
-  Widget _buildCountdownNumber(int number) {
-    final bool isHighlighted = number == countdown;
-
-    return AnimatedOpacity(
-      duration: const Duration(milliseconds: 300),
-      opacity: isHighlighted ? 1.0 : 0.3,
-      child: Text(
-        number.toString(),
-        style: TextStyle(
-          fontSize: 100,
-          fontWeight: FontWeight.bold,
-          color: isHighlighted ? Colors.red : Colors.white,
-          shadows: [
-            Shadow(
-              offset: const Offset(2, 2),
-              blurRadius: 4,
-              color: Colors.black.withValues(alpha: 0.5),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   /// 카운트다운 오버레이 위젯 반환
   Widget buildCountdownOverlay() {
     if (!isCountingDown) return const SizedBox.shrink();
@@ -412,17 +437,44 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
     return FadeTransition(
       opacity: _overlayAnimation,
       child: Container(
-        color: Colors.black.withValues(alpha: 0.9),
+        color: Colors.black.withOpacity(0.6),
         alignment: Alignment.center,
         child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            _buildCountdownNumber(3),
-            const SizedBox(width: 150),
-            _buildCountdownNumber(2),
-            const SizedBox(width: 150),
-            _buildCountdownNumber(1),
-          ],
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: List.generate(3, (i) {
+            int number = 3 - i;
+            return Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 32),
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  Text(
+                    '$number',
+                    style: TextStyle(
+                      fontSize: 72,
+                      fontWeight: FontWeight.bold,
+                      foreground: Paint()
+                        ..style = PaintingStyle.stroke
+                        ..strokeWidth = 10
+                        ..color = countdown == number
+                            ? const Color(0xffB95D4C)
+                            : const Color(0xff949494),
+                    ),
+                  ),
+                  Text(
+                    '$number',
+                    style: TextStyle(
+                      fontSize: 72,
+                      fontWeight: FontWeight.bold,
+                      color: countdown == number
+                          ? const Color(0xffFD9B8A)
+                          : const Color(0xfff6f6f6),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }),
         ),
       ),
     );
@@ -439,18 +491,71 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
     };
   }
 
-  @override
-  void dispose() {
+  /// 모든 리소스를 안전하게 정리하는 메서드
+  void cleanupResources() async {
+    print('🧹 리소스 정리 시작...');
+
+    // 1. 모든 타이머 취소
     _countdownTimer?.cancel();
     _recordingDataTimer?.cancel();
+
+    // 2. 구독 취소
     _recorderSubscription?.cancel();
+    if (_stompUnsubscribe != null) {
+      try {
+        _stompUnsubscribe!();
+        print('✅ WebSocket 구독 취소 완료');
+      } catch (e) {
+        print('⚠️ WebSocket 구독 취소 중 오류 발생: $e');
+      }
+      _stompUnsubscribe = null;
+    }
 
-    if (isRecording) _recorder.stopRecorder();
+    // 3. 녹음 중지
+    if (isRecording && _recorder != null) {
+      try {
+        await _recorder!.stopRecorder();
+        print('✅ 녹음 중지 완료');
+      } catch (e) {
+        print('⚠️ 녹음 중지 중 오류 발생: $e');
+      }
+    }
 
-    _recorder.closeRecorder();
+    // 4. 녹음기 정리
+    if (_recorder != null) {
+      try {
+        await _recorder!.closeRecorder();
+        print('✅ 녹음기 종료 완료');
+      } catch (e) {
+        print('⚠️ 녹음기 종료 중 오류 발생: $e');
+      }
+      _recorder = null;
+    }
+
+    // 5. WebSocket 연결 종료
+    if (_stompClient != null) {
+      try {
+        // 연결 상태 확인 없이 무조건 비활성화 시도
+        _stompClient!.deactivate();
+        print('✅ WebSocket 종료 완료');
+      } catch (e) {
+        print('⚠️ WebSocket 종료 중 오류 발생: $e');
+      }
+      _stompClient = null;
+    }
+
+    print('✅ 모든 리소스 정리 완료');
+  }
+
+  @override
+  void dispose() {
+    _isDisposed = true;
+
+    // 리소스 정리
+    cleanupResources();
+
+    // 애니메이션 컨트롤러 해제
     _overlayController.dispose();
-
-    if (_stompClient.connected) _stompClient.deactivate();
 
     super.dispose();
   }
