@@ -24,6 +24,9 @@ dependencies {
     implementation project(':common')
     implementation project(':common-auth')
     implementation project(':common-redis')
+    // java-faker
+    implementation ('com.github.javafaker:javafaker:1.0.2') { exclude module: 'snakeyaml' }
+    implementation group: 'org.yaml', name: 'snakeyaml', version: '2.2'
     // test
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation platform('org.junit:junit-bom:5.10.0')
