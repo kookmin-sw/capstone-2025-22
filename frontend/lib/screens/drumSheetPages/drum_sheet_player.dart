@@ -144,6 +144,7 @@ class _DrumSheetPlayerState extends State<DrumSheetPlayer> {
                                 // 홈 버튼 눌렀을 때
                                 GestureDetector(
                                   onTap: () {
+                                    playbackController.stopPlayback();
                                     showDialog(
                                       context: context,
                                       barrierDismissible: true,
@@ -155,8 +156,6 @@ class _DrumSheetPlayerState extends State<DrumSheetPlayer> {
                                         },
                                         onCancel: () {
                                           Navigator.of(context).pop();
-                                          playbackController
-                                              .stopPlayback(); // 취소하면 정지 상태
                                         },
                                       ),
                                     );
@@ -212,6 +211,7 @@ class _DrumSheetPlayerState extends State<DrumSheetPlayer> {
                                       child: // 리셋 버튼 눌렀을 때
                                           GestureDetector(
                                         onTap: () {
+                                          playbackController.stopPlayback();
                                           showDialog(
                                             context: context,
                                             barrierDismissible: true,
@@ -224,8 +224,7 @@ class _DrumSheetPlayerState extends State<DrumSheetPlayer> {
                                               },
                                               onCancel: () {
                                                 Navigator.of(context).pop();
-                                                playbackController
-                                                    .stopPlayback(); // 취소하면 정지 상태
+                                                // 이미 멈춰있으니 추가 동작 불필요
                                               },
                                             ),
                                           );
@@ -240,7 +239,11 @@ class _DrumSheetPlayerState extends State<DrumSheetPlayer> {
                                               right: s == 2.0 ? 0 : 15),
                                           child: GestureDetector(
                                             onTap: () {
-                                              playbackController.setSpeed(s);
+                                              // 재생 중일 때는 배속 변경 못하도록 함
+                                              if (!playbackController
+                                                  .isPlaying) {
+                                                playbackController.setSpeed(s);
+                                              }
                                             },
                                             child: Text(
                                               '${s}x',
@@ -320,24 +323,33 @@ class _DrumSheetPlayerState extends State<DrumSheetPlayer> {
                       ),
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(5),
-                        child: Stack(
-                          children: [
-                            if (playbackController.isPlaying ||
-                                playbackController.isCountingDown)
-                              CursorWidget(
-                                cursor: playbackController.currentCursor,
-                                imageWidth: MediaQuery.of(context).size.width,
-                                canvasWidth: playbackController.canvasWidth,
-                                height: imageHeight,
-                              ),
-                            if (playbackController.currentLineImage != null)
-                              Image.memory(
-                                playbackController.currentLineImage!,
-                                width: double.infinity,
-                                height: imageHeight,
-                                fit: BoxFit.fitWidth,
-                              ),
-                          ],
+                        child: LayoutBuilder(
+                          builder: (context, constraints) {
+                            // 실제 악보가 그려지는 폭
+                            final displayWidth = constraints.maxWidth;
+                            return Stack(
+                              children: [
+                                // 재생했거나 재생 중이거나 재생 끝난 뒤에도(=paused 상태 포함) 커서 계속 표시
+                                if (playbackController.currentDuration >
+                                        Duration.zero ||
+                                    playbackController.isPlaying ||
+                                    playbackController.currentDuration >=
+                                        playbackController.totalDuration)
+                                  CursorWidget(
+                                    cursor: playbackController.currentCursor,
+                                    imageWidth: displayWidth,
+                                    height: imageHeight,
+                                  ),
+                                if (playbackController.currentLineImage != null)
+                                  Image.memory(
+                                    playbackController.currentLineImage!,
+                                    width: displayWidth,
+                                    height: imageHeight,
+                                    fit: BoxFit.fitWidth,
+                                  ),
+                              ],
+                            );
+                          },
                         ),
                       ),
                     ),

@@ -26,7 +26,6 @@ class CursorWidget extends StatelessWidget {
   final Cursor cursor;
   final double? height;
   final double? imageWidth;
-  final double? canvasWidth;
   final BoxDecoration decoration;
 
   const CursorWidget({
@@ -34,7 +33,6 @@ class CursorWidget extends StatelessWidget {
     required this.cursor,
     this.height,
     this.imageWidth,
-    this.canvasWidth,
     this.decoration = const BoxDecoration(
       color: Color(0xffe6aaa0),
       borderRadius: BorderRadius.all(Radius.circular(4)),
@@ -44,20 +42,14 @@ class CursorWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // 1) X 위치 계산: ratio 기반으로 canvasWidth 쓰기
-    final double adjustedX;
-    if (cursor.xRatio != null && canvasWidth != null) {
-      adjustedX = cursor.xRatio! * canvasWidth!;
-    } else {
-      adjustedX = cursor.x;
-    }
+    final double adjustedX = (cursor.xRatio != null && imageWidth != null)
+        ? cursor.xRatio! * imageWidth!
+        : cursor.x;
 
     // 2) Y 위치 계산: yRatio가 있으면 height(=imageHeight)*yRatio, 없으면 cursor.y
-    final double adjustedY;
-    if (cursor.yRatio != null && height != null) {
-      adjustedY = cursor.yRatio! * height!;
-    } else {
-      adjustedY = cursor.y;
-    }
+    final double adjustedY = (cursor.yRatio != null && height != null)
+        ? cursor.yRatio! * height!
+        : cursor.y;
 
     // 3) adjustedCursor 로 치환
     final adjustedCursor = cursor.copyWith(

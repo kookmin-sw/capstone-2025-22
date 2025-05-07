@@ -25,12 +25,10 @@ class PlaybackController {
   double currentProgress = 0.0; // 전체 대비 현재 진행 비율 (0.0 ~ 1.0)
 
   // 페이지 / 줄 이동 관리
-  int totalLines = 1; // 전체 줄 수
   int currentPage = 0; // 현재 재생 중인 줄 인덱스
 
   // 커서 데이터
   List<Cursor> fullCursorList = []; // 전체 커서 리스트 (진행 시간 계산용)
-  List<List<Cursor>> lineCursorLists = []; // 줄별 커서 리스트
   Cursor currentCursor = Cursor.createEmpty();
 
   // 줄별 악보 이미지 관련
@@ -54,40 +52,35 @@ class PlaybackController {
     print('📊 Loaded full cursor list: ${fullCursorList.length} cursors');
 
     lineImages = sheetInfo!.lineImages;
-    totalLines = lineImages.length;
 
-    lineCursorLists = _splitCursorByLine(sheetInfo!);
-    print('📊 Split into ${lineCursorLists.length} lines');
-    for (var i = 0; i < lineCursorLists.length; i++) {
-      print('Line $i has ${lineCursorLists[i].length} cursors');
-    }
+    // ➊ 전체 리스트로 한 번만 컨트롤러 생성
+    _cursorController?.dispose();
+    _cursorController = CursorController(
+      cursorList: fullCursorList,
+      bpm: sheetInfo!.bpm.toDouble(),
+      speed: speed,
+      onCursorMove: _handleCursorMove,
+    );
 
     currentPage = 0;
     currentLineImage = lineImages.isNotEmpty ? lineImages[0] : null;
     nextLineImage = lineImages.length > 1 ? lineImages[1] : null;
-
-    _initializeCursorController();
-    if (lineCursorLists.isNotEmpty && lineCursorLists[0].isNotEmpty) {
-      updateCursorWidget(lineCursorLists[0].first);
-    } else {
-      currentCursor = Cursor.createEmpty();
-    }
   }
 
-  void _initializeCursorController() {
-    if (lineCursorLists.isEmpty || currentPage >= lineCursorLists.length) {
-      return;
-    }
+  /// 커서가 이동할 때마다 호출됩니다.
+  void _handleCursorMove(Cursor cursor) {
+    // 1) 위치 업데이트
+    updateCursorWidget(cursor);
 
-    _cursorController?.dispose(); // 기존 커서 컨트롤러 정리
-    _cursorController = CursorController(
-      cursorList: lineCursorLists[currentPage], // 현재 줄의 커서 리스트
-      bpm: sheetInfo!.bpm.toDouble(),
-      speed: speed,
-      onCursorMove: (cursor) {
-        updateCursorWidget(cursor); // 커서 이동할 때마다 호출
-      },
-    );
+    // 2) 줄이 바뀌면 이미지 교체
+    if (cursor.lineIndex != currentPage) {
+      currentPage = cursor.lineIndex;
+      currentLineImage = lineImages[currentPage];
+      nextLineImage = (currentPage + 1 < lineImages.length)
+          ? lineImages[currentPage + 1]
+          : null;
+      onPageChange?.call(currentPage);
+    }
   }
 
   void updateCursorWidget(Cursor cursor) {
@@ -112,25 +105,6 @@ class PlaybackController {
       y: adjustedY,
     );
     currentCursor = adjustedCursor;
-  }
-
-  List<List<Cursor>> _splitCursorByLine(SheetInfo sheetInfo) {
-    // 1) lineIndex별로 그룹핑
-    final Map<int, List<Cursor>> byLine = {};
-    for (var c in sheetInfo.cursorList) {
-      final idx = c.lineIndex;
-      byLine.putIfAbsent(idx, () => []).add(c);
-    }
-    // 2) 순서대로 꺼내기 (없는 줄은 빈 리스트)
-    final total = sheetInfo.lineImages.length;
-    final lists = List.generate(total, (i) => byLine[i] ?? <Cursor>[]);
-
-    // 3) 각 줄 안에서는 ts(타임스탬프) 순으로 정렬
-    for (var line in lists) {
-      line.sort((a, b) => a.ts.compareTo(b.ts));
-    }
-
-    return lists;
   }
 
   // 전체 재생 시간 세팅 (진행바 계산, 재생 완료 판별용)
@@ -167,42 +141,6 @@ class PlaybackController {
     }
   }
 
-  Future<void> _goToNextPage() async {
-    if (currentPage + 1 >= totalLines) {
-      print('🎵 Reached last page, stopping playback');
-      stopPlayback();
-      return;
-    }
-
-    print('🔄 Moving to next page: ${currentPage + 1}');
-    currentPage++;
-
-    // 현재 줄 이미지 업데이트
-    if (currentPage < lineImages.length) {
-      currentLineImage = lineImages[currentPage];
-    }
-
-    // 다음 줄 미리보기 이미지 업데이트
-    if (currentPage + 1 < lineImages.length) {
-      nextLineImage = lineImages[currentPage + 1];
-    } else {
-      nextLineImage = null;
-    }
-
-    // 커서 컨트롤러 재초기화
-    _cursorController?.stop();
-    _initializeCursorController();
-    _cursorController?.start();
-
-    // 첫 번째 커서로 이동
-    if (lineCursorLists.length > currentPage &&
-        lineCursorLists[currentPage].isNotEmpty) {
-      updateCursorWidget(lineCursorLists[currentPage].first);
-    }
-
-    onPageChange?.call(currentPage);
-  }
-
   // Timer 콜백 : 재생 시간 업데이트 + 줄 이동 관리
   void _onProgressTick(Timer timer) async {
     if (!isPlaying || playbackStartTime == null) {
@@ -228,24 +166,10 @@ class PlaybackController {
         onProgressUpdate?.call(currentProgress);
       }
 
-      // 현재 줄의 마지막 커서 시간 체크
-      if (lineCursorLists.isNotEmpty &&
-          currentPage < lineCursorLists.length &&
-          lineCursorLists[currentPage].isNotEmpty) {
-        final currentLineCursors = lineCursorLists[currentPage];
-        final lastCursor = currentLineCursors.last;
-        final currentCursor = _cursorController?.getCurrentCursor();
-
-        if (currentCursor != null && currentCursor.ts >= lastCursor.ts) {
-          // 현재 줄의 마지막 커서에 도달했으면 다음 줄로 이동
-          await _goToNextPage();
-        }
-      }
-
       // 전체 재생 완료 여부 체크
       if (currentDuration >= totalDuration) {
-        timer.cancel();
         stopPlayback();
+        return;
       }
     } catch (e) {
       debugPrint("Error in _onProgressTick: $e");
@@ -262,25 +186,32 @@ class PlaybackController {
   }
 
   void resetToStart() {
-    stopPlayback(); // 재생 중지
-    currentDuration = Duration.zero; // 현재 재생 시간 초기화
-    currentProgress = 0.0; // 진행도 리셋
-    currentPage = 0; // 첫 번째 줄로 이동
-
+    // 1) 타이머 & 컨트롤러 모두 중지
+    stopPlayback();
+    // 2) 진행 상태만 리셋
+    currentDuration = Duration.zero;
+    currentProgress = 0.0;
+    // 3) 첫 페이지 & 이미지로 초기화
+    currentPage = 0;
     if (lineImages.isNotEmpty) {
       currentLineImage = lineImages[0];
       nextLineImage = lineImages.length > 1 ? lineImages[1] : null;
     }
 
+    // 4) 콜백으로 화면 갱신
     onProgressUpdate?.call(currentProgress); // 진행바 0으로 초기화
     onPageChange?.call(currentPage); // 화면 줄 이동 콜백
 
+    // 5) 커서 컨트롤러 위치만 초기화 (재시작은 하지 않음)
     _cursorController?.stop();
-    _initializeCursorController();
-    _cursorController?.start();
+    if (fullCursorList.isNotEmpty) {
+      updateCursorWidget(fullCursorList.first);
+    }
   }
 
   void showCountdownAndStart() {
+    _cursorController?.stop();
+
     isCountingDown = true;
     countdown = 3;
     onCountdownUpdate?.call(countdown);
@@ -318,7 +249,8 @@ class PlaybackController {
     }
 
     final secondsPerBeat = 60 / bpm; // 1박자당 걸리는 초 계산
-    final durationInBeats = lastTS - firstTS; // 시작 커서와 끝 커서 박자 차이 계산
+    final durationInBeats =
+        (lastTS - firstTS) + speed; // 시작 커서와 끝 커서 박자 차이 계산 + 1박자 여유 두기
     final durationMs =
         (durationInBeats * secondsPerBeat * 1000).toInt(); // 전체 곡 재생 시간 계산
     totalDuration = Duration(milliseconds: durationMs);
@@ -331,30 +263,12 @@ class PlaybackController {
   }
 
   void setSpeed(double newSpeed) {
-    final wasPlaying = isPlaying;
+    // 1) speed 값만 업데이트
+    speed = newSpeed;
+    _cursorController?.setSpeed(newSpeed);
 
-    // 재생 중이면 일시 중지
-    if (isPlaying) {
-      progressTimer?.cancel();
-      _cursorController?.stop();
-    }
-
-    speed = newSpeed; // 배속 변경
-    _cursorController?.setSpeed(newSpeed); // 커서 이동 배속 변경
-    onPlaybackStateChange?.call(isPlaying); // 재생 중인지 여부 콜백
-
-    if (wasPlaying) {
-      // 재생 중이었던 경우 속도 적용된 재생으로 재설정
-      playbackStartTime = DateTime.now().subtract(Duration(
-        milliseconds: (currentDuration.inMilliseconds / speed).round(),
-      ));
-
-      progressTimer = Timer.periodic(
-        Duration(milliseconds: (100 ~/ speed).round()),
-        _onProgressTick,
-      );
-      _cursorController?.start(); // 커서 이동 재시작
-    }
+    // 2) UI 리빌드용 콜백 (선택)
+    onPlaybackStateChange?.call(isPlaying);
   }
 
   void dispose() {

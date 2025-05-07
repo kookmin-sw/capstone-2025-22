@@ -60,7 +60,7 @@ class CursorController {
     _timer?.cancel();
   }
 
-  // 재시작작
+  // 재시작
   void resume() {
     // 이미 currentIndex가 마지막으로 멈춘 상태이므로
     // 다음 스텝 예약만 해 주면 됨
