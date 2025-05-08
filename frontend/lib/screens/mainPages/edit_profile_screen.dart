@@ -53,7 +53,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       'profile_image.png'; // 앱 내 임시 저장할 프로필 사진 파일 이름
   static const String defaultProfileImagePath =
       "assets/images/default_profile.jpg"; // 	프로필 이미지가 없을 때 보여줄 기본 이미지 경로
-  static const String baseUrl = 'http://10.0.2.2:28080';
+  static const String baseUrl = 'http://34.68.164.98:28080';
 
   /// 앱이 실행되면 자동으로 secure storage에서 사용자 정보를 불러옴
   @override
@@ -82,9 +82,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   /// 서버에서 프로필 사진 가져오는 함수(api 사용)
   Future<void> _fetchUserProfile() async {
     try {
-      final response = await putHTTP(
-          '/users/profile', {}, {'nickname': nickName},
-          reqHeader: {'authorization': accessToken});
+      final response = await getHTTP('/users/email', {'email': email});
 
       if (response['errorMessage'] == null) {
         final body = response['body'];
@@ -274,6 +272,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   /// 사용자 정보 저장 (secure storage)
   Future<void> _saveUserData(Map<String, dynamic> userData) async {
+    await _storage.write(key: 'profile_image', value: userData['profileImage']);
     await _storage.write(key: 'nick_name', value: userData['nickname']);
   }
 
