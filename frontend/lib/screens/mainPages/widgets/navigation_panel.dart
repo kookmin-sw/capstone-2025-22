@@ -23,13 +23,15 @@ class NavigationPanel extends StatelessWidget {
       child: Column(
         // 네비게이션 바 메뉴
         children: [
-          SizedBox(height: 35),
-          Text("알려드럼 로고",
-              style: TextStyle(
-                  fontSize: 17,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.redAccent)),
           SizedBox(height: 20),
+          Container(
+            alignment: Alignment.center,
+            child: Image.asset('assets/images/appLogo.png'),
+            height: 55,
+          ),
+          SizedBox(
+            height: 15,
+          ),
           // 네비게이션 바 메뉴 아이템
           _navItem(FaIcon(FontAwesomeIcons.drum), "드럼 기초", 0),
           _navItem(FaIcon(FontAwesomeIcons.handsClapping), "메트로놈", 1),
