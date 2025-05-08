@@ -7,10 +7,10 @@ Future<Map<String, dynamic>> getHTTP(
     String endpoint, Map<String, dynamic> queryParam,
     {Map<String, dynamic> reqHeader = const {}}) async {
   try {
-    print("GET 요청 시작 --");
+    print("GET 요청 시작 -- ${endpoint}");
 
     final uri = Uri.http(
-      serverAddr, // 서버 주소 : 현재 애뮬레이터 10.0.2.2:28080
+      serverAddr, // 서버 주소
       endpoint, // API 엔드포인트
       queryParam,
     );
@@ -62,7 +62,7 @@ Future<Map<String, dynamic>> postHTTP(String endpoint,
     Map<String, dynamic>? requestBody, // requestBody를 nullable로 변경
     {Map<String, dynamic> reqHeader = const {}}) async {
   try {
-    print("POST 요청 시작 --");
+    print("POST 요청 시작 -- ${endpoint}");
     final uri = Uri.parse("http://$serverAddr$endpoint"); // URL 생성
 
     // requestBody가 null일 경우 빈 본문을 전달
@@ -120,7 +120,7 @@ Future<Map<String, dynamic>> putHTTP(
     Map<String, dynamic>? requestBody, // requestBody를 nullable로 변경
     {Map<String, dynamic> reqHeader = const {}}) async {
   try {
-    print("PUT 요청 시작 --");
+    print("PUT 요청 시작 -- ${endpoint}");
 
     // 쿼리 파라미터가 있을 경우 URI에 포함, 없으면 기본 endpoint로 URI 생성
     final uri = queryParam != null
