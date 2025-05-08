@@ -96,6 +96,7 @@ flutter:
     - assets/images/notes/dot_quarter.png
     - assets/sounds/metronome_first.wav
     - assets/sounds/metronome_other.wav
+    - assets/images/appLogo.png
 
   #   - images/a_dot_burr.jpeg
   #   - images/a_dot_ham.jpeg
