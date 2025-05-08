@@ -8,17 +8,25 @@ import 'package:capstone_2025/widgets/openSheetModal.dart';
 import 'package:flutter/material.dart';
 
 class PracticeResultMS extends StatefulWidget {
-  const PracticeResultMS({super.key});
+  const PracticeResultMS(
+      {super.key,
+      required this.musicTitle,
+      required this.musicArtist,
+      required this.score});
+
+  final String musicTitle; // 제목
+  final String musicArtist; // 아티스트
+  final int score; // 점수
 
   @override
   State<PracticeResultMS> createState() => _PracticeResultMSState();
 }
 
 class _PracticeResultMSState extends State<PracticeResultMS> {
-  int score = 70; // 점수
+  late int score = widget.score; // 점수
   late bool isPerfect = (score == 100); // 퍼펙트 여부
-  String musicTitle = "그라데이션"; // 제목
-  String musicArtist = "10cm"; // 아티스트
+  late String musicTitle = widget.musicTitle; // 제목
+  late String musicArtist = widget.musicArtist; // 아티스트
 
   Widget resultKeyword(int score) {
     var keyword;
