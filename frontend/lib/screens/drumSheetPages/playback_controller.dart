@@ -24,6 +24,10 @@ class PlaybackController {
   Duration currentDuration = Duration.zero; // 현재 재생 시간
   double currentProgress = 0.0; // 전체 대비 현재 진행 비율 (0.0 ~ 1.0)
 
+  // 이전 상태 저장용 변수
+  int _lastCursorIndex = -1;
+  double _lastProgress = -1.0;
+
   // 페이지 / 줄 이동 관리
   int currentPage = 0; // 현재 재생 중인 줄 인덱스
 
@@ -50,8 +54,9 @@ class PlaybackController {
     sheetInfo = info;
     fullCursorList = sheetInfo!.cursorList;
     print('📊 Loaded full cursor list: ${fullCursorList.length} cursors');
-
     lineImages = sheetInfo!.lineImages;
+
+    calculateTotalDurationFromCursorList(sheetInfo!.bpm.toDouble());
 
     // ➊ 전체 리스트로 한 번만 컨트롤러 생성
     _cursorController?.dispose();
@@ -123,22 +128,10 @@ class PlaybackController {
     // 진행 업데이트를 위한 타이머 재설정 (기존 타이머 중지 후 새로 시작, 재생 속도 반영)
     progressTimer?.cancel();
     progressTimer = Timer.periodic(
-        Duration(milliseconds: (100 ~/ speed).round()), _onProgressTick);
-
+        Duration(milliseconds: (16 ~/ speed).clamp(1, 100)), _onProgressTick);
+    _cursorController?.start();
     isPlaying = true;
     onPlaybackStateChange?.call(isPlaying);
-
-    // 처음 시작하는 건지 재시작인지 구분
-    if (currentDuration == Duration.zero) {
-      // 새로 시작
-      _cursorController?.start();
-    } else {
-      // 재개(resume) 부분 직전에,
-      // 멈춘 순간의 커서 모양을 즉시 화면에 반영
-      final cur = _cursorController?.getCurrentCursor();
-      if (cur != null) updateCursorWidget(cur);
-      _cursorController?.resume();
-    }
   }
 
   // Timer 콜백 : 재생 시간 업데이트 + 줄 이동 관리
@@ -161,10 +154,25 @@ class PlaybackController {
 
       // 진행 퍼센트 업데이트 콜백 호출
       if (totalDuration.inMilliseconds > 0) {
-        currentProgress =
+        final newProgress =
             currentDuration.inMilliseconds / totalDuration.inMilliseconds;
-        onProgressUpdate?.call(currentProgress);
+        // 진행 퍼센트가 충분히 바뀌었을 때만 콜백
+        if ((newProgress - _lastProgress).abs() > 0.005) {
+          _lastProgress = newProgress;
+          onProgressUpdate?.call(newProgress);
+        }
       }
+      // 시간 기반으로 커서 위치 계산
+      // beat 단위로 변환: (재생된 초) × (BPM / 60)
+      // final playedSeconds = currentDuration.inMilliseconds / 1000.0;
+      // final beatTs = playedSeconds * (sheetInfo!.bpm / 60.0);
+      // final cursor = _cursorController!.getCursorAtBeat(beatTs);
+      // // 새로 얻은 커서의 리스트 인덱스(혹은 measureNumber)를 저장해 두었다가 비교
+      // final newIndex = cursor.measureNumber * 100 + (cursor.ts * 100).toInt();
+      // if (newIndex != _lastCursorIndex) {
+      //   _lastCursorIndex = newIndex;
+      //   _handleCursorMove(cursor);
+      // }
 
       // 전체 재생 완료 여부 체크
       if (currentDuration >= totalDuration) {
@@ -236,26 +244,29 @@ class PlaybackController {
       return;
     }
 
-    // 혹시 모를 ts 오름차순 정렬
+    // ts 오름차순 정렬
     fullCursorList.sort((a, b) => a.ts.compareTo(b.ts));
 
-    final firstTS = fullCursorList.first.ts;
+    // 1) 마지막 ts (beat 단위)
     final lastTS = fullCursorList.last.ts;
 
-    if (firstTS == lastTS || lastTS < firstTS) {
-      debugPrint("❗ 타임스탬프가 이상함. 재생 시간 계산 생략");
-      totalDuration = Duration.zero;
-      return;
-    }
+    // 2) 올바른 buffer: “마지막 음표 길이(beat 단위)”
+    final prevTS = (fullCursorList.length >= 2)
+        ? fullCursorList[fullCursorList.length - 2].ts
+        : lastTS - 1.0;
+    // 최소 1박자 이상 버퍼
+    final rawInterval = (lastTS > prevTS) ? lastTS - prevTS : 1.0;
+    final extraBeat = rawInterval < 1.0 ? 1.0 : rawInterval;
 
-    final secondsPerBeat = 60 / bpm; // 1박자당 걸리는 초 계산
-    final durationInBeats =
-        (lastTS - firstTS) + speed; // 시작 커서와 끝 커서 박자 차이 계산 + 1박자 여유 두기
-    final durationMs =
-        (durationInBeats * secondsPerBeat * 1000).toInt(); // 전체 곡 재생 시간 계산
+    // 3) 전체 박자 수 = 마지막 위치 + buffer
+    final totalBeats = lastTS + extraBeat;
+    final secondsPerBeat = 60 / bpm;
+    final durationMs = (totalBeats * secondsPerBeat * 1000).round();
+
     totalDuration = Duration(milliseconds: durationMs);
-
-    debugPrint("⏱️ 총 재생 시간(ms): $durationMs");
+    debugPrint("⏱️ BPM:$bpm, speed:$speed×, " +
+        "마지막음표길이=$extraBeat 박자, " +
+        "총박자=$totalBeats, 재생시간=${durationMs}ms");
   }
 
   void _onCountdownComplete() {
@@ -265,6 +276,7 @@ class PlaybackController {
   void setSpeed(double newSpeed) {
     // 1) speed 값만 업데이트
     speed = newSpeed;
+    calculateTotalDurationFromCursorList(sheetInfo!.bpm.toDouble());
     _cursorController?.setSpeed(newSpeed);
 
     // 2) UI 리빌드용 콜백 (선택)
