@@ -8,6 +8,15 @@ import './widgets/cursor_widget.dart';
 import 'playback_controller.dart';
 import './widgets/confirmation_dialog.dart';
 import '../../services/osmd_service.dart';
+import 'dart:io';
+import 'package:flutter_sound/flutter_sound.dart' as fs;
+import 'package:flutter_sound/public/flutter_sound_recorder.dart';
+import 'package:stomp_dart_client/stomp_dart_client.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:xml/xml.dart';
+import 'package:path_provider/path_provider.dart';
+import '../../widgets/drum_recording_widget.dart';
 
 class DrumSheetPlayer extends StatefulWidget {
   const DrumSheetPlayer({super.key});
@@ -20,6 +29,24 @@ class _DrumSheetPlayerState extends State<DrumSheetPlayer> {
   late PlaybackController playbackController;
   late OSMDService osmdService;
   bool _isControllerInitialized = false;
+  // 녹음/웹소켓 관련 변수
+  late fs.FlutterSoundRecorder _recorder;
+  late StompClient _stompClient;
+  final _storage = const FlutterSecureStorage();
+  Timer? _recordingDataTimer;
+  String? _recordingPath;
+  bool _isRecording = false;
+  bool _webSocketConnected = false;
+  String _userEmail = '';
+  int _beatsPerMeasure = 4;
+  int _totalMeasures = 1;
+  double _bpm = 60.0;
+  int _currentMeasure = 0;
+
+  // DrumRecordingWidget 관련 변수
+  final GlobalKey<DrumRecordingWidgetState> _drumRecordingKey = GlobalKey();
+  List<dynamic> _detectedOnsets = [];
+  final String _recordingStatusMessage = '';
 
   @override
   void didChangeDependencies() {
@@ -47,6 +74,8 @@ class _DrumSheetPlayerState extends State<DrumSheetPlayer> {
   @override
   void initState() {
     super.initState();
+    _initRecorder();
+    _setupWebSocket();
 
     // OSMDService 초기화할 때 onDataLoaded 연결
     osmdService = OSMDService(
@@ -112,6 +141,105 @@ class _DrumSheetPlayerState extends State<DrumSheetPlayer> {
   void dispose() {
     playbackController.dispose();
     super.dispose();
+  }
+
+  Future<void> _initRecorder() async {
+    var status = await Permission.microphone.request();
+    if (status != PermissionStatus.granted) {
+      throw fs.RecordingPermissionException('마이크 권한이 부여되지 않았습니다.');
+    }
+    _recorder = fs.FlutterSoundRecorder();
+    await _recorder.openRecorder();
+    final appDocDir = await getApplicationDocumentsDirectory();
+    _recordingPath = '${appDocDir.path}/drum_performance.wav';
+  }
+
+  Future<void> _setupWebSocket() async {
+    final token = await _storage.read(key: 'access_token');
+    _userEmail = await _storage.read(key: 'user_email') ?? 'test@example.com';
+    _stompClient = StompClient(
+      config: StompConfig.sockJS(
+        url: 'http://34.68.164.98:28080/ws/audio',
+        onConnect: (StompFrame frame) {
+          print('✅ WebSocket 연결 완료!');
+          _webSocketConnected = true;
+        },
+        beforeConnect: () async => print('🌐 WebSocket 연결 시도 중...'),
+        onWebSocketError: (dynamic error) {
+          print('❌ WebSocket 오류 발생: $error');
+        },
+        onDisconnect: (frame) {
+          print('🔌 WebSocket 연결 끊어짐');
+          _webSocketConnected = false;
+        },
+        stompConnectHeaders: {
+          'Authorization': token ?? '',
+        },
+      ),
+    );
+    _stompClient.activate();
+  }
+
+  Future<void> _startRecording() async {
+    if (_isRecording) return;
+    if (!_webSocketConnected) {
+      print('❌ 녹음을 시작할 수 없습니다: WebSocket이 연결되지 않았습니다.');
+      return;
+    }
+    await _recorder.startRecorder(
+      toFile: _recordingPath,
+      codec: fs.Codec.pcm16WAV,
+      sampleRate: 16000,
+      numChannels: 1,
+      bitRate: 16000,
+    );
+    _isRecording = true;
+    _currentMeasure = 0;
+    final measureSeconds = (_beatsPerMeasure * 60.0) / _bpm;
+    _recordingDataTimer =
+        Timer.periodic(Duration(seconds: measureSeconds.toInt()), (timer) {
+      _sendRecordingDataWithMeasure();
+    });
+  }
+
+  Future<void> _stopRecording() async {
+    if (!_isRecording) return;
+    _recordingDataTimer?.cancel();
+    await _recorder.stopRecorder();
+    _isRecording = false;
+    print('🎙️ 녹음 종료');
+  }
+
+  Future<void> _sendRecordingDataWithMeasure() async {
+    if (!_stompClient.connected) {
+      print('❌ WebSocket 연결이 되지 않아 데이터 전송 실패');
+      return;
+    }
+    try {
+      final file = File(_recordingPath!);
+      if (await file.exists()) {
+        final base64String = base64Encode(await file.readAsBytes());
+        final message = {
+          'email': _userEmail,
+          'message': base64String,
+          'currentMeasure': _currentMeasure,
+          'totalMeasures': _totalMeasures
+        };
+        print(
+            '📤 녹음 데이터 전송: ${DateTime.now()} (마디: ${_currentMeasure + 1}/$_totalMeasures)');
+        _stompClient.send(
+          destination: '/app/audio/forwarding',
+          body: json.encode(message),
+          headers: {'content-type': 'application/json'},
+        );
+        _currentMeasure++;
+        if (_currentMeasure >= _totalMeasures) {
+          _stopRecording();
+        }
+      }
+    } catch (e) {
+      print('❌ 녹음 데이터 전송 중 오류 발생: $e');
+    }
   }
 
   @override
@@ -269,9 +397,22 @@ class _DrumSheetPlayerState extends State<DrumSheetPlayer> {
                       ),
                       Center(
                         child: GestureDetector(
-                          onTap: () => playbackController.isPlaying
-                              ? playbackController.stopPlayback()
-                              : playbackController.showCountdownAndStart(),
+                          onTap: () {
+                            if (playbackController.isPlaying) {
+                              playbackController.stopPlayback();
+                              // 녹음 중지
+                              _drumRecordingKey.currentState?.stopRecording();
+                            } else {
+                              // 녹음 시작
+                              _drumRecordingKey.currentState?.startCountdown(
+                                onCountdownComplete: () {
+                                  _drumRecordingKey.currentState
+                                      ?.startRecording();
+                                  playbackController.showCountdownAndStart();
+                                },
+                              );
+                            }
+                          },
                           child: playbackController.isPlaying
                               ? Container(
                                   width: 52,
@@ -450,6 +591,21 @@ class _DrumSheetPlayerState extends State<DrumSheetPlayer> {
                     ],
                   ),
                 ),
+
+                // 녹음 상태 메시지 표시
+                if (_recordingStatusMessage.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: Text(
+                      _recordingStatusMessage,
+                      style: const TextStyle(
+                        color: Color(0xFFE5958B),
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
               ],
             ),
           ),
@@ -498,6 +654,38 @@ class _DrumSheetPlayerState extends State<DrumSheetPlayer> {
                 ),
               ),
             ),
+
+          // DrumRecordingWidget 추가 (보이지 않지만 기능 사용)
+          Offstage(
+            offstage: true,
+            child: DrumRecordingWidget(
+              key: _drumRecordingKey,
+              title: playbackController.sheetInfo?.title ?? '',
+              xmlFilePath: 'assets/music/demo.xml',
+              audioFilePath: 'assets/music/demo.wav',
+              onRecordingComplete: (onsets) {
+                setState(() {
+                  _detectedOnsets = onsets;
+                });
+              },
+              onOnsetsReceived: (onsets) {
+                setState(() {
+                  _detectedOnsets = onsets;
+                });
+              },
+              onMusicXMLParsed: (info) {
+                setState(() {
+                  _beatsPerMeasure = info['beatsPerMeasure'] as int;
+                  _totalMeasures = info['totalMeasures'] as int;
+                  _bpm = info['bpm'] as double;
+                });
+              },
+            ),
+          ),
+
+          // DrumRecordingWidget의 카운트다운 오버레이 표시
+          if (_drumRecordingKey.currentState != null)
+            _drumRecordingKey.currentState!.buildCountdownOverlay(),
         ],
       ),
     );
