@@ -34,6 +34,9 @@ class DrumRecordingWidget extends StatefulWidget {
   /// 온셋 데이터 수신 시 호출될 콜백
   final Function(List<dynamic> onsets)? onOnsetsReceived;
 
+  /// MusicXML 파싱 결과를 부모 위젯에 전달하기 위한 콜백
+  final Function(Map<String, dynamic>)? onMusicXMLParsed;
+
   const DrumRecordingWidget({
     super.key,
     required this.title,
@@ -42,6 +45,7 @@ class DrumRecordingWidget extends StatefulWidget {
     this.onRecordingComplete,
     this.onMeasureUpdate,
     this.onOnsetsReceived,
+    this.onMusicXMLParsed,
   });
 
   @override
@@ -228,6 +232,20 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
     }
   }
 
+  /// 마디 타이밍 정보 설정
+  void setMeasureInfo(Map<String, dynamic> info) {
+    if (_isDisposed) return;
+
+    setState(() {
+      _beatsPerMeasure = info['beatsPerMeasure'] as int;
+      _beatType = info['beatType'] as int;
+      _totalMeasures = info['totalMeasures'] as int;
+      _totalDuration = info['totalDuration'] as double;
+    });
+
+    print('✅ DrumRecordingWidget: 마디 정보 업데이트 완료');
+  }
+
   Future<void> _parseMusicXML() async {
     if (_isDisposed) return;
 
@@ -244,15 +262,49 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
       // 총 마디 수 계산
       _totalMeasures = document.findAllElements('measure').length;
 
-      // 총 재생 시간 계산 (초)
-      // 4/4박자에서 60BPM일 때 한 마디 = 4초
-      _totalDuration =
-          (_totalMeasures * _beatsPerMeasure * 60.0) / (_beatType * _baseBpm);
+      // BPM 추출
+      double? parsedBpm;
+      final soundElem = document.findAllElements('sound').firstOrNull;
+      if (soundElem != null && soundElem.getAttribute('tempo') != null) {
+        parsedBpm = double.tryParse(soundElem.getAttribute('tempo')!);
+      }
+      if (parsedBpm == null) {
+        final perMinuteElem =
+            document.findAllElements('per-minute').firstOrNull;
+        if (perMinuteElem != null) {
+          parsedBpm = double.tryParse(perMinuteElem.text);
+        }
+      }
+      if (parsedBpm == null) {
+        final bpmElem = document.findAllElements('bpm').firstOrNull;
+        if (bpmElem != null) {
+          parsedBpm = double.tryParse(bpmElem.text);
+        }
+      }
+      final bpm = parsedBpm ?? 60.0;
 
-      print('🎵 MusicXML 파싱 결과:');
+      // 총 재생 시간 계산 (초)
+      final measureDuration = (_beatsPerMeasure * 60.0) / bpm;
+      _totalDuration = _totalMeasures * measureDuration;
+
+      print('🎼≪MusicXML 파싱 결과≫🎼');
       print('박자: $_beatsPerMeasure/$_beatType');
       print('총 마디 수: $_totalMeasures');
+      print('BPM: $bpm');
+      print('한 마디 시간: ${measureDuration.toStringAsFixed(2)}초');
       print('총 재생 시간: ${_totalDuration.toStringAsFixed(2)}초');
+
+      // 부모 위젯에 파싱 결과 전달
+      if (widget.onMusicXMLParsed != null && !_isDisposed) {
+        widget.onMusicXMLParsed!({
+          'beatsPerMeasure': _beatsPerMeasure,
+          'beatType': _beatType,
+          'totalMeasures': _totalMeasures,
+          'bpm': bpm,
+          'totalDuration': _totalDuration,
+          'measureDuration': measureDuration,
+        });
+      }
     } catch (e) {
       print('❌ MusicXML 파싱 오류: $e');
     }
