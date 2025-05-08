@@ -5,6 +5,7 @@ const cursorHeight = 100;
 // 전역 변수 정의
 let xmlData = "";
 let BPM = 60; // 기본 BPM 값
+let beatsPerMeasure = 4; // 박자 값 (4/4인 경우 4, 3/4인 경우 3...)
 let isRendered = false; // 렌더링 완료 여부 체크 변수
 
 const defaultOptions = {
@@ -120,10 +121,10 @@ async function cropLineImages(fullCanvas, osmd) {
     // 2줄마다 한 번씩 이벤트루프 양보 (UI 프리징 방지)
     if (i % 2 === 1) await new Promise(requestAnimationFrame); 
   }
-  console.log(`✅ 생성된 이미지 수: ${images.length}`);
   return { images, bounds };
 }
 
+// BPM 파싱하는 함수
 function extractBPMFromXML(xmlText) {
   const match = xmlText.match(/<sound[^>]*tempo=\"([\d.]+)\"/);
   if (match) {
@@ -133,22 +134,81 @@ function extractBPMFromXML(xmlText) {
   }
 }
 
+// time 서명(박자표) 파싱하는 함수
+function extractTimeSignatureFromXML(xmlText) {
+  // <time>…<beats>X</beats>…</time> 중 X를 꺼냄
+  const match = xmlText.match(/<time>[\s\S]*?<beats>(\d+)<\/beats>/);
+  if (match) {
+    beatsPerMeasure = parseInt(match[1], 10);
+  } else {
+    console.warn("Time signature (<beats>) 태그를 찾지 못했습니다.");
+  }
+}
+
 function getCursorList(osmdCursor, lineBounds) {
-  const cursorList = [];
+  // 1) 실제 음표(ts)만 모은 rawCursorList 생성
+  const rawCursorList = [];
   osmdCursor.show();
   try {
     while (!osmdCursor.iterator.endReached) {
-      // 직접 박자 정보(ts)와 커서 Element 위치를 수집
-      const cursorInfo = getCursorInfo(osmdCursor, lineBounds);
-      cursorList.push(cursorInfo);
-      osmdCursor.next();              
+      // 실제 음표(VoiceEntry)가 있는 틱만 필터
+      const visible = osmdCursor.iterator.CurrentVisibleVoiceEntries();
+      if (visible.length > 0) {
+        rawCursorList.push( getCursorInfo(osmdCursor, lineBounds) );
+      }
+      osmdCursor.next();
     }
   } catch (e) {
     console.error("❗ 커서 위치 수집 중 오류 발생", e);
   }
   osmdCursor.hide();
-  console.log(`📊 Total cursors generated: ${cursorList.length}`);
-  return cursorList;
+  console.log(`📊 Raw cursors: ${rawCursorList.length}`);
+
+  // 2) rawCursorList → fullCursorList: 휴지(rest) 구간을 1-beat 단위로 채움
+  const fullCursorList = [];
+  for (let i = 0; i < rawCursorList.length - 1; i++) {
+    const curr = rawCursorList[i];
+    const next = rawCursorList[i + 1];
+
+    // 2-1) 실제 음표 포인트
+    fullCursorList.push(curr);
+
+    // 2-2) 마디 사이 휴지 구간
+    //    next.ts와 curr.ts 사이가 1 beat 이상이면,
+    //    Math.ceil(curr.ts)+1  부터 Math.floor(next.ts) 까지 1씩 추가
+    const startBeat = Math.ceil(curr.ts);
+    const endBeat   = Math.floor(next.ts);
+    for (let beat = startBeat; beat <= endBeat; beat++) {
+      // beat 만큼 ts를 옮긴 새로운 포인트 생성
+      fullCursorList.push({
+        ...curr,
+        ts: beat,
+      });
+    }
+  }
+  // 3) 마지막 실제 음표 포인트도 추가
+  if (rawCursorList.length > 0) {
+    fullCursorList.push(rawCursorList[rawCursorList.length - 1]);
+  }
+   // 4) 마지막 마디 끝(ts = (마지막 마디 인덱스 + 1) * beatsPerMeasure)까지
+   if (rawCursorList.length > 0) {
+    // rawCursorList 마지막 항목에서 measureNumber 가져오기 (0-based)
+    const lastRaw = rawCursorList[rawCursorList.length - 1];
+    const totalBeats = (lastRaw.measureNumber + 1) * beatsPerMeasure; // ex. 16 * 4 = 64
+    // fullCursorList 맨 끝 포인트
+    const lastFull = fullCursorList[fullCursorList.length - 1];
+    // lastFull.ts 다음 정수부터 totalBeats까지 반복
+    const startBeat = Math.floor(lastFull.ts) + 1;
+    for (let beat = startBeat; beat <= totalBeats; beat++) {
+      fullCursorList.push({
+        ...lastFull,
+        ts: beat,
+      });
+    }
+  }
+
+  console.log(`📊 Full cursors: ${fullCursorList.length}`);
+  return fullCursorList;
 }
 
 // 커서 위치·크기·타임스탬프 한꺼번에 계산
@@ -164,8 +224,10 @@ function getCursorInfo(osmdCursor, lineBounds) {
   const x    = xCss * cssFactor;
   const y    = yCss * cssFactor;
 
-  const ts = osmdCursor.iterator.currentTimeStamp.realValue;
-  const measureNumber = osmdCursor.iterator.CurrentMeasureIndex ?? -1;
+  const measureNumber = osmdCursor.iterator.CurrentMeasureIndex || 0;
+  
+  // OSMD는 16분음표(0.25)를 기준으로 타임스탬프를 계산하므로
+  const ts = osmdCursor.iterator.currentTimeStamp.realValue * 4;
 
   const measuresPerLine = osmd.EngravingRules.RenderXMeasuresPerLineAkaSystem || 4;
   const lineIndex = Math.floor(measureNumber / measuresPerLine);
@@ -184,6 +246,7 @@ function getCursorInfo(osmdCursor, lineBounds) {
     ? (yCss - cropTopCss) / (cropBotCss - cropTopCss)
     : 0;
 
+    
   return { x, y, w: cursorWidth, h: cursorHeight, ts, xRatio, yRatio, measureNumber, lineIndex };
 }
 
@@ -195,8 +258,9 @@ window.startOSMDFromFlutter = async function () {
   const xmlText = await window.flutter_inappwebview.callHandler("sendFileToOSMD");
   xmlData = xmlText; // 전역 저장
 
-  // BPM 추출 
+  // BPM, 박자 추출 
   extractBPMFromXML(xmlText);
+  extractTimeSignatureFromXML(xmlText);
 
   // OSMD 인스턴스 초기화
   const container = document.getElementById("osmdCanvas");
@@ -218,7 +282,6 @@ window.startOSMDFromFlutter = async function () {
   osmd.cursor.hide();
 
   await new Promise(resolve => setTimeout(resolve, 100)); // JS 이벤트 루프 돌기
-  await new Promise(requestAnimationFrame);
   await new Promise(requestAnimationFrame);
 
   const fullCanvas = container.querySelector("#osmdCanvasVexFlowBackendCanvas1");
