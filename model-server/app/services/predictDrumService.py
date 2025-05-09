@@ -5,12 +5,15 @@ import torch
 import librosa
 import soundfile as sf
 
-from model.inference import CNN_inference
-import model.utils as utils
+from app.model.inference import CNN_inference
+import app.model.utils as utils
 
 DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 TORCH_MEL_TRANSFORM = utils.get_mel_transform("torch")
-MODEL_PATH = "../model/drum_model_multiCNN_20_0.25wav_f1_0.92.pt"
+
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+MODEL_PATH = os.path.join(BASE_DIR, "model", "drum_model_multiCNN_20_0.25wav_f1_0.92.pt")
+
 
 def predict(segment_audio:BytesIO):
     # 메모리 버퍼에 WAV 데이터 작성

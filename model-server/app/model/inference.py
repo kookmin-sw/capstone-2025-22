@@ -3,8 +3,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-import utils
-from model import MultiCNN
+import app.model.utils as utils
+from app.model.model import MultiCNN
 
 MAX_FRAMES = 86
 
