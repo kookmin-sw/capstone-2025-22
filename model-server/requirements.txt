@@ -4,3 +4,7 @@ librosa
 soundfile
 numpy
 scipy
+pydub
+torch
+torchaudio
+matplotlib
