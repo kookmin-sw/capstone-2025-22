@@ -16,8 +16,11 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-webflux'
     // eureka-client
     implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
+    // redis
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis-reactive'
     // common module
     implementation project(':common')
+    implementation project(':common-redis')
     // stomp
     implementation("org.springframework.boot:spring-boot-starter-websocket")
     // kafka
