@@ -1,10 +1,8 @@
 package com.capstone.service;
 
-import com.capstone.dto.OnsetMatchResult;
+import com.capstone.dto.score.OnsetMatchResult;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 public class DTWMatcher {
