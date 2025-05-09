@@ -4,13 +4,12 @@ import com.capstone.client.AudioModelClient;
 import com.capstone.client.MusicClientService;
 import com.capstone.config.EmbeddedRedisConfig;
 import com.capstone.constants.DrumInstrument;
-import com.capstone.dto.OnsetMatchResult;
+import com.capstone.dto.score.OnsetMatchResult;
 import com.capstone.dto.musicXml.MeasureInfo;
 import com.capstone.dto.musicXml.NoteInfo;
 import com.capstone.dto.musicXml.PitchInfo;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
@@ -55,22 +54,15 @@ class AudioMessageConsumerTest {
     }
 
     @Test
-    void getScore() {
+    void calculateScore() {
         // given
-        String[] answerPredictions = new String[]{DrumInstrument.TOM, DrumInstrument.TOM};
-        String[] userPredictions = new String[]{DrumInstrument.TOM, DrumInstrument.SNARE};
-        List<String> testInstrumentTypes = List.of(userPredictions);
-        MeasureInfo testMeasureInfo = getTestMeasureInfo(testInstrumentTypes);
-        OnsetMatchResult onsetMatchResult = OnsetMatchResult.builder()
-                .matchedUserOnsetIndices(new int[]{0, 1})
-                .build();
-        List<String[]> drumPredictionListExpected0 = List.of(answerPredictions, answerPredictions);
-        List<String[]> drumPredictionListExpected50 = List.of(answerPredictions, userPredictions);
-        List<String[]> drumPredictionListExpected100 = List.of(userPredictions, userPredictions);
+        List<Boolean> mustBe100 = List.of(true, true, true, true, true, true);
+        List<Boolean> mustBe50 = List.of(true, true, true, false, false, false);
+        List<Boolean> mustBe0 = List.of(false, false, false, false, false, false);
         // when
-        double scoreMust0 = audioMessageConsumer.getScore(onsetMatchResult, drumPredictionListExpected0, testMeasureInfo);
-        double scoreMust50 = audioMessageConsumer.getScore(onsetMatchResult, drumPredictionListExpected50, testMeasureInfo);
-        double scoreMust100 = audioMessageConsumer.getScore(onsetMatchResult, drumPredictionListExpected100, testMeasureInfo);
+        double scoreMust0 = audioMessageConsumer.calculateScore(mustBe0);
+        double scoreMust50 = audioMessageConsumer.calculateScore(mustBe50);
+        double scoreMust100 = audioMessageConsumer.calculateScore(mustBe100);
         // then
         assertEquals(100.0, scoreMust100);
         assertEquals(50.0, scoreMust50);

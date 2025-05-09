@@ -1,12 +1,10 @@
 package com.capstone.service;
 
-import com.capstone.dto.OnsetMatchResult;
+import com.capstone.dto.score.OnsetMatchResult;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 class DTWMatcherTest {
 

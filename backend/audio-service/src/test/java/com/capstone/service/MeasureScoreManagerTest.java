@@ -2,17 +2,13 @@ package com.capstone.service;
 
 import com.capstone.client.AudioModelClient;
 import com.capstone.client.MusicClientService;
-import com.capstone.dto.AudioMessageDto;
-import com.capstone.dto.FinalMeasureResult;
+import com.capstone.dto.score.FinalMeasureResult;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.kafka.clients.producer.KafkaProducer;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.util.List;
