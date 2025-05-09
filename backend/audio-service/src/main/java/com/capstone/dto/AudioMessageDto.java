@@ -14,4 +14,5 @@ public class AudioMessageDto {
     private String email;
     private String message;
     private String measureNumber;
+    private boolean isLastMeasure;
 }
