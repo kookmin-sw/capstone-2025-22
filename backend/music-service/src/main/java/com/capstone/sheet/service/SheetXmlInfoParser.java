@@ -1,8 +1,9 @@
 package com.capstone.sheet.service;
 
+import com.capstone.constants.DrumInstrument;
+import com.capstone.dto.musicXml.*;
 import com.capstone.sheet.constants.MusicXmlTags;
 import com.capstone.sheet.constants.MusicXmlTextValues;
-import com.capstone.sheet.dto.musicXml.*;
 import com.capstone.sheet.constants.MusicXmlAttributes;
 import com.capstone.sheet.utils.FieldLister;
 import org.springframework.stereotype.Component;
@@ -15,6 +16,7 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 
@@ -45,6 +47,17 @@ public class SheetXmlInfoParser {
         Element firstElement = getFirstElementByTagName(element, tagName).orElse(null);
         if(firstElement != null) return Optional.of(firstElement.getTextContent());
         return Optional.empty();
+    }
+
+    public HashMap<String, String> resolveScoreInstruments(NodeList scoreInstruments){
+        HashMap<String, String> instrumentList = new HashMap<>();
+        for(int i=0; i<scoreInstruments.getLength(); i++){
+            Element scoreInstrument = (Element) scoreInstruments.item(i);
+            String instrumentId = scoreInstrument.getAttribute(MusicXmlAttributes.INSTRUMENT_ID_NAME);
+            getFirstElementTextContentByTagName(scoreInstrument, MusicXmlTags.INSTRUMENT_NAME)
+                    .ifPresent(instrumentName -> instrumentList.put(instrumentId, instrumentName));
+        }
+        return instrumentList;
     }
 
     public Optional<Element> getPitchTypeElement(Element noteElement){
@@ -78,11 +91,22 @@ public class SheetXmlInfoParser {
         return null;
     }
 
-    public PitchInfo resolveNote(Element noteElement){
+    public String getInstrumentType(Element noteElement, HashMap<String, String> instrumentList){
+        return getFirstElementByTagName(noteElement, MusicXmlTags.INSTRUMENT)
+                .map(instrument -> {
+                    String instrumentId = instrument.getAttribute(MusicXmlAttributes.INSTRUMENT_ID_NAME);
+                    return instrumentList.get(instrumentId);
+                })
+                .map(DrumInstrument::getDrumInstrumentType)
+                .orElse(null);
+    }
+
+    public PitchInfo resolveNote(Element noteElement, HashMap<String, String> instrumentList){
         String defaultX = noteElement.getAttribute(MusicXmlAttributes.DEFAULT_X);
         String noteHead = getNoteHead(noteElement);
         String noteType = getNoteType(noteElement);
         String duration = getFirstElementTextContentByTagName(noteElement, MusicXmlTags.DURATION).orElse(null);
+        String instrumentType = getInstrumentType(noteElement, instrumentList);
         Optional<Element> noteTypeElement = getPitchTypeElement(noteElement);
         String pitchType = noteTypeElement.map(Element::getTagName)
                 .orElse(null);
@@ -100,6 +124,7 @@ public class SheetXmlInfoParser {
                 .duration(duration)
                 .displayStep(displayStep)
                 .displayOctave(displayOctave)
+                .instrumentType(instrumentType)
                 .build();
     }
 
@@ -107,14 +132,14 @@ public class SheetXmlInfoParser {
         return noteElement.getElementsByTagName(MusicXmlTags.CHORD).getLength() > 0;
     }
 
-    public MeasureInfo resolveMeasure(Element measureElement, int divisions){
+    public MeasureInfo resolveMeasure(Element measureElement, HashMap<String, String> instrumentList, int divisions){
         String measureNumber = measureElement.getAttribute(MusicXmlAttributes.MEASURE_NUMBER);
         NodeList notes = measureElement.getElementsByTagName(MusicXmlTags.NOTE);
         List<NoteInfo> noteList = new ArrayList<>();
         double cumulatedOnset = 0.0;
         for(int j=0; j<notes.getLength(); j++){
             Element noteElement = (Element) notes.item(j);
-            PitchInfo pitchInfo = resolveNote(noteElement);
+            PitchInfo pitchInfo = resolveNote(noteElement, instrumentList);
             if(isChord(noteElement) && !noteList.isEmpty()){
                 noteList.get(noteList.size()-1).getPitchList().add(pitchInfo);
             }else{
@@ -156,6 +181,7 @@ public class SheetXmlInfoParser {
         InputStream inputStream = new ByteArrayInputStream(sheetInfo);
         Document document = documentBuilder.parse(inputStream);
         NodeList partNodes = document.getElementsByTagName(MusicXmlTags.PART);
+        HashMap<String, String> instrumentList = resolveScoreInstruments(document.getElementsByTagName(MusicXmlTags.SCORE_INSTRUMENT));
         for (int i = 0; i < partNodes.getLength(); i++) {
             Element partElement = (Element) partNodes.item(i);
             NodeList measures = partElement.getElementsByTagName(MusicXmlTags.MEASURE);
@@ -171,7 +197,7 @@ public class SheetXmlInfoParser {
             int divisions = partInfoBuilder.build().getDivisions();
             for (int j = 0; j < measures.getLength(); j++) {
                 Element measureElement = (Element) measures.item(j);
-                MeasureInfo measure = resolveMeasure(measureElement, divisions);
+                MeasureInfo measure = resolveMeasure(measureElement, instrumentList, divisions);
                 measureInfoList.add(measure);
             }
             // add part info to partInfoList

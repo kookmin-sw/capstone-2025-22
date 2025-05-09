@@ -1,4 +1,4 @@
-package com.capstone.sheet.dto.musicXml;
+package com.capstone.dto.musicXml;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -11,7 +11,9 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class MeasureInfo {
-    String measureNumber;
-    List<NoteInfo> noteList;
+public class PartInfo {
+    int beats;
+    int beatType;
+    int divisions;
+    List<MeasureInfo> measureList;
 }
