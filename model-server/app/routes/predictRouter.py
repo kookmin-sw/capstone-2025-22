@@ -1,7 +1,8 @@
 # routers/predictRouter.py
 from fastapi import APIRouter, HTTPException
-from schema import PredictRequest, PredictResponse
-from services.predictDrumService import split_audio_and_predict
+from app.schema.AudioRequest import PredictRequest
+from app.schema.AudioResponse import PredictResponse
+from app.services.predictDrumService import split_audio_and_predict
 import io, base64
 
 predictRouter = APIRouter(prefix="/onset/predict")

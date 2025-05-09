@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException
-from schema import AudioRequest, AudioResponse, PredictResponse
-from services.onsetDetectService import detect_onset
+from app.schema.AudioRequest import AudioRequest
+from app.schema.AudioResponse import AudioResponse
+from app.services.onsetDetectService import detect_onset
 import io, base64
 
 onsetRouter = APIRouter(prefix="/onset")
