@@ -130,6 +130,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     print(data['body']);
     print(response.statusCode);
 
+    if (!mounted) return;
     setState(() => _message = ""); // 기존 오류 메시지 초기화
 
     if (response.statusCode == 200) {
