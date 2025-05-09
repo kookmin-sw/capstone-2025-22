@@ -10,6 +10,7 @@ import lombok.*;
 public class AudioMessageDto {
     private int bpm;
     private int userSheetId;
+    private String identifier;
     private String email;
     private String message;
     private String measureNumber;
