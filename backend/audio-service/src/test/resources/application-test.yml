@@ -1,0 +1,45 @@
+# spring application config
+spring:
+  application:
+    name: audio-service
+  config:
+    activate:
+      on-profile: test
+
+  # Redis config
+  data:
+    redis:
+      host: 127.0.0.1
+      port: 26380
+
+  # Kafka config
+  kafka:
+    bootstrap-servers: localhost:9092
+    properties:
+      admin.enabled: false
+      request.timeout.ms: 50
+      max.block.ms: 50
+      metadata.max.age.ms: 50
+      connections.max.idle.ms: 50
+    producer:
+      retries: 0
+    retry:
+      topic:
+        enabled: false
+
+# Eureka config
+eureka:
+  client:
+    enabled: false
+
+# actuator
+management:
+  metrics:
+    enable:
+      jvm: false
+      system: false
+      processor: false
+  endpoints:
+    web:
+      exposure:
+        include: 'health'
