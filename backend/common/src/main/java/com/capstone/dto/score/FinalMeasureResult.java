@@ -1,4 +1,4 @@
-package com.capstone.dto;
+package com.capstone.dto.score;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AllArgsConstructor;
@@ -17,9 +17,8 @@ import java.util.List;
 public class FinalMeasureResult {
     Double score;
     String measureNumber;
-    OnsetMatchResult onsetMatchResult;
-    List<String[]> userDrumPredictList;
-    List<String[]> answerDrumPredictList;
+    List<Boolean> beatScoringResults;
+    List<Boolean> finalScoringResults;
 
     public static FinalMeasureResult fromString(String measureScoreString){
         try {
