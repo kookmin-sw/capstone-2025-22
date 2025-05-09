@@ -7,6 +7,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
+import static com.capstone.dto.sheet.MusicServiceClientDto.*;
+
 @Slf4j
 @Component
 public class MusicClientService {
@@ -24,5 +26,18 @@ public class MusicClientService {
                 .bodyToMono(MeasureInfo.class)
                 .doOnNext(measureInfo -> log.info("measureInfo: {}", measureInfo.toString()))
                 .doOnError(e -> log.error("Error getting measure info: {}", e.getMessage()));
+    }
+
+    public Mono<Boolean> saveMeasureScoreInfo(SheetPracticeCreateRequest requestDto) {
+        return musicWebClient.post()
+                .uri(builder -> builder.path("/sheets/{userSheetId}/practices")
+                        .build(requestDto.getUserSheetId()))
+                .exchangeToMono(res -> {
+                    if (res.statusCode().is2xxSuccessful()) {
+                        return Mono.just(true);
+                    }else{
+                        return Mono.just(false);
+                    }
+                });
     }
 }

@@ -3,9 +3,9 @@ package com.capstone.service;
 import com.capstone.client.AudioModelClient;
 import com.capstone.client.MusicClientService;
 import com.capstone.dto.AudioMessageDto;
-import com.capstone.dto.FinalMeasureResult;
+import com.capstone.dto.score.FinalMeasureResult;
 import com.capstone.dto.ModelDto.*;
-import com.capstone.dto.OnsetMatchResult;
+import com.capstone.dto.score.OnsetMatchResult;
 import com.capstone.dto.musicXml.MeasureInfo;
 import com.capstone.dto.musicXml.NoteInfo;
 import com.capstone.dto.musicXml.PitchInfo;
@@ -22,6 +22,8 @@ import reactor.core.scheduler.Schedulers;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+
+import static com.capstone.dto.sheet.MusicServiceClientDto.*;
 
 @Slf4j
 @Service
@@ -55,23 +57,53 @@ public class AudioMessageConsumer {
         return DTWMatcher.match(userOnset, answerOnset, errorThreshold);
     }
 
-    public double getScore(OnsetMatchResult onsetMatchResult, List<String[]> drumPredictList, MeasureInfo measureInfo){
-        int correctNoteCount = 0;
+    public double calculateScore(List<Boolean> finalMatchingResult){
+        int successCount = 0;
+        for(Boolean result : finalMatchingResult){
+            if(result){
+                successCount++;
+            }
+        }
+        return ((double) successCount / finalMatchingResult.size()) * 100;
+    }
+
+    public List<Boolean> calculateBeatMatchingResult(OnsetMatchResult onsetMatchResult){
+        List<Double> answerOnsets = onsetMatchResult.getAnswerOnset();
+        int[] matchedUserOnsetIndices = onsetMatchResult.getMatchedUserOnsetIndices();
+        List<Boolean> beatMatchingResult = new ArrayList<>();
+        for(int noteInfoIdx : matchedUserOnsetIndices) {
+            if(noteInfoIdx < 0 || noteInfoIdx >= answerOnsets.size()) {
+                beatMatchingResult.add(false);
+            }else{
+                beatMatchingResult.add(true);
+            }
+        }
+        return beatMatchingResult;
+    }
+
+    public List<Boolean> calculateFinalMatchingResult(
+            OnsetMatchResult onsetMatchResult,
+            List<String[]> drumPredictList,
+            MeasureInfo measureInfo){
+        List<Boolean> finalMatchingResult = new ArrayList<>();
         List<NoteInfo> noteInfoList = measureInfo.getNoteList();
         int[] matchedUserOnsetIndices = onsetMatchResult.getMatchedUserOnsetIndices();
         for (int noteInfoIdx : matchedUserOnsetIndices) {
-            if (noteInfoIdx < 0 || noteInfoIdx >= noteInfoList.size()) continue;
-            NoteInfo answerNoteInfo = noteInfoList.get(noteInfoIdx);
-            String[] answerNotePrediction = answerNoteInfo.getPitchList()
-                    .stream().map(PitchInfo::getInstrumentType).toArray(String[]::new);
-            String[] userNotePrediction = drumPredictList.get(noteInfoIdx);
-            Arrays.sort(answerNotePrediction);
-            Arrays.sort(userNotePrediction);
-            if (Arrays.equals(answerNotePrediction, userNotePrediction)) {
-                correctNoteCount++;
+            if(noteInfoIdx >= 0 && noteInfoIdx < noteInfoList.size()){
+                NoteInfo answerNoteInfo = noteInfoList.get(noteInfoIdx);
+                String[] answerNotePrediction = answerNoteInfo.getPitchList()
+                        .stream().map(PitchInfo::getInstrumentType).toArray(String[]::new);
+                String[] userNotePrediction = drumPredictList.get(noteInfoIdx);
+                Arrays.sort(answerNotePrediction);
+                Arrays.sort(userNotePrediction);
+                if (Arrays.equals(answerNotePrediction, userNotePrediction)) {
+                    finalMatchingResult.add(true);
+                }else{
+                    finalMatchingResult.add(false);
+                }
             }
         }
-        return ((double) correctNoteCount/matchedUserOnsetIndices.length)*100;
+        return finalMatchingResult;
     }
 
     @KafkaListener(topics = "audio", groupId = "${spring.kafka.consumer.group-id}")
@@ -98,13 +130,34 @@ public class AudioMessageConsumer {
                                     .onsets(onsetMeasureDataBuilder.build().getOnsetResponse().getOnsets())
                                     .build())
                             .doOnSuccess(drumPredictResponse -> {
-                                double score = getScore(onsetMatchResult, drumPredictResponse.getPredictions(), measureInfo);
+                                List<Boolean> beatScoringResults = calculateBeatMatchingResult(onsetMatchResult);
+                                List<Boolean> finalScoringResults = calculateFinalMatchingResult(onsetMatchResult, drumPredictResponse.getPredictions(), measureInfo);
+                                double score = calculateScore(finalScoringResults);
                                 FinalMeasureResult finalMeasureResult = FinalMeasureResult.builder()
                                         .measureNumber(audioMessageDto.getMeasureNumber())
-                                        .onsetMatchResult(onsetMeasureDataBuilder.build().getOnsetMatchResult())
-                                        .userDrumPredictList(drumPredictResponse.getPredictions())
+                                        .beatScoringResults(beatScoringResults)
+                                        .finalScoringResults(finalScoringResults)
                                         .score(score).build();
                                 measureScoreManager.saveMeasureScore(audioMessageDto.getIdentifier(), audioMessageDto.getMeasureNumber(), finalMeasureResult);
+                            })
+                            .doOnSuccess(res -> {
+                                if(audioMessageDto.isLastMeasure()){
+                                    List<FinalMeasureResult> finalMeasureResults = measureScoreManager
+                                            .getAllMeasureScores(audioMessageDto.getIdentifier())
+                                            .stream()
+                                            .map(FinalMeasureResult::fromString)
+                                            .toList();
+                                    musicClientService.saveMeasureScoreInfo(SheetPracticeCreateRequest.from(finalMeasureResults, audioMessageDto.getUserSheetId(), audioMessageDto.getEmail()))
+                                            .subscribeOn(Schedulers.boundedElastic())
+                                            .doOnSuccess(isSaveSuccess -> {
+                                                if(!isSaveSuccess) {
+                                                    log.error("failed to save data : retry again");
+                                                    musicClientService.saveMeasureScoreInfo(
+                                                            SheetPracticeCreateRequest.from(finalMeasureResults, audioMessageDto.getUserSheetId(), audioMessageDto.getEmail())
+                                                    ).block();
+                                                }
+                                            }).subscribe();
+                                }
                             }).subscribe();
                 }).subscribe();
     }
