@@ -5,4 +5,4 @@ class AudioRequest(BaseModel):
 
 class PredictRequest(BaseModel):
     audio_base64: str
-    onsets: list
+    onsets: list[float]
