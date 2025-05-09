@@ -1,6 +1,6 @@
 package com.capstone.service;
 
-import com.capstone.dto.FinalMeasureResult;
+import com.capstone.dto.score.FinalMeasureResult;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

@@ -1,6 +1,6 @@
 package com.capstone.service;
 
-import com.capstone.dto.FinalMeasureResult;
+import com.capstone.dto.score.FinalMeasureResult;
 import com.capstone.redis.RedisSingleDataService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.connection.ReactiveRedisConnection;

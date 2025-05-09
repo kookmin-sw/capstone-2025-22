@@ -1,4 +1,4 @@
-package com.capstone.dto;
+package com.capstone.dto.score;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
