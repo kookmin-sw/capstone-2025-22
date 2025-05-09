@@ -15,6 +15,9 @@ public class MusicXmlTags {
     public static final String TIME = "time";
     public static final String BEATS = "beats";
     public static final String BEAT_TYPE = "beat-type";
+    public static final String INSTRUMENT = "instrument";
+    public static final String SCORE_INSTRUMENT = "score-instrument";
+    public static final String INSTRUMENT_NAME = "instrument-name";
 
     public static class Pitch {
         public static final String REST = "rest";
