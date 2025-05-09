@@ -63,6 +63,7 @@ class _MyPageState extends State<MyPage> {
 
     if (clientInfo['errMessage'] == null) {
       // 정상적으로 정보 받아온 경우
+      if (!mounted) return;
       setState(() {
         profileImage = clientInfo["body"]["profileImage"];
         email = clientInfo["body"]["email"];
@@ -84,6 +85,7 @@ class _MyPageState extends State<MyPage> {
     if (response['errMessage'] == null &&
         (response['body'] as List).isNotEmpty) {
       // 악보 연습 기록이 존재하는 경우
+      if (!mounted) return;
       setState(() {
         isSheetMusicUploaded = true;
         sheetMusicData =
@@ -102,6 +104,7 @@ class _MyPageState extends State<MyPage> {
       });
     } else {
       // 악보 연습 기록이 없는 경우
+      if (!mounted) return;
       setState(() {
         isSheetMusicUploaded = false;
         sheetMusicData = [];
