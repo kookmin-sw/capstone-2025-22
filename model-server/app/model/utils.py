@@ -55,6 +55,33 @@ def wav_to_mel(wav_file, mel_transform, sample_rate=44100):
     sr = None
 
     if isinstance(wav_file, str):
+        # base64 문자열로 처리
+        try:
+            decoded = base64.b64decode(wav_file)
+            buffer = io.BytesIO(decoded)
+            waveform, sr = sf.read(buffer) # [Time, Channel]
+            # [Channel, Time]로 바꿔주고, float32타입으로 변환해줘야 모델이 인식함
+            if waveform.ndim == 1:  # 모노
+                waveform = torch.tensor(waveform).unsqueeze(0).float()
+            else: 
+                waveform = torch.tensor(waveform).T.float() # 스테레오
+        except Exception as e:
+            raise ValueError("base64 decoding 실패 또는 잘못된 형식입니다.") from e
+    elif isinstance(wav_file, io.BytesIO):
+        # BytesIO 객체 직접 처리
+        try:
+            waveform, sr = sf.read(wav_file) # [Time, Channel]
+            if waveform.ndim == 1:  # 모노
+                waveform = torch.tensor(waveform).unsqueeze(0).float()
+            else: 
+                waveform = torch.tensor(waveform).T.float() # 스테레오
+        except Exception as e:
+            raise ValueError("BytesIO 객체 처리 중 오류 발생") from e
+    else:
+        raise TypeError("wav_file은 base64 문자열 또는 BytesIO 객체여야 합니다.")
+
+    '''
+    if isinstance(wav_file, str):
         # (1) .wav로 끝나면 파일 경로라고 간주
         if wav_file.lower().endswith(".wav"):
             # print("wav_file is a file path")
@@ -77,6 +104,7 @@ def wav_to_mel(wav_file, mel_transform, sample_rate=44100):
     else:
         raise TypeError("wav_file은 base64 문자열 또는 파일 경로여야 합니다.")
     # print("Original waveform shape:", waveform.shape)
+    '''
 
     # 샘플레이트 맞추기
     if sr != sample_rate:
