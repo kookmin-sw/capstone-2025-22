@@ -1,17 +1,17 @@
-package com.capstone.sheet.dto.musicXml;
+package com.capstone.dto.musicXml;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class MusicXmlMetaData {
-    int bpm;
-    int division;
-    int beat;
-    int beatType;
+public class MeasureInfo {
+    String measureNumber;
+    List<NoteInfo> noteList;
 }

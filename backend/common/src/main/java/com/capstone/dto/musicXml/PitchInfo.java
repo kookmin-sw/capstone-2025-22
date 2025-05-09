@@ -1,4 +1,4 @@
-package com.capstone.sheet.dto.musicXml;
+package com.capstone.dto.musicXml;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -17,4 +17,5 @@ public class PitchInfo {
     String duration;
     String displayStep;
     String displayOctave;
+    String instrumentType;
 }

@@ -1,4 +1,4 @@
-package com.capstone.sheet.dto.musicXml;
+package com.capstone.dto.musicXml;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
