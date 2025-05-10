@@ -28,6 +28,7 @@ public class EmbeddedRedisConfig {
             int port = getAvailablePort();
             redisServer = new RedisServer(port);
             redisServer.start();
+            System.setProperty("spring.redis.port", String.valueOf(port));
         }catch (Exception e){
             throw new RuntimeException("failed to start redis server");
         }

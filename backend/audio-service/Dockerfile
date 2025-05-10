@@ -23,7 +23,7 @@ COPY /${CONFIG_MODULE} /app/${CONFIG_MODULE}
 # ensure execute gradlew
 RUN chmod +x gradlew
 # build project
-RUN ./gradlew build --build-cache
+RUN ./gradlew build --build-cache --info
 # copy spring boot jar on root dir
 RUN ls module/build/libs
 RUN cp module/build/libs/module-*.jar /app.jar

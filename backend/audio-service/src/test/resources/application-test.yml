@@ -10,6 +10,7 @@ spring:
   data:
     redis:
       host: 127.0.0.1
+      port: ${spring.redis.port:26379}
 
   # Kafka config
   kafka:
