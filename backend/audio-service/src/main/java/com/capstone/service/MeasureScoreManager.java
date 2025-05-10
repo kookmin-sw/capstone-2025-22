@@ -2,6 +2,7 @@ package com.capstone.service;
 
 import com.capstone.dto.score.FinalMeasureResult;
 import com.capstone.redis.RedisSingleDataService;
+import com.capstone.redis.RedisSingleDataServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.connection.ReactiveRedisConnection;
 import org.springframework.data.redis.core.ReactiveRedisTemplate;
@@ -14,7 +15,7 @@ import java.util.List;
 @Component
 @RequiredArgsConstructor
 public class MeasureScoreManager {
-    private final RedisSingleDataService redisService;
+    private final RedisSingleDataServiceImpl redisService;
     private final ReactiveRedisTemplate<String, String> reactiveRedisTemplate;
 
     public String getMeasureScoreKey(String identifier, String measureNumber){
@@ -34,11 +35,15 @@ public class MeasureScoreManager {
     public List<String> getAllMeasureScores(String identifier){
         ScanOptions scanOptions = ScanOptions.scanOptions().match("practice-" + identifier + "-*").build();
         ReactiveRedisConnection connection = reactiveRedisTemplate.getConnectionFactory().getReactiveConnection();
-        return connection.keyCommands().scan(scanOptions).map(byteBuffer -> {
-            byte[] bytes = new byte[byteBuffer.remaining()];
-            byteBuffer.get(bytes);
-            return new String(bytes);
-        }).collectList().block();
+        return connection.keyCommands().scan(scanOptions)
+                .map(byteBuffer -> {
+                    byte[] bytes = new byte[byteBuffer.remaining()];
+                    byteBuffer.get(bytes);
+                    return new String(bytes);
+                })
+                .flatMap(redisService::getValue)
+                .collectList()
+                .block();
     }
 
     public List<Long> deleteAllMeasureScores(String identifier){
