@@ -23,7 +23,7 @@ public class Sheet {
     @Column(columnDefinition = "MEDIUMBLOB")
     private byte[] sheetInfo;
 
-    @Column
+    @Column(columnDefinition = "TEXT")
     private String sheetJson;
 
     @Column

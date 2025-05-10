@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        # service: [audio-service]
+        # service: [music-service]
         service: [audio-service, auth-service, user-service, verification-service, gateway-service, music-service, discovery-service]
     steps:
       - name: Set up Docker Buildx

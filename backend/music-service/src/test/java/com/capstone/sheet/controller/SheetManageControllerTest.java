@@ -20,6 +20,8 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.core.io.DefaultResourceLoader;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
@@ -28,6 +30,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.nio.file.Files;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -61,8 +64,14 @@ class SheetManageControllerTest {
     @Autowired
     TestDataGenerator testDataGenerator;
 
+    byte[] sheetXmlBytes;
+
     @BeforeEach
-    void setUp() {
+    void setUp() throws Exception{
+        ResourceLoader resourceLoader = new DefaultResourceLoader();
+        Resource sheetXmlInfo = resourceLoader.getResource("classpath:sheet/sheet.xml");
+        testDataGenerator.generateTestData();
+        sheetXmlBytes = Files.readAllBytes(sheetXmlInfo.getFile().toPath());
         testDataGenerator.generateTestData();
     }
 
@@ -98,7 +107,7 @@ class SheetManageControllerTest {
                 new ObjectMapper().writeValueAsString(meta).getBytes()
         );
         // stub
-        when(converter.convertToXml(meta, sheetFilePDF)).thenReturn(new byte[100]);
+        when(converter.convertToXml(meta, sheetFilePDF)).thenReturn(sheetXmlBytes);
 
         // when & then
         mockMvc.perform(multipart("/sheets")
