@@ -1,13 +1,14 @@
 package com.capstone.dto;
 
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.util.List;
 
 @Data
-public class OnsetDto {
+public class ModelDto {
     @Data
     @AllArgsConstructor
     public static class OnsetRequestDto{
@@ -19,10 +20,28 @@ public class OnsetDto {
     }
 
     @Data
+    @Builder
     @AllArgsConstructor
     @NoArgsConstructor
     public static class OnsetResponseDto{
         List<String> onsets;
         int count;
+    }
+
+    @Data
+    @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class DrumPredictRequest{
+        String audio_base64;
+        List<String> onsets;
+    }
+
+    @Data
+    @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class DrumPredictResponse{
+        List<String[]> predictions;
     }
 }
