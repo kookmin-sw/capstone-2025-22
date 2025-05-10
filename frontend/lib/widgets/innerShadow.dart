@@ -18,20 +18,23 @@ class InnerShadow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        child,
-        Positioned.fill(
-          child: CustomPaint(
-            painter: _InnerShadowPainter(
-              shadowColor: shadowColor,
-              blur: blur,
-              offset: offset,
-              borderRadius: borderRadius,
+    return ClipRRect(
+      borderRadius: borderRadius,
+      child: Stack(
+        children: [
+          child,
+          Positioned.fill(
+            child: CustomPaint(
+              painter: _InnerShadowPainter(
+                shadowColor: shadowColor,
+                blur: blur,
+                offset: offset,
+                borderRadius: borderRadius,
+              ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
