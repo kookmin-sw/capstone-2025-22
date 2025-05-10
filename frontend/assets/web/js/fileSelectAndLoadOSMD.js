@@ -9,7 +9,7 @@ let beatsPerMeasure = 4; // 박자 값 (4/4인 경우 4, 3/4인 경우 3...)
 let isRendered = false; // 렌더링 완료 여부 체크 변수
 
 const defaultOptions = {
-  autoResize: false,
+  autoResize: true,
   backend: "canvas",
   defaultColorNotehead: "#000000",
   defaultColorStem: "#000000",
@@ -94,7 +94,9 @@ async function cropLineImages(fullCanvas, osmd) {
 
     const y = Math.round(cropTop - topOffset); // 캔버스에서의 시작 Y
     const height = Math.round(cropBot - cropTop);
-    const width = fullCanvas.width;
+    
+    const sysPosX = system.PositionAndShape.AbsolutePosition.x * scale;
+    const sysWidth = system.PositionAndShape.Size.width * scale;
 
     console.log(`[crop] line ${i}: y=${y}, h=${height}, canvasH=${fullCanvas.height}`);
 
@@ -106,14 +108,16 @@ async function cropLineImages(fullCanvas, osmd) {
 
     // 잘라서 임시 캔버스에 복사 → Base64 PNG
     const tmp = document.createElement('canvas');
-    tmp.width = width;  tmp.height = height;
+    tmp.width = Math.round(sysWidth);  tmp.height = height;
     tmp.getContext('2d').drawImage(
-      fullCanvas, 0, y, width, height,
-      0, 0, width, height
+      fullCanvas, Math.round(sysPosX), y, Math.round(sysWidth), height,
+      0, 0, Math.round(sysWidth), height
     );
     images.push(tmp.toDataURL('image/png').split(',')[1]);
     // 절대좌표 -> 이미지 내부 좌표로 변경
-    bounds.push({ 
+    bounds.push({
+      left:   sysPosX   / cssFactor,  // 잘라낸 시스템의 시작 위치 (CSS px)
+      width:  sysWidth  / cssFactor,  // 잘라낸 시스템의 폭 (CSS px)
       top: (cropTop - topOffset) / cssFactor,
       bot: (cropBot - topOffset) / cssFactor
     });
@@ -232,7 +236,11 @@ function getCursorInfo(osmdCursor, lineBounds) {
   const measuresPerLine = osmd.EngravingRules.RenderXMeasuresPerLineAkaSystem || 4;
   const lineIndex = Math.floor(measureNumber / measuresPerLine);
 
-  const xRatio = x / fullCanvas.width;
+  const { left: lineLeft = 0, width: lineWidth = fullCanvas.width } =
+    lineBounds[lineIndex] || {};
+
+  // x(캔버스 전체 px) → 잘라낸 이미지(시스템) 내부 위치 → 비율
+  const xRatio = (x / cssFactor - lineLeft) / lineWidth;
 
   // 1) lineBounds 에서 이 커서가 속한 줄의 CSS logical 픽셀 경계 꺼내기
   //    lineBounds 배열에는 { top: cssPx, bot: cssPx } 형태로 저장되어 있습니다.

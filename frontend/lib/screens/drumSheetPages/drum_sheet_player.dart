@@ -574,7 +574,7 @@ class _DrumSheetPlayerState extends State<DrumSheetPlayer> {
                             child: ClipRRect(
                               borderRadius: BorderRadius.circular(20),
                               child: Container(
-                                  height: 7, color: const Color(0xffEB8E8E)),
+                                  height: 7, color: const Color(0xffD97D6C)),
                             ),
                           ),
                         ),
