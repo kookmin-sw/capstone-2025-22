@@ -20,6 +20,7 @@ public class ModelDto {
     }
 
     @Data
+    @Builder
     @AllArgsConstructor
     @NoArgsConstructor
     public static class OnsetResponseDto{
@@ -37,6 +38,7 @@ public class ModelDto {
     }
 
     @Data
+    @Builder
     @AllArgsConstructor
     @NoArgsConstructor
     public static class DrumPredictResponse{
