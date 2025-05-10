@@ -53,13 +53,12 @@ public class SheetPracticeRetrieveService {
      * 특정 악보 연습에 대한 대표 연습 정보 조회
     * */
     public SheetPracticeRepresentResponse getRepresentSheetPractice(String userEmail, int userSheetId){
-        SheetPractice sheetPractice = sheetPracticeRepository.findLastPracticeByEmailAndSheetId(userSheetId)
-                .orElseThrow(() -> new DataNotFoundException("practice record not exists"));
-        UserSheet userSheet = userSheetRepository.findById(userSheetId)
-                .orElseThrow(() -> new DataNotFoundException("user sheet not found"));
-        Integer maxScore = sheetPracticeRepository.findMaxScoreById(userSheet.getUserSheetId())
-                .orElseThrow(() -> new DataNotFoundException("can't find max score"));
-        return SheetPracticeRepresentResponse.from(userSheet, maxScore, sheetPractice.getCreatedDate());
+        UserSheet userSheet = userSheetRepository.findById(userSheetId).orElseThrow(() -> new DataNotFoundException("user sheet not found"));
+        return sheetPracticeRepository.findLastPracticeByEmailAndSheetId(userSheetId).map(sheetPractice -> {
+            Integer maxScore = sheetPracticeRepository.findMaxScoreById(userSheet.getUserSheetId())
+                    .orElseThrow(() -> new DataNotFoundException("exception on getRepresentSheetPractice : sheet practice exists but cant find max score"));
+            return SheetPracticeRepresentResponse.from(userSheet, maxScore, sheetPractice.getCreatedDate());
+        }).orElse(null);
     }
     /** 
      * 대표 악보 연습 정보 목록 조회
