@@ -52,6 +52,7 @@ public class AudioMessageConsumer {
                     OnsetResponseDto onsetResponse = onsetMeasureDataBuilder.build().getOnsetResponse();
                     MeasureInfo measureInfo = onsetMeasureDataBuilder.build().getMeasureInfo();
                     OnsetMatchResult matchResult = practiceResultResolver.matchOnset(onsetResponse, measureInfo);
+                    matchResult.setMeasureNumber(audioMessageDto.getMeasureNumber());
                     messagingTemplate.convertAndSend("/topic/onset/" + audioMessageDto.getEmail(), matchResult);
                     return onsetMeasureDataBuilder.onsetMatchResult(matchResult);
                 })

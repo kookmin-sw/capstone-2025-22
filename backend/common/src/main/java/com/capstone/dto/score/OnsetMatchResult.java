@@ -10,6 +10,7 @@ import java.util.List;
 @Builder
 @AllArgsConstructor
 public class OnsetMatchResult {
+    String measureNumber;
     List<Double> userOnset;
     List<Double> answerOnset;
     boolean[] answerOnsetPlayed;
