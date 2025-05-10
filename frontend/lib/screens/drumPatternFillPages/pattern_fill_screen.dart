@@ -1,11 +1,10 @@
-import 'dart:io';
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
+// ignore: depend_on_referenced_packages
+import 'package:path_provider/path_provider.dart';
 import 'package:audioplayers/audioplayers.dart' as ap;
-import 'package:flutter_sound/flutter_sound.dart' as fs;
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:stomp_dart_client/stomp_dart_client.dart';
+import 'package:capstone_2025/widgets/drum_recording_widget.dart';
 import 'package:capstone_2025/screens/mainPages/navigation_screens.dart';
 import 'package:flutter/services.dart';
 import '../../models/sheet_info.dart';
@@ -17,7 +16,7 @@ import 'package:capstone_2025/widgets/innerShadow.dart';
 import '../drumSheetPages/widgets/confirmation_dialog.dart';
 
 // Import the DrumRecordingWidget
-import 'package:capstone_2025/widgets/drum_recording_widget.dart'; // 경로는 실제 프로젝트에 맞게 수정해야 합니다
+import 'package:capstone_2025/widgets/drum_recording_widget.dart';
 
 /// MenuController에 toggle()을 추가하는 확장 메서드
 extension MenuControllerToggle on MenuController {
@@ -73,6 +72,8 @@ class _CountdownPageState extends State<CountdownPage>
   StreamSubscription? _playerStateSubscription;
   StreamSubscription? _playerCompleteSubscription;
   StreamSubscription? _positionSubscription;
+
+  String? _recordingPath; // 녹음 파일 경로 추가
 
   // 악보 띄우려고 추가한 부분
   late PlaybackController playbackController;
@@ -184,6 +185,14 @@ class _CountdownPageState extends State<CountdownPage>
         pageWidth: 1080,
       );
     });
+
+    // 녹음 경로 초기화 (덮어쓰기 방식)
+    _initializeRecording();
+  }
+
+  void _initializeRecording() async {
+    final appDocDir = await getApplicationDocumentsDirectory();
+    _recordingPath = '${appDocDir.path}/current_performance.wav'; // 녹음 파일 경로
   }
 
   void _setupAudioListeners() {
@@ -839,6 +848,7 @@ class _CountdownPageState extends State<CountdownPage>
             offstage: true, // UI를 화면에 표시하지 않음
             child: DrumRecordingWidget(
               key: _drumRecordingKey,
+              playbackController: playbackController,
               title: widget.title,
               xmlFilePath: 'assets/music/test_pattern.xml',
               audioFilePath: 'assets/sounds/test_pattern.wav',

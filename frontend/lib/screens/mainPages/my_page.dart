@@ -21,7 +21,6 @@ class _MyPageState extends State<MyPage> {
   void initState() {
     super.initState();
     _loadUserData(); // 페이지가 열릴 때 사용자 데이터 불러오기
-    _createInfoList(); // 악보 연습 기록 불러오기
   }
 
   bool isSheetMusicUploaded = true; // 업로드된 악보 존재하는지
@@ -38,33 +37,6 @@ class _MyPageState extends State<MyPage> {
   );
 
   List<Map<String, String>> sheetMusicData = []; // 악보 연습 기록 데이터
-  // List<Map<String, String>> sheetMusicData = [
-  //   {
-  //     "악보명": "그라데이션",
-  //     "마지막 연습 날짜": "2025.01.18",
-  //     "최고 점수": "100",
-  //   },
-  //   {
-  //     "악보명": "Hi Bully",
-  //     "마지막 연습 날짜": "2025.02.10",
-  //     "최고 점수": "95",
-  //   },
-  //   {
-  //     "악보명": "한 페이지가 될 수 있게",
-  //     "마지막 연습 날짜": "2025.02.11",
-  //     "최고 점수": "90",
-  //   },
-  //   {
-  //     "악보명": "개화",
-  //     "마지막 연습 날짜": "2025.02.12",
-  //     "최고 점수": "85",
-  //   },
-  //   {
-  //     "악보명": "곰 세 마리",
-  //     "마지막 연습 날짜": "2025.02.17",
-  //     "최고 점수": "80",
-  //   },
-  // ];
 
   // Secure Storage에서 데이터 불러와서 상태 업데이트
   Future<void> _loadUserData() async {
@@ -72,6 +44,7 @@ class _MyPageState extends State<MyPage> {
     String? storedEmail = await storage.read(key: 'user_email');
     String? storedUserName = await storage.read(key: 'nick_name');
     String? storedAccessToken = await storage.read(key: 'access_token');
+    String? storedProfileImage = await storage.read(key: "profile_image");
 
     Map<String, String> infoQueryParam = {
       "email": storedEmail ?? "",
@@ -81,32 +54,26 @@ class _MyPageState extends State<MyPage> {
       return;
     }
 
-    Map<String, String> imgReqHeader = {
-      "authorization": storedAccessToken ?? "",
-    };
     if (storedAccessToken == null) {
       print("액세스 토큰 정보가 없습니다.");
       return;
     }
 
-    Map<String, String> imgReqBody = {
-      "nickname": storedUserName ?? "",
-    };
-
     var clientInfo = await getHTTP("/users/email", infoQueryParam);
-    var profileImgInfo = await putHTTP("/users/profile", null, imgReqBody,
-        reqHeader: imgReqHeader);
 
-    setState(() {
-      // 사용자 정보 업데이트
-      email = storedEmail;
-      userName = storedUserName;
-      if (profileImgInfo['errMessage'] == null) {
-        profileImage = profileImgInfo["body"]["profileImg"];
-      } else {
-        print("프로필 이미지 정보가 없습니다.");
-      }
-    });
+    if (clientInfo['errMessage'] == null) {
+      // 정상적으로 정보 받아온 경우
+      if (!mounted) return;
+      setState(() {
+        profileImage = clientInfo["body"]["profileImage"];
+        email = clientInfo["body"]["email"];
+        userName = clientInfo["body"]["nickname"];
+      });
+
+      _createInfoList();
+    } else {
+      print("프로필 이미지 정보가 없습니다.");
+    }
   }
 
   void _createInfoList() async {
@@ -115,8 +82,10 @@ class _MyPageState extends State<MyPage> {
       {'email': email},
     );
 
-    if (response['errMessage'] == null) {
+    if (response['errMessage'] == null &&
+        (response['body'] as List).isNotEmpty) {
       // 악보 연습 기록이 존재하는 경우
+      if (!mounted) return;
       setState(() {
         isSheetMusicUploaded = true;
         sheetMusicData =
@@ -135,6 +104,7 @@ class _MyPageState extends State<MyPage> {
       });
     } else {
       // 악보 연습 기록이 없는 경우
+      if (!mounted) return;
       setState(() {
         isSheetMusicUploaded = false;
         sheetMusicData = [];
@@ -193,8 +163,6 @@ class _MyPageState extends State<MyPage> {
       },
     );
   }
-
-  void logout() {}
 
   // 모달 메뉴 아이템
   Widget _buildMenuItem(
@@ -370,10 +338,10 @@ class _MyPageState extends State<MyPage> {
           child: Row(
             children: [
               // 테이블 헤더
-              _buildListHeaderCell("악보명", flex: 1),
-              _buildListHeaderCell("마지막 연습 날짜", flex: 1),
-              _buildListHeaderCell("최고 점수", flex: 1),
-              _buildListHeaderCell("상세 기록", flex: 1),
+              _buildListHeaderCell("악보명", flex: 4),
+              _buildListHeaderCell("마지막 연습 날짜", flex: 2),
+              _buildListHeaderCell("최고 점수", flex: 2),
+              _buildListHeaderCell("상세 기록", flex: 2),
             ],
           ),
         ),
@@ -399,12 +367,12 @@ class _MyPageState extends State<MyPage> {
                 child: Row(
                   children: [
                     // 테이블 셀 내용
-                    _buildListCell(item["악보명"] ?? "", flex: 1),
-                    _buildListCell(item["마지막 연습 날짜"] ?? "-", flex: 1),
-                    _buildListCell(item["maxScore"]!, flex: 1),
+                    _buildListCell(item["악보명"] ?? "", flex: 4),
+                    _buildListCell(item["마지막 연습 날짜"] ?? "-", flex: 2),
+                    _buildListCell(item["최고 점수"] ?? "-", flex: 2),
                     Expanded(
                       // 상세 기록 버튼
-                      flex: 1,
+                      flex: 2,
                       child: GestureDetector(
                         onTap: () => {
                           Navigator.push(
@@ -412,6 +380,7 @@ class _MyPageState extends State<MyPage> {
                             MaterialPageRoute(
                               builder: (context) => MusicsheetDetail(
                                 songID: item["id"]!,
+                                songTitle: item['악보명'] ?? "-",
                               ),
                             ),
                           ),
@@ -450,7 +419,10 @@ Widget _buildListCell(String text, {int flex = 1}) {
     child: Center(
       child: Text(
         text,
-        style: TextStyle(fontSize: 16),
+        textAlign: TextAlign.center,
+        style: TextStyle(
+          fontSize: 16,
+        ),
       ),
     ),
   );
@@ -528,9 +500,15 @@ void openModal(
                     padding: EdgeInsets.zero,
                     minimumSize: Size(0, 0),
                   ),
-                  onPressed: () {
+                  onPressed: () async {
+                    String? accessToken =
+                        await storage.read(key: 'access_token');
+
                     // 로그아웃 처리
                     storage.deleteAll();
+                    getHTTP('/auth/signout', {}, reqHeader: {
+                      'authorization': accessToken ?? "",
+                    });
                     Navigator.pushReplacement(
                       context,
                       MaterialPageRoute(

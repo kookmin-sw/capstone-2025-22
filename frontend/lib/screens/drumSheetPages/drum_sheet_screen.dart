@@ -85,7 +85,8 @@ class _SheetListScreenState extends State<SheetListScreen> {
 
   // API 관련 메서드들
   Future<List<Sheet>> fetchSheets() async {
-    final response = await http.get(Uri.parse('http://10.0.2.2:28080/sheets'));
+    final response =
+        await http.get(Uri.parse('http://34.68.164.98:28080/sheets'));
     if (response.statusCode == 200) {
       List jsonResponse = json.decode(response.body);
       return jsonResponse.map((sheet) => Sheet.fromJson(sheet)).toList();
@@ -96,26 +97,27 @@ class _SheetListScreenState extends State<SheetListScreen> {
 
   Future<Sheet> addSheet(String title, String artist) async {
     final response = await http.post(
-      Uri.parse('http://10.0.2.2:28080/sheets'),
+      Uri.parse('http://34.68.164.98:28080/sheets'),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
       },
       body: jsonEncode(<String, String>{
-        'title': title,
+        'sheetCreateMeta': title,
         'artist': artist,
       }),
     );
 
-    if (response.statusCode == 201) {
+    if (response.statusCode == 200) {
       return Sheet.fromJson(json.decode(response.body));
     } else {
+      print("ERROR!!!!! $response");
       throw Exception('Failed to add sheet');
     }
   }
 
   Future<void> updateSheet(int id, String title) async {
     final response = await http.put(
-      Uri.parse('http://10.0.2.2:28080/sheets/$id'),
+      Uri.parse('http://34.68.164.98:28080/sheets/$id'),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
       },
@@ -129,7 +131,7 @@ class _SheetListScreenState extends State<SheetListScreen> {
 
   Future<void> deleteSheet(int id) async {
     final response = await http.delete(
-      Uri.parse('http://10.0.2.2:28080/sheets/$id'),
+      Uri.parse('http://34.68.164.98:28080/sheets/$id'),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
       },
@@ -744,6 +746,7 @@ class _SheetListScreenState extends State<SheetListScreen> {
                                 // ignore: use_build_context_synchronously
                                 ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(content: Text('Error: $e')));
+                                print(e);
                               }
                             },
                           ),
