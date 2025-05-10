@@ -12,6 +12,7 @@ import 'package:stomp_dart_client/stomp_dart_client.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter_sound/public/flutter_sound_recorder.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:capstone_2025/screens/drumSheetPages/playback_controller.dart';
 
 /// 드럼 녹음 기능을 제공하는 위젯
 /// 카운트다운, WebSocket 연결, XML 파싱, 녹음 등의 기능을 포함
@@ -37,6 +38,9 @@ class DrumRecordingWidget extends StatefulWidget {
   /// MusicXML 파싱 결과를 부모 위젯에 전달하기 위한 콜백
   final Function(Map<String, dynamic>)? onMusicXMLParsed;
 
+  /// 배속 정보
+  final PlaybackController playbackController;
+
   const DrumRecordingWidget({
     super.key,
     required this.title,
@@ -46,6 +50,7 @@ class DrumRecordingWidget extends StatefulWidget {
     this.onMeasureUpdate,
     this.onOnsetsReceived,
     this.onMusicXMLParsed,
+    required this.playbackController,
   });
 
   @override
@@ -399,10 +404,13 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
         });
       }
 
+      // 배속을 감안한 마디의 시간 (초)
+      final measureDurationInSeconds =
+          (_secondsPerMeasure / widget.playbackController.speed).toInt();
+
       // 한 마디 동안 녹음
       _recordingTimer =
-          Timer(Duration(milliseconds: (_secondsPerMeasure * 1000).toInt()),
-              () async {
+          Timer(Duration(seconds: measureDurationInSeconds), () async {
         // 녹음 중지
         await _recorder!.stopRecorder();
 

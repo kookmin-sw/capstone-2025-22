@@ -78,7 +78,7 @@ class _MyAppState extends State<MyApp> {
     return MaterialApp(
       theme: ThemeData(scaffoldBackgroundColor: Color(0xFFF2F1F3)),
       home: _isLoggedIn! ? NavigationScreens() : LoginScreenGoogle(),
-      //   home: DrumSheetPlayer(),
+      // home: DrumSheetPlayer(), // 악보연주페이지 확인용
     );
     // return MaterialApp(
     //     // 임시 코드

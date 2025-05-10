@@ -1,22 +1,22 @@
+import 'dart:io';
 import 'dart:async';
 import 'dart:convert';
+import 'package:logger/logger.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../../models/sheet_info.dart';
-import '../../models/cursor.dart';
-import './widgets/cursor_widget.dart';
-import 'playback_controller.dart';
-import './widgets/confirmation_dialog.dart';
-import '../../services/osmd_service.dart';
-import 'dart:io';
+import 'package:path_provider/path_provider.dart';
 import 'package:flutter_sound/flutter_sound.dart' as fs;
-import 'package:flutter_sound/public/flutter_sound_recorder.dart';
 import 'package:stomp_dart_client/stomp_dart_client.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:xml/xml.dart';
-import 'package:path_provider/path_provider.dart';
+
+import '../../models/cursor.dart';
+import '../../models/sheet_info.dart';
+import '../../services/osmd_service.dart';
 import '../../widgets/drum_recording_widget.dart';
+import './widgets/cursor_widget.dart';
+import './widgets/confirmation_dialog.dart';
+import 'playback_controller.dart';
 
 class DrumSheetPlayer extends StatefulWidget {
   const DrumSheetPlayer({super.key});
@@ -171,9 +171,14 @@ class _DrumSheetPlayerState extends State<DrumSheetPlayer> {
     );
     _isRecording = true;
     _currentMeasure = 0;
-    final measureSeconds = (_beatsPerMeasure * 60.0) / _bpm;
+
+    // 배속을 감안한 한 마디의 길이 계산 (초 단위)
+    final measureDuration =
+        (_beatsPerMeasure * 60.0) / (_bpm * playbackController.speed);
+
+    // Timer로 한 마디가 끝날 때마다 데이터를 전송
     _recordingDataTimer =
-        Timer.periodic(Duration(seconds: measureSeconds.toInt()), (timer) {
+        Timer.periodic(Duration(seconds: measureDuration.toInt()), (timer) {
       _sendRecordingDataWithMeasure(); // 한 마디를 주기로 녹음 데이터 전송
     });
   }
@@ -684,6 +689,7 @@ class _DrumSheetPlayerState extends State<DrumSheetPlayer> {
                   _bpm = info['bpm'] as double;
                 });
               },
+              playbackController: playbackController, // playbackController 전달
             ),
           ),
 
