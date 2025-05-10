@@ -4,22 +4,24 @@ import 'dart:convert'; //jsonDecode
 
 // HTTP handler 함수 - GET 요청 전용
 Future<Map<String, dynamic>> getHTTP(
-    String endpoint, Map<String, dynamic> queryParam,
-    {Map<String, dynamic> reqHeader = const {}}) async {
+  String endpoint,
+  Map<String, dynamic> queryParam, {
+  Map<String, dynamic> reqHeader = const {},
+}) async {
   try {
-    print("GET 요청 시작 --");
+    print("GET 요청 시작 -- $endpoint");
 
-    final uri = Uri.http(
-      serverAddr, // 서버 주소 : 현재 애뮬레이터 10.0.2.2:28080
-      endpoint, // API 엔드포인트
-      queryParam,
-    );
+    // queryParam의 값을 모두 String으로 변환
+    final safeQueryParam = queryParam.map((k, v) => MapEntry(k, v.toString()));
+
+    final uri = Uri.parse("http://$serverAddr$endpoint")
+        .replace(queryParameters: safeQueryParam);
 
     final response = await http.get(
       uri,
       headers: {
-        "Accept": "application/json", // 기대하는 응답 형식
-        if (reqHeader != {}) ...reqHeader, // 추가 헤더 정보
+        "Accept": "application/json",
+        if (reqHeader.isNotEmpty) ...reqHeader,
       },
     );
 
@@ -29,12 +31,10 @@ Future<Map<String, dynamic>> getHTTP(
     print("_________________");
 
     if (response.statusCode == 200) {
-      // 정상적인 경우
       final data = jsonDecode(response.body);
-      data["errMessage"] = null; // 에러 메시지 초기화
+      data["errMessage"] = null;
       return data;
     } else {
-      // 에러 코드별 세분화 처리
       switch (response.statusCode) {
         case 400:
           return {'errMessage': "잘못된 요청입니다. (정보 누락)"};
@@ -53,7 +53,7 @@ Future<Map<String, dynamic>> getHTTP(
       }
     }
   } catch (error) {
-    // 네트워크 오류 또는 JSON 파싱 오류 처리
+    print("예외 발생: $error");
     return {'errMessage': "네트워크 오류가 발생했습니다."};
   }
 }
@@ -62,7 +62,7 @@ Future<Map<String, dynamic>> postHTTP(String endpoint,
     Map<String, dynamic>? requestBody, // requestBody를 nullable로 변경
     {Map<String, dynamic> reqHeader = const {}}) async {
   try {
-    print("POST 요청 시작 --");
+    print("POST 요청 시작 -- ${endpoint}");
     final uri = Uri.parse("http://$serverAddr$endpoint"); // URL 생성
 
     // requestBody가 null일 경우 빈 본문을 전달
@@ -110,6 +110,7 @@ Future<Map<String, dynamic>> postHTTP(String endpoint,
       }
     }
   } catch (error) {
+    print("예외 발생: $error");
     return {'errMessage': "네트워크 오류가 발생했습니다."};
   }
 }
@@ -120,7 +121,7 @@ Future<Map<String, dynamic>> putHTTP(
     Map<String, dynamic>? requestBody, // requestBody를 nullable로 변경
     {Map<String, dynamic> reqHeader = const {}}) async {
   try {
-    print("PUT 요청 시작 --");
+    print("PUT 요청 시작 -- ${endpoint}");
 
     // 쿼리 파라미터가 있을 경우 URI에 포함, 없으면 기본 endpoint로 URI 생성
     final uri = queryParam != null

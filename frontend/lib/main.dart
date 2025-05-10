@@ -1,3 +1,5 @@
+import 'package:capstone_2025/screens/drumPatternFillPages/practice_result_PP.dart';
+import 'package:capstone_2025/screens/drumSheetPages/drum_sheet_player.dart';
 import 'package:capstone_2025/screens/drumPatternFillPages/pattern_fill_main.dart';
 import 'package:capstone_2025/screens/drumPatternFillPages/pattern_fill_screen.dart';
 import 'package:capstone_2025/screens/introPages/login_screen_google.dart';
@@ -51,9 +53,9 @@ class _MyAppState extends State<MyApp> {
         });
         return;
       }
-      final response = await postHTTP('/auth/token', {},
-          reqHeader: {'authorization': token});
-      final isTokenValid = response['status'] == 200;
+      final response =
+          await getHTTP('/auth/check', {}, reqHeader: {'authorization': token});
+      final isTokenValid = response['body'] == 'valid';
       setState(() {
         _isLoggedIn = token.isNotEmpty && isTokenValid;
       });
@@ -67,25 +69,23 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
-    // if (_isLoggedIn == null) {
-    //   // 자동로그인 로직
-    //   return const MaterialApp(
-    //     home: Scaffold(
-    //       body: Center(child: CircularProgressIndicator()),
-    //     ),
-    //   );
-    // }
+    if (_isLoggedIn == null) {
+      // 자동로그인 로직
+      return const MaterialApp(
+        home: Scaffold(
+          body: Center(child: CircularProgressIndicator()),
+        ),
+      );
+    }
 
-    // return MaterialApp(
-    //   theme: ThemeData(scaffoldBackgroundColor: Color(0xFFF2F1F3)),
-    //   home: _isLoggedIn! ? NavigationScreens() : LoginScreenGoogle(),
-    // );
     return MaterialApp(
-      // 임시 코드
       theme: ThemeData(scaffoldBackgroundColor: Color(0xFFF2F1F3)),
-      home: PatternFillScreen(
-        title: "Basic Pattern 1",
-      ),
+      home: _isLoggedIn! ? NavigationScreens() : LoginScreenGoogle(),
+      // home: DrumSheetPlayer(), // 악보연주페이지 확인용
     );
+    // return MaterialApp(
+    //     // 임시 코드
+    //     theme: ThemeData(scaffoldBackgroundColor: Color(0xFFF2F1F3)),
+    //     home: NavigationScreens());
   }
 }

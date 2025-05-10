@@ -9,42 +9,39 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class MusicsheetDetail extends StatefulWidget {
   final String songID; // 노래 ID
+  final String songTitle; // 노래 제목
 
-  const MusicsheetDetail({super.key, required this.songID});
+  const MusicsheetDetail(
+      {super.key, required this.songID, required this.songTitle});
 
   @override
   State<MusicsheetDetail> createState() => _MusicsheetDetailState();
 }
 
 class _MusicsheetDetailState extends State<MusicsheetDetail> {
-  List<Map<String, String>> scoreData = [
-    {'연습 날짜': "2025.01.18", '점수': "70"},
-    {'연습 날짜': "2025.02.10", '점수': "95"},
-    {'연습 날짜': "2025.02.11", '점수': "100"},
-    {'연습 날짜': "2025.02.12", '점수': "85"},
-    {'연습 날짜': "2025.02.17", '점수': "90"},
-    {'연습 날짜': "2025.02.18", '점수': "75"},
-    {'연습 날짜': "2025.02.20", '점수': "88"},
-    {'연습 날짜': "2025.02.22", '점수': "93"},
-    {'연습 날짜': "2025.02.25", '점수': "78"},
-    {'연습 날짜': "2025.02.28", '점수': "85"},
-    {'연습 날짜': "2025.03.02", '점수': "97"},
-    {'연습 날짜': "2025.03.05", '점수': "92"},
-    {'연습 날짜': "2025.03.08", '점수': "80"},
-    {'연습 날짜': "2025.03.10", '점수': "76"},
-    {'연습 날짜': "2025.03.12", '점수': "98"},
-    {'연습 날짜': "2025.03.15", '점수': "100"},
-  ];
+  List<Map<String, String>> scoreData = [];
+
+  @override
+  void initState() {
+    super.initState();
+    createDetailList();
+  }
 
   void createDetailList() async {
+    // 리스트 생성 함수
     String? email = await storage.read(key: "user_email");
     final response = await getHTTP(
       '/sheets/${widget.songID}/practices',
       {"pageSize": 100, "pageNumber": 0, "email": email},
     );
+    print("DEBUG - 호출한 API: /sheets/${widget.songID}/practices");
+    print("DEBUG - 전달한 email: $email");
+    print("DEBUG - 응답 결과: $response");
 
     if (response['errMessage'] == null) {
       List<dynamic> rawData = response['body'];
+      print("res: $rawData");
+
       setState(() {
         scoreData = rawData.map<Map<String, String>>((item) {
           final rawDate = DateTime.tryParse(item['createdDate'] ?? '');
@@ -64,7 +61,9 @@ class _MusicsheetDetailState extends State<MusicsheetDetail> {
 
   List<FlSpot> generateChartData() {
     // scoreData에서 마지막 5개 데이터만 가져오기
-    lastFive = scoreData.sublist(scoreData.length - 5, scoreData.length);
+    lastFive = scoreData.length > 5
+        ? scoreData.sublist(scoreData.length - 5)
+        : List.from(scoreData);
 
     // 차트 데이터로 변환 (x축은 0부터 시작)
     return List.generate(
@@ -78,9 +77,12 @@ class _MusicsheetDetailState extends State<MusicsheetDetail> {
 
   // 최소값 찾기(그래프 하단 여백 남기기 위해)
   double getMinY() {
-    final scores = scoreData.map((data) => double.tryParse(data['점수']!) ?? 0.0);
-    final minScore = scores.reduce((a, b) => a < b ? a : b); // 최소 점수 찾기
-    return (minScore - 5).clamp(0.0, 100.0); // 최소값에서 5점 감소 (최소 0점)
+    if (scoreData.isEmpty) return 0.0;
+
+    final scores =
+        scoreData.map((data) => double.tryParse(data['점수']!) ?? 0.0).toList();
+    final minScore = scores.reduce((a, b) => a < b ? a : b); // 최소 점수
+    return (minScore - 5).clamp(0.0, 100.0);
   }
 
   // 그래프 생성
@@ -259,7 +261,7 @@ class _MusicsheetDetailState extends State<MusicsheetDetail> {
                     // 노래 제목
                     child: Center(
                       child: linedText(
-                        widget.songID,
+                        widget.songTitle,
                         27,
                         Colors.black54,
                         Colors.white,

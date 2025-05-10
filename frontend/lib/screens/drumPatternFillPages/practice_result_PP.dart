@@ -8,16 +8,19 @@ import 'package:capstone_2025/widgets/openSheetModal.dart';
 import 'package:flutter/material.dart';
 
 class PracticeResultPP extends StatefulWidget {
-  const PracticeResultPP({super.key});
+  const PracticeResultPP({super.key, required this.idx, required this.score});
+
+  final int idx; // 패턴 번호
+  final int score; // 점수
 
   @override
   State<PracticeResultPP> createState() => _PracticeResultPPState();
 }
 
 class _PracticeResultPPState extends State<PracticeResultPP> {
-  int idx = 9; // 패턴 번호
-  bool lvCleared = true; // 레벨 클리어 여부
-  int score = 80; // 점수
+  late int idx = widget.idx; // 패턴 번호
+  late int score = widget.score; // 점수
+  late bool lvCleared = (widget.score >= 80); // 레벨 클리어 여부
 
   @override
   Widget build(BuildContext context) {
