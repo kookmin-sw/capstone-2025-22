@@ -2,26 +2,33 @@ package com.capstone.config;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import redis.embedded.RedisServer;
 
 import java.io.IOException;
+import java.net.ServerSocket;
 
 @Configuration
 public class EmbeddedRedisConfig {
-    @Value("${spring.data.redis.port}")
-    int port;
 
     private RedisServer redisServer;
 
+    public int getAvailablePort() {
+        try (ServerSocket socket = new ServerSocket(0)) {
+            socket.setReuseAddress(true);
+            return socket.getLocalPort();
+        } catch (IOException e) {
+            throw new IllegalStateException("No available port", e);
+        }
+    }
+
     @PostConstruct
-    public void startRedis() throws IOException {
+    public void startRedis() {
         try {
+            int port = getAvailablePort();
             redisServer = new RedisServer(port);
             redisServer.start();
         }catch (Exception e){
-            e.printStackTrace();
             throw new RuntimeException("failed to start redis server");
         }
     }

@@ -30,6 +30,7 @@ dependencies {
     testImplementation platform('org.junit:junit-bom:5.10.0')
     testImplementation 'org.junit.jupiter:junit-jupiter'
     testImplementation 'it.ozimov:embedded-redis:0.7.2'
+    testImplementation 'org.springframework.kafka:spring-kafka-test'
 }
 
 test {
