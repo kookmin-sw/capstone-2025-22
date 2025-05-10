@@ -31,6 +31,7 @@ public class SecurityConfig {
             "/verification/v3/api-docs/**",
             "/users/v3/api-docs/**",
             "/music/v3/api-docs/**",
+            "/audio/v3/api-docs/**",
             // auth service
             "/auth/**",
             // verification service
@@ -43,6 +44,10 @@ public class SecurityConfig {
             "/sheets/**",
             // user service
             "/users/**",
+    };
+    private final String[] WHITE_LIST_POST = {
+            // audio service
+            "/audio/practice/**",
     };
     private JwtAuthFilter jwtAuthFilter;
     public SecurityConfig(JwtAuthFilter jwtAuthFilter) {
@@ -58,6 +63,7 @@ public class SecurityConfig {
                 .authorizeExchange(exchange -> {
                     exchange.pathMatchers(WHITE_LIST).permitAll();
                     exchange.pathMatchers(HttpMethod.GET ,WHITE_LIST_GET).permitAll();
+                    exchange.pathMatchers(HttpMethod.POST, WHITE_LIST_POST).permitAll();
                     exchange.anyExchange().authenticated();
                 });
         return http.build();
