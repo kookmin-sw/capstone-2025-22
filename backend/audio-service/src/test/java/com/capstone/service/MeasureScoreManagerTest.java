@@ -57,8 +57,8 @@ class MeasureScoreManagerTest {
         for(int i = 0; i < 10; i++){
             String measureNumber = UUID.randomUUID().toString();
             FinalMeasureResult finalMeasureResult = FinalMeasureResult.builder()
-                    .userDrumPredictList(List.of(new String[]{"TOM"}, new String[]{"TOM"}, new String[]{"TOM"}))
-                    .answerDrumPredictList(List.of(new String[]{"TOM"}, new String[]{"TOM"}, new String[]{"TOM"}))
+                    .finalScoringResults(List.of(true, true, true))
+                    .beatScoringResults(List.of(true, true, true))
                     .measureNumber(measureNumber)
                     .score(((double) i + 1 ) * 10)
                     .build();
