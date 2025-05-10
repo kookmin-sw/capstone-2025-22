@@ -2,17 +2,17 @@ package com.capstone.dto;
 
 import lombok.*;
 
-@Getter
-@Setter
+@Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @ToString
 public class AudioMessageDto {
-    private int bpm;
-    private int userSheetId;
-    private String identifier;
-    private String email;
-    private String message;
-    private String measureNumber;
-    private boolean isLastMeasure;
+    int bpm;
+    int userSheetId;
+    String identifier;
+    String email;
+    String message;
+    String measureNumber;
+    boolean endOfMeasure;
 }
