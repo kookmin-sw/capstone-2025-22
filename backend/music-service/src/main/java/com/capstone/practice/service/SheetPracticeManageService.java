@@ -27,4 +27,10 @@ public class SheetPracticeManageService {
             throw new RuntimeException(e);
         }
     }
+
+    public void deleteSheetPractice(int sheetPracticeId) {
+        SheetPractice sheetPractice = sheetPracticeRepository.findById(sheetPracticeId)
+                .orElseThrow(() -> new DataNotFoundException("SheetPractice not found"));
+        sheetPracticeRepository.delete(sheetPractice);
+    }
 }
