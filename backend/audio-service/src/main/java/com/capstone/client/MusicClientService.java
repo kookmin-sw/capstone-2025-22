@@ -1,6 +1,8 @@
 package com.capstone.client;
 
+import com.capstone.dto.UserResponseDto;
 import com.capstone.dto.musicXml.MeasureInfo;
+import com.capstone.response.CustomResponseDto;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
@@ -22,10 +24,13 @@ public class MusicClientService {
         return musicWebClient.get()
                 .uri(builder -> builder.path("/sheets/{userSheetId}/measures")
                         .queryParam("measureNumber", measureNumber).build(userSheetId))
-                .retrieve()
-                .bodyToMono(MeasureInfo.class)
-                .doOnNext(measureInfo -> log.info("measureInfo: {}", measureInfo.toString()))
-                .doOnError(e -> log.error("Error getting measure info: {}", e.getMessage()));
+                .exchangeToMono(res -> {
+                    if(res.statusCode().is2xxSuccessful()){
+                        return res.bodyToMono(String.class).map(resBody-> CustomResponseDto.resolveBody(resBody, MeasureInfo.class));
+                    }else{
+                        return Mono.empty();
+                    }
+                });
     }
 
     public Mono<Boolean> saveMeasureScoreInfo(SheetPracticeCreateRequest requestDto) {
