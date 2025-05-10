@@ -1,11 +1,13 @@
 package com.capstone.config;
 
+import com.capstone.dto.score.FinalMeasureResult;
 import com.capstone.practice.entity.SheetPractice;
 import com.capstone.practice.repository.SheetPracticeRepository;
 import com.capstone.sheet.entity.Sheet;
 import com.capstone.sheet.entity.UserSheet;
 import com.capstone.sheet.repository.SheetRepository;
 import com.capstone.sheet.repository.UserSheetRepository;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.javafaker.Faker;
 import jakarta.annotation.PostConstruct;
 import org.springframework.context.annotation.Profile;
@@ -18,6 +20,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.UUID;
 
 @Component
 @Profile("dev")
@@ -37,7 +40,9 @@ public class FakeDataGenerator {
     @PostConstruct
     public void init() throws Exception {
         Faker faker = new Faker(Locale.KOREAN);
-        if(sheetRepository.count() > 10) return;
+        if(sheetPracticeRepository.findAll().size() > 10){
+            return;
+        }
         byte[] sheetXml;
         try (InputStream inputStream = new DefaultResourceLoader()
                 .getResource("classpath:sheets/sheet.xml")
@@ -88,14 +93,25 @@ public class FakeDataGenerator {
     /**
     * generate fake sheet practices
     * */
-    public void generateSheetPractices(Faker faker, List<UserSheet> userSheets, int countPerSheet, String testUser) {
+    public void generateSheetPractices(Faker faker, List<UserSheet> userSheets, int countPerSheet, String testUser) throws Exception{
+        FinalMeasureResult finalMeasureResult = FinalMeasureResult.builder()
+                .score((double) faker.number().numberBetween(1, 100))
+                .beatScoringResults(List.of(true, true, true, true, true))
+                .finalScoringResults(List.of(true, true, true, true, true)).build();
         for(UserSheet userSheet: userSheets){
             for(int i=0; i<countPerSheet; i++){
+                int measureNumber = 1;
+                List<FinalMeasureResult> finalMeasureResults = new ArrayList<>();
+                for(int j=0; j<10; j++){
+                    finalMeasureResult.setMeasureNumber(Integer.toString(measureNumber++));
+                    finalMeasureResults.add(finalMeasureResult);
+                }
+                String practiceInfo = new ObjectMapper().writeValueAsString(finalMeasureResults);
                 sheetPracticeRepository.save(
                         SheetPractice.builder()
                                 .userSheet(userSheet)
                                 .score(faker.number().numberBetween(1, 100))
-                                .practiceInfo("must not use yet")
+                                .practiceInfo(practiceInfo)
                                 .userEmail(testUser)
                                 .createdDate(LocalDateTime.now())
                                 .build()
