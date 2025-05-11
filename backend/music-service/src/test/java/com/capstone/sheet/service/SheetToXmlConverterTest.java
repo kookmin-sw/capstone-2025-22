@@ -56,7 +56,7 @@ class SheetToXmlConverterTest {
     }
 
     @Test
-    void convertToXml_pdf_success() {
+    void convertToXml_pdf_success() throws IOException{
         // given
         SheetCreateMeta sheetCreateMeta = SheetCreateMeta.builder()
                 .sheetName("sheet name")
@@ -69,7 +69,7 @@ class SheetToXmlConverterTest {
         // stub
         doReturn(new byte[100]).when(converter).processConvert(anyString(), anyString());
         // when
-        byte[] res = converter.convertToXml(sheetCreateMeta, sheetFile);
+        byte[] res = converter.convertToXml(sheetCreateMeta, sheetFile.getBytes());
         // then
         assertNotNull(res);
         assertTrue(res.length > 0);
