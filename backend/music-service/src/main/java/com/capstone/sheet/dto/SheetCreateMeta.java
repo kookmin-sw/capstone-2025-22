@@ -17,6 +17,7 @@ public class SheetCreateMeta {
     boolean isOwner;
     String userEmail;
     String fileExtension;
+    String artistName;
 
     public UserSheet toUserSheetEntity(Sheet sheet){
         return UserSheet.builder()

@@ -16,6 +16,6 @@ public class SheetEventListener {
     @EventListener
     @Transactional
     public void handleSheetInfoUpdateEvent(SheetUpdateEvent event) {
-        sheetUpdateService.updateSheetInfo(event.getSheet(), event.getSheetCreateMeta(), event.getSheetFile());
+        sheetUpdateService.updateSheetInfo(event.getSheet(), event.getSheetCreateMeta(), event.getSheetFileBytes());
     }
 }

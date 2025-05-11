@@ -31,7 +31,7 @@ public class SheetUpdateService {
     private final ObjectMapper objectMapper;
 
     @Transactional
-    public void updateSheetInfo(Sheet sheet, SheetCreateMeta sheetCreateMeta, MultipartFile sheetFile) {
+    public void updateSheetInfo(Sheet sheet, SheetCreateMeta sheetCreateMeta, byte[] sheetFile) {
         try {
             byte[] sheetXml = sheetToXmlConverter.convertToXml(sheetCreateMeta, sheetFile);
             String partInfoListString = objectMapper.writeValueAsString(sheetXmlInfoParser.parseXmlInfo(sheetXml));
