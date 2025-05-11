@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 class Sheet {
   String title;
+  String artistName;
   final DateTime createdDate;
   final DateTime lastPracticedDate;
   Color color;
@@ -9,6 +10,7 @@ class Sheet {
 
   Sheet({
     required this.title,
+    required this.artistName,
     required this.createdDate,
     required this.lastPracticedDate,
     this.color = const Color(0xFFBEBEBE),
@@ -18,6 +20,7 @@ class Sheet {
   factory Sheet.fromJson(Map<String, dynamic> json) {
     return Sheet(
       title: json['sheetName'] ?? "error",
+      artistName: json['artistName'] ?? "errorName",
       createdDate: json['createdDate'] != null
           ? DateTime.parse(json['createdDate'])
           : DateTime.now(),
