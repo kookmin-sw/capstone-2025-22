@@ -88,17 +88,20 @@ class _MyPageState extends State<MyPage> {
       if (!mounted) return;
       setState(() {
         isSheetMusicUploaded = true;
-        sheetMusicData =
-            (response['body'] as List).map<Map<String, String>>((item) {
-          final rawDate = DateTime.tryParse(item['lastPracticeDate'] ?? '');
+        sheetMusicData = (response['body'] as List)
+            .whereType<Map<String, dynamic>>() // null이거나 잘못된 타입 제거
+            .map<Map<String, String>>((item) {
+          final rawDate =
+              DateTime.tryParse(item['lastPracticeDate']?.toString() ?? '');
           final formattedDate = rawDate != null
               ? "${rawDate.year.toString().padLeft(4, '0')}.${rawDate.month.toString().padLeft(2, '0')}.${rawDate.day.toString().padLeft(2, '0')}"
-              : '';
+              : '-';
+
           return {
             "id": item["userSheetId"].toString(),
-            "악보명": item["sheetName"],
+            "악보명": item["sheetName"] ?? "제목 없음",
             "마지막 연습 날짜": formattedDate,
-            "최고 점수": item["maxScore"].toString(),
+            "최고 점수": item["maxScore"]?.toString() ?? "-",
           };
         }).toList();
       });

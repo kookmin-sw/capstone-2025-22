@@ -17,9 +17,13 @@ class Sheet {
 
   factory Sheet.fromJson(Map<String, dynamic> json) {
     return Sheet(
-      title: json['title'],
-      createdDate: DateTime.now(),
-      lastPracticedDate: DateTime.parse(json['lastPracticedDate']),
+      title: json['sheetName'] ?? "error",
+      createdDate: json['createdDate'] != null
+          ? DateTime.parse(json['createdDate'])
+          : DateTime.now(),
+      lastPracticedDate: json['lastPracticeDate'] != null
+          ? DateTime.parse(json['lastPracticeDate'])
+          : DateTime.now(),
       color: _hexToColor(json['color'] ?? '#BEBEBE'),
     );
   }
