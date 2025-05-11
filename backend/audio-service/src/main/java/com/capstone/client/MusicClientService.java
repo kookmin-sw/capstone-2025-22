@@ -28,6 +28,8 @@ public class MusicClientService {
                     if(res.statusCode().is2xxSuccessful()){
                         return res.bodyToMono(String.class).map(resBody-> CustomResponseDto.resolveBody(resBody, MeasureInfo.class));
                     }else{
+                        String message = res.bodyToMono(String.class).block();
+                        log.error("Error getting measure info: {}", message);
                         return Mono.empty();
                     }
                 });
@@ -41,6 +43,8 @@ public class MusicClientService {
                     if (res.statusCode().is2xxSuccessful()) {
                         return Mono.just(true);
                     }else{
+                        String message = res.bodyToMono(String.class).block();
+                        log.error("Error saving practice info: {}", message);
                         return Mono.just(false);
                     }
                 });
