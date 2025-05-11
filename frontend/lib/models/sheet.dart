@@ -27,7 +27,7 @@ class Sheet {
       createdDate: json['createdDate'] != null
           ? DateTime.parse(json['createdDate'])
           : DateTime.now(),
-      sheetId: json['sheetId'] ?? 0,
+      sheetId: json['userSheetId'] ?? 0,
       lastPracticedDate: json['lastPracticeDate'] != null
           ? DateTime.parse(json['lastPracticeDate'])
           : DateTime.now(),
