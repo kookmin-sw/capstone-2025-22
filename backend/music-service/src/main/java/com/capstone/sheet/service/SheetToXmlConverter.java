@@ -1,6 +1,7 @@
 package com.capstone.sheet.service;
 
 import com.capstone.exception.InternalServerException;
+import com.capstone.sheet.dto.PatternCreateDto;
 import com.capstone.sheet.dto.SheetCreateMeta;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.tomcat.util.http.fileupload.FileUtils;
@@ -165,6 +166,15 @@ public class SheetToXmlConverter {
         } finally {
             deleteDirectory(sheetDir);
         }
+    }
+
+    public byte[] convertToXml(PatternCreateDto createDto, byte[] fileBytes){
+        SheetCreateMeta meta = SheetCreateMeta.builder()
+                .sheetName(createDto.getPatternName())
+                .fileExtension(createDto.getFileExtension())
+                .userEmail(UUID.randomUUID().toString().substring(0, 8))
+                .build();
+        return convertToXml(meta, fileBytes);
     }
 
 }
