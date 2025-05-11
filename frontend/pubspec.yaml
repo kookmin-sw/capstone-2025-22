@@ -57,8 +57,7 @@ dev_dependencies:
   flutter_lints: ^5.0.0
   image_picker: ^1.0.7 # 카메라, 앨범에서 사진을 가져오는 패키지
   path_provider: ^2.1.2
-  build_runner:
-  custom_lint:
+
   riverpod_generator: ^2.6.5
   riverpod_lint: ^2.6.5
 
@@ -80,6 +79,7 @@ flutter:
     - assets/web/js/opensheetmusicdisplay.min.js
     - assets/web/js/fileSelectAndLoadOSMD.js
     - assets/music/demo.xml
+    - assets/music/test_pattern.xml
     - assets/images/drum_kit.png
     - assets/test/tom_mix.xml
     - assets/test/tom_mix.wav
@@ -97,6 +97,7 @@ flutter:
     - assets/images/notes/dot_quarter.png
     - assets/sounds/metronome_first.wav
     - assets/sounds/metronome_other.wav
+    - assets/sounds/test_pattern.wav
     - assets/images/appLogo.png
 
   #   - images/a_dot_burr.jpeg

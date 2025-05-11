@@ -1,22 +1,22 @@
+import 'dart:io';
 import 'dart:async';
 import 'dart:convert';
+import 'package:logger/logger.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../../models/sheet_info.dart';
-import '../../models/cursor.dart';
-import './widgets/cursor_widget.dart';
-import 'playback_controller.dart';
-import './widgets/confirmation_dialog.dart';
-import '../../services/osmd_service.dart';
-import 'dart:io';
+import 'package:path_provider/path_provider.dart';
 import 'package:flutter_sound/flutter_sound.dart' as fs;
-import 'package:flutter_sound/public/flutter_sound_recorder.dart';
 import 'package:stomp_dart_client/stomp_dart_client.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:xml/xml.dart';
-import 'package:path_provider/path_provider.dart';
+
+import '../../models/cursor.dart';
+import '../../models/sheet_info.dart';
+import '../../services/osmd_service.dart';
 import '../../widgets/drum_recording_widget.dart';
+import './widgets/cursor_widget.dart';
+import './widgets/confirmation_dialog.dart';
+import 'playback_controller.dart';
 
 class DrumSheetPlayer extends StatefulWidget {
   const DrumSheetPlayer({super.key});
@@ -143,6 +143,7 @@ class _DrumSheetPlayerState extends State<DrumSheetPlayer> {
     super.dispose();
   }
 
+  // 1. _recordingPath를 하나의 고정된 경로로 설정하여 녹음 파일 덮어쓰기
   Future<void> _initRecorder() async {
     var status = await Permission.microphone.request();
     if (status != PermissionStatus.granted) {
@@ -152,6 +153,76 @@ class _DrumSheetPlayerState extends State<DrumSheetPlayer> {
     await _recorder.openRecorder();
     final appDocDir = await getApplicationDocumentsDirectory();
     _recordingPath = '${appDocDir.path}/drum_performance.wav';
+  }
+
+  // 2. 녹음 시작 후, 마디별로 데이터를 웹소켓으로 전송 후 덮어쓰기
+  Future<void> _startRecording() async {
+    if (_isRecording) return;
+    if (!_webSocketConnected) {
+      print('❌ 녹음을 시작할 수 없습니다: WebSocket이 연결되지 않았습니다.');
+      return;
+    }
+    await _recorder.startRecorder(
+      toFile: _recordingPath, // 덮어쓰기 경로
+      codec: fs.Codec.pcm16WAV,
+      sampleRate: 16000,
+      numChannels: 1,
+      bitRate: 16000,
+    );
+    _isRecording = true;
+    _currentMeasure = 0;
+
+    // 배속을 감안한 한 마디의 길이 계산 (초 단위)
+    final measureDuration =
+        (_beatsPerMeasure * 60.0) / (_bpm * playbackController.speed);
+
+    // Timer로 한 마디가 끝날 때마다 데이터를 전송
+    _recordingDataTimer =
+        Timer.periodic(Duration(seconds: measureDuration.toInt()), (timer) {
+      _sendRecordingDataWithMeasure(); // 한 마디를 주기로 녹음 데이터 전송
+    });
+  }
+
+  // 3. 녹음 중 데이터 전송 및 덮어쓰기
+  Future<void> _sendRecordingDataWithMeasure() async {
+    if (!_stompClient.connected) {
+      print('❌ WebSocket 연결이 되지 않아 데이터 전송 실패');
+      return;
+    }
+    try {
+      final file = File(_recordingPath!);
+      if (await file.exists()) {
+        final base64String = base64Encode(await file.readAsBytes());
+        final message = {
+          'email': _userEmail,
+          'message': base64String,
+          'currentMeasure': _currentMeasure,
+          'totalMeasures': _totalMeasures
+        };
+        print(
+            '📤 녹음 데이터 전송: ${DateTime.now()} (마디: ${_currentMeasure + 1}/$_totalMeasures)');
+        _stompClient.send(
+          destination: '/app/audio/forwarding',
+          body: json.encode(message),
+          headers: {'content-type': 'application/json'},
+        );
+        _currentMeasure++;
+        if (_currentMeasure >= _totalMeasures) {
+          _stopRecording(); // 모든 마디 녹음 완료 후 종료
+        }
+      }
+    } catch (e) {
+      print('❌ 녹음 데이터 전송 중 오류 발생: $e');
+    }
+  }
+
+  // 4. 녹음 종료
+  Future<void> _stopRecording() async {
+    if (!_isRecording) return;
+    _recordingDataTimer?.cancel();
+    await _recorder.stopRecorder();
+    _isRecording = false;
+    print('🎙️ 녹음 종료');
   }
 
   Future<void> _setupWebSocket() async {
@@ -178,68 +249,6 @@ class _DrumSheetPlayerState extends State<DrumSheetPlayer> {
       ),
     );
     _stompClient.activate();
-  }
-
-  Future<void> _startRecording() async {
-    if (_isRecording) return;
-    if (!_webSocketConnected) {
-      print('❌ 녹음을 시작할 수 없습니다: WebSocket이 연결되지 않았습니다.');
-      return;
-    }
-    await _recorder.startRecorder(
-      toFile: _recordingPath,
-      codec: fs.Codec.pcm16WAV,
-      sampleRate: 16000,
-      numChannels: 1,
-      bitRate: 16000,
-    );
-    _isRecording = true;
-    _currentMeasure = 0;
-    final measureSeconds = (_beatsPerMeasure * 60.0) / _bpm;
-    _recordingDataTimer =
-        Timer.periodic(Duration(seconds: measureSeconds.toInt()), (timer) {
-      _sendRecordingDataWithMeasure();
-    });
-  }
-
-  Future<void> _stopRecording() async {
-    if (!_isRecording) return;
-    _recordingDataTimer?.cancel();
-    await _recorder.stopRecorder();
-    _isRecording = false;
-    print('🎙️ 녹음 종료');
-  }
-
-  Future<void> _sendRecordingDataWithMeasure() async {
-    if (!_stompClient.connected) {
-      print('❌ WebSocket 연결이 되지 않아 데이터 전송 실패');
-      return;
-    }
-    try {
-      final file = File(_recordingPath!);
-      if (await file.exists()) {
-        final base64String = base64Encode(await file.readAsBytes());
-        final message = {
-          'email': _userEmail,
-          'message': base64String,
-          'currentMeasure': _currentMeasure,
-          'totalMeasures': _totalMeasures
-        };
-        print(
-            '📤 녹음 데이터 전송: ${DateTime.now()} (마디: ${_currentMeasure + 1}/$_totalMeasures)');
-        _stompClient.send(
-          destination: '/app/audio/forwarding',
-          body: json.encode(message),
-          headers: {'content-type': 'application/json'},
-        );
-        _currentMeasure++;
-        if (_currentMeasure >= _totalMeasures) {
-          _stopRecording();
-        }
-      }
-    } catch (e) {
-      print('❌ 녹음 데이터 전송 중 오류 발생: $e');
-    }
   }
 
   @override
@@ -574,7 +583,7 @@ class _DrumSheetPlayerState extends State<DrumSheetPlayer> {
                             child: ClipRRect(
                               borderRadius: BorderRadius.circular(20),
                               child: Container(
-                                  height: 7, color: const Color(0xffEB8E8E)),
+                                  height: 7, color: const Color(0xffD97D6C)),
                             ),
                           ),
                         ),
@@ -680,6 +689,7 @@ class _DrumSheetPlayerState extends State<DrumSheetPlayer> {
                   _bpm = info['bpm'] as double;
                 });
               },
+              playbackController: playbackController, // playbackController 전달
             ),
           ),
 

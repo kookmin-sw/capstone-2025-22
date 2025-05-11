@@ -12,6 +12,7 @@ import 'package:stomp_dart_client/stomp_dart_client.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter_sound/public/flutter_sound_recorder.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:capstone_2025/screens/drumSheetPages/playback_controller.dart';
 
 /// 드럼 녹음 기능을 제공하는 위젯
 /// 카운트다운, WebSocket 연결, XML 파싱, 녹음 등의 기능을 포함
@@ -37,6 +38,9 @@ class DrumRecordingWidget extends StatefulWidget {
   /// MusicXML 파싱 결과를 부모 위젯에 전달하기 위한 콜백
   final Function(Map<String, dynamic>)? onMusicXMLParsed;
 
+  /// 배속 정보
+  final PlaybackController playbackController;
+
   const DrumRecordingWidget({
     super.key,
     required this.title,
@@ -46,6 +50,7 @@ class DrumRecordingWidget extends StatefulWidget {
     this.onMeasureUpdate,
     this.onOnsetsReceived,
     this.onMusicXMLParsed,
+    required this.playbackController,
   });
 
   @override
@@ -69,7 +74,7 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
   String? _recordingPath;
   fs.FlutterSoundRecorder? _recorder;
   String recordingStatusMessage = '';
-  Timer? _recordingDataTimer;
+  Timer? _recordingTimer;
   StreamSubscription<fs.RecordingDisposition>? _recorderSubscription;
 
   // XML 파싱 및 타이밍 관련
@@ -79,6 +84,7 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
   final double _baseBpm = 60.0;
   double _totalDuration = 0.0;
   int _currentMeasure = 0;
+  double _secondsPerMeasure = 0.0; // 한 마디당 시간(초), XML 파싱 후 계산됨
 
   // 카운트다운 관련
   int countdown = 3;
@@ -134,7 +140,7 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
 
     // 녹음 파일 저장 경로 설정
     final appDocDir = await getApplicationDocumentsDirectory();
-    _recordingPath = '${appDocDir.path}/drum_performance.wav';
+    _recordingPath = '${appDocDir.path}/current_measure.wav';
   }
 
   Future<void> _setupWebSocket() async {
@@ -241,6 +247,7 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
       _beatType = info['beatType'] as int;
       _totalMeasures = info['totalMeasures'] as int;
       _totalDuration = info['totalDuration'] as double;
+      _secondsPerMeasure = info['secondsPerMeasure'] as double;
     });
 
     print('✅ DrumRecordingWidget: 마디 정보 업데이트 완료');
@@ -283,15 +290,17 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
       }
       final bpm = parsedBpm ?? 60.0;
 
+      // 한 마디당 시간 계산 (초)
+      _secondsPerMeasure = (_beatsPerMeasure * 60.0) / bpm;
+
       // 총 재생 시간 계산 (초)
-      final measureDuration = (_beatsPerMeasure * 60.0) / bpm;
-      _totalDuration = _totalMeasures * measureDuration;
+      _totalDuration = _totalMeasures * _secondsPerMeasure;
 
       print('🎼≪MusicXML 파싱 결과≫🎼');
       print('박자: $_beatsPerMeasure/$_beatType');
       print('총 마디 수: $_totalMeasures');
       print('BPM: $bpm');
-      print('한 마디 시간: ${measureDuration.toStringAsFixed(2)}초');
+      print('한 마디 시간: ${_secondsPerMeasure.toStringAsFixed(2)}초');
       print('총 재생 시간: ${_totalDuration.toStringAsFixed(2)}초');
 
       // 부모 위젯에 파싱 결과 전달
@@ -302,7 +311,7 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
           'totalMeasures': _totalMeasures,
           'bpm': bpm,
           'totalDuration': _totalDuration,
-          'measureDuration': measureDuration,
+          'secondsPerMeasure': _secondsPerMeasure,
         });
       }
     } catch (e) {
@@ -356,7 +365,30 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
     }
 
     try {
-      print("🎙️ 녹음을 시작합니다. 저장 경로: $_recordingPath");
+      // 전체 녹음 프로세스 시작
+      setState(() {
+        isRecording = true;
+        _currentMeasure = 0;
+        recordingStatusMessage = '녹음이 시작되었습니다.';
+      });
+
+      // 마디별 녹음 시작
+      await _recordMeasure();
+    } catch (e) {
+      if (!_isDisposed) {
+        setState(() => recordingStatusMessage = '녹음 시작 실패: $e');
+      }
+      print('❌ 녹음 중 오류 발생: $e');
+    }
+  }
+
+  /// 한 마디 녹음 후 전송
+  Future<void> _recordMeasure() async {
+    if (_isDisposed || !isRecording) return;
+
+    try {
+      // 녹음 시작
+      print("🎙️ 마디 ${_currentMeasure + 1} 녹음 시작. 저장 경로: $_recordingPath");
       await _recorder!.startRecorder(
         toFile: _recordingPath,
         codec: fs.Codec.pcm16WAV,
@@ -367,42 +399,55 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
 
       if (!_isDisposed) {
         setState(() {
-          isRecording = true;
-          _currentMeasure = 0;
-          recordingStatusMessage = '녹음이 시작되었습니다.';
+          recordingStatusMessage =
+              '녹음 중... (마디: ${_currentMeasure + 1}/$_totalMeasures)';
         });
       }
 
-      // 박자와 BPM에 따른 마디당 시간 계산
-      final secondsPerMeasure = (_beatsPerMeasure * 60.0) / _baseBpm;
+      // 배속을 감안한 마디의 시간 (초)
+      final measureDurationInSeconds =
+          (_secondsPerMeasure / widget.playbackController.speed).toInt();
 
-      // 마디마다 녹음 데이터 전송
-      _recordingDataTimer =
-          Timer.periodic(Duration(seconds: secondsPerMeasure.toInt()), (timer) {
-        if (_isDisposed) {
-          timer.cancel();
-          return;
-        }
+      // 한 마디 동안 녹음
+      _recordingTimer =
+          Timer(Duration(seconds: measureDurationInSeconds), () async {
+        // 녹음 중지
+        await _recorder!.stopRecorder();
 
-        _sendRecordingData();
+        // 녹음된 데이터 전송
+        await _sendRecordingData();
 
         // 부모 위젯에 현재 마디 정보 업데이트
         if (widget.onMeasureUpdate != null && !_isDisposed) {
           widget.onMeasureUpdate!(_currentMeasure + 1, _totalMeasures);
         }
-      });
 
-      // 총 재생 시간 후 녹음 중지
-      Future.delayed(Duration(seconds: _totalDuration.toInt()), () {
-        if (isRecording && !_isDisposed) {
-          stopRecording();
+        // 다음 마디로 이동
+        _currentMeasure++;
+
+        // 모든 마디 녹음 완료
+        if (_currentMeasure >= _totalMeasures) {
+          if (!_isDisposed) {
+            setState(() {
+              isRecording = false;
+              recordingStatusMessage = '녹음이 완료되었습니다.';
+            });
+
+            // 부모 위젯에 결과 전달
+            if (widget.onRecordingComplete != null) {
+              widget.onRecordingComplete!(_detectedOnsets);
+            }
+          }
+        } else {
+          // 다음 마디 녹음 시작
+          await _recordMeasure();
         }
       });
     } catch (e) {
+      print('❌ 마디 녹음 중 오류 발생: $e');
       if (!_isDisposed) {
-        setState(() => recordingStatusMessage = '녹음 시작 실패: $e');
+        setState(() => recordingStatusMessage = '녹음 오류: $e');
       }
-      print('❌ 녹음 중 오류 발생: $e');
     }
   }
 
@@ -410,18 +455,17 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
   Future<void> stopRecording() async {
     if (!isRecording || !mounted || _isDisposed || _recorder == null) return;
 
-    _recordingDataTimer?.cancel(); // 데이터 전송 타이머 중지
+    _recordingTimer?.cancel(); // 녹음 타이머 중지
 
     try {
-      await _recorder!.stopRecorder(); // 녹음기 종료
-
-      // 마지막 녹음 데이터 서버로 전송
-      _sendRecordingData();
+      if (_recorder!.isRecording) {
+        await _recorder!.stopRecorder(); // 현재 진행 중인 녹음 중지
+      }
 
       if (!_isDisposed) {
         setState(() {
           isRecording = false;
-          recordingStatusMessage = '녹음이 완료되었습니다.';
+          recordingStatusMessage = '녹음이 중지되었습니다.';
         });
       }
 
@@ -464,15 +508,7 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
 
         if (!_isDisposed) {
           setState(() => recordingStatusMessage =
-              '녹음 데이터 전송 중... (마디: ${_currentMeasure + 1}/$_totalMeasures)');
-        }
-
-        // 다음 마디로 이동
-        _currentMeasure++;
-
-        // 마지막 마디에 도달하면 녹음 중지
-        if (_currentMeasure >= _totalMeasures && !_isDisposed) {
-          stopRecording();
+              '녹음 데이터 전송 완료 (마디: ${_currentMeasure + 1}/$_totalMeasures)');
         }
       } else {
         print('⚠️ 녹음 파일이 존재하지 않습니다: $_recordingPath');
@@ -539,7 +575,7 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
       'beatType': _beatType,
       'totalMeasures': _totalMeasures,
       'totalDuration': _totalDuration,
-      'secondsPerMeasure': (_beatsPerMeasure * 60.0) / _baseBpm,
+      'secondsPerMeasure': _secondsPerMeasure,
     };
   }
 
@@ -549,7 +585,7 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
 
     // 1. 모든 타이머 취소
     _countdownTimer?.cancel();
-    _recordingDataTimer?.cancel();
+    _recordingTimer?.cancel();
 
     // 2. 구독 취소
     _recorderSubscription?.cancel();
@@ -566,7 +602,9 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
     // 3. 녹음 중지
     if (isRecording && _recorder != null) {
       try {
-        await _recorder!.stopRecorder();
+        if (_recorder!.isRecording) {
+          await _recorder!.stopRecorder();
+        }
         print('✅ 녹음 중지 완료');
       } catch (e) {
         print('⚠️ 녹음 중지 중 오류 발생: $e');
