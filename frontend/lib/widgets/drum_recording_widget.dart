@@ -264,8 +264,9 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
 
       // xmlFilePath가 주어지면 파일을 읽어와서 xmlDataString으로 사용
       if (widget.xmlFilePath != null) {
-        final file = File(widget.xmlFilePath!);
-        xmlDataString = await file.readAsString();
+        print('🔍 xmlFilePath 존재');
+        xmlDataString = await rootBundle.loadString(widget.xmlFilePath!);
+        print('🔍 xmlDataString: $xmlDataString');
       }
       // xmlDataString이 주어지면 그대로 사용
       else if (widget.xmlDataString != null) {

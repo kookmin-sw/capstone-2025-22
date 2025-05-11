@@ -474,7 +474,7 @@ class _CountdownPageState extends State<CountdownPage>
                         style: MenuStyle(
                           alignment: Alignment.bottomLeft,
                           shadowColor:
-                              MaterialStatePropertyAll(Colors.transparent),
+                              WidgetStatePropertyAll(Colors.transparent),
                           padding: WidgetStatePropertyAll(EdgeInsets.zero),
                           backgroundColor:
                               WidgetStatePropertyAll(Colors.transparent),
