@@ -13,5 +13,5 @@ import org.springframework.web.multipart.MultipartFile;
 public class SheetUpdateEvent {
     private final Sheet sheet;
     private final SheetCreateMeta sheetCreateMeta;
-    private final MultipartFile sheetFile;
+    private final byte[] sheetFileBytes;
 }
