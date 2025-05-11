@@ -1,5 +1,6 @@
 package com.capstone.sheet.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
 
 @Getter
@@ -8,7 +9,12 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 public class SheetUpdateRequestDto {
+    @JsonProperty("email")
     String email;
+
+    @JsonProperty("color")
     String color;
+
+    @JsonProperty("name")
     String name;
 }

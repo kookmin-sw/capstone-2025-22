@@ -1,15 +1,28 @@
 package com.capstone.sheet.entity;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Entity
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class Pattern {
     @Id
-    private String id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
     @Column
     private String patternName;
-    @Column(columnDefinition = "Text")
-    private String patternInfo;
+
+    @Lob
+    @Column(columnDefinition = "MEDIUMBLOB")
+    private byte[] patternInfo;
+
+    @Column(columnDefinition = "TEXT")
+    private String patternJson;
 }

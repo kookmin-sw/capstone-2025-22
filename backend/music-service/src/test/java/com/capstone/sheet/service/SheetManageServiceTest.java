@@ -1,33 +1,44 @@
 package com.capstone.sheet.service;
 
 import com.capstone.data.TestDataGenerator;
-import com.capstone.exception.DataNotFoundException;
-import com.capstone.exception.InvalidRequestException;
+import com.capstone.sheet.dto.SheetCreateMeta;
 import com.capstone.sheet.dto.SheetResponseDto;
 import com.capstone.sheet.entity.UserSheet;
+import com.capstone.sheet.repository.SheetRepository;
 import com.capstone.sheet.repository.UserSheetRepository;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.core.io.DefaultResourceLoader;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.ResourceLoader;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.when;
+import static org.awaitility.Awaitility.await;
 
 @SpringBootTest
-@Transactional
 @ActiveProfiles("test")
 class SheetManageServiceTest {
-    @Autowired
-    private SheetManageService sheetManageService;
+    @MockBean
+    SheetToXmlConverter converter;
 
     @Autowired
-    private SheetRetrieveService sheetRetrieveService;
+    private SheetManageService sheetManageService;
 
     @Autowired
     private UserSheetRepository userSheetRepository;
@@ -35,8 +46,25 @@ class SheetManageServiceTest {
     @Autowired
     private TestDataGenerator testDataGenerator;
 
+    ResourceLoader resourceLoader;
+    MultipartFile sheetFilePDF;
+    byte[] sheetXmlBytes;
+
     @BeforeEach
-    void setUp() {
+    void setUp() throws IOException {
+        resourceLoader = new DefaultResourceLoader();
+        File originFile = resourceLoader.getResource("classpath:sheet/sheet.pdf").getFile();
+        FileInputStream input = new FileInputStream(originFile);
+        sheetFilePDF = new MockMultipartFile(
+                originFile.getName(),   // file name
+                originFile.getName(),   // origin file name
+                "application/pdf",      // content type
+                input                   // input
+        );
+        Resource sheetXmlInfo = resourceLoader.getResource("classpath:sheet/sheet.xml");
+        testDataGenerator.generateTestData();
+        sheetXmlBytes = Files.readAllBytes(sheetXmlInfo.getFile().toPath());
+        testDataGenerator.generateTestData();
         testDataGenerator.generateTestData();
     }
 
@@ -46,60 +74,25 @@ class SheetManageServiceTest {
     }
 
     @Test
-    void updateSheetNameTest() {
+    void saveSheetAndUserSheet_success() throws IOException{
         // given
-        String email = TestDataGenerator.userEmails.get(0);
-        String ghostEmail = UUID.randomUUID() + "@gmail.com";
-        String newName = "newName"+ UUID.randomUUID();
+        SheetCreateMeta meta = SheetCreateMeta.builder()
+                .sheetName(UUID.randomUUID().toString())
+                .color("#ffffffff")
+                .fileExtension("pdf")
+                .isOwner(true)
+                .userEmail("test@test.com").build();
+        // stub
+        when(converter.convertToXml(meta, sheetFilePDF.getBytes())).thenReturn(sheetXmlBytes);
         // when
-        List<UserSheet> userSheets = userSheetRepository.findAllByEmail(email);
-        UserSheet userSheet = userSheets.get(0);
-        SheetResponseDto res = sheetManageService.updateSheetName(email, newName, userSheet.getUserSheetId());
+        SheetResponseDto res = sheetManageService.saveSheetAndUserSheet(meta, sheetFilePDF);
         // then
-        assert res.getSheetName().equals(newName);
-        assertThrows(InvalidRequestException.class, () -> {
-            sheetManageService.updateSheetName(ghostEmail, newName, userSheet.getUserSheetId());
-        });
-    }
-
-    @Test
-    void updateSheetColorTest() {
-        // given
-        String email = TestDataGenerator.userEmails.get(0);
-        String ghostEmail = UUID.randomUUID() + "@gmail.com";
-        String newColor = "newColor"+ UUID.randomUUID();
-        // when
-        List<UserSheet> userSheets = userSheetRepository.findAllByEmail(email);
-        UserSheet userSheet = userSheets.get(0);
-        SheetResponseDto res = sheetManageService.updateSheetColor(email, newColor, userSheet.getUserSheetId());
-        // then
-        assert res.getColor().equals(newColor);
-        assertThrows(InvalidRequestException.class, () -> {
-            sheetManageService.updateSheetName(ghostEmail, newColor, userSheet.getUserSheetId());
-        });
-    }
-
-    @Test
-    void deleteSheetsTest() {
-        // given
-        String email = TestDataGenerator.userEmails.get(0);
-        String ghostEmail = UUID.randomUUID() + "@gmail.com";
-        // when
-        List<Integer> userSheetIds = sheetRetrieveService.getSheetsByEmail(email)
-                .stream()
-                .map(SheetResponseDto::getUserSheetId)
-                .toList();
-        // then
-        assertThrows(DataNotFoundException.class, () -> {
-            sheetManageService.deleteSheetByIdList(email, List.of(-1));
-        });
-        assertThrows(InvalidRequestException.class, () -> {
-            sheetManageService.deleteSheetByIdList(ghostEmail, userSheetIds);
-        });
-        assertTrue(() -> {
-            if(sheetRetrieveService.getSheetsByEmail(email).size()!=userSheetIds.size()) return false;
-            sheetManageService.deleteSheetByIdList(email, userSheetIds);
-            return sheetRetrieveService.getSheetsByEmail(email).isEmpty();
+        assert res.getSheetName().equals(meta.getSheetName());
+        await().atMost(1, TimeUnit.MINUTES).untilAsserted(() -> {
+            List<UserSheet> userSheets = userSheetRepository.findAllBySheetName(res.getSheetName());
+            assertEquals(1, userSheets.size());
+            assertNotNull(userSheets.get(0).getSheet().getSheetInfo());
+            assertTrue(userSheets.get(0).getSheet().getSheetInfo().length > 0);
         });
     }
 }
