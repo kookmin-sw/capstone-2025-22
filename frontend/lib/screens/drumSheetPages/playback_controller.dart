@@ -37,7 +37,7 @@ class PlaybackController {
   List<Cursor> rawCursorList = []; // 실제 음표만 담긴 커서 리스트
   Cursor currentCursor = Cursor.createEmpty();
   List<Cursor> missedCursors = []; // 1차 채점용 놓친 음표 커서 리스트
-  Function(Cursor)? onCursorMove; // 테스트 용 (나중에 삭제하기)
+  Function(Cursor)? onCursorMove; 
 
   // 줄별 악보 이미지 관련
   List<Uint8List> lineImages = []; // 줄 단위로 잘라낸 악보 이미지들
