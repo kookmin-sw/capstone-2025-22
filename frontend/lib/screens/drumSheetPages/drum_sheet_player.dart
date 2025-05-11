@@ -87,9 +87,6 @@ class _DrumSheetPlayerState extends State<DrumSheetPlayer> {
         ..onPlaybackStateChange = (isPlaying) {
           setState(() {});
         }
-        ..onPlaybackComplete = (lastMeasure) {
-          _simulateDummyScoring(lastMeasure);
-        } // 테스트 용 (제거하기)
         ..onCountdownUpdate = (count) {
           setState(() {});
         }
@@ -105,10 +102,6 @@ class _DrumSheetPlayerState extends State<DrumSheetPlayer> {
           // measureNumber가 바뀔 때만
           if (newMeasure != _currentMeasureOneBased) {
             setState(() {
-              // 바로 전에 연주를 마친 마디 번호가 1 이상이면 스코어링
-              if (_currentMeasureOneBased >= 1) {
-                _simulateDummyScoring(_currentMeasureOneBased);
-              }
               // 그 다음 현재 마디 번호 갱신
               _currentMeasureOneBased = newMeasure;
             });
@@ -266,18 +259,6 @@ class _DrumSheetPlayerState extends State<DrumSheetPlayer> {
     // ts가 같은 애를 기준으로 찾자
     final idx = cursorsInMeasure.indexWhere((c) => c.ts == cursor.ts);
     return idx;
-  }
-
-  // 테스트 용
-  void _simulateDummyScoring(int measureNumber) {
-    final dummy = {
-      'measureNumber': measureNumber.toString(),
-      'userOnset': [0.1, 0.6, 1.2, 1.8],
-      'answerOnset': [0.0, 0.5, 1.0, 1.5],
-      'answerOnsetPlayed': [true, false, true, true],
-      'matchedUserOnsetIndices': [0, -1, 2, 3],
-    };
-    _handleScoringResult(dummy);
   }
 
   @override
