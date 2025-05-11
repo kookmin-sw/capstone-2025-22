@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:capstone_2025/screens/drumSheetPages/drum_sheet_player.dart';
 import 'package:capstone_2025/services/api_func.dart';
 import 'package:capstone_2025/services/storage_service.dart';
 import 'package:flutter/material.dart';
@@ -495,9 +496,22 @@ class _SheetListScreenState extends State<SheetListScreen> {
                             borderRadius: BorderRadius.circular(12),
                           ),
                         ),
-                        onPressed: () {
+                        onPressed: () async {
                           // 연주 시작 페이지로 이동하는 코드 추가하기
-                          Navigator.of(context).pop();
+                          final response =
+                              await getHTTP('/sheets/${sheet.sheetId}', {});
+
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => DrumSheetPlayer(
+                                sheetId: sheet.sheetId ?? 0,
+                                title: sheet.title,
+                                artist: sheet.artistName,
+                                // sheetXmlData: response['body']['sheetInfo'],
+                              ),
+                            ),
+                          );
                         },
                         child: const Text(
                           '확인',
@@ -782,6 +796,7 @@ class _SheetListScreenState extends State<SheetListScreen> {
                               try {
                                 final newSheet = await addSheet(
                                     sheetName, artistName, filePath!);
+                                newSheet.artistName = artistName;
                                 setState(() {
                                   _sheets.add(newSheet);
                                 });
