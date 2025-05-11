@@ -152,6 +152,7 @@ function extractTimeSignatureFromXML(xmlText) {
 function getCursorList(osmdCursor, lineBounds) {
   // 1) 실제 음표(ts)만 모은 rawCursorList 생성
   const rawCursorList = [];
+  osmdCursor.reset();
   osmdCursor.show();
   try {
     while (!osmdCursor.iterator.endReached) {
@@ -212,7 +213,7 @@ function getCursorList(osmdCursor, lineBounds) {
   }
 
   console.log(`📊 Full cursors: ${fullCursorList.length}`);
-  return fullCursorList;
+  return { rawCursorList, fullCursorList };
 }
 
 // 커서 위치·크기·타임스탬프 한꺼번에 계산
@@ -301,7 +302,8 @@ window.startOSMDFromFlutter = async function () {
   // ▸ 줄별 PNG + bbox 얻기
   const { images: lineImages, bounds: lineBounds } = await cropLineImages(fullCanvas, osmd);
   
-  const cursorList = getCursorList(osmd.cursor, lineBounds);
+  const { rawCursorList, fullCursorList } = getCursorList(osmd.cursor, lineBounds);
+  console.log("📊 rawCursorList ts 리스트:", rawCursorList.map(c => c.ts));
   
   // 악보 줄 수: MusicXML의 <measure> 태그 개수를 세어서 4마디씩 나눈 줄 수로 계산
   const parser = new DOMParser();
@@ -316,7 +318,8 @@ window.startOSMDFromFlutter = async function () {
   window.flutter_inappwebview.callHandler("getDataFromOSMD", 
     sheetImage,
     {
-      cursorList,
+      cursorList: fullCursorList,
+      rawCursorList,
       bpm: BPM,
       canvasWidth: fullCanvas.width,
       canvasHeight: fullCanvas.height,

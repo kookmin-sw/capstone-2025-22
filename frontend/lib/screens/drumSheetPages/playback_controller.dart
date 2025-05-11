@@ -4,6 +4,7 @@ import 'package:capstone_2025/models/sheet_info.dart';
 import 'package:flutter/foundation.dart';
 import '../../models/cursor.dart';
 import './cursor_controller.dart';
+import 'dart:math'; // 테스트 용
 
 class PlaybackController {
   CursorController? _cursorController; // 커서 이동 관리
@@ -32,8 +33,11 @@ class PlaybackController {
   int currentPage = 0; // 현재 재생 중인 줄 인덱스
 
   // 커서 데이터
-  List<Cursor> fullCursorList = []; // 전체 커서 리스트 (진행 시간 계산용)
+  List<Cursor> fullCursorList = []; // 전체 커서 리스트 (커서 진행용)
+  List<Cursor> rawCursorList = []; // 실제 음표만 담긴 커서 리스트
   Cursor currentCursor = Cursor.createEmpty();
+  List<Cursor> missedCursors = []; // 1차 채점용 놓친 음표 커서 리스트
+  Function(Cursor)? onCursorMove; // 테스트 용 (나중에 삭제하기)
 
   // 줄별 악보 이미지 관련
   List<Uint8List> lineImages = []; // 줄 단위로 잘라낸 악보 이미지들
@@ -46,6 +50,7 @@ class PlaybackController {
   Function(bool)? onPlaybackStateChange;
   Function(int)? onCountdownUpdate;
   Function(int)? onPageChange;
+  Function(int)? onPlaybackComplete;
 
   PlaybackController({required this.imageHeight}); // 생성자에 imageHeight 추가
 
@@ -58,7 +63,7 @@ class PlaybackController {
 
     calculateTotalDurationFromCursorList(sheetInfo!.bpm.toDouble());
 
-    // ➊ 전체 리스트로 한 번만 컨트롤러 생성
+    // 전체 리스트로 한 번만 컨트롤러 생성
     _cursorController?.dispose();
     _cursorController = CursorController(
       cursorList: fullCursorList,
@@ -74,6 +79,10 @@ class PlaybackController {
 
   /// 커서가 이동할 때마다 호출됩니다.
   void _handleCursorMove(Cursor cursor) {
+    // 0) 페이지가 바뀔 때마다, 이전 마디의 회색 커서를 모두 지우고
+    if (cursor.lineIndex != currentPage) {
+      missedCursors.clear();
+    }
     // 1) 위치 업데이트
     updateCursorWidget(cursor);
 
@@ -86,6 +95,7 @@ class PlaybackController {
           : null;
       onPageChange?.call(currentPage);
     }
+    onCursorMove?.call(cursor); // 테스트 용 호출 (나중에 지우기)
   }
 
   void updateCursorWidget(Cursor cursor) {
@@ -128,8 +138,8 @@ class PlaybackController {
     // 진행 업데이트를 위한 타이머 재설정 (기존 타이머 중지 후 새로 시작, 재생 속도 반영)
     progressTimer?.cancel();
     progressTimer = Timer.periodic(
-        Duration(milliseconds: (16 ~/ speed).clamp(1, 100)), _onProgressTick);
-    _cursorController?.start();
+        Duration(milliseconds: (33 ~/ speed).clamp(1, 100)), _onProgressTick);
+    // _cursorController?.start();
     isPlaying = true;
     onPlaybackStateChange?.call(isPlaying);
   }
@@ -162,17 +172,19 @@ class PlaybackController {
           onProgressUpdate?.call(newProgress);
         }
       }
-      // 시간 기반으로 커서 위치 계산
-      // beat 단위로 변환: (재생된 초) × (BPM / 60)
-      // final playedSeconds = currentDuration.inMilliseconds / 1000.0;
-      // final beatTs = playedSeconds * (sheetInfo!.bpm / 60.0);
-      // final cursor = _cursorController!.getCursorAtBeat(beatTs);
-      // // 새로 얻은 커서의 리스트 인덱스(혹은 measureNumber)를 저장해 두었다가 비교
-      // final newIndex = cursor.measureNumber * 100 + (cursor.ts * 100).toInt();
-      // if (newIndex != _lastCursorIndex) {
-      //   _lastCursorIndex = newIndex;
-      //   _handleCursorMove(cursor);
-      // }
+
+      // 1) 재생된 초(sec) 계산
+      final playedSeconds = currentDuration.inMilliseconds / 1000.0;
+      // 2) beat 단위로 환산 (BPM/60)
+      final beatTs = playedSeconds * (sheetInfo!.bpm / 60.0);
+      // 3) 단일 타이머 소스에서 커서 위치 가져오기
+      final cursor = _cursorController!.getCursorAtBeat(beatTs);
+      // 4) 중복 호출 방지용 인덱스
+      final newIndex = cursor.measureNumber * 100 + (cursor.ts * 100).toInt();
+      if (newIndex != _lastCursorIndex) {
+        _lastCursorIndex = newIndex;
+        _handleCursorMove(cursor);
+      }
 
       // 전체 재생 완료 여부 체크
       if (currentDuration >= totalDuration) {
@@ -191,11 +203,17 @@ class PlaybackController {
     _cursorController?.stop(); // 커서 이동 타이머 중지
     isPlaying = false;
     onPlaybackStateChange?.call(isPlaying);
+
+    if (currentDuration >= totalDuration) {
+      final lastOneBased = currentCursor.measureNumber + 1;
+      onPlaybackComplete?.call(lastOneBased);
+    }
   }
 
   void resetToStart() {
     // 1) 타이머 & 컨트롤러 모두 중지
     stopPlayback();
+    missedCursors.clear(); // 테스트 용
     // 2) 진행 상태만 리셋
     currentDuration = Duration.zero;
     currentProgress = 0.0;
@@ -287,5 +305,20 @@ class PlaybackController {
     countdownTimer?.cancel();
     progressTimer?.cancel();
     _cursorController?.dispose();
+  }
+
+  void addMissedNotesCursor({
+    required int measureIndex,
+    required List<int> missedIndices,
+  }) {
+    final targets =
+        rawCursorList.where((c) => c.measureNumber == measureIndex).toList();
+    targets.sort((a, b) => a.ts.compareTo(b.ts));
+
+    for (final idx in missedIndices) {
+      if (idx >= 0 && idx < targets.length) {
+        missedCursors.add(targets[idx]);
+      }
+    }
   }
 }
