@@ -1,9 +1,9 @@
 // ignore_for_file: avoid_print
-
 import 'dart:io';
 import 'dart:async';
 import 'dart:convert';
 import 'package:xml/xml.dart';
+import 'package:logger/logger.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
@@ -137,6 +137,9 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
     if (status != PermissionStatus.granted) {
       throw RecordingPermissionException('마이크 권한이 부여되지 않았습니다.');
     }
+
+    // 녹음기 관련 로그 끄기
+    _recorder = fs.FlutterSoundRecorder(logLevel: Level.off);
 
     await _recorder?.openRecorder();
 
