@@ -1,5 +1,6 @@
 package com.capstone.config;
 
+import com.capstone.dto.musicXml.PartInfo;
 import com.capstone.dto.score.FinalMeasureResult;
 import com.capstone.practice.entity.SheetPractice;
 import com.capstone.practice.repository.SheetPracticeRepository;
@@ -7,9 +8,12 @@ import com.capstone.sheet.entity.Sheet;
 import com.capstone.sheet.entity.UserSheet;
 import com.capstone.sheet.repository.SheetRepository;
 import com.capstone.sheet.repository.UserSheetRepository;
+import com.capstone.sheet.service.SheetXmlInfoParser;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.javafaker.Faker;
 import jakarta.annotation.PostConstruct;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.stereotype.Component;
@@ -24,18 +28,13 @@ import java.util.UUID;
 
 @Component
 @Profile("dev")
+@RequiredArgsConstructor
 public class FakeDataGenerator {
     private final SheetRepository sheetRepository;
     private final UserSheetRepository userSheetRepository;
     private final SheetPracticeRepository sheetPracticeRepository;
-    public FakeDataGenerator(
-            SheetRepository sheetRepository,
-            UserSheetRepository userSheetRepository,
-            SheetPracticeRepository sheetPracticeRepository) {
-        this.sheetRepository = sheetRepository;
-        this.userSheetRepository = userSheetRepository;
-        this.sheetPracticeRepository = sheetPracticeRepository;
-    }
+    private final SheetXmlInfoParser sheetXmlInfoParser;
+    private final ObjectMapper objectMapper;
 
     @PostConstruct
     public void init() throws Exception {
@@ -49,21 +48,23 @@ public class FakeDataGenerator {
                 .getInputStream()) {
             sheetXml = inputStream.readAllBytes();
         }
+        String sheetJson = objectMapper.writeValueAsString(sheetXmlInfoParser.parseXmlInfo(sheetXml));
         String testUser = "test@test.com";
-        List<Sheet> sheets = generateSheets(faker, sheetXml, 10);
+        List<Sheet> sheets = generateSheets(faker, sheetXml, sheetJson, 10);
         List<UserSheet> userSheets = generateUserSheets(faker, sheets, testUser);
         generateSheetPractices(faker, userSheets, 10, testUser);
     }
     /**
      * generate fake data for sheets
     * */
-    public List<Sheet> generateSheets(Faker faker, byte[] sheetXml, int count) {
+    public List<Sheet> generateSheets(Faker faker, byte[] sheetXml, String sheetJson, int count) {
         List<Sheet> sheets = new ArrayList<>();
         for (int i=0; i<count; i++){
             Sheet sheet = sheetRepository.save(
                     Sheet.builder()
                             .author(faker.artist().name())
                             .sheetInfo(sheetXml)
+                            .sheetJson(sheetJson)
                             .build()
             );
             sheets.add(sheet);
