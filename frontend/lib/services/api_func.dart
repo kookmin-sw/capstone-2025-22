@@ -14,8 +14,9 @@ Future<Map<String, dynamic>> getHTTP(
     // queryParam의 값을 모두 String으로 변환
     final safeQueryParam = queryParam.map((k, v) => MapEntry(k, v.toString()));
 
-    final uri = Uri.parse("http://$serverAddr$endpoint")
-        .replace(queryParameters: safeQueryParam);
+    final uri = Uri.parse("http://$serverAddr$endpoint").replace(
+      queryParameters: safeQueryParam,
+    ); // 한글 인코딩 처리
 
     final response = await http.get(
       uri,
@@ -31,7 +32,7 @@ Future<Map<String, dynamic>> getHTTP(
     print("_________________");
 
     if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
+      final data = jsonDecode(utf8.decode(response.bodyBytes));
       data["errMessage"] = null;
       return data;
     } else {
