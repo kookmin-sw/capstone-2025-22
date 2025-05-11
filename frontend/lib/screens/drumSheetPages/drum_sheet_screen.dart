@@ -111,6 +111,7 @@ class _SheetListScreenState extends State<SheetListScreen> {
     // ✅ 메타 정보 JSON 준비
     final sheetMeta = jsonEncode({
       'sheetName': title,
+      'artistName': artist,
       'color': '#646464',
       'userEmail': userEmail,
       'fileExtension': 'pdf',
@@ -449,7 +450,7 @@ class _SheetListScreenState extends State<SheetListScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    '${sheet.title}',
+                    '${sheet.title} - ${sheet.artistName}',
                     textAlign: TextAlign.center,
                     style: const TextStyle(
                       fontSize: 16,
