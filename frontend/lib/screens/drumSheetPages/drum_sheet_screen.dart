@@ -1,10 +1,15 @@
 import 'dart:convert';
+import 'dart:io';
+import 'package:capstone_2025/screens/drumSheetPages/drum_sheet_player.dart';
+import 'package:capstone_2025/services/api_func.dart';
+import 'package:capstone_2025/services/storage_service.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
 import '../../models/sheet.dart';
 import 'widgets/sheet_card.dart';
 import 'widgets/add_sheet_dialog.dart';
+import 'package:http_parser/http_parser.dart';
 
 void main() => runApp(const DrumSheetScreen());
 
@@ -41,49 +46,36 @@ class _SheetListScreenState extends State<SheetListScreen> {
   bool _isSearchMode = false;
   final TextEditingController _searchController = TextEditingController();
   List<Sheet> _searchResults = [];
+  String? userEmail;
+
+  @override
+  void initState() {
+    super.initState();
+    createSheetList();
+  }
 
   // 악보 리스트 샘플 데이터
-  final List<Sheet> _sheets = [
-    Sheet(
-        title: '가',
-        createdDate: DateTime(2023, 1, 5),
-        lastPracticedDate: DateTime(2024, 3, 21),
-        color: Color(0xFFBEBEBE)),
-    Sheet(
-        title: '나',
-        createdDate: DateTime(2024, 10, 12),
-        lastPracticedDate: DateTime(2024, 12, 2),
-        color: Color(0xFFF4B3B3)),
-    Sheet(
-        title: '다',
-        createdDate: DateTime(2028, 8, 30),
-        lastPracticedDate: DateTime(2030, 1, 15),
-        color: Color(0xFFF4DDB3)),
-    Sheet(
-      title: '라',
-      createdDate: DateTime(2019, 8, 30),
-      lastPracticedDate: DateTime(2020, 1, 15),
-      color: Color(0xFFb3f4b5),
-    ),
-    Sheet(
-      title: '마',
-      createdDate: DateTime(2021, 8, 30),
-      lastPracticedDate: DateTime(2024, 1, 15),
-      color: Color(0xFFb3eaf4),
-    ),
-    Sheet(
-      title: '바',
-      createdDate: DateTime(2020, 4, 30),
-      lastPracticedDate: DateTime(2025, 1, 15),
-      color: Color(0xFFdcb3f4),
-    ),
-    Sheet(
-        title: '사',
-        createdDate: DateTime(2001, 8, 30),
-        lastPracticedDate: DateTime(2025, 1, 15)),
-  ];
+  final List<Sheet> _sheets = [];
 
   // API 관련 메서드들
+  //악보 리스트 받아오기
+  void createSheetList() async {
+    String? email = await storage.read(key: 'user_email');
+    final response = await getHTTP('/sheets', {'email': email});
+
+    if (response['errMessage'] == null) {
+      var body = response['body']['sheets'];
+
+      if (!mounted) return;
+      setState(() {
+        userEmail = email;
+        _sheets.clear();
+        _sheets
+            .addAll(body.map<Sheet>((json) => Sheet.fromJson(json)).toList());
+      });
+    }
+  }
+
   Future<List<Sheet>> fetchSheets() async {
     final response =
         await http.get(Uri.parse('http://34.68.164.98:28080/sheets'));
@@ -95,23 +87,68 @@ class _SheetListScreenState extends State<SheetListScreen> {
     }
   }
 
-  Future<Sheet> addSheet(String title, String artist) async {
-    final response = await http.post(
-      Uri.parse('http://34.68.164.98:28080/sheets'),
-      headers: <String, String>{
-        'Content-Type': 'application/json; charset=UTF-8',
-      },
-      body: jsonEncode(<String, String>{
-        'sheetCreateMeta': title,
-        'artist': artist,
-      }),
+  Future<String> convertFileToBase64(String filePath) async {
+    final bytes = await File(filePath).readAsBytes();
+    return base64Encode(bytes);
+  }
+
+  Future<Sheet> addSheet(String title, String artist, String filePath) async {
+    final token = await storage.read(key: "access_token");
+    if (token == null) throw Exception("access_token이 없습니다.");
+
+    if (userEmail == null) {
+      userEmail = await storage.read(key: 'user_email');
+      if (userEmail == null) {
+        throw Exception("userEmail이 없습니다.");
+      }
+    }
+
+    final uri = Uri.parse('http://34.68.164.98:28080/sheets');
+    final request = http.MultipartRequest('POST', uri);
+
+    // 헤더 확인
+    request.headers['Authorization'] = 'Bearer $token';
+
+    // 메타 정보 JSON 준비
+    final sheetMeta = jsonEncode({
+      'sheetName': title,
+      'artistName': artist,
+      'color': '#646464',
+      'userEmail': userEmail,
+      'fileExtension': 'pdf',
+      'owner': true,
+    });
+    // JSON 메타 정보 첨부
+    request.files.add(
+      http.MultipartFile.fromString(
+        'sheetCreateMeta',
+        sheetMeta,
+        contentType: MediaType('application', 'json'),
+      ),
     );
 
+    // PDF 파일 첨부
+    request.files.add(
+      await http.MultipartFile.fromPath(
+        'sheetFile',
+        filePath,
+        contentType: MediaType('application', 'pdf'),
+      ),
+    );
+
+    print('파일 업로드 시작...');
+    final streamedResponse = await request.send();
+    final response = await http.Response.fromStream(streamedResponse);
+
+    print('응답 코드: ${response.statusCode}');
+    print('응답 바디: ${response.body}');
+
     if (response.statusCode == 200) {
-      return Sheet.fromJson(json.decode(response.body));
+      print('파일 업로드 성공');
+      final Map<String, dynamic> decoded = json.decode(response.body);
+      return Sheet.fromJson(decoded['body']);
     } else {
-      print("ERROR!!!!! $response");
-      throw Exception('Failed to add sheet');
+      throw Exception('파일 업로드 실패 - 상태코드: ${response.statusCode}');
     }
   }
 
@@ -163,9 +200,9 @@ class _SheetListScreenState extends State<SheetListScreen> {
   String get _sortLabel {
     switch (_selectedSort) {
       case SortOption.date:
-        return '날짜순';
+        return '생성 날짜 순';
       case SortOption.name:
-        return '이름순';
+        return '이름 순';
       case SortOption.recentPractice:
         return '최근 연습한 순';
     }
@@ -407,7 +444,8 @@ class _SheetListScreenState extends State<SheetListScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    '${sheet.title}-가수',
+                    '${sheet.title} - ${sheet.artistName}',
+                    textAlign: TextAlign.center,
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
@@ -451,9 +489,23 @@ class _SheetListScreenState extends State<SheetListScreen> {
                             borderRadius: BorderRadius.circular(12),
                           ),
                         ),
-                        onPressed: () {
+                        onPressed: () async {
                           // 연주 시작 페이지로 이동하는 코드 추가하기
-                          Navigator.of(context).pop();
+                          final response =
+                              await getHTTP('/sheets/${sheet.sheetId}', {});
+                          print("sheetID: ${sheet.sheetId}");
+
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => DrumSheetPlayer(
+                                sheetId: sheet.sheetId ?? 0,
+                                title: sheet.title,
+                                artist: sheet.artistName,
+                                sheetXmlData: response['body']['sheetInfo'],
+                              ),
+                            ),
+                          );
                         },
                         child: const Text(
                           '확인',
@@ -734,10 +786,11 @@ class _SheetListScreenState extends State<SheetListScreen> {
                         showDialog(
                           context: context,
                           builder: (_) => AddSheetDialog(
-                            onSubmit: (sheetName, artistName) async {
+                            onSubmit: (sheetName, artistName, filePath) async {
                               try {
-                                final newSheet =
-                                    await addSheet(sheetName, artistName);
+                                final newSheet = await addSheet(
+                                    sheetName, artistName, filePath!);
+                                newSheet.artistName = artistName;
                                 setState(() {
                                   _sheets.add(newSheet);
                                 });
@@ -929,8 +982,8 @@ class _SheetListScreenState extends State<SheetListScreen> {
                       ),
                     ),
                   ),
-                  _buildSortTile(SortOption.date, '날짜순'),
-                  _buildSortTile(SortOption.name, '이름순'),
+                  _buildSortTile(SortOption.date, '생성 날짜 순'),
+                  _buildSortTile(SortOption.name, '이름 순'),
                   _buildSortTile(SortOption.recentPractice, '최근 연습한 순'),
                 ],
               ),

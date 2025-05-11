@@ -1,9 +1,9 @@
 // ignore_for_file: avoid_print
-
 import 'dart:io';
 import 'dart:async';
 import 'dart:convert';
 import 'package:xml/xml.dart';
+import 'package:logger/logger.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
@@ -20,8 +20,9 @@ class DrumRecordingWidget extends StatefulWidget {
   /// 화면 상단에 표시될 제목
   final String title;
 
-  /// MusicXML 파일 경로
-  final String xmlFilePath;
+  /// MusicXML 파일 경로 혹은 파일 내용
+  final String? xmlFilePath; // 패턴 및 필인 페이지에서 사용
+  final String? xmlDataString; // 악보 연습 페이지에서 사용
 
   /// 연습용 오디오 파일 경로
   final String audioFilePath;
@@ -44,7 +45,8 @@ class DrumRecordingWidget extends StatefulWidget {
   const DrumRecordingWidget({
     super.key,
     required this.title,
-    required this.xmlFilePath,
+    this.xmlFilePath,
+    this.xmlDataString,
     required this.audioFilePath,
     this.onRecordingComplete,
     this.onMeasureUpdate,
@@ -135,6 +137,9 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
     if (status != PermissionStatus.granted) {
       throw RecordingPermissionException('마이크 권한이 부여되지 않았습니다.');
     }
+
+    // 녹음기 관련 로그 끄기
+    _recorder = fs.FlutterSoundRecorder(logLevel: Level.off);
 
     await _recorder?.openRecorder();
 
@@ -254,11 +259,36 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
   }
 
   Future<void> _parseMusicXML() async {
+    print('🔍 _parseMusicXML 호출');
     if (_isDisposed) return;
 
     try {
-      final xmlString = await rootBundle.loadString(widget.xmlFilePath);
-      final document = XmlDocument.parse(xmlString);
+      String xmlDataString;
+
+      // xmlFilePath가 주어지면 파일을 읽어와서 xmlDataString으로 사용
+      if (widget.xmlFilePath != null) {
+        print('🔍 xmlFilePath 존재');
+        xmlDataString = await rootBundle.loadString(widget.xmlFilePath!);
+        print('🔍 xmlDataString: $xmlDataString');
+      }
+      // xmlDataString이 주어지면 그대로 사용
+      else if (widget.xmlDataString != null) {
+        print('🔍 xmlDataString 존재');
+        xmlDataString = widget.xmlDataString!;
+        print('🔍 XML Data: $xmlDataString');
+      } else {
+        print("❌ xmlDataString 또는 xmlFilePath가 제공되지 않았습니다.");
+        return;
+      }
+
+      // XML 선언 추가 (만약 없다면)
+      if (!xmlDataString.startsWith('<?xml')) {
+        xmlDataString =
+            '<?xml version="1.0" encoding="UTF-8"?>\n$xmlDataString';
+      }
+
+      // XML 파싱
+      final document = XmlDocument.parse(xmlDataString);
 
       // 박자 정보 파싱
       final timeElement = document.findAllElements('time').first;
@@ -308,7 +338,7 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
         widget.onMusicXMLParsed!({
           'beatsPerMeasure': _beatsPerMeasure,
           'beatType': _beatType,
-          'totalMeasures': _totalMeasures,
+          'totalMeasures': _totalMeasures, // 제대로 설정된 totalMeasures
           'bpm': bpm,
           'totalDuration': _totalDuration,
           'secondsPerMeasure': _secondsPerMeasure,
@@ -388,7 +418,8 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
 
     try {
       // 녹음 시작
-      print("🎙️ 마디 ${_currentMeasure + 1} 녹음 시작. 저장 경로: $_recordingPath");
+      print(
+          "🎙️ 마디 ${_currentMeasure + 1} 녹음 시작: ${DateTime.now()}. 저장 경로: $_recordingPath");
       await _recorder!.startRecorder(
         toFile: _recordingPath,
         codec: fs.Codec.pcm16WAV,
