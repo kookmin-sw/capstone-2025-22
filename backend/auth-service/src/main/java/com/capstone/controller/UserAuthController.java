@@ -38,6 +38,19 @@ public class UserAuthController {
         return ApiResponse.success(SuccessFlag.SUCCESS.getLabel());
     }
     /**
+     * 사용자가 인증되었는지 확인하기 위한 API
+     * @param accessToken user's access token
+     * @return - 인증여부
+    * */
+    @GetMapping("/check")
+    public ResponseEntity<CustomResponseDto<String>> checkUser(
+            @RequestHeader(AuthConstants.ACCESS_TOKEN_HEADER_KEY) String accessToken){
+        accessToken = jwtUtils.processToken(accessToken);
+        return jwtUtils.validateToken(accessToken) ?
+                ApiResponse.success(SuccessFlag.SUCCESS.getLabel()) :
+                ApiResponse.success(SuccessFlag.FAILURE.getLabel());
+    }
+    /**
      * 이메일과 비밀번호를 활용하여 사용자 로그인 처리하는 API
      * @param signInDto - 로그인 요청 객체
      * @return access token과 refresh token을 포함한 응답객체

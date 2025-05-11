@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -49,7 +50,7 @@ public class TestDataGenerator {
         List<Sheet> res = new ArrayList<>(List.of());
         for(int i=0; i<10; i++) {
             Sheet sheet = sheetRepository.save(Sheet.builder()
-                    .sheetInfo("sheetInfo")
+                    .sheetInfo("sheetInfo".getBytes(StandardCharsets.UTF_8))
                     .createdDate(LocalDateTime.now()).build());
             res.add(sheet);
         }
@@ -76,12 +77,12 @@ public class TestDataGenerator {
     public List<SheetPractice> generateTestSheetPractices(String email, List<UserSheet> userSheets){
         List<SheetPractice> res = new ArrayList<>(List.of());
         for(UserSheet userSheet : userSheets) {
-            for(int i=0; i<10; i++) {
+            for(int i=1; i<=10; i++) {
                 SheetPractice practice = sheetPracticeRepository.save(
                         SheetPractice.builder()
                                 .practiceInfo("practiceInfo")
                                 .userEmail(email)
-                                .score(90)
+                                .score(i*10)
                                 .createdDate(LocalDateTime.now())
                                 .userSheet(userSheet).build()
                 );

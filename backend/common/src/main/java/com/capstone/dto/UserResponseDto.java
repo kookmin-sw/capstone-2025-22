@@ -14,4 +14,5 @@ public class UserResponseDto {
     String password;
     String nickname;
     UserRole role;
+    byte[] profileImage;
 }

@@ -19,9 +19,20 @@ public class Sheet {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int sheetId;
 
-    @Column(columnDefinition = "Text")
-    private String sheetInfo;
+    @Lob
+    @Column(columnDefinition = "MEDIUMBLOB")
+    private byte[] sheetInfo;
+
+    @Column(columnDefinition = "MEDIUMTEXT")
+    private String sheetJson;
+
+    @Column
+    private String author;
 
     @CreatedDate
     private LocalDateTime createdDate;
+
+    public static Sheet create(){
+        return Sheet.builder().build();
+    }
 }

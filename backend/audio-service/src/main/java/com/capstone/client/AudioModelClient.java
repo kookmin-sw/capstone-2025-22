@@ -3,16 +3,14 @@ package com.capstone.client;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
-import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Mono;
 
-import java.util.List;
+import javax.print.attribute.standard.Media;
 
-import static com.capstone.dto.OnsetDto.*;
+import static com.capstone.dto.ModelDto.*;
 
 @Slf4j
 @Component
@@ -47,13 +45,23 @@ public class AudioModelClient {
                                 log.info("onset response {}", onset.toString());
                                 return Mono.just(onset);
                             });
-                })
-                .log("onset webClient");
+                });
     }
 
-    public String test(){
-        return audioClient.get()
-                .retrieve()
-                .bodyToMono(String.class).block();
+    public Mono<DrumPredictResponse> getDrumPredictions(DrumPredictRequest requestDto) {
+        return audioClient.post()
+                .uri("/onset/predict")
+                .accept(MediaType.APPLICATION_JSON)
+                .bodyValue(requestDto)
+                .exchangeToMono(res -> {
+                    if (res.statusCode().isError()) {
+                        return Mono.error(new RuntimeException("Error getting drum predictions"));
+                    }
+                    return res.bodyToMono(DrumPredictResponse.class)
+                            .flatMap(drumPredictResponse -> {
+                                log.info("drum predict response {}", drumPredictResponse.toString());
+                                return Mono.just(drumPredictResponse);
+                            });
+                });
     }
 }

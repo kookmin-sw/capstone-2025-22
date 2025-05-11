@@ -12,16 +12,21 @@ import java.time.LocalDateTime;
 public class PatternPractice {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int patternPracticeId;
+    private Long patternPracticeId;
+
     @Column
     private String score;
+
     @Column(columnDefinition = "Text")
     private String practiceInfo;
+
     @CreatedDate
     private LocalDateTime createdDate;
+
     @Column(nullable = false)
     private String userEmail;
+
     @ManyToOne
-    @JoinColumn(name = "pattern_id")
+    @JoinColumn(name = "pattern_id", referencedColumnName = "id")
     private Pattern pattern;
 }

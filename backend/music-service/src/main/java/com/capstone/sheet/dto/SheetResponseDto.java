@@ -14,21 +14,27 @@ import java.time.LocalDateTime;
 public class SheetResponseDto {
     private int userSheetId;
     private String sheetName;
+    private String artistName;
     private String color;
     private LocalDateTime lastPracticeDate;
+    private LocalDateTime createdDate;
 
     public static SheetResponseDto from(UserSheet userSheet, LocalDateTime lastPracticeDate){
         return SheetResponseDto.builder()
                 .userSheetId(userSheet.getUserSheetId())
                 .sheetName(userSheet.getSheetName())
+                .artistName(userSheet.getSheet().getAuthor())
                 .color(userSheet.getColor())
-                .lastPracticeDate(lastPracticeDate).build();
+                .lastPracticeDate(lastPracticeDate)
+                .createdDate(userSheet.getCreatedDate()).build();
     }
 
     public static SheetResponseDto from(UserSheet userSheet){
         return SheetResponseDto.builder()
                 .userSheetId(userSheet.getUserSheetId())
                 .sheetName(userSheet.getSheetName())
-                .color(userSheet.getColor()).build();
+                .artistName(userSheet.getSheet().getAuthor())
+                .color(userSheet.getColor())
+                .createdDate(userSheet.getCreatedDate()).build();
     }
 }
