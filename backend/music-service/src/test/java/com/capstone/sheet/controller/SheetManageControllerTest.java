@@ -107,7 +107,7 @@ class SheetManageControllerTest {
                 new ObjectMapper().writeValueAsString(meta).getBytes()
         );
         // stub
-        when(converter.convertToXml(meta, sheetFilePDF)).thenReturn(sheetXmlBytes);
+        when(converter.convertToXml(meta, sheetFilePDF.getBytes())).thenReturn(sheetXmlBytes);
 
         // when & then
         mockMvc.perform(multipart("/sheets")
