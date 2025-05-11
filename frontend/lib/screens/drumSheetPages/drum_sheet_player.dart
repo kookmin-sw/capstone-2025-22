@@ -18,6 +18,7 @@ import '../../widgets/drum_recording_widget.dart';
 import './widgets/cursor_widget.dart';
 import './widgets/confirmation_dialog.dart';
 import 'playback_controller.dart';
+import 'package:capstone_2025/screens/mainPages/navigation_screens.dart';
 
 class DrumSheetPlayer extends StatefulWidget {
   final int sheetId;
@@ -323,6 +324,7 @@ class _DrumSheetPlayerState extends State<DrumSheetPlayer> {
                                 // 홈 버튼 눌렀을 때
                                 GestureDetector(
                                   onTap: () {
+                                    // 오디오 재생 중지
                                     playbackController.stopPlayback();
                                     showDialog(
                                       context: context,
@@ -330,8 +332,78 @@ class _DrumSheetPlayerState extends State<DrumSheetPlayer> {
                                       builder: (_) => ConfirmationDialog(
                                         message: "메인으로 이동하시겠습니까?",
                                         onConfirm: () {
+                                          print("다이얼로그 닫기 전");
+                                          // 다이얼로그 닫기
                                           Navigator.of(context).pop();
-                                          // TODO: 메인 이동 로직
+                                          print("다이얼로그 닫음");
+
+                                          // DrumRecordingWidget의 녹음 중지
+                                          final drumRecordingState =
+                                              _drumRecordingKey.currentState;
+                                          if (drumRecordingState != null &&
+                                              drumRecordingState.isRecording) {
+                                            drumRecordingState.stopRecording();
+                                          }
+                                          print("녹음 중지");
+
+                                          // 리소스 해제 - WebSocket 연결 종료
+                                          if (_stompClient.connected) {
+                                            _stompClient.deactivate();
+                                          }
+                                          print("웹소켓 연결 종료");
+
+                                          // 녹음기 리소스 해제
+                                          if (_recorder.isRecording) {
+                                            _recorder.stopRecorder();
+                                          }
+                                          print("녹음기 리소스 해제");
+
+                                          // _recordingDataTimer 해제
+                                          _recordingDataTimer?.cancel();
+                                          print("타이머 해제");
+
+                                          // 홈화면으로 이동: NavigationScreens 상태 업데이트 부분 수정
+                                          WidgetsBinding.instance
+                                              .addPostFrameCallback((_) {
+                                            // 1. 먼저 현재 페이지를 스택에서 제거 (순서 변경)
+                                            if (Navigator.canPop(context)) {
+                                              Navigator.of(context).pop();
+                                              print("현재 페이지 스택 제거 완료");
+                                            }
+
+                                            // 2. 그 다음 상위 위젯의 상태 업데이트
+                                            final navigationScreensState =
+                                                context.findAncestorStateOfType<
+                                                    NavigationScreensState>();
+                                            if (navigationScreensState !=
+                                                    null &&
+                                                navigationScreensState
+                                                    .mounted) {
+                                              navigationScreensState
+                                                  .setState(() {
+                                                navigationScreensState
+                                                        .selectedIndex =
+                                                    2; // 홈 화면 인덱스
+                                              });
+                                              print(
+                                                  "NavigationScreens 상태 업데이트 완료");
+                                            } else {
+                                              print(
+                                                  "NavigationScreensState를 찾을 수 없음");
+                                              // 대안으로 직접 네비게이션 처리
+                                              Navigator.of(context)
+                                                  .pushAndRemoveUntil(
+                                                MaterialPageRoute(
+                                                  builder: (context) =>
+                                                      const NavigationScreens(
+                                                          firstSelectedIndex:
+                                                              3),
+                                                ),
+                                                (route) =>
+                                                    false, // 모든 이전 라우트 제거
+                                              );
+                                            }
+                                          });
                                         },
                                         onCancel: () {
                                           Navigator.of(context).pop();
