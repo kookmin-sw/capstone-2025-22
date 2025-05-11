@@ -1,6 +1,10 @@
 import 'package:capstone_2025/screens/drumPatternFillPages/practice_result_PP.dart';
+import 'package:capstone_2025/screens/drumSheetPages/drum_sheet_player.dart';
+import 'package:capstone_2025/screens/drumPatternFillPages/pattern_fill_main.dart';
+import 'package:capstone_2025/screens/drumPatternFillPages/pattern_fill_screen.dart';
 import 'package:capstone_2025/screens/introPages/login_screen_google.dart';
 import 'package:capstone_2025/screens/mainPages/navigation_screens.dart';
+import 'package:capstone_2025/screens/drumSheetPages/drum_sheet_player.dart';
 import 'package:capstone_2025/services/api_func.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -77,6 +81,7 @@ class _MyAppState extends State<MyApp> {
     return MaterialApp(
       theme: ThemeData(scaffoldBackgroundColor: Color(0xFFF2F1F3)),
       home: _isLoggedIn! ? NavigationScreens() : LoginScreenGoogle(),
+      // home: DrumSheetPlayer(), // 악보연주페이지 확인용
     );
     // return MaterialApp(
     //     // 임시 코드
