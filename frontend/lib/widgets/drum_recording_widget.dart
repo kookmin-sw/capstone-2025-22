@@ -1,9 +1,9 @@
 // ignore_for_file: avoid_print
-
 import 'dart:io';
 import 'dart:async';
 import 'dart:convert';
 import 'package:xml/xml.dart';
+import 'package:logger/logger.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
@@ -138,6 +138,9 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
       throw RecordingPermissionException('마이크 권한이 부여되지 않았습니다.');
     }
 
+    // 녹음기 관련 로그 끄기
+    _recorder = fs.FlutterSoundRecorder(logLevel: Level.off);
+
     await _recorder?.openRecorder();
 
     // 녹음 파일 저장 경로 설정
@@ -264,8 +267,9 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
 
       // xmlFilePath가 주어지면 파일을 읽어와서 xmlDataString으로 사용
       if (widget.xmlFilePath != null) {
-        final file = File(widget.xmlFilePath!);
-        xmlDataString = await file.readAsString();
+        print('🔍 xmlFilePath 존재');
+        xmlDataString = await rootBundle.loadString(widget.xmlFilePath!);
+        print('🔍 xmlDataString: $xmlDataString');
       }
       // xmlDataString이 주어지면 그대로 사용
       else if (widget.xmlDataString != null) {
