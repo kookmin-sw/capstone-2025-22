@@ -42,6 +42,7 @@ public class SecurityConfig {
     private final String[] WHITE_LIST_GET = {
             // music service
             "/sheets/**",
+            "/patterns/**",
             // user service
             "/users/**",
     };
