@@ -5,7 +5,7 @@ import 'dart:io';
 import 'dart:async';
 
 class AddSheetDialog extends StatefulWidget {
-  final Function(String, String) onSubmit;
+  final Function(String, String, String?) onSubmit;
 
   const AddSheetDialog({super.key, required this.onSubmit});
 
@@ -339,9 +339,10 @@ class _AddSheetDialogState extends State<AddSheetDialog> {
           onNext: _artistNameController.text.isNotEmpty
               ? () {
                   widget.onSubmit(
-                    _sheetNameController.text, // 악보명
-                    _artistNameController.text, // 가수명
-                  );
+                      _sheetNameController.text, // 악보명
+                      _artistNameController.text, // 가수명
+                      _selectedFilePath // 파일 경로
+                      );
                   Navigator.of(context).pop();
                 }
               : null,

@@ -39,7 +39,11 @@ class SheetCard extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 8),
-        Text(sheet.title, style: const TextStyle(fontSize: 14)),
+        Text(
+          sheet.title,
+          style: const TextStyle(fontSize: 14),
+          textAlign: TextAlign.center,
+        ),
         Text(
           '${sheet.createdDate.year}.${sheet.createdDate.month.toString().padLeft(2, '0')}.${sheet.createdDate.day.toString().padLeft(2, '0')}',
           style: const TextStyle(fontSize: 12, color: Colors.grey),
