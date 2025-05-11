@@ -74,7 +74,7 @@ class SheetManageServiceTest {
     }
 
     @Test
-    void saveSheetAndUserSheet_success() {
+    void saveSheetAndUserSheet_success() throws IOException{
         // given
         SheetCreateMeta meta = SheetCreateMeta.builder()
                 .sheetName(UUID.randomUUID().toString())
@@ -83,7 +83,7 @@ class SheetManageServiceTest {
                 .isOwner(true)
                 .userEmail("test@test.com").build();
         // stub
-        when(converter.convertToXml(meta, sheetFilePDF)).thenReturn(sheetXmlBytes);
+        when(converter.convertToXml(meta, sheetFilePDF.getBytes())).thenReturn(sheetXmlBytes);
         // when
         SheetResponseDto res = sheetManageService.saveSheetAndUserSheet(meta, sheetFilePDF);
         // then

@@ -25,8 +25,10 @@ public class SheetCreateService {
      * @return Sheet
      * */
     @Transactional
-    public Sheet saveSheet() {
-        return sheetRepository.saveAndFlush(Sheet.create());
+    public Sheet saveSheet(SheetCreateMeta sheetCreateMeta) {
+        return sheetRepository.saveAndFlush(Sheet.builder()
+                .author(sheetCreateMeta.getArtistName())
+                .build());
     }
 
     @Transactional

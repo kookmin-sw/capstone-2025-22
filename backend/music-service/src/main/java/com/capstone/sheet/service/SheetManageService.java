@@ -11,6 +11,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+
 @Service
 @RequiredArgsConstructor
 public class SheetManageService {
@@ -20,12 +22,16 @@ public class SheetManageService {
 
     @Transactional
     public SheetResponseDto saveSheetAndUserSheet(SheetCreateMeta sheetCreateMeta, MultipartFile sheetFile) {
-        Sheet sheet = sheetCreateService.saveSheet();
-        UserSheet userSheet = sheetCreateService.saveUserSheet(sheetCreateMeta, sheet);
-        eventPublisher.publishEvent(SheetUpdateEvent.builder()
-                        .sheet(sheet)
-                        .sheetCreateMeta(sheetCreateMeta)
-                        .sheetFile(sheetFile).build());
-        return SheetResponseDto.from(userSheet);
+        try {
+            Sheet sheet = sheetCreateService.saveSheet(sheetCreateMeta);
+            UserSheet userSheet = sheetCreateService.saveUserSheet(sheetCreateMeta, sheet);
+            eventPublisher.publishEvent(SheetUpdateEvent.builder()
+                    .sheet(sheet)
+                    .sheetCreateMeta(sheetCreateMeta)
+                    .sheetFileBytes(sheetFile.getBytes()).build());
+            return SheetResponseDto.from(userSheet);
+        }catch (IOException e){
+            throw new RuntimeException("IOException occurred while reading file", e);
+        }
     }
 }

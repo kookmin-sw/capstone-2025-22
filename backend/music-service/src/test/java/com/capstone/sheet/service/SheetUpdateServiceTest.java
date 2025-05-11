@@ -87,19 +87,20 @@ class SheetUpdateServiceTest {
     @Test
     void updateSheetInfoTest()  throws InterruptedException, IOException{
         // given
-        Sheet sheet = sheetCreateService.saveSheet();
         SheetCreateMeta meta = SheetCreateMeta.builder()
                 .sheetName("sheetName")
                 .color("#ffffffff")
                 .fileExtension("pdf")
+                .artistName("test author")
                 .isOwner(true)
                 .userEmail("test@test.com").build();
+        Sheet sheet = sheetCreateService.saveSheet(meta);
 
         // stub
-        when(converter.convertToXml(meta, sheetFilePDF)).thenReturn(sheetXmlBytes);
+        when(converter.convertToXml(meta, sheetFilePDF.getBytes())).thenReturn(sheetXmlBytes);
 
         // when
-        sheetUpdateService.updateSheetInfo(sheet, meta, sheetFilePDF);
+        sheetUpdateService.updateSheetInfo(sheet, meta, sheetFilePDF.getBytes());
 
         // then
         assertTrue(() -> {

@@ -1,6 +1,7 @@
 package com.capstone.sheet.service;
 
 import com.capstone.exception.InternalServerException;
+import com.capstone.sheet.dto.PatternCreateDto;
 import com.capstone.sheet.dto.SheetCreateMeta;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.tomcat.util.http.fileupload.FileUtils;
@@ -8,12 +9,14 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.attribute.PosixFilePermissions;
 import java.util.Arrays;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
@@ -22,12 +25,12 @@ public class SheetToXmlConverter {
     /**
      * write sheetFile's content on target file
      * @param target file to write sheetFile's content
-     * @param sheetFile multipart file about sheet content
+     * @param fileBytes multipart file about sheet content
      * @throws IOException if failed to write file
     * */
-    private void writeFile(Path target, MultipartFile sheetFile) throws IOException {
+    private void writeFile(Path target, byte[] fileBytes) throws IOException {
         try(OutputStream fos = Files.newOutputStream(target)) {
-            fos.write(sheetFile.getBytes());
+            fos.write(fileBytes);
             fos.flush();
         }
     }
@@ -83,6 +86,7 @@ public class SheetToXmlConverter {
     * */
     public byte[] processConvert(String inputPath, String outputPath){
         ProcessBuilder builder = new ProcessBuilder();
+        builder.redirectErrorStream(true);
         builder.command(commandBuilder(inputPath, outputPath));
         log.info(Arrays.toString(builder.command().toArray()));
         String outputFileName = "output.xml";
@@ -90,8 +94,8 @@ public class SheetToXmlConverter {
         try{
             Process process = builder.start();
             consumeStream(process.getInputStream());  // stdout
-            consumeStream(process.getErrorStream());  // stderr
-            process.waitFor(3, TimeUnit.MINUTES);
+            process.waitFor(1, TimeUnit.MINUTES);
+//            process.waitFor();
             outputFile = Paths.get(outputPath, outputFileName);
             return Files.readAllBytes(outputFile);
         }catch (IOException | InterruptedException e){
@@ -114,13 +118,27 @@ public class SheetToXmlConverter {
         return basePath;
     }
 
+    public byte[] cleanMusicXml(byte[] rawBytes) throws UnsupportedEncodingException {
+        // 1. byte[] → String (인코딩은 일반적으로 UTF-8, 필요 시 조정)
+        String xmlString = new String(rawBytes, StandardCharsets.UTF_8);
+
+        // 2. </score-partwise> 위치까지 잘라냄
+        int endIdx = xmlString.indexOf("</score-partwise>");
+        if (endIdx != -1) {
+            xmlString = xmlString.substring(0, endIdx + "</score-partwise>".length());
+        }
+
+        // 3. String → byte[] 재변환
+        return xmlString.getBytes(StandardCharsets.UTF_8);
+    }
+
     /**
      * Score file life cycle management and xml conversion functions
      * @param sheetCreateMeta metadata of sheet
-     * @param sheetFile sheet file data
+     * @param fileBytes sheet file data
      * @return byte array of sheet xml
     * */
-    public byte[] convertToXml(SheetCreateMeta sheetCreateMeta, MultipartFile sheetFile) throws InternalServerException {
+    public byte[] convertToXml(SheetCreateMeta sheetCreateMeta, byte[] fileBytes) throws InternalServerException {
         Path target;
         String tmpDir = getBasePath();
         Path sheetDir = Paths.get(tmpDir, "sheet", sheetCreateMeta.getUserEmail());
@@ -134,13 +152,13 @@ public class SheetToXmlConverter {
 
             // 입력 파일 저장
             target = inputDirPath.resolve("input." + sheetCreateMeta.getFileExtension());
-            writeFile(target, sheetFile);
+            writeFile(target, fileBytes);
 
             log.info("Input file exists: {} (size: {})", Files.exists(target), Files.size(target));
             String inputPath = inputDirPath.toAbsolutePath().toString();
             String outputPath = outputDirPath.toAbsolutePath().toString();
-
-            return processConvert(inputPath, outputPath);
+            byte[] rawBytes = processConvert(inputPath, outputPath);
+            return cleanMusicXml(rawBytes);
         } catch (IOException e) {
             String errorMessage = "SheetToXmlConverter.convertToXml : " + e.getMessage();
             log.error(errorMessage);
@@ -148,6 +166,15 @@ public class SheetToXmlConverter {
         } finally {
             deleteDirectory(sheetDir);
         }
+    }
+
+    public byte[] convertToXml(PatternCreateDto createDto, byte[] fileBytes){
+        SheetCreateMeta meta = SheetCreateMeta.builder()
+                .sheetName(createDto.getPatternName())
+                .fileExtension(createDto.getFileExtension())
+                .userEmail(UUID.randomUUID().toString().substring(0, 8))
+                .build();
+        return convertToXml(meta, fileBytes);
     }
 
 }
