@@ -94,22 +94,22 @@ class _SheetListScreenState extends State<SheetListScreen> {
 
   Future<Sheet> addSheet(String title, String artist, String filePath) async {
     final token = await storage.read(key: "access_token");
-    if (token == null) throw Exception("❌ access_token이 없습니다.");
+    if (token == null) throw Exception("access_token이 없습니다.");
 
     if (userEmail == null) {
       userEmail = await storage.read(key: 'user_email');
       if (userEmail == null) {
-        throw Exception("❌ userEmail이 없습니다.");
+        throw Exception("userEmail이 없습니다.");
       }
     }
 
     final uri = Uri.parse('http://34.68.164.98:28080/sheets');
     final request = http.MultipartRequest('POST', uri);
 
-    // ✅ 헤더 확인
+    // 헤더 확인
     request.headers['Authorization'] = 'Bearer $token';
 
-    // ✅ 메타 정보 JSON 준비
+    // 메타 정보 JSON 준비
     final sheetMeta = jsonEncode({
       'sheetName': title,
       'artistName': artist,
@@ -118,10 +118,7 @@ class _SheetListScreenState extends State<SheetListScreen> {
       'fileExtension': 'pdf',
       'owner': true,
     });
-
-    print('📦 전송할 sheetMeta: $sheetMeta');
-
-    // ✅ JSON 메타 정보 첨부
+    // JSON 메타 정보 첨부
     request.files.add(
       http.MultipartFile.fromString(
         'sheetCreateMeta',
@@ -130,11 +127,7 @@ class _SheetListScreenState extends State<SheetListScreen> {
       ),
     );
 
-    // ✅ PDF 파일 첨부
-    final file = File(filePath);
-    final fileLength = await file.length();
-    print('📄 PDF 파일 크기: $fileLength bytes');
-
+    // PDF 파일 첨부
     request.files.add(
       await http.MultipartFile.fromPath(
         'sheetFile',
@@ -500,6 +493,7 @@ class _SheetListScreenState extends State<SheetListScreen> {
                           // 연주 시작 페이지로 이동하는 코드 추가하기
                           final response =
                               await getHTTP('/sheets/${sheet.sheetId}', {});
+                          print("sheetID: ${sheet.sheetId}");
 
                           Navigator.push(
                             context,
@@ -508,7 +502,7 @@ class _SheetListScreenState extends State<SheetListScreen> {
                                 sheetId: sheet.sheetId ?? 0,
                                 title: sheet.title,
                                 artist: sheet.artistName,
-                                // sheetXmlData: response['body']['sheetInfo'],
+                                sheetXmlData: response['body']['sheetInfo'],
                               ),
                             ),
                           );
