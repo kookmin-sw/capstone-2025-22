@@ -47,6 +47,7 @@ class _SheetListScreenState extends State<SheetListScreen> {
   final TextEditingController _searchController = TextEditingController();
   List<Sheet> _searchResults = [];
   String? userEmail;
+  String? accessToken;
 
   @override
   void initState() {
@@ -61,6 +62,7 @@ class _SheetListScreenState extends State<SheetListScreen> {
   //악보 리스트 받아오기
   void createSheetList() async {
     String? email = await storage.read(key: 'user_email');
+    String? token = await storage.read(key: 'access_token');
     final response = await getHTTP('/sheets', {'email': email});
 
     if (response['errMessage'] == null) {
@@ -69,6 +71,7 @@ class _SheetListScreenState extends State<SheetListScreen> {
       if (!mounted) return;
       setState(() {
         userEmail = email;
+        accessToken = token;
         _sheets.clear();
         _sheets
             .addAll(body.map<Sheet>((json) => Sheet.fromJson(json)).toList());
@@ -93,9 +96,6 @@ class _SheetListScreenState extends State<SheetListScreen> {
   }
 
   Future<Sheet> addSheet(String title, String artist, String filePath) async {
-    final token = await storage.read(key: "access_token");
-    if (token == null) throw Exception("access_token이 없습니다.");
-
     if (userEmail == null) {
       userEmail = await storage.read(key: 'user_email');
       if (userEmail == null) {
@@ -107,7 +107,7 @@ class _SheetListScreenState extends State<SheetListScreen> {
     final request = http.MultipartRequest('POST', uri);
 
     // 헤더 확인
-    request.headers['Authorization'] = 'Bearer $token';
+    request.headers['Authorization'] = 'Bearer $accessToken';
 
     // 메타 정보 JSON 준비
     final sheetMeta = jsonEncode({
@@ -163,19 +163,6 @@ class _SheetListScreenState extends State<SheetListScreen> {
 
     if (response.statusCode != 200) {
       throw Exception('Failed to update sheet');
-    }
-  }
-
-  Future<void> deleteSheet(int id) async {
-    final response = await http.delete(
-      Uri.parse('http://34.68.164.98:28080/sheets/$id'),
-      headers: <String, String>{
-        'Content-Type': 'application/json; charset=UTF-8',
-      },
-    );
-
-    if (response.statusCode != 200) {
-      throw Exception('악보 삭제');
     }
   }
 
@@ -264,10 +251,30 @@ class _SheetListScreenState extends State<SheetListScreen> {
               child: const Text('취소'),
             ),
             ElevatedButton(
-              onPressed: () {
-                setState(() {
-                  sheet.title = controller.text;
-                });
+              onPressed: () async {
+                var requestBody = {
+                  'email': userEmail,
+                  "color":
+                      '#${sheet.color.value.toRadixString(16).padLeft(8, '0').substring(2).toUpperCase()}',
+                  "name": controller.text,
+                };
+                var response = await putHTTP(
+                    "/sheets/${sheet.sheetId}/name", {}, requestBody,
+                    reqHeader: {
+                      "Authorization": 'Bearer $accessToken',
+                    });
+                if (response['errMessage'] == null) {
+                  setState(() {
+                    sheet.title = controller.text;
+                    _isSelectionMode = false;
+                    _isAllSelected = false;
+                    for (var s in _sheets) {
+                      s.isSelected = false;
+                    }
+                  });
+                } else {
+                  print(response['errMessage']);
+                }
                 Navigator.of(context).pop();
               },
               child: const Text('저장'),
@@ -318,10 +325,28 @@ class _SheetListScreenState extends State<SheetListScreen> {
                     mainAxisSize: MainAxisSize.min,
                     children: customColors.map((color) {
                       return GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            sheet.color = color;
-                          });
+                        onTap: () async {
+                          var requestBody = {
+                            'email': userEmail,
+                            "color":
+                                '#${color.value.toRadixString(16).padLeft(8, '0').substring(2).toUpperCase()}',
+                            "name": sheet.title
+                          };
+                          var response = await putHTTP(
+                              "/sheets/${sheet.sheetId}/color", {}, requestBody,
+                              reqHeader: {
+                                "Authorization": 'Bearer $accessToken',
+                              });
+                          if (response['errMessage'] == null) {
+                            setState(() {
+                              sheet.color = color;
+                              _isSelectionMode = false;
+                              _isAllSelected = false;
+                              for (var s in _sheets) {
+                                s.isSelected = false;
+                              }
+                            });
+                          }
                           Navigator.of(context).pop();
                         },
                         child: Container(
@@ -346,7 +371,14 @@ class _SheetListScreenState extends State<SheetListScreen> {
     );
   }
 
-  void _confirmDeleteMultiple(List<Sheet> sheets) {
+  List<int> selectedSheetsId(List<Sheet> sheets) {
+    return sheets
+        .where((sheet) => sheet.isSelected)
+        .map((sheet) => sheet.sheetId)
+        .toList();
+  }
+
+  void _confirmDeleteMultiple(List<Sheet> sheets) async {
     showDialog(
       context: context,
       barrierDismissible: true,
@@ -400,11 +432,18 @@ class _SheetListScreenState extends State<SheetListScreen> {
                             borderRadius: BorderRadius.circular(12),
                           ),
                         ),
-                        onPressed: () {
-                          setState(() {
-                            _sheets
-                                .removeWhere((sheet) => sheets.contains(sheet));
-                          });
+                        onPressed: () async {
+                          var response = await deleteHTTP(
+                              '/sheets', selectedSheetsId(_sheets));
+
+                          if (response['errMessage'] == null) {
+                            setState(() {
+                              _sheets.removeWhere(
+                                  (sheet) => sheets.contains(sheet));
+                            });
+                          } else
+                            (print(response['errMessage']));
+
                           Navigator.of(context).pop();
                         },
                         child: const Text(
@@ -495,17 +534,40 @@ class _SheetListScreenState extends State<SheetListScreen> {
                               await getHTTP('/sheets/${sheet.sheetId}', {});
                           print("sheetID: ${sheet.sheetId}");
 
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => DrumSheetPlayer(
-                                sheetId: sheet.sheetId ?? 0,
-                                title: sheet.title,
-                                artist: sheet.artistName,
-                                sheetXmlData: response['body']['sheetInfo'],
+                          if (response['body']['sheetInfo'] == null) {
+                            Navigator.of(context).pop();
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: const Text(
+                                  '악보 변환 중입니다. 잠시 후 다시 시도해주세요.',
+                                  style: TextStyle(
+                                      fontSize: 14,
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w600),
+                                ),
+                                backgroundColor: Color(0xFFD97D6C),
+                                duration: Duration(seconds: 2),
+                                behavior: SnackBarBehavior.floating,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                margin: const EdgeInsets.all(16),
                               ),
-                            ),
-                          );
+                            );
+                          } else {
+                            Navigator.of(context).pop();
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => DrumSheetPlayer(
+                                  sheetId: sheet.sheetId ?? 0,
+                                  title: sheet.title,
+                                  artist: sheet.artistName,
+                                  sheetXmlData: response['body']['sheetInfo'],
+                                ),
+                              ),
+                            );
+                          }
                         },
                         child: const Text(
                           '확인',
