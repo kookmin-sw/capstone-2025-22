@@ -293,7 +293,7 @@ class _MyPageState extends State<MyPage> {
   // 악보 연습 기록 타이틀
   Widget _buildSheetMusicHeader() {
     return Padding(
-      padding: const EdgeInsets.only(left: 20),
+      padding: const EdgeInsets.only(left: 20, bottom: 10),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
