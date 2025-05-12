@@ -316,7 +316,6 @@ class _CountdownPageState extends State<CountdownPage>
     );
   }
 
-  // 페이지가 종료될 때 리소스 해제하는 함수
   @override
   void dispose() {
     _practiceMessageTimer?.cancel();
@@ -325,8 +324,17 @@ class _CountdownPageState extends State<CountdownPage>
     _playerCompleteSubscription?.cancel();
     _positionSubscription?.cancel();
 
-    _audioPlayer.dispose(); // 오디오플레이어 정리
-    _overlayController.dispose(); // 애니메이션 컨트롤러
+    // 오디오플레이어 정리
+    _audioPlayer.dispose();
+
+    // 오버레이 애니메이션 컨트롤러 정리
+    _overlayController.dispose();
+
+    // (중요) OSMDService 등 서버 리소스 정리
+    osmdService.dispose(); // 만약 dispose 메서드가 있다면
+
+    // DrumRecordingWidget의 리소스도 정리 필요시
+    _drumRecordingKey.currentState?.dispose();
 
     super.dispose();
   }
