@@ -1,4 +1,5 @@
 import 'package:capstone_2025/services/server_addr.dart'; //serverAddr
+import 'package:capstone_2025/services/storage_service.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert'; //jsonDecode
 
@@ -123,6 +124,7 @@ Future<Map<String, dynamic>> putHTTP(
     {Map<String, dynamic> reqHeader = const {}}) async {
   try {
     print("PUT 요청 시작 -- ${endpoint}");
+    print(reqHeader);
 
     // 쿼리 파라미터가 있을 경우 URI에 포함, 없으면 기본 endpoint로 URI 생성
     final uri = queryParam != null
@@ -137,10 +139,66 @@ Future<Map<String, dynamic>> putHTTP(
       uri,
       headers: {
         "Content-Type": "application/json", // 요청 본문 형식
-        "Accept": "application/json", // 예상 응답 형식
         if (reqHeader.isNotEmpty) ...reqHeader, // reqHeader가 있을 경우 추가
       },
       body: body, // 본문이 null이면 빈 본문이 전달됨
+    );
+
+    print("_________________");
+    print("응답 상태 코드: ${response.statusCode}");
+    print("응답 본문: ${response.body}");
+    print("_________________");
+
+    // 상태 코드가 200이면 정상 응답 처리
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      data["errMessage"] = null; // 에러 메시지 초기화
+      return data; // 정상 응답 데이터 반환
+    } else {
+      // 상태 코드별 오류 처리
+      switch (response.statusCode) {
+        case 400:
+          return {'errMessage': "잘못된 요청입니다. (정보 누락)"};
+        case 401:
+          return {'errMessage': "인증 실패: 잘못된 토큰 정보"};
+        case 403:
+          return {'errMessage': "권한이 없습니다."};
+        case 500:
+          return {'errMessage': "서버 내부 오류가 발생했습니다."};
+        default:
+          return {
+            'errMessage': "알 수 없는 오류가 발생했습니다. (코드: ${response.statusCode})"
+          };
+      }
+    }
+  } catch (error) {
+    // 네트워크 오류나 다른 예외가 발생한 경우
+    return {'errMessage': "네트워크 오류가 발생했습니다."};
+  }
+}
+
+Future<Map<String, dynamic>> deleteHTTP(String endpoint, List<int> Ids) async {
+  try {
+    var email = await storage.read(key: "user_email") ?? "";
+    var token = await storage.read(key: "access_token") ?? "";
+    print("token: $token");
+    Map<String, dynamic> queryParam = {"email": email};
+
+    print("DELETE 요청 시작 -- ${endpoint}");
+
+    final uri = Uri.http(serverAddr, endpoint, queryParam);
+
+    final requestBody = {"sheetIds": Ids};
+    final body = jsonEncode(requestBody);
+
+    // Delete 요청 보내기
+    final response = await http.delete(
+      uri,
+      headers: {
+        "Authorization": "Bearer $token",
+        "Content-Type": "application/json", // 요청 본문 형식
+      },
+      body: body,
     );
 
     print("_________________");
