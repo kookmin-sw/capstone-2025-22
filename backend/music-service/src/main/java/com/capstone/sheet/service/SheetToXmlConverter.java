@@ -94,7 +94,7 @@ public class SheetToXmlConverter {
         try{
             Process process = builder.start();
             consumeStream(process.getInputStream());  // stdout
-            process.waitFor(1, TimeUnit.MINUTES);
+            process.waitFor(5, TimeUnit.MINUTES);
 //            process.waitFor();
             outputFile = Paths.get(outputPath, outputFileName);
             return Files.readAllBytes(outputFile);
