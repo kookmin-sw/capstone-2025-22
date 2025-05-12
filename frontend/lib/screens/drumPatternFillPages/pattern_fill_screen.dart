@@ -14,9 +14,7 @@ import '../drumSheetPages/playback_controller.dart';
 import '../../services/osmd_service.dart';
 import 'package:capstone_2025/widgets/innerShadow.dart';
 import '../drumSheetPages/widgets/confirmation_dialog.dart';
-
-// Import the DrumRecordingWidget
-import 'package:capstone_2025/widgets/drum_recording_widget.dart';
+import 'package:capstone_2025/screens/drumSheetPages/widgets/confirmation_dialog.dart';
 
 /// MenuController에 toggle()을 추가하는 확장 메서드
 extension MenuControllerToggle on MenuController {
@@ -376,38 +374,52 @@ class _CountdownPageState extends State<CountdownPage>
                             icon: const Icon(Icons.home_filled,
                                 color: Color(0xff646464)),
                             onPressed: () {
-                              // 오디오 재생 중이면 정지
-                              if (_isPlaying) _audioPlayer.stop();
+                              // Show the confirmation dialog
+                              showDialog(
+                                context: context,
+                                builder: (context) => ConfirmationDialog(
+                                  message: "메인으로 이동하시겠습니까?",
+                                  onConfirm: () {
+                                    // The logic when the user confirms
+                                    // Your existing home button behavior (like stopping playback and going home)
+                                    Navigator.of(context)
+                                        .pop(); // Close the dialog
+                                    // Proceed with your home navigation logic (similar to DrumSheetPlayer)
+                                    if (_isPlaying) _audioPlayer.stop();
+                                    final drumRecordingState =
+                                        _drumRecordingKey.currentState;
+                                    if (drumRecordingState != null &&
+                                        drumRecordingState.isRecording) {
+                                      drumRecordingState.stopRecording();
+                                    }
+                                    _playerStateSubscription?.cancel();
+                                    _playerCompleteSubscription?.cancel();
+                                    _practiceMessageTimer?.cancel();
+                                    _positionUpdateTimer?.cancel();
 
-                              // DrumRecordingWidget의 녹음 중지
-                              final drumRecordingState =
-                                  _drumRecordingKey.currentState;
-                              if (drumRecordingState != null &&
-                                  drumRecordingState.isRecording) {
-                                drumRecordingState.stopRecording();
-                              }
-
-                              // 리소스 해제
-                              _playerStateSubscription?.cancel();
-                              _playerCompleteSubscription?.cancel();
-                              _practiceMessageTimer?.cancel();
-                              _positionUpdateTimer?.cancel();
-
-                              // 홈화면으로 이동: NavigationScreens 상태 업데이트
-                              WidgetsBinding.instance.addPostFrameCallback((_) {
-                                final navigationScreensState =
-                                    context.findAncestorStateOfType<
-                                        NavigationScreensState>();
-                                if (navigationScreensState != null &&
-                                    navigationScreensState.mounted) {
-                                  navigationScreensState.setState(() {
-                                    navigationScreensState.selectedIndex = 2;
-                                  });
-                                } // 현재 페이지 스택 제거
-                                if (Navigator.canPop(context)) {
-                                  Navigator.of(context).pop();
-                                }
-                              });
+                                    WidgetsBinding.instance
+                                        .addPostFrameCallback((_) {
+                                      final navigationScreensState =
+                                          context.findAncestorStateOfType<
+                                              NavigationScreensState>();
+                                      if (navigationScreensState != null &&
+                                          navigationScreensState.mounted) {
+                                        navigationScreensState.setState(() {
+                                          navigationScreensState.selectedIndex =
+                                              2;
+                                        });
+                                      }
+                                      if (Navigator.canPop(context)) {
+                                        Navigator.of(context).pop();
+                                      }
+                                    });
+                                  },
+                                  onCancel: () {
+                                    // Close the dialog if user cancels
+                                    Navigator.of(context).pop();
+                                  },
+                                ),
+                              );
                             },
                           ),
                         ),
