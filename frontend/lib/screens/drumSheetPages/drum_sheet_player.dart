@@ -263,7 +263,12 @@ class _DrumSheetPlayerState extends State<DrumSheetPlayer> {
 
   @override
   void dispose() {
-    playbackController.dispose();
+    // OSMDService 등 서버 리소스 정리
+    osmdService.dispose();
+
+    // DrumRecordingWidget의 리소스도 정리 필요시
+    _drumRecordingKey.currentState?.dispose();
+
     super.dispose();
   }
 
