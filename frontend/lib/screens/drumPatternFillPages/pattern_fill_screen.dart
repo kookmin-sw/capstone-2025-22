@@ -253,13 +253,23 @@ class _CountdownPageState extends State<CountdownPage>
     });
 
     // 시범 연주가 끝나면 PlaybackController 카운트다운 + 녹음 시작
-    _playerCompleteSubscription = _audioPlayer.onPlayerComplete.listen((_) {
+    _playerCompleteSubscription =
+        _audioPlayer.onPlayerComplete.listen((_) async {
       if (!mounted) return;
 
       _playerCompleteSubscription?.cancel();
 
-      // 슬라이더 초기화
-      _audioPlayer.seek(Duration.zero);
+      try {
+        // 오디오가 stopped 상태가 아니면 seek 시도
+        if (_audioPlayer.state != ap.PlayerState.stopped) {
+          await _audioPlayer
+              .seek(Duration.zero)
+              .timeout(const Duration(seconds: 1));
+        }
+      } catch (e, stack) {
+        debugPrint('seek 예외 발생(무시해도 됨): $e\n$stack');
+      }
+
       setState(() => _currentPosition = 0.0);
 
       // 카운트다운 UI → 3-2-1 → 시트 재생
