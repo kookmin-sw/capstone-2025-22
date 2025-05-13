@@ -26,7 +26,7 @@ class _SetNewPwScreenState extends State<SetNewPwScreen> {
   // 기존 비밀번호와 동일한지 확인
   Future<bool> _isSameAsOldPassword(String password) async {
     final accessToken = await _storage.read(key: 'email_token');
-    final uri = Uri.parse('http://10.0.2.2:28080/verification/password');
+    final uri = Uri.parse('http://34.68.164.98:28080/verification/password');
 
     final response = await http.post(
       uri,
@@ -75,7 +75,7 @@ class _SetNewPwScreenState extends State<SetNewPwScreen> {
   // 비밀번호 재설정 API 호출
   Future<void> setNewPassword(
       String newPassword, String emailToken, String accessToken) async {
-    final url = Uri.parse('https://10.0.2.2:28080/user/password'); // 요청 경로
+    final url = Uri.parse('https://34.68.164.98:28080/user/password'); // 요청 경로
 
     try {
       final response = await http.put(
