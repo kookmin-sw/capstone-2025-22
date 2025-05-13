@@ -13,6 +13,7 @@ import lombok.NoArgsConstructor;
 public class PatternResponseDto {
     Long patternId;
     String patternName;
+    int score;
     byte[] patternInfo;
 
     public static PatternResponseDto from(Pattern pattern) {
@@ -20,6 +21,15 @@ public class PatternResponseDto {
                 .patternId(pattern.getId())
                 .patternName(pattern.getPatternName())
                 .patternInfo(pattern.getPatternInfo())
+                .build();
+    }
+
+    public static PatternResponseDto from(Pattern pattern, int score) {
+        return PatternResponseDto.builder()
+                .patternId(pattern.getId())
+                .patternName(pattern.getPatternName())
+                .patternInfo(pattern.getPatternInfo())
+                .score(score)
                 .build();
     }
 }

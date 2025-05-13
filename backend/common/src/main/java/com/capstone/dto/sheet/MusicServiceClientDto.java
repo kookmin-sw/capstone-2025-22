@@ -38,4 +38,33 @@ public class MusicServiceClientDto {
                     .build();
         }
     }
+
+    @Data
+    @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class PatternPracticeCreateRequest {
+        List<FinalMeasureResult> finalMeasures;
+        String userEmail;
+        Long patternId;
+        double score;
+
+        public static PatternPracticeCreateRequest from(
+                List<FinalMeasureResult> finalMeasureResults,
+                Long patternId,
+                String userEmail) {
+            double totalScore = 0;
+            for(FinalMeasureResult finalMeasureResult : finalMeasureResults) {
+                totalScore += finalMeasureResult.getScore();
+            }
+            totalScore/=finalMeasureResults.size();
+
+            return PatternPracticeCreateRequest.builder()
+                    .score(totalScore)
+                    .finalMeasures(finalMeasureResults)
+                    .userEmail(userEmail)
+                    .patternId(patternId)
+                    .build();
+        }
+    }
 }
