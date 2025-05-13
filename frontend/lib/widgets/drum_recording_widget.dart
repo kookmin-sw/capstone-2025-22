@@ -543,9 +543,6 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
   Future<void> _startMeasureRecording() async {
     if (_isDisposed || _recorder == null) return;
 
-    final id = await widget.fetchPracticeIdentifier();
-    _identifier = id;
-
     try {
       widget.onMeasureUpdate?.call(_currentMeasure + 1, _totalMeasures);
       print('🎙️ 마디 ${_currentMeasure + 1} 녹음 시작: ${DateTime.now()}');
