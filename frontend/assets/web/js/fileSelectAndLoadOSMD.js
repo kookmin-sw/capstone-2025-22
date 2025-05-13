@@ -327,6 +327,7 @@ window.startOSMDFromFlutter = async function () {
       lineImages,
       lineBounds,
       lineCount: systemCount,
+      totalMeasures: measures.length // 악보 총 마디 개수
     }
   );
   isRendered = true;

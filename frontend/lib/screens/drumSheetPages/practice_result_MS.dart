@@ -8,15 +8,20 @@ import 'package:capstone_2025/widgets/openSheetModal.dart';
 import 'package:flutter/material.dart';
 
 class PracticeResultMS extends StatefulWidget {
-  const PracticeResultMS(
-      {super.key,
-      required this.musicTitle,
-      required this.musicArtist,
-      required this.score});
+  const PracticeResultMS({
+    super.key,
+    required this.musicTitle,
+    required this.musicArtist,
+    required this.score,
+    required this.xmlDataString,
+    required this.practiceInfo,
+  });
 
   final String musicTitle; // 제목
   final String musicArtist; // 아티스트
   final int score; // 점수
+  final String xmlDataString; // MusicXML
+  final List<Map<String, dynamic>> practiceInfo; // 1차 채점 결과
 
   @override
   State<PracticeResultMS> createState() => _PracticeResultMSState();
@@ -228,7 +233,11 @@ class _PracticeResultMSState extends State<PracticeResultMS> {
                               shadowColor: Color.fromARGB(255, 177, 177, 177),
                               width: MediaQuery.of(context).size.width * 0.75,
                               clickedFunc: () {
-                                openMusicSheet(context);
+                                openMusicSheet(
+                                  context: context,
+                                  xmlDataString: widget.xmlDataString,
+                                  practiceInfo: widget.practiceInfo,
+                                );
                               },
                               btnIcon: Icons.insert_drive_file_rounded,
                             ),
