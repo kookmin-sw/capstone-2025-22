@@ -141,6 +141,7 @@ class _CountdownPageState extends State<CountdownPage>
         required double canvasWidth,
         required double canvasHeight,
         required List<dynamic> lineBounds,
+        required int totalMeasures,
       }) async {
         try {
           final List<Uint8List> lineImages =
