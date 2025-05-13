@@ -22,6 +22,7 @@ public class SheetPracticeDetailResponseDto {
     int practiceId;
     int sheetId;
     String sheetName;
+    String artistName;
     LocalDateTime createdDate;
     int score;
     List<FinalMeasureResult> practiceInfo;
@@ -38,6 +39,7 @@ public class SheetPracticeDetailResponseDto {
                 .practiceId(sheetPractice.getSheetPracticeId())
                 .sheetId(sheetPractice.getUserSheet().getUserSheetId())
                 .sheetName(sheetPractice.getUserSheet().getSheetName())
+                .artistName(sheetPractice.getUserSheet().getSheet().getAuthor())
                 .createdDate(sheetPractice.getCreatedDate())
                 .score(sheetPractice.getScore())
                 .practiceInfo(finalMeasureResultList)
