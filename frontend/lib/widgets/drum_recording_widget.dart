@@ -487,8 +487,25 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
   /// 녹음 재개
   Future<void> resumeRecording() async {
     if (!isRecording) return;
-    await _recorder?.resumeRecorder();
-    print('▶️ 녹음 재개 (마디 ${_currentMeasure + 1}부터)');
+
+    try {
+      // 녹음기가 null인 경우 초기화
+      if (_recorder == null) {
+        await _initRecorder();
+      }
+
+      await _recorder?.resumeRecorder();
+      print('▶️ 녹음 재개 (마디 ${_currentMeasure + 1}부터)');
+    } catch (e) {
+      print('❌ 녹음 재개 중 오류 발생: $e');
+      // 오류 발생 시 녹음기 재초기화 시도
+      try {
+        await _initRecorder();
+        await _recorder?.resumeRecorder();
+      } catch (retryError) {
+        print('❌ 녹음기 재초기화 및 재개 실패: $retryError');
+      }
+    }
   }
 
 // 마디 단위 처리
@@ -745,5 +762,59 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
   Widget build(BuildContext context) {
     // 이 위젯은 추상적이므로 자체 UI가 없음
     return const SizedBox.shrink();
+  }
+
+  /// 마디별 녹음 데이터 전송
+  Future<void> sendMeasureData({
+    required int measureNumber,
+    required bool isLastMeasure,
+  }) async {
+    if (!isRecording ||
+        _isDisposed ||
+        _stompClient == null ||
+        !_stompClient!.connected) {
+      print('❌ 녹음 데이터 전송 불가: 연결 상태 확인 필요');
+      return;
+    }
+
+    try {
+      final file = File(_recordingPath!);
+      if (await file.exists()) {
+        final base64String = base64Encode(await file.readAsBytes());
+        final originalBpm =
+            ((_beatsPerMeasure * 60) / (_totalDuration / _totalMeasures))
+                .toInt();
+        final adjustedBpm =
+            (originalBpm * widget.playbackController.speed).round();
+
+        final message = {
+          'bpm': adjustedBpm,
+          'userSheetId': widget.userSheetId,
+          'identifier': _identifier,
+          'email': _userEmail,
+          'message': base64String,
+          'measureNumber': measureNumber.toString(),
+          'endOfMeasure': isLastMeasure,
+        };
+
+        _stompClient!.send(
+          destination: '/app/audio/forwarding',
+          body: json.encode(message),
+          headers: {
+            'content-type': 'application/json',
+            'receipt': 'measure-$measureNumber',
+          },
+        );
+
+        if (!_isDisposed) {
+          setState(() => recordingStatusMessage =
+              '녹음 데이터 전송 완료 (마디: $measureNumber/$_totalMeasures)');
+        }
+      } else {
+        print('⚠️ 녹음 파일이 존재하지 않습니다: $_recordingPath');
+      }
+    } catch (e) {
+      print('❌ 녹음 데이터 전송 중 오류 발생: $e');
+    }
   }
 }
