@@ -65,7 +65,6 @@ class _DrumSheetPlayerState extends State<DrumSheetPlayer> {
   // DrumRecordingWidget 관련 변수
   final GlobalKey<DrumRecordingWidgetState> _drumRecordingKey = GlobalKey();
   List<dynamic> _detectedOnsets = [];
-  final String _recordingStatusMessage = '';
 
   // 채점 기능 관련 변수
   late ScoringService scoringService;
@@ -91,8 +90,7 @@ class _DrumSheetPlayerState extends State<DrumSheetPlayer> {
   }
 
   // WS 메시지 콜백
-  void _onWsGradingMessage(String payload) {
-    final msg = jsonDecode(payload) as Map<String, dynamic>;
+  void _onWsGradingMessage(Map<String, dynamic> msg) {
     print(
         "▶ 받은 채점 메시지 #${_beatGradingResults.length + 1}: measure=${msg['measureNumber']}, played=${msg['answerOnsetPlayed']}");
     setState(() {
@@ -157,11 +155,14 @@ class _DrumSheetPlayerState extends State<DrumSheetPlayer> {
         ..onPlaybackStateChange = (isPlaying) {
           setState(() {});
           if (isPlaying) {
-            // 재생이 진짜 시작될 때 녹음 시작
-            _startRecording();
+            if (_drumRecordingKey.currentState?.isRecording == true) {
+              _drumRecordingKey.currentState?.resumeRecording();
+            } else {
+              _drumRecordingKey.currentState?.startRecording();
+            }
           } else {
             // 재생이 멈추면 녹음 일시정지
-            _pauseRecording();
+            _drumRecordingKey.currentState?.pauseRecording();
           }
         }
         ..onCountdownUpdate = (count) {
@@ -191,8 +192,6 @@ class _DrumSheetPlayerState extends State<DrumSheetPlayer> {
   @override
   void initState() {
     super.initState();
-    _initRecorder();
-    _setupWebSocket();
 
     // base64로 인코딩된 XML 데이터를 사용
     Future.microtask(() async {
@@ -264,14 +263,27 @@ class _DrumSheetPlayerState extends State<DrumSheetPlayer> {
     );
   }
 
-  Future<String?> _fetchPracticeIdentifier() async {
-    final token = await _storage.read(key: 'access_token');
-    final response = await postHTTP('/audio/practice', null,
-        reqHeader: {'authorization': token ?? ''});
-    if (response['errMessage'] == null) {
-      return response['body'] as String;
-    } else {
-      print('Identifier 요청 실패: ${response['errMessage']}');
+  Future<String?> fetchPracticeIdentifier() async {
+    try {
+      final token = await _storage.read(key: 'access_token');
+      if (token == null) {
+        print('❌ 토큰이 없습니다');
+        return null;
+      }
+
+      final response = await postHTTP('/audio/practice', null,
+          reqHeader: {'authorization': token});
+
+      if (response['body'] != null) {
+        final identifier = response['body'] as String;
+        print('✅ 연주 식별자 수신: $identifier');
+        return identifier;
+      } else {
+        print('❌ 연주 식별자 요청 실패: ${response['message']}');
+        return null;
+      }
+    } catch (e) {
+      print('❌ 연주 식별자 요청 중 오류: $e');
       return null;
     }
   }
@@ -319,12 +331,6 @@ class _DrumSheetPlayerState extends State<DrumSheetPlayer> {
 
   @override
   void dispose() {
-    // OSMDService 등 서버 리소스 정리
-    osmdService.dispose();
-
-    // DrumRecordingWidget의 리소스도 정리 필요시
-    _drumRecordingKey.currentState?.dispose();
-
     super.dispose();
   }
 
@@ -353,139 +359,6 @@ class _DrumSheetPlayerState extends State<DrumSheetPlayer> {
     } catch (e) {
       print("Failed to load XML from backend: $e");
     }
-  }
-
-  // 1. _recordingPath를 하나의 고정된 경로로 설정하여 녹음 파일 덮어쓰기
-  Future<void> _initRecorder() async {
-    var status = await Permission.microphone.request();
-    if (status != PermissionStatus.granted) {
-      throw fs.RecordingPermissionException('마이크 권한이 부여되지 않았습니다.');
-    }
-    _recorder = fs.FlutterSoundRecorder();
-    await _recorder.openRecorder();
-    final appDocDir = await getApplicationDocumentsDirectory();
-    _recordingPath = '${appDocDir.path}/drum_performance.wav';
-  }
-
-  // 2. 녹음 시작 후, 마디별로 데이터를 웹소켓으로 전송 후 덮어쓰기
-  Future<void> _startRecording() async {
-    if (_isRecording) return;
-    if (!_webSocketConnected) {
-      print('❌ 녹음을 시작할 수 없습니다: WebSocket이 연결되지 않았습니다.');
-      return;
-    }
-    await _recorder.startRecorder(
-      toFile: _recordingPath, // 덮어쓰기 경로
-      codec: fs.Codec.pcm16WAV,
-      sampleRate: 16000,
-      numChannels: 1,
-      bitRate: 16000,
-    );
-    _isRecording = true;
-    _currentMeasure = 0;
-
-    // 배속을 감안한 한 마디의 길이 계산 (초 단위)
-    final measureDuration =
-        (_beatsPerMeasure * 60.0) / (_bpm * playbackController.speed);
-
-    // Timer로 한 마디가 끝날 때마다 데이터를 전송
-    _recordingDataTimer = Timer.periodic(
-        Duration(milliseconds: (measureDuration * 1000).toInt()), (timer) {
-      _sendRecordingDataWithMeasure(); // 한 마디를 주기로 녹음 데이터 전송
-    });
-  }
-
-  // 3. 녹음 중 데이터 전송 및 덮어쓰기
-  Future<void> _sendRecordingDataWithMeasure() async {
-    if (!_stompClient.connected) {
-      print('❌ WebSocket 연결이 되지 않아 데이터 전송 실패');
-      return;
-    }
-    try {
-      final file = File(_recordingPath!);
-      if (await file.exists()) {
-        final base64String = base64Encode(await file.readAsBytes());
-
-        // ❌ 기존 _stompClient.send(...) 부분 삭제 및 대체
-        scoringService.sendMeasureAudio(
-          email: _userEmail,
-          base64Wav: base64String,
-          bpm: (_bpm * playbackController.speed).round(),
-          userSheetId: userSheetId,
-          measureNumber: (_currentMeasure + 1).toString(),
-          endOfMeasure: (_currentMeasure + 1) >= _totalMeasures,
-        );
-
-        print('📤 녹음 데이터 전송 (ScoringService): '
-            'measure=${_currentMeasure + 1}/$_totalMeasures');
-
-        _currentMeasure++;
-        if (_currentMeasure >= _totalMeasures) {
-          _stopRecording(); // 모든 마디 녹음 완료 후 종료
-        }
-      }
-    } catch (e) {
-      print('❌ 녹음 데이터 전송 중 오류 발생: $e');
-    }
-  }
-
-  // 4. 녹음 종료
-  Future<void> _stopRecording() async {
-    if (!_isRecording) return;
-    _recordingDataTimer?.cancel();
-    await _recorder.stopRecorder();
-    _isRecording = false;
-    print('🎙️ 녹음 종료');
-  }
-
-  // 5. 녹음 일시 정지
-  Future<void> _pauseRecording() async {
-    if (!_isRecording) return;
-    await _recorder.pauseRecorder(); // 녹음 일시정지
-    _recordingDataTimer?.cancel(); // 전송 타이머도 멈춤
-    print('⏸️ 녹음 일시정지');
-  }
-
-  //6. 녹음 재개
-  Future<void> _resumeRecording() async {
-    if (!_isRecording) return;
-    await _recorder.resumeRecorder(); // 녹음 재개
-    // measureDuration 는 기존 계산 그대로
-    final measureDuration =
-        (_beatsPerMeasure * 60.0) / (_bpm * playbackController.speed);
-    _recordingDataTimer = Timer.periodic(
-      Duration(seconds: measureDuration.toInt()),
-      (_) => _sendRecordingDataWithMeasure(),
-    );
-    print('▶️ 녹음 재개 (마디 ${_currentMeasure + 1}부터)');
-  }
-
-  Future<void> _setupWebSocket() async {
-    final token = await _storage.read(key: 'access_token');
-    _userEmail = await _storage.read(key: 'user_email') ?? 'test@example.com';
-
-    _stompClient = StompClient(
-      config: StompConfig.sockJS(
-        url: 'http://34.68.164.98:28080/ws/audio',
-        onConnect: (StompFrame frame) {
-          print('✅ WebSocket 연결 완료!');
-          _webSocketConnected = true;
-          scoringService = ScoringService(client: _stompClient);
-        },
-        beforeConnect: () async => print('🌐 WebSocket 연결 시도 중...'),
-        onWebSocketError: (dynamic error) {
-          print('❌ WebSocket 오류 발생: $error');
-        },
-        onDisconnect: (frame) {
-          print('🔌 WebSocket 연결 끊어짐');
-          _webSocketConnected = false;
-        },
-        stompConnectHeaders: {
-          'Authorization': token ?? '',
-        },
-      ),
-    );
-    _stompClient.activate();
   }
 
   @override
@@ -543,16 +416,10 @@ class _DrumSheetPlayerState extends State<DrumSheetPlayer> {
                                           _beatGradingResults.clear();
 
                                           // 리소스 해제 - WebSocket 연결 종료
-                                          if (_stompClient.connected) {
-                                            _stompClient.deactivate();
-                                          }
-                                          print("웹소켓 연결 종료");
+                                          _drumRecordingKey.currentState
+                                              ?.cleanupResources();
 
-                                          // 녹음기 리소스 해제
-                                          if (_recorder.isRecording) {
-                                            _recorder.stopRecorder();
-                                          }
-                                          print("녹음기 리소스 해제");
+                                          print("리소스 해제");
 
                                           // _recordingDataTimer 해제
                                           _recordingDataTimer?.cancel();
@@ -673,9 +540,6 @@ class _DrumSheetPlayerState extends State<DrumSheetPlayer> {
                                                       0; // 1-based 마디 번호 초기화
                                                   _beatGradingResults.clear();
                                                 });
-                                                _drumRecordingKey.currentState
-                                                    ?.stopRecording();
-                                                _stopRecording();
                                               },
                                               onCancel: () {
                                                 Navigator.of(context).pop();
@@ -728,24 +592,12 @@ class _DrumSheetPlayerState extends State<DrumSheetPlayer> {
                             if (playbackController.isPlaying) {
                               // 재생 중이면 일시정지 & 녹음 중지
                               playbackController.stopPlayback();
+                              _drumRecordingKey.currentState?.pauseRecording();
                             } else {
                               setState(() {
                                 _beatGradingResults.clear();
                               });
-                              final id = await _fetchPracticeIdentifier();
-                              if (id == null) {
-                                // 실패 시 사용자에게 알려주고 녹음 중단
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                        content: Text("채점 식별자를 가져오지 못했습니다.")));
-                                return;
-                              }
-                              scoringService.setIdentifier(id);
-                              scoringService.subscribeToScoringResults(
-                                  _userEmail, _handleScoringResult);
-
                               playbackController.showCountdownAndStart();
-                              _startRecording();
                             }
                           },
                           child: playbackController.isPlaying
@@ -942,21 +794,6 @@ class _DrumSheetPlayerState extends State<DrumSheetPlayer> {
                     ],
                   ),
                 ),
-
-                // 녹음 상태 메시지 표시
-                if (_recordingStatusMessage.isNotEmpty)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 8),
-                    child: Text(
-                      _recordingStatusMessage,
-                      style: const TextStyle(
-                        color: Color(0xFFE5958B),
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
               ],
             ),
           ),
@@ -1050,13 +887,15 @@ class _DrumSheetPlayerState extends State<DrumSheetPlayer> {
                   print('Error parsing XML: $e');
                 }
               },
-              playbackController: playbackController, // playbackController 전달
+              onGradingResult: (msg) {
+                _handleScoringResult(msg); // 1) 즉시 화면에 틀린 박자 커서 표시
+                _onWsGradingMessage(msg); // 2) 리스트에 쌓아서, 마지막에 전체 점수 계산
+              },
+              playbackController: playbackController, //playbackController 전달
+              fetchPracticeIdentifier: fetchPracticeIdentifier,
+              userSheetId: widget.sheetId,
             ),
           ),
-
-          // DrumRecordingWidget의 카운트다운 오버레이 표시
-          if (_drumRecordingKey.currentState != null)
-            _drumRecordingKey.currentState!.buildCountdownOverlay(),
         ],
       ),
     );

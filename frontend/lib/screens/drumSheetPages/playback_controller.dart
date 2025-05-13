@@ -4,7 +4,6 @@ import 'package:capstone_2025/models/sheet_info.dart';
 import 'package:flutter/foundation.dart';
 import '../../models/cursor.dart';
 import './cursor_controller.dart';
-import 'dart:math'; // 테스트 용
 
 class PlaybackController {
   CursorController? _cursorController; // 커서 이동 관리
