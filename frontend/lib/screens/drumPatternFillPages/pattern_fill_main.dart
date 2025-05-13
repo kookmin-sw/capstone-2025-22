@@ -1,3 +1,5 @@
+import 'package:capstone_2025/services/api_func.dart';
+import 'package:capstone_2025/services/storage_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:capstone_2025/widgets/innerShadow.dart';
@@ -36,15 +38,19 @@ class _PatternFillMainState extends State<PatternFillMain> {
                     child: SingleChildScrollView(
                       child: Column(
                         children: [
-                          clickedListItem(context, 1, true, false),
-                          clickedListItem(context, 2, false, false),
-                          clickedListItem(context, 3, false, true),
-                          clickedListItem(context, 4, false, true),
-                          clickedListItem(context, 5, false, true),
-                          clickedListItem(context, 6, false, true),
-                          clickedListItem(context, 7, false, true),
-                          clickedListItem(context, 8, false, true),
-                          clickedListItem(context, 9, false, true),
+                          FutureBuilder<List<Widget>>(
+                            future: buildPatternList(),
+                            builder: (context, snapshot) {
+                              if (snapshot.connectionState ==
+                                  ConnectionState.waiting) {
+                                return const CircularProgressIndicator();
+                              } else if (snapshot.hasError) {
+                                return Text('에러 발생: ${snapshot.error}');
+                              } else {
+                                return Column(children: snapshot.data ?? []);
+                              }
+                            },
+                          ),
                         ],
                       ),
                     ),
@@ -161,7 +167,7 @@ class _PatternFillMainState extends State<PatternFillMain> {
                       Navigator.of(context).push(
                         MaterialPageRoute(
                           builder: (context) => PatternFillScreen(
-                            title: 'Basic Pattern $index',
+                            index: $index,
                           ),
                         ),
                       );
@@ -280,5 +286,34 @@ class _PatternFillMainState extends State<PatternFillMain> {
         ),
       ]),
     );
+  }
+
+  Future<List<Widget>> buildPatternList() async {
+    // Todo : 패턴 및 필인 리스트 만들기
+    String? email = await storage.read(key: "user_email");
+    List<Widget> levels = [];
+
+    var patterns = await getHTTP('/patterns', {}, reqHeader: {});
+    if (patterns['errMessage'] == null) {
+      var body = patterns['body'];
+      levels = (body as List).asMap().entries.map((entry) {
+        int index = entry.key + 1;
+        return patternFillList(
+          context,
+          index,
+          false, // isLevelCleared
+          true, // isLevelLocked
+        );
+      }).toList();
+    } else {
+      print(patterns['errMessage']);
+    }
+
+    var successPatterns = await getHTTP('/patterns/success', {"email": email});
+    if (successPatterns['errMessage'] == null) {
+      var successList = successPatterns['body'].map;
+    }
+
+    return levels;
   }
 }
