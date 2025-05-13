@@ -31,6 +31,17 @@ public class MusicClientService {
                         String message = res.bodyToMono(String.class).block();
                         log.error("Error getting measure info: {}", message);
                         return Mono.empty();
+    public Mono<MeasureInfo> getPatternMeasureInfo(Long patternId, String measureNumber){
+        return musicWebClient.get()
+                .uri(builder -> builder.path("/patterns/{patternId}/measures")
+                        .queryParam("measureNumber", measureNumber).build(patternId))
+                .exchangeToMono(res -> {
+                    if(res.statusCode().is2xxSuccessful()){
+                        return res.bodyToMono(String.class).map(resBody-> CustomResponseDto.resolveBody(resBody, MeasureInfo.class));
+                    }else{
+                        return res.bodyToMono(String.class)
+                                .doOnNext(message -> log.error("[pattern practice] Error getting measure info: {}", message))
+                                .then(Mono.empty());
                     }
                 });
     }
@@ -46,6 +57,17 @@ public class MusicClientService {
                         String message = res.bodyToMono(String.class).block();
                         log.error("Error saving practice info: {}", message);
                         return Mono.just(false);
+    public Mono<Boolean> savePatternScoreInfo(PatternPracticeCreateRequest createDto){
+        return musicWebClient.post()
+                .uri(builder -> builder.path("patterns/practices").build())
+                .bodyValue(createDto)
+                .exchangeToMono(res -> {
+                    if(res.statusCode().is2xxSuccessful()){
+                        return Mono.just(true);
+                    }else{
+                        return res.bodyToMono(String.class)
+                                .doOnNext(message -> log.error("[pattern practice] Error saving practice info: {}", message))
+                                .then(Mono.just(false));
                     }
                 });
     }
