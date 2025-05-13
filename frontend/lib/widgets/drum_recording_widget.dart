@@ -6,7 +6,6 @@ import 'package:xml/xml.dart';
 import 'package:logger/logger.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
-import '../services/scoring_service.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter_sound/flutter_sound.dart' as fs;
 import 'package:stomp_dart_client/stomp_dart_client.dart';
@@ -40,12 +39,13 @@ class DrumRecordingWidget extends StatefulWidget {
   /// MusicXML 파싱 결과를 부모 위젯에 전달하기 위한 콜백
   final Function(Map<String, dynamic>)? onMusicXMLParsed;
 
-  final void Function(Map<String, dynamic> scoringResult)? onGradingResult;
-
   /// 배속 정보
   final PlaybackController playbackController;
 
   final Future<String?> Function() fetchPracticeIdentifier;
+
+  /// 채점 결과 콜백
+  final void Function(Map<String, dynamic> gradingResult)? onGradingResult;
   final int? userSheetId;
 
   const DrumRecordingWidget({
@@ -58,10 +58,10 @@ class DrumRecordingWidget extends StatefulWidget {
     this.onMeasureUpdate,
     this.onOnsetsReceived,
     this.onMusicXMLParsed,
+    this.userSheetId,
     this.onGradingResult,
     required this.playbackController,
-    required this.fetchPracticeIdentifier,
-    this.userSheetId,
+    required this.fetchPracticeIdentifier, // identifier 가져옴
   });
 
   @override
@@ -79,7 +79,7 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
   final _storage = const FlutterSecureStorage();
   Function? _stompUnsubscribe;
   bool _isDisposed = false;
-  int _receivedResults = 0;
+  String? _identifier;
 
   // 녹음 관련
   bool isRecording = false;
@@ -107,9 +107,7 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
 
   // 결과
   List<dynamic> _detectedOnsets = [];
-
-  // 채점 관련
-  late final ScoringService scoringService;
+  int _receivedResults = 0; // answerOnsetPlayed 메시지 수 카운트
 
   @override
   void initState() {
@@ -170,7 +168,6 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
     if (_isDisposed) return;
 
     final token = await _storage.read(key: 'access_token');
-    _userEmail = await _storage.read(key: 'user_email') ?? 'test@test.com';
     print('🔑 WebSocket 연결 시도 - 토큰: $token');
 
     // WebSocket 설정
@@ -185,9 +182,6 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
             _webSocketConnected = true;
           });
           _reconnectAttemps = 0;
-          scoringService = ScoringService(client: _stompClient!);
-
-          // 최초 연결 시에만 토픽 구독
           _subscribeToTopic();
         },
         beforeConnect: () async => print('🌐 WebSocket 연결 시도 중...'),
@@ -218,33 +212,40 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
 
   void _subscribeToTopic() {
     if (_isDisposed || _stompClient == null) return;
-    // ScoringService를 통해 구독 등록
-    _stompUnsubscribe = scoringService.subscribeToScoringResults(
-      _userEmail,
-      (Map<String, dynamic> msg) async {
-        _receivedResults++;
-        print('📥 채점 데이터 수신 #$_receivedResults: $msg');
 
-        // 온셋 감지 결과 처리
-        if (msg.containsKey('userOnset')) {
-          setState(() => _detectedOnsets = msg['userOnset']);
-          widget.onOnsetsReceived?.call(_detectedOnsets);
-          print('🎯 감지된 온셋 (userOnset): ${msg['userOnset']}');
-        }
+    _stompUnsubscribe = _stompClient!.subscribe(
+      destination: '/topic/onset/$_userEmail',
+      callback: (frame) {
+        if (_isDisposed) return;
 
-        // 채점 결과 처리
-        if (msg.containsKey('answerOnsetPlayed')) {
-          final played = msg['answerOnsetPlayed'];
-          final measure = msg['measureNumber'];
-          print('📝 마디 $measure 채점결과: played=$played');
-          if (widget.onGradingResult != null && !_isDisposed) {
-            widget.onGradingResult!(msg);
+        if (frame.body != null) {
+          final response = json.decode(frame.body!);
+          print('📦 WebSocket 데이터 수신 완료: $response');
+
+          if (response.containsKey('onsets')) {
+            if (!_isDisposed) {
+              setState(() {
+                _detectedOnsets = response['onsets'];
+              });
+            }
+            print('🎯 감지된 온셋 수: ${response['onsets']}');
+
+            // 부모 위젯에 콜백으로 알림
+            if (widget.onOnsetsReceived != null && !_isDisposed) {
+              widget.onOnsetsReceived!(_detectedOnsets);
+            }
           }
-          // 모든 마디 결과를 다 받았으면 녹음 세션 종료
-          if (_receivedResults >= _totalMeasures && isRecording) {
-            print('✅ 모든 채점 결과 도착 — 녹음 종료');
-            await stopRecording();
-            widget.onRecordingComplete?.call(_detectedOnsets);
+          // ② answerOnsetPlayed → 채점 결과
+          if (response.containsKey('answerOnsetPlayed')) {
+            _receivedResults++;
+            widget.onGradingResult?.call(response);
+            // 모든 마디 채점 결과 받았으면 녹음 종료
+            if (_receivedResults >= _totalMeasures && isRecording) {
+              stopRecording();
+              widget.onRecordingComplete?.call(_detectedOnsets);
+            }
+          } else {
+            print('⚠️ 빈 WebSocket 프레임 수신');
           }
         }
       },
@@ -442,27 +443,25 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
 
   /// 오디오 녹음 시작
   void startRecording() async {
+    if (isRecording || !mounted || _isDisposed || _recorder == null) return;
     _receivedResults = 0;
     _detectedOnsets.clear();
-    if (isRecording || !mounted || _isDisposed || _recorder == null) return;
+    // WebSocket 연결 확인
+    if (!_webSocketConnected) {
+      print('❌ 녹음을 시작할 수 없습니다: WebSocket이 연결되지 않았습니다.');
+      setState(() => recordingStatusMessage = 'WebSocket 연결이 필요합니다!');
+      return;
+    }
+
+    // 한 번만 fetch
+    _identifier = await widget.fetchPracticeIdentifier();
+    if (_identifier == null) {
+      setState(() => recordingStatusMessage = '식별자 획득 실패');
+      return;
+    }
 
     try {
-      // 1. WebSocket 연결 확인
-      if (!_webSocketConnected) {
-        print('❌ WebSocket이 연결되지 않았습니다');
-        setState(() => recordingStatusMessage = 'WebSocket 연결이 필요합니다');
-        return;
-      }
-      // 2. practice identifier 받아오기
-      final id = await widget.fetchPracticeIdentifier();
-      if (id == null) {
-        setState(() => recordingStatusMessage = '연주 식별자를 가져오지 못했습니다.');
-        return;
-      }
-      print("📝 Practice identifier: $id");
-      scoringService.setIdentifier(id);
-
-      // 3. 녹음 시작
+      // 전체 녹음 프로세스 시작
       setState(() {
         isRecording = true;
         _currentMeasure = 0;
@@ -472,8 +471,10 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
       // 첫 마디 녹음 시작
       await _startMeasureRecording();
     } catch (e) {
-      print('❌ 녹음 시작 중 오류: $e');
-      setState(() => recordingStatusMessage = '녹음 시작 실패: $e');
+      if (!_isDisposed) {
+        setState(() => recordingStatusMessage = '녹음 시작 실패: $e');
+      }
+      print('❌ 녹음 중 오류 발생: $e');
     }
   }
 
@@ -499,83 +500,6 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
       }
     } catch (e) {
       print('❌ 녹음 종료 중 오류 발생: $e');
-    }
-  }
-
-  /// 녹음 일시정지
-  Future<void> pauseRecording() async {
-    if (!isRecording) return;
-    await _recorder?.pauseRecorder(); // 기존 코드 그대로
-    _recordingTimer?.cancel(); // 전송용 타이머 취소
-  }
-
-  /// 녹음 재개
-  Future<void> resumeRecording() async {
-    if (!isRecording) return;
-    await _recorder?.resumeRecorder(); // 녹음 재개
-
-    // 한 마디 길이를 다시 계산해서, 타이머를 걸어줍니다.
-    final measureDurationInSeconds =
-        (_secondsPerMeasure / widget.playbackController.speed).toInt();
-    _recordingTimer = Timer(
-      Duration(seconds: measureDurationInSeconds),
-      () async {
-        // 한 마디 녹음 후 전송하고, 다음 마디로 넘어가는 로직 호출
-        await _recordMeasure();
-      },
-    );
-
-    print('▶️ 녹음 재개 (마디 ${_currentMeasure + 1}부터)');
-  }
-
-  /// WebSocket을 통해 녹음 데이터를 서버로 전송
-  Future<void> _sendRecordingData() async {
-    try {
-      // State가 이미 dispose된 경우 바로 return
-      if (!mounted || _isDisposed) {
-        print('❌ State가 dispose된 후 _sendRecordingData 호출됨!');
-        return;
-      }
-      if (_stompClient == null) {
-        print('❌ _stompClient가 null입니다!');
-        return;
-      }
-      if (!_stompClient!.connected) {
-        print('❌ WebSocket이 연결되지 않았습니다!');
-        return;
-      }
-
-      try {
-        final file = File(_recordingPath!);
-        if (await file.exists()) {
-          final base64String = base64Encode(await file.readAsBytes());
-          final originalBpm =
-              ((_beatsPerMeasure * 60) / (_totalDuration / _totalMeasures))
-                  .toInt();
-          final adjustedBpm =
-              (originalBpm * widget.playbackController.speed).round();
-
-          scoringService.sendMeasureAudio(
-            email: _userEmail,
-            base64Wav: base64String,
-            bpm: adjustedBpm,
-            userSheetId: widget.userSheetId ?? 0,
-            measureNumber: (_currentMeasure + 1).toString(),
-            endOfMeasure: _currentMeasure + 1 == _totalMeasures,
-          );
-
-          if (!_isDisposed) {
-            setState(() => recordingStatusMessage =
-                '녹음 데이터 전송 완료 (마디: ${_currentMeasure + 1}/$_totalMeasures)');
-          }
-        } else {
-          print('⚠️ 녹음 파일이 존재하지 않습니다: $_recordingPath');
-        }
-      } catch (e) {
-        print('❌ 녹음 데이터 전송 중 오류 발생: $e');
-      }
-    } catch (e, stack) {
-      print('❌ _sendRecordingData 예외 발생: $e\n$stack');
     }
   }
 
@@ -629,6 +553,19 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
     );
   }
 
+  /// 녹음 일시정지
+  Future<void> pauseRecording() async {
+    if (!isRecording) return;
+    await _recorder?.pauseRecorder();
+  }
+
+  /// 녹음 재개
+  Future<void> resumeRecording() async {
+    if (!isRecording) return;
+    await _recorder?.resumeRecorder();
+    print('▶️ 녹음 재개 (마디 ${_currentMeasure + 1}부터)');
+  }
+
   /// 마디 타이밍 정보 반환
   Map<String, dynamic> getMeasureInfo() {
     return {
@@ -650,6 +587,15 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
 
     // 2. 구독 취소
     _recorderSubscription?.cancel();
+    if (_stompUnsubscribe != null) {
+      try {
+        _stompUnsubscribe!();
+        print('✅ WebSocket 구독 취소 완료');
+      } catch (e) {
+        print('⚠️ WebSocket 구독 취소 중 오류 발생: $e');
+      }
+      _stompUnsubscribe = null;
+    }
 
     // 3. 녹음 중지
     if (isRecording && _recorder != null) {
@@ -674,12 +620,12 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
       _recorder = null;
     }
 
-    // 5. WebSocket 전체 연결 종료 → 구독도 함께 해제됨
+    // 5. WebSocket 연결 종료
     if (_stompClient != null) {
       try {
         // 연결 상태 확인 없이 무조건 비활성화 시도
         _stompClient!.deactivate();
-        print('✅ WebSocket 종료 및 구독 해제 완료');
+        print('✅ WebSocket 종료 완료');
       } catch (e) {
         print('⚠️ WebSocket 종료 중 오류 발생: $e');
       }
@@ -716,6 +662,7 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
       // 녹음 데이터 전송
       await _sendRecordingData();
       print('📤 마디 ${_currentMeasure + 1} 녹음 데이터 전송 완료: ${DateTime.now()}');
+      widget.onMeasureUpdate?.call(_currentMeasure + 1, _totalMeasures);
 
       // 다음 마디 녹음 시작 (첫 마디가 아닌 경우에만)
       if (_currentMeasure < _totalMeasures - 1) {
@@ -736,8 +683,11 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
   // 마디 녹음 시작
   Future<void> _startMeasureRecording() async {
     if (_isDisposed || _recorder == null) return;
+    final id = await widget.fetchPracticeIdentifier();
+    _identifier = id;
 
     try {
+      widget.onMeasureUpdate?.call(_currentMeasure + 1, _totalMeasures);
       print('🎙️ 마디 ${_currentMeasure + 1} 녹음 시작: ${DateTime.now()}');
 
       await _recorder!.startRecorder(
@@ -747,7 +697,7 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
         numChannels: 1,
         bitRate: 16000,
       );
-
+      widget.onMeasureUpdate?.call(_currentMeasure + 1, _totalMeasures);
       if (!_isDisposed) {
         setState(() {
           recordingStatusMessage =
@@ -783,17 +733,29 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
         final file = File(_recordingPath!);
         if (await file.exists()) {
           final base64String = base64Encode(await file.readAsBytes());
+          final originalBpm =
+              ((_beatsPerMeasure * 60) / (_totalDuration / _totalMeasures))
+                  .toInt();
+          final adjustedBpm =
+              (originalBpm * widget.playbackController.speed).round();
+
           final message = {
+            'bpm': adjustedBpm,
+            'userSheetId': widget.userSheetId,
+            'identifier': _identifier,
             'email': _userEmail,
             'message': base64String,
-            'currentMeasure': _currentMeasure,
-            'totalMeasures': _totalMeasures
+            'measureNumber': (_currentMeasure + 1).toString(),
+            'endOfMeasure': _currentMeasure + 1 == _totalMeasures,
           };
 
           _stompClient!.send(
             destination: '/app/audio/forwarding',
             body: json.encode(message),
-            headers: {'content-type': 'application/json'},
+            headers: {
+              'content-type': 'application/json',
+              'receipt': 'measure-${_currentMeasure + 1}',
+            },
           );
 
           if (!_isDisposed) {

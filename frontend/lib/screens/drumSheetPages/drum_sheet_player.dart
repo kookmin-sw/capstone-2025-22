@@ -414,6 +414,8 @@ class _DrumSheetPlayerState extends State<DrumSheetPlayer> {
                                           print("녹음 중지");
 
                                           _beatGradingResults.clear();
+                                          playbackController.missedCursors
+                                              .clear();
 
                                           // 리소스 해제 - WebSocket 연결 종료
                                           _drumRecordingKey.currentState
@@ -531,14 +533,26 @@ class _DrumSheetPlayerState extends State<DrumSheetPlayer> {
                                             barrierDismissible: true,
                                             builder: (_) => ConfirmationDialog(
                                               message: "처음부터 다시 연주하시겠습니까?",
-                                              onConfirm: () {
+                                              onConfirm: () async {
                                                 Navigator.of(context).pop();
-                                                playbackController
-                                                    .resetToStart(); // 리셋 로직 실행
+                                                // 1) 녹음 중이면 중지하고 리소스 정리
+                                                final recorder =
+                                                    _drumRecordingKey
+                                                        .currentState;
+                                                if (recorder?.isRecording ==
+                                                    true) {
+                                                  await recorder!
+                                                      .stopRecording();
+                                                }
+                                                // 2) 플레이어 & 내부 상태 리셋
                                                 setState(() {
-                                                  _currentMeasureOneBased =
-                                                      0; // 1-based 마디 번호 초기화
+                                                  _currentMeasureOneBased = 0;
                                                   _beatGradingResults.clear();
+                                                  playbackController
+                                                      .missedCursors
+                                                      .clear();
+                                                  playbackController
+                                                      .resetToStart();
                                                 });
                                               },
                                               onCancel: () {
@@ -596,6 +610,7 @@ class _DrumSheetPlayerState extends State<DrumSheetPlayer> {
                             } else {
                               setState(() {
                                 _beatGradingResults.clear();
+                                playbackController.missedCursors.clear();
                               });
                               playbackController.showCountdownAndStart();
                             }
