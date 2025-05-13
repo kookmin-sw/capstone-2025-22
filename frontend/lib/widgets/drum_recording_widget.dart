@@ -126,6 +126,11 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
     // 데이터 초기화
     _initializeData();
     _parseMusicXML();
+
+    // PlaybackController의 이벤트 구독
+    widget.playbackController.onMeasureChange = _handleMeasureChange;
+    widget.playbackController.onCountdownComplete = _handleCountdownComplete;
+    widget.playbackController.onPlaybackComplete = _handlePlaybackComplete;
   }
 
   Future<void> _initializeData() async {
@@ -403,6 +408,38 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
     });
   }
 
+  // 카운트다운 완료 처리
+  void _handleCountdownComplete() {
+    if (!mounted || _isDisposed) return;
+    startRecording();
+  }
+
+  // 연주 완료 처리
+  void _handlePlaybackComplete(int lastMeasure) {
+    if (!isRecording || _isDisposed) return;
+    print('🎼 연주 완료 감지: 마지막 마디 $lastMeasure');
+
+    // 1. 마지막 마디 녹음 중지 (데이터 저장)
+    if (_recorder!.isRecording) {
+      _recorder!.stopRecorder().then((_) {
+        print('🎙️ 마지막 마디 녹음 중지 완료');
+        // 2. 저장된 데이터 전송
+        return _sendRecordingData();
+      }).then((_) {
+        print('📤 마지막 마디 녹음 데이터 전송 완료: ${DateTime.now()}');
+        // 3. 녹음 종료
+        return stopRecording();
+      }).then((_) {
+        print('🎙️ 녹음 종료 완료');
+      }).catchError((error) {
+        print('❌ 마지막 마디 처리 중 오류 발생: $error');
+      });
+    } else {
+      print('⚠️ 마지막 마디 녹음이 이미 중지된 상태입니다');
+      stopRecording();
+    }
+  }
+
   /// 오디오 녹음 시작
   void startRecording() async {
     _receivedResults = 0;
@@ -432,73 +469,17 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
         recordingStatusMessage = '녹음이 시작되었습니다.';
       });
 
-      await _recordMeasure();
+      // 첫 마디 녹음 시작
+      await _startMeasureRecording();
     } catch (e) {
       print('❌ 녹음 시작 중 오류: $e');
       setState(() => recordingStatusMessage = '녹음 시작 실패: $e');
     }
   }
 
-  /// 한 마디 녹음 후 전송
-  Future<void> _recordMeasure() async {
-    if (_isDisposed || !isRecording) return;
-
-    try {
-      // 녹음 시작
-      print(
-          "🎙️ 마디 ${_currentMeasure + 1} 녹음 시작: ${DateTime.now()}. 저장 경로: $_recordingPath");
-      await _recorder!.startRecorder(
-        toFile: _recordingPath,
-        codec: fs.Codec.pcm16WAV,
-        sampleRate: 16000,
-        numChannels: 1,
-        bitRate: 16000,
-      );
-
-      if (!_isDisposed) {
-        setState(() {
-          recordingStatusMessage =
-              '녹음 중... (마디: ${_currentMeasure + 1}/$_totalMeasures)';
-        });
-      }
-
-      // 배속을 감안한 마디의 시간 (초)
-      final measureDurationInSeconds =
-          (_secondsPerMeasure / widget.playbackController.speed).toInt();
-
-      // 한 마디 동안 녹음
-      _recordingTimer =
-          Timer(Duration(seconds: measureDurationInSeconds), () async {
-        // 녹음 중지
-        await _recorder!.stopRecorder();
-
-        // 녹음된 데이터 전송
-        await _sendRecordingData();
-
-        // 부모 위젯에 현재 마디 정보 업데이트
-        if (widget.onMeasureUpdate != null && !_isDisposed) {
-          widget.onMeasureUpdate!(_currentMeasure + 1, _totalMeasures);
-        }
-
-        // 다음 마디로 이동
-        _currentMeasure++;
-        if (_currentMeasure < _totalMeasures && isRecording) {
-          await _recordMeasure(); // → 여기에 재귀를 넣어야 타이머가 실행된 다음에 호출됩니다.
-        }
-      });
-    } catch (e) {
-      print('❌ 마디 녹음 중 오류 발생: $e');
-      if (!_isDisposed) {
-        setState(() => recordingStatusMessage = '녹음 오류: $e');
-      }
-    }
-  }
-
   /// 오디오 녹음 중지
   Future<void> stopRecording() async {
     if (!isRecording || !mounted || _isDisposed || _recorder == null) return;
-
-    _recordingTimer?.cancel(); // 녹음 타이머 중지
 
     try {
       if (_recorder!.isRecording) {
@@ -511,8 +492,6 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
           recordingStatusMessage = '녹음이 중지되었습니다.';
         });
       }
-
-      print('🎙️ 녹음 종료');
 
       // 부모 위젯에 결과 전달
       if (widget.onRecordingComplete != null && !_isDisposed) {
@@ -710,6 +689,128 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
     print('✅ 모든 리소스 정리 완료');
   }
 
+  // 마디 변경 처리
+  void _handleMeasureChange(int measureNumber) {
+    if (!isRecording || _isDisposed) return;
+
+    // 첫 번째 마디 변경 감지인 경우 (녹음 시작)
+    if (_currentMeasure == 0 && measureNumber == 0) {
+      _startMeasureRecording();
+      return;
+    }
+
+    // 현재 마디 녹음 중지 및 데이터 전송
+    _processCurrentMeasure();
+  }
+
+  // 마디 단위 처리
+  Future<void> _processCurrentMeasure() async {
+    if (!isRecording || _isDisposed || _recorder == null) return;
+
+    try {
+      // 현재 녹음 중지
+      if (_recorder!.isRecording) {
+        await _recorder!.stopRecorder();
+      }
+
+      // 녹음 데이터 전송
+      await _sendRecordingData();
+      print('📤 마디 ${_currentMeasure + 1} 녹음 데이터 전송 완료: ${DateTime.now()}');
+
+      // 다음 마디 녹음 시작 (첫 마디가 아닌 경우에만)
+      if (_currentMeasure < _totalMeasures - 1) {
+        _currentMeasure++;
+        if (_currentMeasure > 0) {
+          // 첫 마디가 아닌 경우에만 녹음 시작
+          await _startMeasureRecording();
+        }
+      }
+    } catch (e) {
+      print('❌ 마디 처리 중 오류 발생: $e');
+      if (!_isDisposed) {
+        setState(() => recordingStatusMessage = '녹음 오류: $e');
+      }
+    }
+  }
+
+  // 마디 녹음 시작
+  Future<void> _startMeasureRecording() async {
+    if (_isDisposed || _recorder == null) return;
+
+    try {
+      print('🎙️ 마디 ${_currentMeasure + 1} 녹음 시작: ${DateTime.now()}');
+
+      await _recorder!.startRecorder(
+        toFile: _recordingPath,
+        codec: fs.Codec.pcm16WAV,
+        sampleRate: 16000,
+        numChannels: 1,
+        bitRate: 16000,
+      );
+
+      if (!_isDisposed) {
+        setState(() {
+          recordingStatusMessage =
+              '녹음 중... (마디: ${_currentMeasure + 1}/$_totalMeasures)';
+        });
+      }
+    } catch (e) {
+      print('❌ 마디 녹음 시작 중 오류 발생: $e');
+      if (!_isDisposed) {
+        setState(() => recordingStatusMessage = '녹음 시작 실패: $e');
+      }
+    }
+  }
+
+  /// WebSocket을 통해 녹음 데이터를 서버로 전송
+  Future<void> _sendRecordingData() async {
+    try {
+      // State가 이미 dispose된 경우 바로 return
+      if (!mounted || _isDisposed) {
+        print('❌ State가 dispose된 후 _sendRecordingData 호출됨!');
+        return;
+      }
+      if (_stompClient == null) {
+        print('❌ _stompClient가 null입니다!');
+        return;
+      }
+      if (!_stompClient!.connected) {
+        print('❌ WebSocket이 연결되지 않았습니다!');
+        return;
+      }
+
+      try {
+        final file = File(_recordingPath!);
+        if (await file.exists()) {
+          final base64String = base64Encode(await file.readAsBytes());
+          final message = {
+            'email': _userEmail,
+            'message': base64String,
+            'currentMeasure': _currentMeasure,
+            'totalMeasures': _totalMeasures
+          };
+
+          _stompClient!.send(
+            destination: '/app/audio/forwarding',
+            body: json.encode(message),
+            headers: {'content-type': 'application/json'},
+          );
+
+          if (!_isDisposed) {
+            setState(() => recordingStatusMessage =
+                '녹음 데이터 전송 완료 (마디: ${_currentMeasure + 1}/$_totalMeasures)');
+          }
+        } else {
+          print('⚠️ 녹음 파일이 존재하지 않습니다: $_recordingPath');
+        }
+      } catch (e) {
+        print('❌ 녹음 데이터 전송 중 오류 발생: $e');
+      }
+    } catch (e, stack) {
+      print('❌ _sendRecordingData 예외 발생: $e\n$stack');
+    }
+  }
+
   @override
   void dispose() {
     _isDisposed = true;
@@ -720,6 +821,7 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
     // 애니메이션 컨트롤러 해제
     _overlayController.dispose();
 
+    widget.playbackController.onMeasureChange = null; // 이벤트 구독 해제
     super.dispose();
   }
 
