@@ -369,7 +369,11 @@ class _MusicsheetDetailState extends State<MusicsheetDetail> {
                           top: MediaQuery.of(context).size.height * 0.765,
                           right: MediaQuery.of(context).size.height * 0.035,
                           child: IconButton(
-                            onPressed: () => openMusicSheet(context),
+                            onPressed: () => openMusicSheet(
+                              context: context,
+                              xmlDataString: '',
+                              practiceInfo: <Map<String, dynamic>>[], // TODO
+                            ),
                             icon: FaIcon(FontAwesomeIcons.expand,
                                 size: 28, color: Color(0xffD97D6C)),
                           ),

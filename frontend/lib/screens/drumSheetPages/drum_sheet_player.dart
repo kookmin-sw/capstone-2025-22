@@ -21,6 +21,7 @@ import './widgets/cursor_widget.dart';
 import './widgets/confirmation_dialog.dart';
 import 'playback_controller.dart';
 import 'package:capstone_2025/screens/mainPages/navigation_screens.dart';
+import './practice_result_MS.dart';
 
 class DrumSheetPlayer extends StatefulWidget {
   final int sheetId;
@@ -75,6 +76,75 @@ class _DrumSheetPlayerState extends State<DrumSheetPlayer> {
 
   late String xmlDataString;
 
+  // 1차 채점 결과 메시지들
+  final List<Map<String, dynamic>> _beatGradingResults = [];
+
+  // practiceInfo 변환용 getter (여기에 추가)
+  List<Map<String, dynamic>> get practiceInfo {
+    return _beatGradingResults.map((msg) {
+      return {
+        "measureNumber": msg["measureNumber"],
+        "beatScoringResults": List<bool>.from(msg["answerOnsetPlayed"]),
+        "finalScoringResults": <bool>[], // 2차 채점 아직 없으니 빈 리스트
+      };
+    }).toList();
+  }
+
+  // WS 메시지 콜백
+  void _onWsGradingMessage(String payload) {
+    final msg = jsonDecode(payload) as Map<String, dynamic>;
+    print(
+        "▶ 받은 채점 메시지 #${_beatGradingResults.length + 1}: measure=${msg['measureNumber']}, played=${msg['answerOnsetPlayed']}");
+    setState(() {
+      _beatGradingResults.add(msg);
+      // 모두 왔으면 결과 처리
+      if (_beatGradingResults.length == _totalMeasures) {
+        print(
+            "🗒️ 전체 마디 데이터 수신 완료: ${_beatGradingResults.map((m) => m['measureNumber']).toList()}");
+        _applyGradingResults();
+      }
+    });
+  }
+
+  // 1차 채점 데이터 기반 점수 계산
+  int computeScoreFrom1stGrading(
+      List<Map<String, dynamic>> _beatGradingResults) {
+    // 1) 각 마디별 beatScoringResults를 모두 모아서 하나의 리스트로
+    final allBeats = _beatGradingResults
+        .expand((m) => List<bool>.from(m['answerOnsetPlayed']))
+        .toList();
+
+    // 2) 틀린 음표 개수 세기
+    final wrongCount = allBeats.where((b) => b == false).length;
+    final totalCount = allBeats.length;
+
+    if (totalCount == 0) return 0; // 예외 처리
+
+    // 3) 100점 만점으로 환산
+    final correctCount = totalCount - wrongCount;
+    return ((correctCount / totalCount) * 100).round();
+  }
+
+  void _applyGradingResults() {
+    print("✅ 1차 채점 완료: measureNumbers = "
+        "${_beatGradingResults.map((m) => m['measureNumber']).toList()}");
+    final initialBeatScore = computeScoreFrom1stGrading(_beatGradingResults);
+    // 2초 딜레이 후 결과창으로 이동
+    Future.delayed(const Duration(seconds: 2), () {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+          builder: (_) => PracticeResultMS(
+            musicTitle: widget.title,
+            musicArtist: widget.artist,
+            score: initialBeatScore,
+            xmlDataString: xmlDataString,
+            practiceInfo: practiceInfo,
+          ),
+        ),
+      );
+    });
+  }
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -86,6 +156,13 @@ class _DrumSheetPlayerState extends State<DrumSheetPlayer> {
         }
         ..onPlaybackStateChange = (isPlaying) {
           setState(() {});
+          if (isPlaying) {
+            // 재생이 진짜 시작될 때 녹음 시작
+            _startRecording();
+          } else {
+            // 재생이 멈추면 녹음 일시정지
+            _pauseRecording();
+          }
         }
         ..onCountdownUpdate = (count) {
           setState(() {});
@@ -131,6 +208,7 @@ class _DrumSheetPlayerState extends State<DrumSheetPlayer> {
         required double canvasWidth,
         required double canvasHeight,
         required List<dynamic> lineBounds,
+        required int totalMeasures,
       }) async {
         try {
           final int totalLines = (json['lineCount'] is int)
@@ -172,6 +250,7 @@ class _DrumSheetPlayerState extends State<DrumSheetPlayer> {
             playbackController.rawCursorList = rawCursorList; // 1차 채점용으로 추가
             playbackController
                 .calculateTotalDurationFromCursorList(bpm); // 총 재생시간 계산
+            playbackController.totalMeasures = totalMeasures;
 
             playbackController.currentLineImage =
                 lineImages.isNotEmpty ? lineImages[0] : null;
@@ -183,29 +262,6 @@ class _DrumSheetPlayerState extends State<DrumSheetPlayer> {
         }
       },
     );
-  }
-
-  // 최초 identifier 요청 및 웹소켓 결과 구독
-  Future<void> _startPracticeSession() async {
-    final token = await _storage.read(key: 'access_token');
-
-    final response = await postHTTP(
-      '/audio/practice',
-      null, // 요청 본문이 없으므로 null 전달
-      reqHeader: {
-        'authorization': token ?? '',
-      },
-    );
-    if (response['errMessage'] == null) {
-      setState(() {
-        practiceIdentifier = response['body'];
-      });
-      scoringService.subscribeToScoringResults(
-          _userEmail, _handleScoringResult);
-    } else {
-      print("Error: ${response['errMessage']}");
-      // 추가적인 오류 처리 (UI에 에러 표시 등)
-    }
   }
 
   Future<String?> _fetchPracticeIdentifier() async {
@@ -350,23 +406,18 @@ class _DrumSheetPlayerState extends State<DrumSheetPlayer> {
       if (await file.exists()) {
         final base64String = base64Encode(await file.readAsBytes());
 
-        final message = {
-          'bpm': (_bpm * playbackController.speed).round(),
-          'userSheetId': userSheetId, // TODO : 사용자 악보 ID 백엔드에서 받아와야 함
-          'identifier': scoringService.identifier,
-          'email': _userEmail,
-          'message': base64String,
-          'measureNumber': (_currentMeasure + 1).toString(),
-          'endOfMeasure': (_currentMeasure + 1) >= _totalMeasures
-        };
-        print(
-            '📤 녹음 데이터 전송: ${DateTime.now()} (마디: ${_currentMeasure + 1}/$_totalMeasures)');
-
-        _stompClient.send(
-          destination: '/app/audio/forwarding',
-          body: json.encode(message),
-          headers: {'content-type': 'application/json'},
+        // ❌ 기존 _stompClient.send(...) 부분 삭제 및 대체
+        scoringService.sendMeasureAudio(
+          email: _userEmail,
+          base64Wav: base64String,
+          bpm: (_bpm * playbackController.speed).round(),
+          userSheetId: userSheetId,
+          measureNumber: (_currentMeasure + 1).toString(),
+          endOfMeasure: (_currentMeasure + 1) >= _totalMeasures,
         );
+
+        print('📤 녹음 데이터 전송 (ScoringService): '
+            'measure=${_currentMeasure + 1}/$_totalMeasures');
 
         _currentMeasure++;
         if (_currentMeasure >= _totalMeasures) {
@@ -419,7 +470,6 @@ class _DrumSheetPlayerState extends State<DrumSheetPlayer> {
         onConnect: (StompFrame frame) {
           print('✅ WebSocket 연결 완료!');
           _webSocketConnected = true;
-
           scoringService = ScoringService(client: _stompClient);
         },
         beforeConnect: () async => print('🌐 WebSocket 연결 시도 중...'),
@@ -489,6 +539,8 @@ class _DrumSheetPlayerState extends State<DrumSheetPlayer> {
                                             drumRecordingState.stopRecording();
                                           }
                                           print("녹음 중지");
+
+                                          _beatGradingResults.clear();
 
                                           // 리소스 해제 - WebSocket 연결 종료
                                           if (_stompClient.connected) {
@@ -619,6 +671,7 @@ class _DrumSheetPlayerState extends State<DrumSheetPlayer> {
                                                 setState(() {
                                                   _currentMeasureOneBased =
                                                       0; // 1-based 마디 번호 초기화
+                                                  _beatGradingResults.clear();
                                                 });
                                                 _drumRecordingKey.currentState
                                                     ?.stopRecording();
@@ -675,32 +728,24 @@ class _DrumSheetPlayerState extends State<DrumSheetPlayer> {
                             if (playbackController.isPlaying) {
                               // 재생 중이면 일시정지 & 녹음 중지
                               playbackController.stopPlayback();
-                              _pauseRecording();
                             } else {
-                              _drumRecordingKey.currentState?.startCountdown(
-                                onCountdownComplete: () async {
-                                  // ① 녹음 시작 전, identifier 받아오기
-                                  final id = await _fetchPracticeIdentifier();
-                                  if (id == null) {
-                                    // 실패 시 사용자에게 알려주고 녹음 중단
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                        SnackBar(
-                                            content:
-                                                Text("채점 식별자를 가져오지 못했습니다.")));
-                                    return;
-                                  }
-                                  scoringService.setIdentifier(id);
-                                  scoringService.subscribeToScoringResults(
-                                      _userEmail, _handleScoringResult);
+                              setState(() {
+                                _beatGradingResults.clear();
+                              });
+                              final id = await _fetchPracticeIdentifier();
+                              if (id == null) {
+                                // 실패 시 사용자에게 알려주고 녹음 중단
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                        content: Text("채점 식별자를 가져오지 못했습니다.")));
+                                return;
+                              }
+                              scoringService.setIdentifier(id);
+                              scoringService.subscribeToScoringResults(
+                                  _userEmail, _handleScoringResult);
 
-                                  playbackController.showCountdownAndStart();
-                                  if (_isRecording) {
-                                    _resumeRecording();
-                                  } else {
-                                    _startRecording();
-                                  }
-                                },
-                              );
+                              playbackController.showCountdownAndStart();
+                              _startRecording();
                             }
                           },
                           child: playbackController.isPlaying

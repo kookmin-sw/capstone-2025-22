@@ -8,7 +8,6 @@ import 'dart:math'; // 테스트 용
 
 class PlaybackController {
   CursorController? _cursorController; // 커서 이동 관리
-  double? canvasWidth; // 커서 위치 계산용 캔버스 원본 너비
   SheetInfo? sheetInfo;
 
   // 재생 상태 및 타이머
@@ -37,13 +36,14 @@ class PlaybackController {
   List<Cursor> rawCursorList = []; // 실제 음표만 담긴 커서 리스트
   Cursor currentCursor = Cursor.createEmpty();
   List<Cursor> missedCursors = []; // 1차 채점용 놓친 음표 커서 리스트
-  Function(Cursor)? onCursorMove; 
+  Function(Cursor)? onCursorMove;
 
   // 줄별 악보 이미지 관련
   List<Uint8List> lineImages = []; // 줄 단위로 잘라낸 악보 이미지들
   Uint8List? currentLineImage; // 현재 줄의 악보 이미지 (줄 넘어갈 때마다 바뀜)
   Uint8List? nextLineImage; // 다음 줄 미리보기 악보 이미지
   final double imageHeight; // 이미지 높이 저장
+  double? canvasWidth; // 커서 위치 계산용 캔버스 원본 너비
 
   // 콜백 함수들
   Function(double)? onProgressUpdate;
@@ -51,6 +51,9 @@ class PlaybackController {
   Function(int)? onCountdownUpdate;
   Function(int)? onPageChange;
   Function(int)? onPlaybackComplete;
+
+  // 채점 관리
+  late int totalMeasures;
 
   PlaybackController({required this.imageHeight}); // 생성자에 imageHeight 추가
 
@@ -250,7 +253,7 @@ class PlaybackController {
       if (countdown <= 0) {
         timer.cancel();
         isCountingDown = false;
-        _onCountdownComplete();
+        startPlayback();
       }
     });
   }
@@ -285,10 +288,6 @@ class PlaybackController {
     debugPrint("⏱️ BPM:$bpm, speed:$speed×, " +
         "마지막음표길이=$extraBeat 박자, " +
         "총박자=$totalBeats, 재생시간=${durationMs}ms");
-  }
-
-  void _onCountdownComplete() {
-    startPlayback(); // 카운트다운 끝나면 재생 시작
   }
 
   void setSpeed(double newSpeed) {

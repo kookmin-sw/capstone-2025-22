@@ -79,6 +79,7 @@ flutter:
     - assets/web/index.html
     - assets/web/js/opensheetmusicdisplay.min.js
     - assets/web/js/fileSelectAndLoadOSMD.js
+    - assets/web/js/detailedScoreRenderer.js
     - assets/music/demo.xml
     - assets/music/test_pattern.xml
     - assets/images/drum_kit.png
