@@ -14,9 +14,7 @@ import '../drumSheetPages/playback_controller.dart';
 import '../../services/osmd_service.dart';
 import 'package:capstone_2025/widgets/innerShadow.dart';
 import '../drumSheetPages/widgets/confirmation_dialog.dart';
-
-// Import the DrumRecordingWidget
-import 'package:capstone_2025/widgets/drum_recording_widget.dart';
+import 'package:capstone_2025/screens/drumSheetPages/widgets/confirmation_dialog.dart';
 
 /// MenuController에 toggle()을 추가하는 확장 메서드
 extension MenuControllerToggle on MenuController {
@@ -256,13 +254,23 @@ class _CountdownPageState extends State<CountdownPage>
     });
 
     // 시범 연주가 끝나면 PlaybackController 카운트다운 + 녹음 시작
-    _playerCompleteSubscription = _audioPlayer.onPlayerComplete.listen((_) {
+    _playerCompleteSubscription =
+        _audioPlayer.onPlayerComplete.listen((_) async {
       if (!mounted) return;
 
       _playerCompleteSubscription?.cancel();
 
-      // 슬라이더 초기화
-      _audioPlayer.seek(Duration.zero);
+      try {
+        // 오디오가 stopped 상태가 아니면 seek 시도
+        if (_audioPlayer.state != ap.PlayerState.stopped) {
+          await _audioPlayer
+              .seek(Duration.zero)
+              .timeout(const Duration(seconds: 1));
+        }
+      } catch (e, stack) {
+        debugPrint('seek 예외 발생(무시해도 됨): $e\n$stack');
+      }
+
       setState(() => _currentPosition = 0.0);
 
       // 카운트다운 UI → 3-2-1 → 시트 재생
@@ -317,7 +325,6 @@ class _CountdownPageState extends State<CountdownPage>
     );
   }
 
-  // 페이지가 종료될 때 리소스 해제하는 함수
   @override
   void dispose() {
     _practiceMessageTimer?.cancel();
@@ -326,8 +333,17 @@ class _CountdownPageState extends State<CountdownPage>
     _playerCompleteSubscription?.cancel();
     _positionSubscription?.cancel();
 
-    _audioPlayer.dispose(); // 오디오플레이어 정리
-    _overlayController.dispose(); // 애니메이션 컨트롤러
+    // 오디오플레이어 정리
+    _audioPlayer.dispose();
+
+    // 오버레이 애니메이션 컨트롤러 정리
+    _overlayController.dispose();
+
+    // (중요) OSMDService 등 서버 리소스 정리
+    osmdService.dispose(); // 만약 dispose 메서드가 있다면
+
+    // DrumRecordingWidget의 리소스도 정리 필요시
+    _drumRecordingKey.currentState?.dispose();
 
     super.dispose();
   }
@@ -369,38 +385,52 @@ class _CountdownPageState extends State<CountdownPage>
                             icon: const Icon(Icons.home_filled,
                                 color: Color(0xff646464)),
                             onPressed: () {
-                              // 오디오 재생 중이면 정지
-                              if (_isPlaying) _audioPlayer.stop();
+                              // Show the confirmation dialog
+                              showDialog(
+                                context: context,
+                                builder: (context) => ConfirmationDialog(
+                                  message: "메인으로 이동하시겠습니까?",
+                                  onConfirm: () {
+                                    // The logic when the user confirms
+                                    // Your existing home button behavior (like stopping playback and going home)
+                                    Navigator.of(context)
+                                        .pop(); // Close the dialog
+                                    // Proceed with your home navigation logic (similar to DrumSheetPlayer)
+                                    if (_isPlaying) _audioPlayer.stop();
+                                    final drumRecordingState =
+                                        _drumRecordingKey.currentState;
+                                    if (drumRecordingState != null &&
+                                        drumRecordingState.isRecording) {
+                                      drumRecordingState.stopRecording();
+                                    }
+                                    _playerStateSubscription?.cancel();
+                                    _playerCompleteSubscription?.cancel();
+                                    _practiceMessageTimer?.cancel();
+                                    _positionUpdateTimer?.cancel();
 
-                              // DrumRecordingWidget의 녹음 중지
-                              final drumRecordingState =
-                                  _drumRecordingKey.currentState;
-                              if (drumRecordingState != null &&
-                                  drumRecordingState.isRecording) {
-                                drumRecordingState.stopRecording();
-                              }
-
-                              // 리소스 해제
-                              _playerStateSubscription?.cancel();
-                              _playerCompleteSubscription?.cancel();
-                              _practiceMessageTimer?.cancel();
-                              _positionUpdateTimer?.cancel();
-
-                              // 홈화면으로 이동: NavigationScreens 상태 업데이트
-                              WidgetsBinding.instance.addPostFrameCallback((_) {
-                                final navigationScreensState =
-                                    context.findAncestorStateOfType<
-                                        NavigationScreensState>();
-                                if (navigationScreensState != null &&
-                                    navigationScreensState.mounted) {
-                                  navigationScreensState.setState(() {
-                                    navigationScreensState.selectedIndex = 2;
-                                  });
-                                } // 현재 페이지 스택 제거
-                                if (Navigator.canPop(context)) {
-                                  Navigator.of(context).pop();
-                                }
-                              });
+                                    WidgetsBinding.instance
+                                        .addPostFrameCallback((_) {
+                                      final navigationScreensState =
+                                          context.findAncestorStateOfType<
+                                              NavigationScreensState>();
+                                      if (navigationScreensState != null &&
+                                          navigationScreensState.mounted) {
+                                        navigationScreensState.setState(() {
+                                          navigationScreensState.selectedIndex =
+                                              2;
+                                        });
+                                      }
+                                      if (Navigator.canPop(context)) {
+                                        Navigator.of(context).pop();
+                                      }
+                                    });
+                                  },
+                                  onCancel: () {
+                                    // Close the dialog if user cancels
+                                    Navigator.of(context).pop();
+                                  },
+                                ),
+                              );
                             },
                           ),
                         ),
