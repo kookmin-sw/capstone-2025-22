@@ -22,7 +22,7 @@ Future<Map<String, dynamic>> getHTTP(
     final response = await http.get(
       uri,
       headers: {
-        "Accept": "application/json",
+        "Content-Type": "application/json",
         if (reqHeader.isNotEmpty) ...reqHeader,
       },
     );
