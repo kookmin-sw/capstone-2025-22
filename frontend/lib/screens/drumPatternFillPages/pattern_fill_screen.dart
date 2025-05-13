@@ -279,9 +279,6 @@ class _CountdownPageState extends State<CountdownPage>
 
       // 카운트다운 UI → 3-2-1 → 시트 재생
       playbackController.showCountdownAndStart();
-
-      // 녹음도 곧바로 시작
-      _drumRecordingKey.currentState?.startRecording();
     });
   }
 
