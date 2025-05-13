@@ -229,7 +229,12 @@ class _PracticeResultPPState extends State<PracticeResultPP> {
                               shadowColor: Color.fromARGB(255, 177, 177, 177),
                               width: MediaQuery.of(context).size.width * 0.65,
                               clickedFunc: () {
-                                openMusicSheet(context);
+                                openMusicSheet(
+                                  context: context,
+                                  xmlDataString: '',
+                                  practiceInfo: <Map<String,
+                                      dynamic>>[], // TODO
+                                );
                               },
                               btnIcon: Icons.insert_drive_file_rounded,
                             ),

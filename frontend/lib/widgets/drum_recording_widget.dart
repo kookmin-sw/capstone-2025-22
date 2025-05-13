@@ -513,39 +513,52 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
 
   /// WebSocket을 통해 녹음 데이터를 서버로 전송
   Future<void> _sendRecordingData() async {
-    if (_isDisposed || _stompClient == null || !_stompClient!.connected) {
-      print('❌ 데이터 전송 실패: WebSocket이 연결되지 않았습니다.');
-      return;
-    }
-
     try {
-      final file = File(_recordingPath!);
-      if (await file.exists()) {
-        final base64String = base64Encode(await file.readAsBytes());
-        final message = {
-          'email': _userEmail,
-          'message': base64String,
-          'currentMeasure': _currentMeasure,
-          'totalMeasures': _totalMeasures
-        };
-        print(
-            '📤 녹음 데이터 전송: ${DateTime.now()} (마디: ${_currentMeasure + 1}/$_totalMeasures)');
-
-        _stompClient!.send(
-          destination: '/app/audio/forwarding',
-          body: json.encode(message),
-          headers: {'content-type': 'application/json'},
-        );
-
-        if (!_isDisposed) {
-          setState(() => recordingStatusMessage =
-              '녹음 데이터 전송 완료 (마디: ${_currentMeasure + 1}/$_totalMeasures)');
-        }
-      } else {
-        print('⚠️ 녹음 파일이 존재하지 않습니다: $_recordingPath');
+      // State가 이미 dispose된 경우 바로 return
+      if (!mounted || _isDisposed) {
+        print('❌ State가 dispose된 후 _sendRecordingData 호출됨!');
+        return;
       }
-    } catch (e) {
-      print('❌ 녹음 데이터 전송 중 오류 발생: $e');
+      if (_stompClient == null) {
+        print('❌ _stompClient가 null입니다!');
+        return;
+      }
+      if (!_stompClient!.connected) {
+        print('❌ WebSocket이 연결되지 않았습니다!');
+        return;
+      }
+
+      try {
+        final file = File(_recordingPath!);
+        if (await file.exists()) {
+          final base64String = base64Encode(await file.readAsBytes());
+          final message = {
+            'email': _userEmail,
+            'message': base64String,
+            'currentMeasure': _currentMeasure,
+            'totalMeasures': _totalMeasures
+          };
+          print(
+              '📤 녹음 데이터 전송: ${DateTime.now()} (마디: ${_currentMeasure + 1}/$_totalMeasures)');
+
+          _stompClient!.send(
+            destination: '/app/audio/forwarding',
+            body: json.encode(message),
+            headers: {'content-type': 'application/json'},
+          );
+
+          if (!_isDisposed) {
+            setState(() => recordingStatusMessage =
+                '녹음 데이터 전송 완료 (마디: ${_currentMeasure + 1}/$_totalMeasures)');
+          }
+        } else {
+          print('⚠️ 녹음 파일이 존재하지 않습니다: $_recordingPath');
+        }
+      } catch (e) {
+        print('❌ 녹음 데이터 전송 중 오류 발생: $e');
+      }
+    } catch (e, stack) {
+      print('❌ _sendRecordingData 예외 발생: $e\n$stack');
     }
   }
 
