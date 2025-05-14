@@ -41,8 +41,8 @@ class MeasureScoreManagerTest {
                 .score(100.0)
                 .build();
         // when
-        boolean res = measureScoreManager.saveMeasureScore(identifier, measureNumber, finalMeasureResult);
-        String savedScore = measureScoreManager.getMeasureScore(identifier, measureNumber);
+        boolean res = measureScoreManager.saveMeasureScore(identifier, measureNumber, finalMeasureResult).block();
+        String savedScore = measureScoreManager.getMeasureScore(identifier, measureNumber).block();
         // then
         assert res;
         assertEquals(savedScore, finalMeasureResult.toString());
@@ -62,10 +62,10 @@ class MeasureScoreManagerTest {
                     .measureNumber(measureNumber)
                     .score(((double) i + 1 ) * 10)
                     .build();
-            measureScoreManager.saveMeasureScore(identifier, measureNumber, finalMeasureResult);
+            measureScoreManager.saveMeasureScore(identifier, measureNumber, finalMeasureResult).block();
         }
         // when
-        List<String> res = measureScoreManager.getAllMeasureScores(identifier);
+        List<String> res = measureScoreManager.getAllMeasureScores(identifier).block();
         assert res.size() == 10;
     }
 }

@@ -93,12 +93,12 @@ public class AudioMessageConsumer {
                 })
                 .map(onsetMeasureDataBuilder -> { // get the final measure result and save it to the redis
                     FinalMeasureResult finalMeasureResult = getFinalMeasureResult(onsetMeasureDataBuilder, audioMessageDto.getMeasureNumber());
-                    measureScoreManager.saveMeasureScore(audioMessageDto.getIdentifier(), audioMessageDto.getMeasureNumber(), finalMeasureResult);
+                    measureScoreManager.saveMeasureScore(audioMessageDto.getIdentifier(), audioMessageDto.getMeasureNumber(), finalMeasureResult).block();
                     return finalMeasureResult;
                 })
                 .filter(res -> audioMessageDto.isEndOfMeasure())
                 .flatMap(finalMeasureResult -> { // save the final measure result list to the database
-                    List<FinalMeasureResult> finalMeasureResultList = measureScoreManager.getAllMeasureScores(audioMessageDto.getIdentifier())
+                    List<FinalMeasureResult> finalMeasureResultList = measureScoreManager.getAllMeasureScores(audioMessageDto.getIdentifier()).block()
                             .stream().map(FinalMeasureResult::fromString).toList();
                     SheetPracticeCreateRequest sheetPracticeCreateRequest = SheetPracticeCreateRequest.from(finalMeasureResultList, audioMessageDto.getUserSheetId(), audioMessageDto.getEmail());
                     return musicClientService.saveMeasureScoreInfo(sheetPracticeCreateRequest).flatMap(saveRes -> {
@@ -132,7 +132,7 @@ public class AudioMessageConsumer {
                 })
                 .filter(res -> patternMessageDto.isEndOfMeasure())
                 .flatMap(finalMeasureResult -> { // save the final measure result list of pattern practice to the database
-                    List<FinalMeasureResult> finalMeasureResultList = measureScoreManager.getAllMeasureScores(patternMessageDto.getIdentifier())
+                    List<FinalMeasureResult> finalMeasureResultList = measureScoreManager.getAllMeasureScores(patternMessageDto.getIdentifier()).block()
                             .stream().map(FinalMeasureResult::fromString).toList();
                     PatternPracticeCreateRequest createDto = PatternPracticeCreateRequest.from(finalMeasureResultList, patternMessageDto.getPatternId(), patternMessageDto.getEmail());
                     return musicClientService.savePatternScoreInfo(createDto).flatMap(saveRes -> {
