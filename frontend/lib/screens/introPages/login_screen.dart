@@ -121,23 +121,32 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return ScreenUtilInit(
-      designSize: const Size(375, 812),
-      minTextAdapt: true,
-      splitScreenMode: true,
-      child: Scaffold(
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        body: Center(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20.0),
-            // 스크롤 가능
-            child: SingleChildScrollView(
+    return Scaffold(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      body: Center(
+        child: Stack(
+          children: [
+            Positioned(
+              top: 20,
+              left: 20,
+              child: IconButton(
+                  onPressed: Navigator.of(context).pop,
+                  icon: Icon(Icons.arrow_back,
+                      size: 50, color: Color(0xff646464))),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20.0),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  introPageHeader(
-                      title: '🥁알려드럼🥁', targetPage: LoginScreenGoogle()),
+                  Container(
+                    alignment: Alignment.center,
+                    child: Image.asset(
+                      "assets/images/appLogo.png",
+                      height: MediaQuery.of(context).size.height * 0.16,
+                    ),
+                  ),
                   const SizedBox(height: 20),
                   SizedBox(
                     width: 400, // 입력 필드의 최대 너비 설정
@@ -180,7 +189,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ],
               ),
             ),
-          ),
+          ],
         ),
       ),
     );
