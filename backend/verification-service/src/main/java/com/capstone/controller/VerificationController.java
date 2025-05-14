@@ -7,6 +7,7 @@ import com.capstone.response.ApiResponse;
 import com.capstone.response.CustomResponseDto;
 import com.capstone.service.UserInfoVerificationService;
 import com.capstone.service.VerificationService;
+import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
@@ -30,6 +31,7 @@ public class VerificationController {
      * @return success if auth code is valid
      * */
     @GetMapping("/nicknames")
+    @Operation(summary = "check nickname is valid")
     public Mono<ResponseEntity<CustomResponseDto<String>>> checkNickname(@RequestParam(name="nickname") String nickname){
         return userVerificationService.isValidNickname(nickname)
                 .map(res -> {
@@ -43,6 +45,7 @@ public class VerificationController {
      * @return success if auth code is valid
      * */
     @GetMapping("/emails")
+    @Operation(summary = "check email is valid")
     public Mono<ResponseEntity<CustomResponseDto<String>>> checkEmail(@RequestParam(name="email") String email){
         return userVerificationService.isValidEmail(email)
                 .map(res -> {
@@ -56,6 +59,7 @@ public class VerificationController {
      * @return success if auth code is valid
     * */
     @GetMapping("/auth-codes")
+    @Operation(summary="send auth code email to user")
     public Mono<ResponseEntity<CustomResponseDto<String>>> sendAuthCodes(@RequestParam(name="email") String email){
         return verificationService.sendVerificationEmail(email).map(res -> {
             if(!res) return ApiResponse.success(SuccessFlag.FAILURE.getLabel());
@@ -69,6 +73,7 @@ public class VerificationController {
      * @return success if auth code is valid
     * */
     @GetMapping("/auth-codes/check")
+    @Operation(summary = "check auth code and give email token to client")
     public Mono<ResponseEntity<CustomResponseDto<EmailTokenResponseDto>>> checkAuthCode(@RequestParam(name="email") String email, @RequestParam(name="authCode") String authCode){
         return verificationService.isValidAuthCode(email, authCode)
                 .flatMap(res -> {

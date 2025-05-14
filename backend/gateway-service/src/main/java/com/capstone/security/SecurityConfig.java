@@ -50,6 +50,10 @@ public class SecurityConfig {
             // audio service
             "/audio/practice/**",
     };
+    private final String[] WHITE_LIST_PUT = {
+            // user service
+            "/users/password",
+    };
     private JwtAuthFilter jwtAuthFilter;
     public SecurityConfig(JwtAuthFilter jwtAuthFilter) {
         this.jwtAuthFilter = jwtAuthFilter;
@@ -65,6 +69,7 @@ public class SecurityConfig {
                     exchange.pathMatchers(WHITE_LIST).permitAll();
                     exchange.pathMatchers(HttpMethod.GET ,WHITE_LIST_GET).permitAll();
                     exchange.pathMatchers(HttpMethod.POST, WHITE_LIST_POST).permitAll();
+                    exchange.pathMatchers(HttpMethod.PUT, WHITE_LIST_PUT).permitAll();
                     exchange.anyExchange().authenticated();
                 });
         return http.build();

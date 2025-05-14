@@ -70,7 +70,7 @@ public class AudioMessageConsumer {
         MeasureInfo measureInfo = onsetMeasureData.getMeasureInfo();
         List<Boolean> beatScoringResults = practiceResultResolver.calculateBeatMatchingResult(onsetMatchResult);
         List<Boolean> finalScoringResults = practiceResultResolver.calculateFinalMatchingResult(onsetMatchResult, predictList, measureInfo);
-        double score = practiceResultResolver.calculateScore(finalScoringResults);
+        double score = practiceResultResolver.calculateScore(beatScoringResults, finalScoringResults);
         return FinalMeasureResult.builder()
                 .measureNumber(measureNumber)
                 .beatScoringResults(beatScoringResults)
