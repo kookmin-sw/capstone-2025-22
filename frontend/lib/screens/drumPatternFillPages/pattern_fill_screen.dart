@@ -23,21 +23,21 @@ extension MenuControllerToggle on MenuController {
 
 // 패턴 및 필인 시작 화면
 class PatternFillScreen extends StatelessWidget {
-  final String title;
+  final String index;
 
-  const PatternFillScreen({super.key, required this.title});
+  const PatternFillScreen({super.key, required this.index});
 
   @override
   Widget build(BuildContext context) {
-    return CountdownPage(title: title);
+    return CountdownPage(index: index);
   }
 }
 
 // 실제 기능을 담당하는 StatefulWidget
 class CountdownPage extends StatefulWidget {
-  final String title;
+  final String index;
 
-  const CountdownPage({super.key, required this.title});
+  const CountdownPage({super.key, required this.index});
 
   @override
   State<CountdownPage> createState() => _CountdownPageState();
@@ -468,7 +468,7 @@ class _CountdownPageState extends State<CountdownPage>
                                   children: [
                                     // 아래: 테두리용 텍스트
                                     Text(
-                                      widget.title,
+                                      widget.index,
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
                                       style: TextStyle(
@@ -483,7 +483,7 @@ class _CountdownPageState extends State<CountdownPage>
                                     ),
                                     // 위: 흰색 채우기 텍스트
                                     Text(
-                                      widget.title,
+                                      widget.index,
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
                                       style: const TextStyle(
@@ -880,7 +880,7 @@ class _CountdownPageState extends State<CountdownPage>
             child: DrumRecordingWidget(
               key: _drumRecordingKey,
               playbackController: playbackController,
-              title: widget.title,
+              title: 'Basic Pattern ${widget.index}',
               xmlFilePath: 'assets/music/test_pattern.xml',
               audioFilePath: 'assets/sounds/test_pattern.wav',
               onRecordingComplete: (onsets) {

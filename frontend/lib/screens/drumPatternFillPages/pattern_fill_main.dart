@@ -166,10 +166,8 @@ class _PatternFillMainState extends State<PatternFillMain> {
                       Navigator.of(context).pop();
                       Navigator.of(context).push(
                         MaterialPageRoute(
-                          builder: (context) => PatternFillScreen(
-                            title: '$index',
-                            // index: $index
-                          ),
+                          builder: (context) =>
+                              PatternFillScreen(index: index.toString()),
                         ),
                       );
                     },
