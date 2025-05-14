@@ -76,13 +76,15 @@ class PracticeResultResolverTest {
         List<Boolean> mustBe50 = List.of(true, true, true, false, false, false);
         List<Boolean> mustBe0 = List.of(false, false, false, false, false, false);
         // when
-        double scoreMust0 = resultResolver.calculateScore(mustBe0);
-        double scoreMust50 = resultResolver.calculateScore(mustBe50);
-        double scoreMust100 = resultResolver.calculateScore(mustBe100);
+        double scoreMust70 = resultResolver.calculateScore(mustBe100, mustBe0);
+        double scoreMust85 = resultResolver.calculateScore(mustBe100, mustBe50);
+        double scoreMust100 = resultResolver.calculateScore(mustBe100, mustBe100);
+        double scoreMust0 = resultResolver.calculateScore(mustBe0, mustBe0);
         // then
         assertEquals(100.0, scoreMust100);
-        assertEquals(50.0, scoreMust50);
-        assertEquals(0.0, scoreMust0);
+        assertEquals(85.0, scoreMust85);
+        assertEquals(70.0, scoreMust70);
+        assertEquals(0, scoreMust0);
     }
 
     @Test
