@@ -22,7 +22,7 @@ public class PracticeManageService {
     }
 
     public boolean completePractice(String identifier){
-        List<FinalMeasureResult> finalMeasureResults = measureScoreManager.getAllMeasureScores(identifier)
+        List<FinalMeasureResult> finalMeasureResults = measureScoreManager.getAllMeasureScores(identifier).block()
                 .stream()
                 .map(FinalMeasureResult::fromString)
                 .toList();
