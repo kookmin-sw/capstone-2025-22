@@ -6,6 +6,7 @@ import com.capstone.sheet.dto.SheetDetailResponseDto;
 import com.capstone.sheet.dto.SheetListResponseDto;
 import com.capstone.dto.musicXml.MeasureInfo;
 import com.capstone.sheet.service.SheetRetrieveService;
+import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -22,6 +23,7 @@ public class SheetRetrieveController {
      * @return SheetResponseDto
     * */
     @GetMapping("")
+    @Operation(summary = "retrieve all user sheets by email")
     public ResponseEntity<CustomResponseDto<SheetListResponseDto>> retrieveSheets(@RequestParam("email") String email) {
         return ApiResponse.success(new SheetListResponseDto(sheetRetrieveService.getSheetsByEmail(email)));
     }
@@ -31,6 +33,7 @@ public class SheetRetrieveController {
      * @return CustomResponseDto<SheetDetailResponseDto>
     * */
     @GetMapping("/{userSheetId}")
+    @Operation(summary = "retrieve user sheet's detail info by id")
     public ResponseEntity<CustomResponseDto<SheetDetailResponseDto>> retrieveSheetDetails(@PathVariable("userSheetId") int userSheetId) {
         return ApiResponse.success(sheetRetrieveService.getSheetById(userSheetId));
     }
@@ -41,6 +44,7 @@ public class SheetRetrieveController {
      * @return CustomResponseDto<MeasureInfo>
     * */
     @GetMapping("/{userSheetId}/measures")
+    @Operation(summary = "get sheet's measure info by user sheet and measure number")
     public ResponseEntity<CustomResponseDto<MeasureInfo>> retrieveSheetMeasure(
             @PathVariable("userSheetId") int userSheetId,
             @RequestParam("measureNumber") String measureNumber) {
