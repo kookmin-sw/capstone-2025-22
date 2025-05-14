@@ -120,7 +120,7 @@ class AudioMessageConsumerTest {
         when(musicClientService.saveMeasureScoreInfo(any(SheetPracticeCreateRequest.class))).thenReturn(Mono.just(true));
         // when && then
         assertDoesNotThrow(() -> {
-            audioMessageConsumer.sendAudioConversionResult(messageDto);
+            audioMessageConsumer.sendAudioConversionResult(messageDto).block();
             verify(musicClientService, times(1)).getMeasureInfo(userSheetId, measureNumber);
             verify(audioModelClient, times(1)).getOnsetFromWav(any(OnsetRequestDto.class));
             verify(audioModelClient, times(1)).getDrumPredictions(any(DrumPredictRequest.class));
@@ -154,7 +154,7 @@ class AudioMessageConsumerTest {
         when(musicClientService.saveMeasureScoreInfo(any(SheetPracticeCreateRequest.class))).thenReturn(Mono.just(true));
         // when && then
         assertDoesNotThrow(() -> {
-            audioMessageConsumer.sendAudioConversionResult(messageDto);
+            audioMessageConsumer.sendAudioConversionResult(messageDto).block();
             verify(musicClientService, times(1)).getMeasureInfo(userSheetId, measureNumber);
             verify(audioModelClient, times(1)).getOnsetFromWav(any(OnsetRequestDto.class));
             verify(audioModelClient, times(1)).getDrumPredictions(any(DrumPredictRequest.class));
