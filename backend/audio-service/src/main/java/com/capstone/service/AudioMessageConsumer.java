@@ -16,6 +16,7 @@ import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
@@ -78,9 +79,9 @@ public class AudioMessageConsumer {
     }
 
     @KafkaListener(topics = "audio", groupId = "${spring.kafka.consumer.group-id}")
-    public void sendAudioConversionResult(@Payload final AudioMessageDto audioMessageDto) {
+    public Mono<Void> sendAudioConversionResult(@Payload final AudioMessageDto audioMessageDto) {
         OnsetRequestDto requestDto = OnsetRequestDto.fromMessageDto(audioMessageDto);
-        audioModelClient.getOnsetFromWav(requestDto)
+        return audioModelClient.getOnsetFromWav(requestDto)
                 .flatMap(onset -> musicClientService.getMeasureInfo(audioMessageDto.getUserSheetId(), audioMessageDto.getMeasureNumber())
                         .map(measureInfo -> OnsetMeasureData.builder()
                                 .onsetResponse(onset)
@@ -91,24 +92,26 @@ public class AudioMessageConsumer {
                 .flatMap(onsetMeasureDataBuilder -> { // get the drum prediction list from the AudioModelClient
                     return getDrumPredictionList(onsetMeasureDataBuilder, audioMessageDto.getMessage());
                 })
-                .map(onsetMeasureDataBuilder -> { // get the final measure result and save it to the redis
+                .flatMap(onsetMeasureDataBuilder -> { // get the final measure result and save it to the redis
                     FinalMeasureResult finalMeasureResult = getFinalMeasureResult(onsetMeasureDataBuilder, audioMessageDto.getMeasureNumber());
-                    measureScoreManager.saveMeasureScore(audioMessageDto.getIdentifier(), audioMessageDto.getMeasureNumber(), finalMeasureResult).block();
-                    return finalMeasureResult;
+                    return measureScoreManager.saveMeasureScore(audioMessageDto.getIdentifier(), audioMessageDto.getMeasureNumber(), finalMeasureResult)
+                            .thenReturn(finalMeasureResult);
                 })
                 .filter(res -> audioMessageDto.isEndOfMeasure())
-                .flatMap(finalMeasureResult -> { // save the final measure result list to the database
-                    List<FinalMeasureResult> finalMeasureResultList = measureScoreManager.getAllMeasureScores(audioMessageDto.getIdentifier()).block()
-                            .stream().map(FinalMeasureResult::fromString).toList();
-                    SheetPracticeCreateRequest sheetPracticeCreateRequest = SheetPracticeCreateRequest.from(finalMeasureResultList, audioMessageDto.getUserSheetId(), audioMessageDto.getEmail());
-                    return musicClientService.saveMeasureScoreInfo(sheetPracticeCreateRequest).flatMap(saveRes -> {
-                        if(!saveRes) {
-                            log.error("[sheet practice] failed to save data : retry again");
-                            return musicClientService.saveMeasureScoreInfo(sheetPracticeCreateRequest);
-                        }
-                        return Mono.empty();
-                    });
-                }).subscribe();
+                .flatMap(finalMeasureResult -> measureScoreManager.getAllMeasureScores(audioMessageDto.getIdentifier())
+                        .flatMapMany(scoreStrings -> Flux.fromIterable(scoreStrings)
+                                .map(FinalMeasureResult::fromString))
+                        .collectList()
+                        .flatMap(finalMeasureResultList -> {
+                            SheetPracticeCreateRequest sheetPracticeCreateRequest = SheetPracticeCreateRequest.from(finalMeasureResultList, audioMessageDto.getUserSheetId(), audioMessageDto.getEmail());
+                            return musicClientService.saveMeasureScoreInfo(sheetPracticeCreateRequest).flatMap(saveRes -> {
+                                if(!saveRes) {
+                                    log.error("[sheet practice] failed to save data : retry again");
+                                    return musicClientService.saveMeasureScoreInfo(sheetPracticeCreateRequest);
+                                }
+                                return Mono.empty();
+                            });
+                        })).then();
     }
 
     @KafkaListener(topics = "pattern")
@@ -125,23 +128,32 @@ public class AudioMessageConsumer {
                 .flatMap(onsetMeasureDataBuilder -> { // get the drum prediction list from the AudioModelClient
                     return getDrumPredictionList(onsetMeasureDataBuilder, patternMessageDto.getAudioBase64());
                 })
-                .map(onsetMeasureDataBuilder -> { // get the final measure result and save it to the redis
+                .flatMap(onsetMeasureDataBuilder -> { // get the final measure result and save it to the redis
                     FinalMeasureResult finalMeasureResult = getFinalMeasureResult(onsetMeasureDataBuilder, patternMessageDto.getMeasureNumber());
-                    measureScoreManager.saveMeasureScore(patternMessageDto.getIdentifier(), patternMessageDto.getMeasureNumber(), finalMeasureResult);
-                    return finalMeasureResult;
+                    return measureScoreManager
+                            .saveMeasureScore(patternMessageDto.getIdentifier(), patternMessageDto.getMeasureNumber(), finalMeasureResult)
+                            .filter(saved -> saved)
+                            .thenReturn(finalMeasureResult);
                 })
                 .filter(res -> patternMessageDto.isEndOfMeasure())
                 .flatMap(finalMeasureResult -> { // save the final measure result list of pattern practice to the database
-                    List<FinalMeasureResult> finalMeasureResultList = measureScoreManager.getAllMeasureScores(patternMessageDto.getIdentifier()).block()
-                            .stream().map(FinalMeasureResult::fromString).toList();
-                    PatternPracticeCreateRequest createDto = PatternPracticeCreateRequest.from(finalMeasureResultList, patternMessageDto.getPatternId(), patternMessageDto.getEmail());
-                    return musicClientService.savePatternScoreInfo(createDto).flatMap(saveRes -> {
-                        if(!saveRes) {
-                            log.error("[pattern practice] failed to save data : retry again");
-                            return musicClientService.savePatternScoreInfo(createDto);
-                        }
-                        return Mono.empty();
-                    });
-                }).subscribe();
+                    return measureScoreManager.getAllMeasureScores(patternMessageDto.getIdentifier())
+                            .flatMapMany(scoreStrings -> Flux.fromIterable(scoreStrings)
+                                    .map(FinalMeasureResult::fromString))
+                            .collectList()
+                            .flatMap(finalMeasureResultList -> {
+                                PatternPracticeCreateRequest createDto = PatternPracticeCreateRequest.from(finalMeasureResultList, patternMessageDto.getPatternId(), patternMessageDto.getEmail());
+                                return musicClientService.savePatternScoreInfo(createDto).flatMap(saveRes -> {
+                                    if(!saveRes) {
+                                        log.error("[pattern practice] failed to save data : retry again");
+                                        return musicClientService.savePatternScoreInfo(createDto);
+                                    }
+                                    return Mono.empty();
+                                });
+                            });
+                }).subscribe(
+                        unused -> {},
+                        error -> log.error("[pattern practice] Error during processing", error)
+                );
     }
 }
