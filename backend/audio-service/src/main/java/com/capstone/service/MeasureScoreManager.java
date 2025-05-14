@@ -1,7 +1,6 @@
 package com.capstone.service;
 
 import com.capstone.dto.score.FinalMeasureResult;
-import com.capstone.redis.RedisSingleDataService;
 import com.capstone.redis.RedisSingleDataServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.connection.ReactiveRedisConnection;
@@ -34,14 +33,7 @@ public class MeasureScoreManager {
     }
 
     public Mono<List<String>> getAllMeasureScores(String identifier){
-        ScanOptions scanOptions = ScanOptions.scanOptions().match("practice-" + identifier + "-*").build();
-        ReactiveRedisConnection connection = reactiveRedisTemplate.getConnectionFactory().getReactiveConnection();
-        return connection.keyCommands().scan(scanOptions)
-                .map(byteBuffer -> {
-                    byte[] bytes = new byte[byteBuffer.remaining()];
-                    byteBuffer.get(bytes);
-                    return new String(bytes);
-                })
+        return reactiveRedisTemplate.keys("practice-" + identifier + "-*")
                 .flatMap(redisService::getValue)
                 .collectList();
     }
