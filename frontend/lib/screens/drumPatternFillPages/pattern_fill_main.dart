@@ -166,10 +166,7 @@ class _PatternFillMainState extends State<PatternFillMain> {
                       Navigator.of(context).pop();
                       Navigator.of(context).push(
                         MaterialPageRoute(
-                          builder: (context) => PatternFillScreen(
-                            title: '$index',
-                            // index: $index
-                          ),
+                          builder: (context) => PatternFillScreen(index: index),
                         ),
                       );
                     },
@@ -290,29 +287,30 @@ class _PatternFillMainState extends State<PatternFillMain> {
   }
 
   Future<List<Widget>> buildPatternList() async {
-    // Todo : 패턴 및 필인 리스트 만들기
     String? email = await storage.read(key: "user_email");
     List<Widget> levels = [];
+    int lastPatternId = -1;
+
+    var successPatterns = await getHTTP('/patterns/success', {"email": email});
+    if (successPatterns['errMessage'] == null) {
+      var body = successPatterns['body'] as List;
+      lastPatternId = body.isNotEmpty ? body.last['patternId'] as int : 0;
+    } else {
+      print(successPatterns['errMessage']);
+    }
 
     var patterns = await getHTTP('/patterns', {}, reqHeader: {});
     if (patterns['errMessage'] == null) {
       var body = patterns['body'];
       levels = (body as List).asMap().entries.map((entry) {
         int index = entry.key + 1;
-        return patternFillList(
-          context,
-          index,
-          false, // isLevelCleared
-          true, // isLevelLocked
-        );
+        bool isCleared = (lastPatternId > index);
+        bool isLocked = (lastPatternId + 1 < index);
+
+        return clickedListItem(context, index, isCleared, isLocked);
       }).toList();
     } else {
       print(patterns['errMessage']);
-    }
-
-    var successPatterns = await getHTTP('/patterns/success', {"email": email});
-    if (successPatterns['errMessage'] == null) {
-      var successList = successPatterns['body'].map;
     }
 
     return levels;

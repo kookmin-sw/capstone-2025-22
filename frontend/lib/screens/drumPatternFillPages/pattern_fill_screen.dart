@@ -1,5 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:capstone_2025/screens/drumSheetPages/sheetXmlDataTemp.dart'
+    as pattern_info_default;
 import 'package:flutter/material.dart';
 // ignore: depend_on_referenced_packages
 import 'package:path_provider/path_provider.dart';
@@ -25,21 +27,21 @@ extension MenuControllerToggle on MenuController {
 
 // 패턴 및 필인 시작 화면
 class PatternFillScreen extends StatelessWidget {
-  final String title;
+  final int index;
 
-  const PatternFillScreen({super.key, required this.title});
+  const PatternFillScreen({super.key, required this.index});
 
   @override
   Widget build(BuildContext context) {
-    return CountdownPage(title: title);
+    return CountdownPage(index: index);
   }
 }
 
 // 실제 기능을 담당하는 StatefulWidget
 class CountdownPage extends StatefulWidget {
-  final String title;
+  final int index;
 
-  const CountdownPage({super.key, required this.title});
+  const CountdownPage({super.key, required this.index});
 
   @override
   State<CountdownPage> createState() => _CountdownPageState();
@@ -73,8 +75,6 @@ class _CountdownPageState extends State<CountdownPage>
   StreamSubscription? _playerCompleteSubscription;
   StreamSubscription? _positionSubscription;
 
-  String? _recordingPath; // 녹음 파일 경로 추가
-
   // 악보 띄우려고 추가한 부분
   late PlaybackController playbackController;
   late OSMDService osmdService;
@@ -84,6 +84,10 @@ class _CountdownPageState extends State<CountdownPage>
   late MenuController _speedMenuController;
 
   final _storage = const FlutterSecureStorage();
+
+  // 페이지 로딩 시 API 호출 후 받아오는 데이터
+  String patternName = 'Default Pattern Name';
+  String patternInfo = pattern_info_default.temp;
 
   @override
   void didChangeDependencies() {
@@ -121,6 +125,9 @@ class _CountdownPageState extends State<CountdownPage>
   @override
   void initState() {
     super.initState();
+
+    // 페이지가 로드될 때 API 호출
+    _fetchData();
 
     // 오버레이 애니메이션 초기화
     _overlayController = AnimationController(
@@ -188,14 +195,31 @@ class _CountdownPageState extends State<CountdownPage>
         pageWidth: 1080,
       );
     });
-
-    // 녹음 경로 초기화 (덮어쓰기 방식)
-    _initializeRecording();
   }
 
-  void _initializeRecording() async {
-    final appDocDir = await getApplicationDocumentsDirectory();
-    _recordingPath = '${appDocDir.path}/current_performance.wav'; // 녹음 파일 경로
+  // API 호출 함수
+  Future<void> _fetchData() async {
+    print("API 호출 시작");
+
+    String? patternId = widget.index.toString();
+
+    // JSON 데이터 정의
+    final Map<String, String> queryParam = {
+      // API를 통해 전달할 param
+      "patternId ": patternId,
+    };
+
+    Map<String, dynamic> resData =
+        await getHTTP("/patterns/$patternId", queryParam);
+
+    if (resData['errMessage'] == null) {
+      patternName = resData['body']['patternName'] ??
+          'Default Pattern Name'; // null일 경우 기본값 설정
+      patternInfo = resData['body']['patternInfo'] ??
+          pattern_info_default.temp; // null일 경우 기본값 설정
+    } else {
+      print("패턴 정보 요청 실패: ${resData['errMessage']}");
+    }
   }
 
   void _setupAudioListeners() {
@@ -463,7 +487,7 @@ class _CountdownPageState extends State<CountdownPage>
                           child: InnerShadow(
                             shadowColor:
                                 const Color.fromARGB(255, 238, 159, 145)
-                                    .withOpacity(0.5),
+                                    .withValues(alpha: 0.5),
                             blur: 6,
                             offset: Offset(0, 0),
                             borderRadius: BorderRadius.circular(30),
@@ -489,7 +513,7 @@ class _CountdownPageState extends State<CountdownPage>
                                   children: [
                                     // 아래: 테두리용 텍스트
                                     Text(
-                                      widget.title,
+                                      patternName,
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
                                       style: TextStyle(
@@ -504,7 +528,7 @@ class _CountdownPageState extends State<CountdownPage>
                                     ),
                                     // 위: 흰색 채우기 텍스트
                                     Text(
-                                      widget.title,
+                                      patternName,
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
                                       style: const TextStyle(
@@ -901,8 +925,8 @@ class _CountdownPageState extends State<CountdownPage>
             child: DrumRecordingWidget(
               key: _drumRecordingKey,
               playbackController: playbackController,
-              title: widget.title,
-              xmlFilePath: 'assets/music/test_pattern.xml',
+              title: 'Basic Pattern ${widget.index}',
+              xmlDataString: patternInfo,
               audioFilePath: 'assets/sounds/test_pattern.wav',
               fetchPracticeIdentifier:
                   fetchPracticeIdentifier, // identifier 요청 함수
