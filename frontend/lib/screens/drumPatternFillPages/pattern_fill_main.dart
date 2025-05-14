@@ -287,7 +287,6 @@ class _PatternFillMainState extends State<PatternFillMain> {
   }
 
   Future<List<Widget>> buildPatternList() async {
-    // 패턴 및 필인 리스트 생성
     String? email = await storage.read(key: "user_email");
     List<Widget> levels = [];
     int lastPatternId = -1;
@@ -295,9 +294,7 @@ class _PatternFillMainState extends State<PatternFillMain> {
     var successPatterns = await getHTTP('/patterns/success', {"email": email});
     if (successPatterns['errMessage'] == null) {
       var body = successPatterns['body'] as List;
-      lastPatternId = body.isNotEmpty
-          ? body.last['patternId'] as int
-          : -1; // 사용자가 통과한 패턴 중 가장 마지막 단계 ID
+      lastPatternId = body.isNotEmpty ? body.last['patternId'] as int : 0;
     } else {
       print(successPatterns['errMessage']);
     }
@@ -307,13 +304,10 @@ class _PatternFillMainState extends State<PatternFillMain> {
       var body = patterns['body'];
       levels = (body as List).asMap().entries.map((entry) {
         int index = entry.key + 1;
-        return patternFillList(
-          context,
-          index,
-          // 패턴 클리어 여부
-          (lastPatternId > index) ? true : false, // isLevelCleared
-          (lastPatternId <= index) ? true : false, // isLevelLocked
-        );
+        bool isCleared = (lastPatternId > index);
+        bool isLocked = (lastPatternId + 1 < index);
+
+        return clickedListItem(context, index, isCleared, isLocked);
       }).toList();
     } else {
       print(patterns['errMessage']);
