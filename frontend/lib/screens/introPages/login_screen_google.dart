@@ -107,13 +107,12 @@ class _LoginScreenGoogleState extends State<LoginScreenGoogle> {
             children: [
               SizedBox(
                 width: 500,
-                child: Text(
-                  '🥁알려드럼🥁', // 타이틀
-                  style: TextStyle(
-                    fontSize: 45,
-                    fontWeight: FontWeight.w800,
+                child: Container(
+                  alignment: Alignment.center,
+                  child: Image.asset(
+                    "assets/images/appLogo.png",
+                    height: MediaQuery.of(context).size.height * 0.16,
                   ),
-                  textAlign: TextAlign.center,
                 ),
               ),
               SizedBox(height: 40),
@@ -125,7 +124,7 @@ class _LoginScreenGoogleState extends State<LoginScreenGoogle> {
                   btnName: "이메일로 로그인",
                   buttonColor: Color(0xFF424242),
                   clickedFunc: () {
-                    Navigator.of(context).pushReplacement(
+                    Navigator.of(context).push(
                       MaterialPageRoute(
                         // 이메일 로그인 페이지로 이동
                         builder: (_) => LoginScreen(),

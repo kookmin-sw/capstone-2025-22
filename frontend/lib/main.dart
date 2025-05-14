@@ -82,6 +82,7 @@ class _MyAppState extends State<MyApp> {
       theme: ThemeData(scaffoldBackgroundColor: Color(0xFFF2F1F3)),
       home: _isLoggedIn! ? NavigationScreens() : LoginScreenGoogle(),
       // home: DrumSheetPlayer(), // 악보연주페이지 확인용
+      //   home: PatternFillScreen(index: 1), // 패턴및필인페이지 확인용
     );
   }
 }

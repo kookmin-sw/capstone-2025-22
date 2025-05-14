@@ -1,4 +1,5 @@
 import 'package:capstone_2025/screens/drumPatternFillPages/pattern_fill_screen.dart';
+import 'package:capstone_2025/screens/drumSheetPages/drum_sheet_player.dart';
 import 'package:capstone_2025/widgets/innerShadow.dart';
 import 'package:capstone_2025/widgets/linedText.dart';
 import 'package:capstone_2025/screens/drumSheetPages/widgets/resultText.dart';
@@ -463,7 +464,7 @@ void openModal(
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => PatternFillScreen(
+                        builder: (context) => DrumSheetPlayer(
                           // 나중에 민지가 만든 페이지로 연결
                           title: "$musicTitle - $musicArtist",
                         ),
