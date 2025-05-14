@@ -301,7 +301,7 @@ class _PracticeResultPPState extends State<PracticeResultPP> {
                                                 MaterialPageRoute(
                                                   builder: (context) =>
                                                       PatternFillScreen(
-                                                    index: "${idx + 1}",
+                                                    index: idx + 1,
                                                   ),
                                                 ),
                                               );
@@ -501,7 +501,7 @@ void openModal(
                       context,
                       MaterialPageRoute(
                         builder: (context) => PatternFillScreen(
-                          index: "$idx",
+                          index: idx,
                         ),
                       ),
                     );

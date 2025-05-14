@@ -25,7 +25,7 @@ extension MenuControllerToggle on MenuController {
 
 // 패턴 및 필인 시작 화면
 class PatternFillScreen extends StatelessWidget {
-  final String index;
+  final int index;
 
   const PatternFillScreen({super.key, required this.index});
 
@@ -37,7 +37,7 @@ class PatternFillScreen extends StatelessWidget {
 
 // 실제 기능을 담당하는 StatefulWidget
 class CountdownPage extends StatefulWidget {
-  final String index;
+  final int index;
 
   const CountdownPage({super.key, required this.index});
 
@@ -489,7 +489,7 @@ class _CountdownPageState extends State<CountdownPage>
                                   children: [
                                     // 아래: 테두리용 텍스트
                                     Text(
-                                      widget.index,
+                                      '${widget.index}',
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
                                       style: TextStyle(
@@ -504,7 +504,7 @@ class _CountdownPageState extends State<CountdownPage>
                                     ),
                                     // 위: 흰색 채우기 텍스트
                                     Text(
-                                      widget.index,
+                                      '${widget.index}',
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
                                       style: const TextStyle(
@@ -902,7 +902,8 @@ class _CountdownPageState extends State<CountdownPage>
               key: _drumRecordingKey,
               playbackController: playbackController,
               title: 'Basic Pattern ${widget.index}',
-              xmlFilePath: 'assets/music/test_pattern.xml',
+              xmlDataString:
+                  'assets/music/test_pattern.xml', // Todo: XML 데이터 자체를 줘야하는데 이 부분은 API 연결 후 다시 수정해야할 듯(임시로 에러만 안나게함)
               audioFilePath: 'assets/sounds/test_pattern.wav',
               fetchPracticeIdentifier:
                   fetchPracticeIdentifier, // identifier 요청 함수
