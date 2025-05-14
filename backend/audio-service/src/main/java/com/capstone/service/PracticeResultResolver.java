@@ -16,6 +16,8 @@ import java.util.List;
 @Component
 public class PracticeResultResolver {
 
+    public static final Double errorThreshold = 0.2;
+
     public OnsetMatchResult matchOnset(ModelDto.OnsetResponseDto onsetResponse, MeasureInfo measureInfo){
         List<Double> userOnset = onsetResponse
                 .getOnsets()
@@ -23,7 +25,6 @@ public class PracticeResultResolver {
                 .map(Double::parseDouble)
                 .toList();
         List<Double> answerOnset = new ArrayList<>();
-        double errorThreshold = 0.05;
         List<NoteInfo> noteInfoList = measureInfo.getNoteList();
         for(NoteInfo noteInfo : noteInfoList){
             answerOnset.add(noteInfo.getStartOnset());
@@ -31,14 +32,19 @@ public class PracticeResultResolver {
         return DTWMatcher.match(userOnset, answerOnset, errorThreshold);
     }
 
-    public double calculateScore(List<Boolean> finalMatchingResult){
-        int successCount = 0;
-        for(Boolean result : finalMatchingResult){
-            if(result){
-                successCount++;
-            }
+    public double calculateScore(
+            List<Boolean> beatMatchingResult,
+            List<Boolean> finalMatchingResult){
+        int size = beatMatchingResult.size();
+        double score = 0;
+        double unitScore = (double) 100 / size;
+        for(int i=0; i<size; i++){
+            if(beatMatchingResult.get(i))
+                score += (unitScore*0.7);
+            if(finalMatchingResult.get(i))
+                score += (unitScore*0.3);
         }
-        return ((double) successCount / finalMatchingResult.size()) * 100;
+        return Math.ceil(score);
     }
 
     public List<Boolean> calculateBeatMatchingResult(OnsetMatchResult onsetMatchResult){
