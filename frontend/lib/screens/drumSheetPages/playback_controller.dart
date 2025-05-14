@@ -4,7 +4,6 @@ import 'package:capstone_2025/models/sheet_info.dart';
 import 'package:flutter/foundation.dart';
 import '../../models/cursor.dart';
 import './cursor_controller.dart';
-import 'dart:math'; // 테스트 용
 
 class PlaybackController {
   CursorController? _cursorController; // 커서 이동 관리
@@ -27,6 +26,7 @@ class PlaybackController {
   // 이전 상태 저장용 변수
   int _lastCursorIndex = -1;
   double _lastProgress = -1.0;
+  int _currentMeasureNumber = 0;
 
   // 페이지 / 줄 이동 관리
   int currentPage = 0; // 현재 재생 중인 줄 인덱스
@@ -37,6 +37,7 @@ class PlaybackController {
   Cursor currentCursor = Cursor.createEmpty();
   List<Cursor> missedCursors = []; // 1차 채점용 놓친 음표 커서 리스트
   Function(Cursor)? onCursorMove;
+  Function(int)? onMeasureChange;
 
   // 줄별 악보 이미지 관련
   List<Uint8List> lineImages = []; // 줄 단위로 잘라낸 악보 이미지들
@@ -51,6 +52,7 @@ class PlaybackController {
   Function(int)? onCountdownUpdate;
   Function(int)? onPageChange;
   Function(int)? onPlaybackComplete;
+  Function()? onCountdownComplete; // 카운트다운 완료 콜백 추가
 
   // 채점 관리
   late int totalMeasures;
@@ -182,6 +184,16 @@ class PlaybackController {
       final beatTs = playedSeconds * (sheetInfo!.bpm / 60.0);
       // 3) 단일 타이머 소스에서 커서 위치 가져오기
       final cursor = _cursorController!.getCursorAtBeat(beatTs);
+
+      // 마디 변경 감지 로직
+      final newMeasureNumber = cursor.measureNumber;
+      if (newMeasureNumber != _currentMeasureNumber) {
+        print(
+            '🎼 마디 변경 감지: ${_currentMeasureNumber + 1} -> ${newMeasureNumber + 1}');
+        _currentMeasureNumber = newMeasureNumber;
+        onMeasureChange?.call(newMeasureNumber);
+      }
+
       // 4) 중복 호출 방지용 인덱스
       final newIndex = cursor.measureNumber * 100 + (cursor.ts * 100).toInt();
       if (newIndex != _lastCursorIndex) {
@@ -191,6 +203,7 @@ class PlaybackController {
 
       // 전체 재생 완료 여부 체크
       if (currentDuration >= totalDuration) {
+        print('⏱️ 재생 시간 완료');
         stopPlayback();
         return;
       }
@@ -209,7 +222,11 @@ class PlaybackController {
 
     if (currentDuration >= totalDuration) {
       final lastOneBased = currentCursor.measureNumber + 1;
-      onPlaybackComplete?.call(lastOneBased);
+      if (onPlaybackComplete != null) {
+        onPlaybackComplete!(lastOneBased);
+      } else {
+        // print('⚠️ onPlaybackComplete 콜백이 설정되지 않음');
+      }
     }
   }
 
@@ -253,6 +270,7 @@ class PlaybackController {
       if (countdown <= 0) {
         timer.cancel();
         isCountingDown = false;
+        onCountdownComplete?.call(); // 카운트다운 완료 콜백 호출
         startPlayback();
       }
     });
@@ -271,7 +289,7 @@ class PlaybackController {
     // 1) 마지막 ts (beat 단위)
     final lastTS = fullCursorList.last.ts;
 
-    // 2) 올바른 buffer: “마지막 음표 길이(beat 단위)”
+    // 2) 올바른 buffer: "마지막 음표 길이(beat 단위)"
     final prevTS = (fullCursorList.length >= 2)
         ? fullCursorList[fullCursorList.length - 2].ts
         : lastTS - 1.0;
@@ -285,8 +303,8 @@ class PlaybackController {
     final durationMs = (totalBeats * secondsPerBeat * 1000).round();
 
     totalDuration = Duration(milliseconds: durationMs);
-    debugPrint("⏱️ BPM:$bpm, speed:$speed×, " +
-        "마지막음표길이=$extraBeat 박자, " +
+    debugPrint("⏱️ BPM:$bpm, speed:$speed×, "
+        "마지막음표길이=$extraBeat 박자, "
         "총박자=$totalBeats, 재생시간=${durationMs}ms");
   }
 

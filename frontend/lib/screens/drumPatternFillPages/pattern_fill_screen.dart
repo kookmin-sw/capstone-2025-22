@@ -15,6 +15,8 @@ import '../../services/osmd_service.dart';
 import 'package:capstone_2025/widgets/innerShadow.dart';
 import '../drumSheetPages/widgets/confirmation_dialog.dart';
 import 'package:capstone_2025/screens/drumSheetPages/widgets/confirmation_dialog.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import '../../services/api_func.dart';
 
 /// MenuController에 toggle()을 추가하는 확장 메서드
 extension MenuControllerToggle on MenuController {
@@ -80,6 +82,8 @@ class _CountdownPageState extends State<CountdownPage>
 
   // 배속 설정 메뉴 컨트롤러
   late MenuController _speedMenuController;
+
+  final _storage = const FlutterSecureStorage();
 
   @override
   void didChangeDependencies() {
@@ -275,9 +279,6 @@ class _CountdownPageState extends State<CountdownPage>
 
       // 카운트다운 UI → 3-2-1 → 시트 재생
       playbackController.showCountdownAndStart();
-
-      // 녹음도 곧바로 시작
-      _drumRecordingKey.currentState?.startRecording();
     });
   }
 
@@ -323,6 +324,26 @@ class _CountdownPageState extends State<CountdownPage>
         ),
       ),
     );
+  }
+
+  Future<String?> fetchPracticeIdentifier() async {
+    // 1) 토큰 읽기
+    final token = await _storage.read(key: 'access_token');
+
+    // 2) POST 호출
+    final response = await postHTTP(
+      '/audio/practice',
+      null,
+      reqHeader: {'authorization': token ?? ''},
+    );
+
+    // 3) 결과 처리
+    if (response['errMessage'] == null) {
+      return response['body'] as String;
+    } else {
+      print('Identifier 요청 실패: ${response['errMessage']}');
+      return null;
+    }
   }
 
   @override
@@ -883,6 +904,9 @@ class _CountdownPageState extends State<CountdownPage>
               title: 'Basic Pattern ${widget.index}',
               xmlFilePath: 'assets/music/test_pattern.xml',
               audioFilePath: 'assets/sounds/test_pattern.wav',
+              fetchPracticeIdentifier:
+                  fetchPracticeIdentifier, // identifier 요청 함수
+
               onRecordingComplete: (onsets) {
                 setState(() {
                   _detectedOnsets = onsets;
