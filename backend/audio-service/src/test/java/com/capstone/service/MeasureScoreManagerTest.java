@@ -3,7 +3,6 @@ package com.capstone.service;
 import com.capstone.client.AudioModelClient;
 import com.capstone.client.MusicClientService;
 import com.capstone.dto.score.FinalMeasureResult;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,9 +21,6 @@ class MeasureScoreManagerTest {
     @Autowired
     private MeasureScoreManager measureScoreManager;
 
-    @Autowired
-    private ObjectMapper objectMapper;
-
     @MockBean
     private MusicClientService musicClientService;
 
@@ -33,7 +29,7 @@ class MeasureScoreManagerTest {
 
     @Test
     @DisplayName("연습 정보 저장 성공 테스트")
-    void saveMeasureScore_success() throws Exception {
+    void saveMeasureScore_success() {
         // given
         String identifier = UUID.randomUUID().toString();
         String measureNumber = UUID.randomUUID().toString();
@@ -41,10 +37,10 @@ class MeasureScoreManagerTest {
                 .score(100.0)
                 .build();
         // when
-        boolean res = measureScoreManager.saveMeasureScore(identifier, measureNumber, finalMeasureResult).block();
+        Boolean res = measureScoreManager.saveMeasureScore(identifier, measureNumber, finalMeasureResult).block();
         String savedScore = measureScoreManager.getMeasureScore(identifier, measureNumber).block();
         // then
-        assert res;
+        assert res!=null && res;
         assertEquals(savedScore, finalMeasureResult.toString());
         assert FinalMeasureResult.fromString(savedScore).getScore() == 100.0;
     }
@@ -66,6 +62,6 @@ class MeasureScoreManagerTest {
         }
         // when
         List<String> res = measureScoreManager.getAllMeasureScores(identifier).block();
-        assert res.size() == 10;
+        assert res != null && res.size() == 10;
     }
 }
