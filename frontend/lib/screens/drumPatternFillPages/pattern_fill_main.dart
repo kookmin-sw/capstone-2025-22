@@ -287,9 +287,20 @@ class _PatternFillMainState extends State<PatternFillMain> {
   }
 
   Future<List<Widget>> buildPatternList() async {
-    // Todo : 패턴 및 필인 리스트 만들기
+    // 패턴 및 필인 리스트 생성
     String? email = await storage.read(key: "user_email");
     List<Widget> levels = [];
+    int lastPatternId = -1;
+
+    var successPatterns = await getHTTP('/patterns/success', {"email": email});
+    if (successPatterns['errMessage'] == null) {
+      var body = successPatterns['body'] as List;
+      lastPatternId = body.isNotEmpty
+          ? body.last['patternId'] as int
+          : -1; // 사용자가 통과한 패턴 중 가장 마지막 단계 ID
+    } else {
+      print(successPatterns['errMessage']);
+    }
 
     var patterns = await getHTTP('/patterns', {}, reqHeader: {});
     if (patterns['errMessage'] == null) {
@@ -299,17 +310,13 @@ class _PatternFillMainState extends State<PatternFillMain> {
         return patternFillList(
           context,
           index,
-          false, // isLevelCleared
-          true, // isLevelLocked
+          // 패턴 클리어 여부
+          (lastPatternId > index) ? true : false, // isLevelCleared
+          (lastPatternId <= index) ? true : false, // isLevelLocked
         );
       }).toList();
     } else {
       print(patterns['errMessage']);
-    }
-
-    var successPatterns = await getHTTP('/patterns/success', {"email": email});
-    if (successPatterns['errMessage'] == null) {
-      var successList = successPatterns['body'].map;
     }
 
     return levels;
