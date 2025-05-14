@@ -180,7 +180,7 @@ class _MyPageState extends State<MyPage> {
         padding: EdgeInsets.symmetric(vertical: 12),
         child: Row(
           children: [
-            Icon(icon, color: Colors.black54, size: 24),
+            Icon(icon, color: const Color(0xFF646464), size: 24),
             SizedBox(width: 10),
             Text(text,
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500)),

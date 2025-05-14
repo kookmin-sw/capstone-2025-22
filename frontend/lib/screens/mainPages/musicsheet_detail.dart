@@ -1,3 +1,5 @@
+import 'dart:io';
+import 'dart:ui';
 import 'package:capstone_2025/services/api_func.dart';
 import 'package:capstone_2025/services/storage_service.dart';
 import 'package:capstone_2025/widgets/linedText.dart';
@@ -6,6 +8,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:path_provider/path_provider.dart';
 
 class MusicsheetDetail extends StatefulWidget {
   final String songID; // 노래 ID
@@ -19,12 +22,54 @@ class MusicsheetDetail extends StatefulWidget {
 }
 
 class _MusicsheetDetailState extends State<MusicsheetDetail> {
+  // 차트용 (날짜·점수)
   List<Map<String, String>> scoreData = [];
+  // 테이블 + 디테일 호출용 practiceId 포함
+  List<Map<String, dynamic>> practiceList = [];
+  Uint8List? previewBytes; // 악보 프리뷰 이미지 띄울 용도
+  int? _selectedPracticeId; // 선택된 연습 기록 ID
+  String? _xmlDataString; // 악보 xml 저장용
 
   @override
   void initState() {
     super.initState();
+    _loadPreview();
     createDetailList();
+    _fetchSheetXml();
+  }
+
+  // 로컬에 저장된 sheetInfo의 프리뷰용 fullSheetImage 가져오기
+  Future<void> _loadPreview() async {
+    final dir = await getApplicationDocumentsDirectory();
+    final path = '${dir.path}/sheet_preview_${widget.songID}.png';
+    final file = File(path);
+    if (await file.exists()) {
+      final bytes = await file.readAsBytes();
+      setState(() {
+        previewBytes = bytes;
+      });
+    }
+  }
+
+  // 채점 결과 렌더링용 악보 xml 파일 가져오기
+  Future<void> _fetchSheetXml() async {
+    final resp = await getHTTP('/sheets/${widget.songID}', {});
+    if (resp['errMessage'] == null) {
+      setState(() {
+        _xmlDataString = resp['body']['sheetInfo'] as String;
+      });
+    } else {
+      debugPrint('악보 XML 로딩 실패: ${resp['errMessage']}');
+    }
+  }
+
+  // 특정 악보 연습의 세부 정보 반환
+  Future<Map<String, dynamic>> fetchPracticeDetail(int practiceId) async {
+    final resp = await getHTTP('/sheets/practices/$practiceId', {});
+    if (resp['errMessage'] != null) {
+      throw Exception('연습 기록 상세 로딩 실패: ${resp['errMessage']}');
+    }
+    return resp['body'] as Map<String, dynamic>;
   }
 
   void createDetailList() async {
@@ -41,20 +86,39 @@ class _MusicsheetDetailState extends State<MusicsheetDetail> {
     if (response['errMessage'] == null) {
       List<dynamic> rawData = response['body'];
       print("res: $rawData");
-
+      final newList = rawData.map<Map<String, dynamic>>((item) {
+        final rawDate = DateTime.tryParse(item['createdDate'] ?? '');
+        final formattedDate = rawDate != null
+            ? "${rawDate.year.toString().padLeft(4, '0')}.${rawDate.month.toString().padLeft(2, '0')}.${rawDate.day.toString().padLeft(2, '0')}"
+            : '';
+        return {
+          'practiceId': item['practiceId'],
+          '연습 날짜': formattedDate,
+          '점수': item['score'].toString(),
+        };
+      }).toList();
       setState(() {
-        scoreData = rawData.map<Map<String, String>>((item) {
-          final rawDate = DateTime.tryParse(item['createdDate'] ?? '');
-          final formattedDate = rawDate != null
-              ? "${rawDate.year.toString().padLeft(4, '0')}.${rawDate.month.toString().padLeft(2, '0')}.${rawDate.day.toString().padLeft(2, '0')}"
-              : '';
-          return {
-            '연습 날짜': formattedDate,
-            '점수': item['score'].toString(),
-          };
-        }).toList();
+        practiceList = newList;
+        // 차트용 데이터
+        scoreData = newList
+            .map((e) => {
+                  '연습 날짜': e['연습 날짜'] as String,
+                  '점수': e['점수'] as String,
+                })
+            .toList();
+        // 기본 선택 첫번째로 ID 지정
+        if (practiceList.isNotEmpty) {
+          _selectedPracticeId = practiceList.first['practiceId'] as int;
+        }
       });
     }
+  }
+
+  void _onRowTap(int practiceId) {
+    setState(() {
+      // 항상 해당 practiceId가 선택되도록
+      _selectedPracticeId = practiceId;
+    });
   }
 
   List<Map<String, String>> lastFive = []; // 그래프에 출력할 마지막 5개 데이터
@@ -279,108 +343,157 @@ class _MusicsheetDetailState extends State<MusicsheetDetail> {
                 padding: const EdgeInsets.symmetric(
                   horizontal: 25,
                 ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      flex: 2,
-                      child: Column(
-                        children: [
-                          SizedBox(height: 10),
-                          Expanded(
-                            // 그래프
-                            flex: 5,
-                            child: Container(
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(9),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withOpacity(0.2),
-                                    blurRadius: 5,
-                                    spreadRadius: 1.5,
-                                    offset: Offset(2, 2),
-                                  ),
-                                ],
-                              ),
-                              child: _buildGraph(),
-                            ),
-                          ),
-                          SizedBox(height: 10),
-                          Expanded(
-                            // 표
-                            flex: 5,
-                            child: Container(
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(9),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withOpacity(0.2),
-                                    blurRadius: 5,
-                                    spreadRadius: 1.5,
-                                    offset: Offset(2, 2),
-                                  ),
-                                ],
-                              ),
-                              child: _buildScoreTable(),
-                            ),
-                          ),
-                          SizedBox(height: 10),
-                        ],
-                      ),
-                    ),
-                    SizedBox(width: 5),
-                    Stack(
-                      children: [
-                        Expanded(
-                          // 악보 출력 예정 공간
-                          flex: 3,
-                          child: Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.end,
-                              children: [
-                                Expanded(
-                                  flex: 20,
-                                  child: Container(
-                                    child: Image.asset(
-                                      'assets/images/image.png', // 악보 이미지 임시 업로드 - 나중에 실제 악보로 변경 예정
+                child: IntrinsicHeight(
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Expanded(
+                        flex: 2,
+                        child: Column(
+                          children: [
+                            SizedBox(height: 10),
+                            Expanded(
+                              // 그래프
+                              flex: 5,
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(9),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.2),
+                                      blurRadius: 5,
+                                      spreadRadius: 1.5,
+                                      offset: Offset(2, 2),
                                     ),
-                                    decoration: BoxDecoration(
-                                      color: Colors.white,
-                                      borderRadius: BorderRadius.circular(9),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: Colors.black.withOpacity(0.2),
-                                          blurRadius: 3,
-                                          spreadRadius: 1.5,
-                                          offset: Offset(2, 2),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
+                                  ],
                                 ),
-                              ],
+                                child: _buildGraph(),
+                              ),
                             ),
+                            SizedBox(height: 10),
+                            Expanded(
+                              // 표
+                              flex: 5,
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(9),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.2),
+                                      blurRadius: 5,
+                                      spreadRadius: 1.5,
+                                      offset: Offset(2, 2),
+                                    ),
+                                  ],
+                                ),
+                                child: _buildScoreTable(),
+                              ),
+                            ),
+                            SizedBox(height: 10),
+                          ],
+                        ),
+                      ),
+                      SizedBox(width: 5),
+                      Expanded(
+                        // 악보 출력 예정 공간
+                        flex: 3,
+                        child: Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Stack(
+                            children: [
+                              Container(
+                                height: double.infinity,
+                                width: double.infinity,
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(9),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.2),
+                                      blurRadius: 3,
+                                      spreadRadius: 1.5,
+                                      offset: Offset(2, 2),
+                                    ),
+                                  ],
+                                ),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(9),
+                                  child: Stack(
+                                    fit: StackFit.expand,
+                                    children: [
+                                      // ② 이미지: 위쪽부터 꽉 차게, 아래는 잘림
+                                      if (previewBytes != null)
+                                        Positioned(
+                                          top: 20,
+                                          left: 20,
+                                          right: 20,
+                                          bottom: 50,
+                                          child: Image.memory(previewBytes!,
+                                              fit: BoxFit.cover),
+                                        )
+                                      else
+                                        Center(
+                                            child: CircularProgressIndicator()),
+
+                                      // ③ 블러 오버레이
+                                      Positioned.fill(
+                                        child: BackdropFilter(
+                                          filter: ImageFilter.blur(
+                                              sigmaX: 2, sigmaY: 2),
+                                          child: Container(
+                                            color:
+                                                Colors.white.withOpacity(0.3),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ), // ← ClipRRect 닫기
+                              ), // ← Container 닫기
+                              Positioned(
+                                // 악보 확대 버튼
+                                top: MediaQuery.of(context).size.height * 0.755,
+                                right:
+                                    MediaQuery.of(context).size.height * 0.013,
+                                child: IconButton(
+                                  onPressed: () async {
+                                    if (_selectedPracticeId == null ||
+                                        _xmlDataString == null) return;
+                                    try {
+                                      final buildContext = context;
+                                      final detail = await fetchPracticeDetail(
+                                          _selectedPracticeId!);
+                                      final rawInfo = detail['body']
+                                          ['practiceInfo'] as List<dynamic>;
+                                      final practiceInfo = rawInfo
+                                          .map((e) => Map<String, dynamic>.from(
+                                              e as Map))
+                                          .toList();
+
+                                      openMusicSheet(
+                                        context: buildContext,
+                                        xmlDataString: _xmlDataString!,
+                                        practiceInfo: practiceInfo,
+                                      );
+                                    } catch (e) {
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                        SnackBar(content: Text('상세 로딩 실패: $e')),
+                                      );
+                                    }
+                                  },
+                                  icon: FaIcon(FontAwesomeIcons.expand,
+                                      size: 28, color: Color(0xffD97D6C)),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                        Positioned(
-                          // 악보 확대 버튼
-                          top: MediaQuery.of(context).size.height * 0.765,
-                          right: MediaQuery.of(context).size.height * 0.035,
-                          child: IconButton(
-                            onPressed: () => openMusicSheet(
-                              context: context,
-                              xmlDataString: '',
-                              practiceInfo: <Map<String, dynamic>>[], // TODO
-                            ),
-                            icon: FaIcon(FontAwesomeIcons.expand,
-                                size: 28, color: Color(0xffD97D6C)),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -401,27 +514,38 @@ class _MusicsheetDetailState extends State<MusicsheetDetail> {
             thickness: 8, // 스크롤바 두께 조정
             radius: Radius.circular(10), // 스크롤바 끝부분 둥글게 처리
             child: ListView.builder(
-              itemCount: scoreData.length,
+              itemCount: practiceList.length,
               padding: EdgeInsets.only(top: 10),
               physics: ClampingScrollPhysics(),
               shrinkWrap: true,
               itemBuilder: (context, index) {
-                var item = scoreData[index];
+                final item = practiceList[index];
+                final isSelected = item['practiceId'] == _selectedPracticeId;
 
-                return Container(
-                  padding: EdgeInsets.symmetric(vertical: 12),
-                  decoration: BoxDecoration(
-                    color: index.isEven ? Colors.white : Colors.grey.shade100,
-                    border: Border(
-                      bottom: BorderSide(color: Colors.grey.shade300, width: 1),
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      _buildListCell(item["연습 날짜"]!, flex: 1),
-                      _buildListCell(item["점수"]!, flex: 1, isCenter: true),
-                    ],
-                  ),
+                return GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      _selectedPracticeId = item['practiceId'] as int;
+                    });
+                    _onRowTap(_selectedPracticeId!);
+                  },
+                  child: Container(
+                      padding: EdgeInsets.symmetric(vertical: 12),
+                      decoration: BoxDecoration(
+                        color: isSelected
+                            ? Colors.grey.shade100 // 선택된 색
+                            : Colors.white,
+                        border: Border(
+                          bottom:
+                              BorderSide(color: Colors.grey.shade300, width: 1),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          _buildListCell(item["연습 날짜"]!, flex: 1),
+                          _buildListCell(item["점수"]!, flex: 1, isCenter: true),
+                        ],
+                      )),
                 );
               },
             ),

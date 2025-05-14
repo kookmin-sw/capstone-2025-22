@@ -210,6 +210,22 @@ class _DrumSheetPlayerState extends State<DrumSheetPlayer> {
         required int totalMeasures,
       }) async {
         try {
+          // 악보에 대한 fullSheetImage 저장할 로컬 경로 확보
+          final dir = await getApplicationDocumentsDirectory();
+          final previewPath = '${dir.path}/sheet_preview_${widget.sheetId}.png';
+          // 파일에 쓰기
+          final file = File(previewPath);
+          if (!await file.exists()) {
+            // 파일이 없을 때만 생성
+            await file.writeAsBytes(base64Image, flush: true);
+            debugPrint('📁 preview 이미지 저장: $previewPath');
+          } else {
+            debugPrint('📁 preview 이미지 이미 존재, 스킵');
+          }
+        } catch (e) {
+          debugPrint('⚠️ Preview save failed: $e');
+        }
+        try {
           final int totalLines = (json['lineCount'] is int)
               ? json['lineCount'] as int
               : (json['lineCount'] ?? 1).toInt();
