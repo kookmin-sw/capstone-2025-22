@@ -46,6 +46,7 @@ class DrumRecordingWidget extends StatefulWidget {
   /// 채점 결과 콜백
   final void Function(Map<String, dynamic> gradingResult)? onGradingResult;
   final int? userSheetId;
+  final int? patternId;
 
   const DrumRecordingWidget({
     super.key,
@@ -57,6 +58,7 @@ class DrumRecordingWidget extends StatefulWidget {
     this.onOnsetsReceived,
     this.onMusicXMLParsed,
     this.userSheetId,
+    this.patternId,
     this.onGradingResult,
     required this.playbackController,
     required this.fetchPracticeIdentifier, // identifier 가져옴
@@ -159,7 +161,7 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
 
     // 녹음 파일 저장 경로 설정
     final appDocDir = await getApplicationDocumentsDirectory();
-    _recordingPath = '${appDocDir.path}/current_measure.wav';
+    _recordingPath = '${appDocDir.path}/current_measure.aac';
   }
 
   Future<void> _setupWebSocket() async {
@@ -189,6 +191,17 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
             _retryWebSocketConnect();
           }
         },
+        // STOMP 계층에서 에러가 왔을 때
+        onStompError: (StompFrame frame) {
+          print('❌ STOMP 프로토콜 에러: ${frame.body}');
+        },
+        // 핸들링되지 않은 모든 프레임을 찍어본다
+        onUnhandledFrame: (dynamic frame) {
+          print('⚠️ Unhandled STOMP frame: $frame');
+        },
+        onUnhandledMessage: (StompFrame frame) {
+          print('⚠️ Unhandled STOMP message: ${frame.body}');
+        },
         onDisconnect: (frame) {
           print('🔌 WebSocket 연결 끊어짐');
           if (!_isDisposed) {
@@ -214,6 +227,7 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
     _stompUnsubscribe = _stompClient!.subscribe(
       destination: '/topic/onset/$_userEmail',
       callback: (frame) {
+        print('🛰️ [RAW FRAME] headers=${frame.headers}, body=${frame.body}');
         if (_isDisposed) return;
 
         if (frame.body != null) {
@@ -549,7 +563,7 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
 
       await _recorder!.startRecorder(
         toFile: _recordingPath,
-        codec: fs.Codec.pcm16WAV,
+        codec: fs.Codec.aacADTS,
         sampleRate: 16000,
         numChannels: 1,
         bitRate: 16000,
@@ -585,6 +599,8 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
       final file = File(_recordingPath!);
       if (await file.exists()) {
         final base64String = base64Encode(await file.readAsBytes());
+        print('📁 녹음 파일 크기: ${base64String.length} bytes');
+        print(base64String);
         final originalBpm =
             ((_beatsPerMeasure * 60) / (_totalDuration / _totalMeasures))
                 .toInt();
@@ -593,7 +609,10 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
 
         final message = {
           'bpm': adjustedBpm,
-          'userSheetId': widget.userSheetId,
+          if (widget.patternId != null) // 이 부분 잘 동작하는지 확인해보기
+            'patternId': widget.patternId!
+          else
+            'userSheetId': widget.userSheetId,
           'identifier': _identifier,
           'email': _userEmail,
           'message': base64String,
@@ -786,7 +805,10 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
 
         final message = {
           'bpm': adjustedBpm,
-          'userSheetId': widget.userSheetId,
+          if (widget.patternId != null) // 이 부분 잘 동작하는지 확인해보기
+            'patternId': widget.patternId!
+          else
+            'userSheetId': widget.userSheetId,
           'identifier': _identifier,
           'email': _userEmail,
           'message': base64String,
