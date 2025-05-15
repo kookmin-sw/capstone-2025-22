@@ -5,7 +5,7 @@ import 'package:capstone_2025/services/api_func.dart';
 import 'package:capstone_2025/services/storage_service.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../models/sheet.dart';
 import 'widgets/sheet_card.dart';
 import 'widgets/add_sheet_dialog.dart';
@@ -309,15 +309,14 @@ class _SheetListScreenState extends State<SheetListScreen> {
         return Stack(
           children: [
             Positioned(
-              bottom: 60,
+              bottom: 60.h,
               left: MediaQuery.of(context).size.width / 2 -
                   (customColors.length * 24) / 2 +
                   100,
               child: Material(
                 color: Colors.transparent,
                 child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding: EdgeInsets.symmetric(horizontal: 5.w, vertical: 8.h),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(24),
@@ -369,9 +368,9 @@ class _SheetListScreenState extends State<SheetListScreen> {
                           Navigator.of(context).pop();
                         },
                         child: Container(
-                          width: 28,
-                          height: 28,
-                          margin: const EdgeInsets.symmetric(horizontal: 6),
+                          width: 10.w,
+                          height: 30.h,
+                          margin: EdgeInsets.symmetric(horizontal: 2.w),
                           decoration: BoxDecoration(
                             color: color,
                             shape: BoxShape.circle,
@@ -408,28 +407,28 @@ class _SheetListScreenState extends State<SheetListScreen> {
             borderRadius: BorderRadius.circular(16),
           ),
           child: SizedBox(
-            width: 300,
+            width: 100.w,
             child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+              padding: EdgeInsets.symmetric(vertical: 25.h, horizontal: 5.w),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Text(
+                  Text(
                     '선택한 악보를 삭제하시겠습니까?',
                     style: TextStyle(
-                      fontSize: 16,
+                      fontSize: 5.5.sp,
                       fontWeight: FontWeight.w600,
                       color: Color(0xFF646464),
                     ),
                   ),
-                  const SizedBox(height: 24),
+                  SizedBox(height: 27.h),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
                       ElevatedButton(
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFFF2F2F2),
-                          minimumSize: const Size(100, 45),
+                          minimumSize: Size(40.w, 55.h),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
@@ -446,7 +445,7 @@ class _SheetListScreenState extends State<SheetListScreen> {
                       ElevatedButton(
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFFD97D6C),
-                          minimumSize: const Size(100, 45),
+                          minimumSize: Size(40.w, 55.h),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
@@ -510,37 +509,37 @@ class _SheetListScreenState extends State<SheetListScreen> {
             borderRadius: BorderRadius.circular(16),
           ),
           child: SizedBox(
-            width: 300,
+            width: 100.w,
             child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+              padding: EdgeInsets.symmetric(vertical: 20.h, horizontal: 5.w),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
                     '${sheet.title} - ${sheet.artistName}',
                     textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontSize: 16,
+                    style: TextStyle(
+                      fontSize: 7.sp,
                       fontWeight: FontWeight.w600,
                       color: Color(0xFF646464),
                     ),
                   ),
-                  const SizedBox(height: 12),
-                  const Text(
+                  SizedBox(height: 10.h),
+                  Text(
                     '연주를 시작하시겠습니까?',
                     style: TextStyle(
-                      fontSize: 13,
+                      fontSize: 5.5.sp,
                       color: Color(0xFF646464),
                     ),
                   ),
-                  const SizedBox(height: 24),
+                  SizedBox(height: 30.h),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
                       ElevatedButton(
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFFF2F2F2),
-                          minimumSize: const Size(100, 45),
+                          minimumSize: Size(40.w, 55.h),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
@@ -557,7 +556,7 @@ class _SheetListScreenState extends State<SheetListScreen> {
                       ElevatedButton(
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFFD97D6C),
-                          minimumSize: const Size(100, 45),
+                          minimumSize: Size(40.w, 55.h),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
@@ -584,10 +583,10 @@ class _SheetListScreenState extends State<SheetListScreen> {
                             Navigator.of(context).pop(); // 확인 다이얼로그 닫기
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
-                                content: const Text(
+                                content: Text(
                                   '악보 변환 중입니다. 잠시 후 다시 시도해주세요.',
                                   style: TextStyle(
-                                      fontSize: 14,
+                                      fontSize: 5.5.sp,
                                       color: Colors.white,
                                       fontWeight: FontWeight.w600),
                                 ),
@@ -597,7 +596,7 @@ class _SheetListScreenState extends State<SheetListScreen> {
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12),
                                 ),
-                                margin: const EdgeInsets.all(16),
+                                margin: EdgeInsets.all(16.h),
                               ),
                             );
                           } else {
@@ -679,7 +678,7 @@ class _SheetListScreenState extends State<SheetListScreen> {
         title: Row(
           children: [
             Icon(Icons.library_music, color: Colors.black54),
-            SizedBox(width: 8),
+            SizedBox(width: 5.w),
             Text(
               '악보 목록',
               style: TextStyle(color: Colors.black87),
@@ -688,11 +687,11 @@ class _SheetListScreenState extends State<SheetListScreen> {
         ),
         backgroundColor: Color(0xFFF5F5F5),
         elevation: 0,
-        toolbarHeight: 50,
+        toolbarHeight: 60.h,
         actions: [
           if (_isSelectionMode) ...[
             Container(
-              margin: const EdgeInsets.only(right: 8),
+              margin: EdgeInsets.only(right: 5.w),
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(32),
@@ -707,16 +706,15 @@ class _SheetListScreenState extends State<SheetListScreen> {
               child: TextButton(
                 onPressed: _toggleSelectAll,
                 style: TextButton.styleFrom(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 8.h),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(32),
                   ),
                 ),
                 child: Text(
                   _isAllSelected ? '전체 선택 해제' : '전체 선택',
-                  style: const TextStyle(
-                    fontSize: 14,
+                  style: TextStyle(
+                    fontSize: 5.sp,
                     fontWeight: FontWeight.w600,
                     color: Color(0xFF595959),
                   ),
@@ -724,7 +722,7 @@ class _SheetListScreenState extends State<SheetListScreen> {
               ),
             ),
             Container(
-              margin: const EdgeInsets.only(right: 8),
+              margin: EdgeInsets.only(right: 8.w),
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(32),
@@ -739,16 +737,15 @@ class _SheetListScreenState extends State<SheetListScreen> {
               child: TextButton(
                 onPressed: _toggleSelectionMode,
                 style: TextButton.styleFrom(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 8.h),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(32),
                   ),
                 ),
-                child: const Text(
+                child: Text(
                   '완료',
                   style: TextStyle(
-                    fontSize: 14,
+                    fontSize: 5.sp,
                     fontWeight: FontWeight.w600,
                     color: Color(0xFF595959),
                   ),
@@ -757,9 +754,9 @@ class _SheetListScreenState extends State<SheetListScreen> {
             ),
           ] else if (_isSearchMode) ...[
             Container(
-              width: 250,
-              height: 32,
-              margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+              width: 100.w,
+              height: 50.h,
+              margin: EdgeInsets.symmetric(vertical: 8.h, horizontal: 8.w),
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(10),
@@ -773,11 +770,11 @@ class _SheetListScreenState extends State<SheetListScreen> {
               ),
               child: Row(
                 children: [
-                  const Padding(
-                    padding: EdgeInsets.only(left: 12),
+                  Padding(
+                    padding: EdgeInsets.only(left: 5.w),
                     child: Icon(
                       Icons.search,
-                      size: 18,
+                      size: 6.5.sp,
                       color: Color(0xFF595959),
                     ),
                   ),
@@ -785,34 +782,34 @@ class _SheetListScreenState extends State<SheetListScreen> {
                     child: TextField(
                       controller: _searchController,
                       autofocus: true,
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         hintText: '검색어를 입력해주세요',
                         hintStyle: TextStyle(
                           color: Color(0xFF949494),
-                          fontSize: 13,
+                          fontSize: 5.sp,
                         ),
                         border: InputBorder.none,
-                        contentPadding:
-                            EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                        contentPadding: EdgeInsets.symmetric(
+                            horizontal: 2.w, vertical: 11.5.h),
                       ),
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: Color(0xFF595959),
-                        fontSize: 13,
+                        fontSize: 5.sp,
                       ),
                       onChanged: _performSearch,
                     ),
                   ),
                   IconButton(
-                    padding: const EdgeInsets.all(4),
+                    padding: EdgeInsets.all(4.w),
                     constraints: const BoxConstraints(),
-                    icon: const Icon(
+                    icon: Icon(
                       Icons.close,
-                      size: 18,
+                      size: 6.sp,
                       color: Color(0xFF595959),
                     ),
                     onPressed: _toggleSearchMode,
                   ),
-                  const SizedBox(width: 8),
+                  SizedBox(width: 1.w),
                 ],
               ),
             ),
@@ -820,13 +817,13 @@ class _SheetListScreenState extends State<SheetListScreen> {
             _buildSortingButton(context),
             PopupMenuButton<String>(
               color: const Color(0xFFfefefe),
-              offset: const Offset(-20, 50),
+              offset: Offset(-20.h, 20.w),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
-              constraints: const BoxConstraints(
-                minWidth: 160,
-                maxWidth: 160,
+              constraints: BoxConstraints(
+                minWidth: 70.w,
+                maxWidth: 70.w,
               ),
               onSelected: (value) {
                 if (value == '선택') {
@@ -836,9 +833,9 @@ class _SheetListScreenState extends State<SheetListScreen> {
                 }
               },
               itemBuilder: (context) => [
-                const PopupMenuItem(
+                PopupMenuItem(
                   value: '선택',
-                  height: 40,
+                  height: 45.h,
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -850,9 +847,9 @@ class _SheetListScreenState extends State<SheetListScreen> {
                     ],
                   ),
                 ),
-                const PopupMenuItem(
+                PopupMenuItem(
                   enabled: false,
-                  height: 1,
+                  height: 1.h,
                   padding: EdgeInsets.zero,
                   child: Divider(
                     height: 1,
@@ -860,9 +857,9 @@ class _SheetListScreenState extends State<SheetListScreen> {
                     color: Color(0xFFEEEEEE),
                   ),
                 ),
-                const PopupMenuItem(
+                PopupMenuItem(
                   value: '검색',
-                  height: 40,
+                  height: 45.h,
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -880,15 +877,15 @@ class _SheetListScreenState extends State<SheetListScreen> {
         ],
       ),
       body: Padding(
-        padding: const EdgeInsets.all(10),
+        padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 30.h),
         child: Column(
           children: [
             Expanded(
               child: GridView.count(
                 crossAxisCount: 3,
-                childAspectRatio: 0.6,
-                crossAxisSpacing: 16,
-                mainAxisSpacing: 16,
+                childAspectRatio: 0.64.h,
+                crossAxisSpacing: 35.w,
+                mainAxisSpacing: 15.h,
                 children: [
                   if (!_isSearchMode)
                     GestureDetector(
@@ -917,33 +914,32 @@ class _SheetListScreenState extends State<SheetListScreen> {
                       },
                       child: Column(
                         children: [
-                          Expanded(
-                            child: Container(
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(12),
-                                boxShadow: const [
-                                  BoxShadow(
-                                    color: Colors.black12,
-                                    blurRadius: 4,
-                                    offset: Offset(0, 2),
-                                  ),
-                                ],
-                              ),
-                              child: const Center(
-                                child: Icon(
-                                  Icons.add,
-                                  size: 36,
-                                  color: Colors.redAccent,
+                          Container(
+                            height: 220.h,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(12),
+                              boxShadow: const [
+                                BoxShadow(
+                                  color: Colors.black12,
+                                  blurRadius: 4,
+                                  offset: Offset(0, 2),
                                 ),
+                              ],
+                            ),
+                            child: Center(
+                              child: Icon(
+                                Icons.add,
+                                size: 13.sp,
+                                color: Colors.redAccent,
                               ),
                             ),
                           ),
-                          const SizedBox(height: 25),
-                          const Text(
+                          SizedBox(height: 18.h),
+                          Text(
                             '악보 추가',
-                            style:
-                                TextStyle(fontSize: 14, color: Colors.black87),
+                            style: TextStyle(
+                                fontSize: 5.sp, color: Colors.black87),
                           ),
                         ],
                       ),
@@ -956,46 +952,42 @@ class _SheetListScreenState extends State<SheetListScreen> {
                             _confirmPracticeStart(sheet);
                           }
                         },
-                        child: SizedBox(
-                          width: 100,
-                          height: 150,
-                          child: Stack(
-                            children: [
-                              SheetCard(sheet: sheet),
-                              if (_isSelectionMode)
-                                Positioned(
-                                  bottom: 65,
-                                  left: 0,
-                                  right: 0,
-                                  child: GestureDetector(
-                                    onTap: () => _onSheetSelected(sheet),
-                                    child: Container(
-                                      width: 28,
-                                      height: 28,
-                                      decoration: BoxDecoration(
-                                        shape: BoxShape.circle,
-                                        border: Border.all(
-                                          color: sheet.isSelected
-                                              ? Colors.transparent
-                                              : Colors.black26,
-                                          width: 2,
-                                          style: sheet.isSelected
-                                              ? BorderStyle.none
-                                              : BorderStyle.solid,
-                                        ),
+                        child: Stack(
+                          children: [
+                            SheetCard(sheet: sheet),
+                            if (_isSelectionMode)
+                              Positioned(
+                                bottom: 105.h,
+                                left: 0,
+                                right: 0,
+                                child: GestureDetector(
+                                  onTap: () => _onSheetSelected(sheet),
+                                  child: Container(
+                                    width: 35.w,
+                                    height: 35.h,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      border: Border.all(
                                         color: sheet.isSelected
-                                            ? Colors.black54
-                                            : Colors.transparent,
+                                            ? Colors.transparent
+                                            : Colors.black26,
+                                        width: 2,
+                                        style: sheet.isSelected
+                                            ? BorderStyle.none
+                                            : BorderStyle.solid,
                                       ),
-                                      child: sheet.isSelected
-                                          ? const Icon(Icons.check,
-                                              color: Colors.white, size: 18)
-                                          : null,
+                                      color: sheet.isSelected
+                                          ? Colors.black54
+                                          : Colors.transparent,
                                     ),
+                                    child: sheet.isSelected
+                                        ? Icon(Icons.check,
+                                            color: Colors.white, size: 6.sp)
+                                        : null,
                                   ),
                                 ),
-                            ],
-                          ),
+                              ),
+                          ],
                         ),
                       )),
                 ],
@@ -1005,7 +997,7 @@ class _SheetListScreenState extends State<SheetListScreen> {
               if (selectedSheets.length == 1)
                 Container(
                   height: MediaQuery.of(context).size.height * 0.12,
-                  padding: const EdgeInsets.symmetric(vertical: 3),
+                  padding: EdgeInsets.symmetric(vertical: 3.h),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(32),
                     color: Colors.white,
@@ -1041,7 +1033,7 @@ class _SheetListScreenState extends State<SheetListScreen> {
               else if (selectedSheets.length > 1)
                 Container(
                   height: MediaQuery.of(context).size.height * 0.12,
-                  padding: const EdgeInsets.symmetric(vertical: 3),
+                  padding: EdgeInsets.symmetric(vertical: 3.h),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(32),
                     color: Colors.white,
@@ -1079,16 +1071,16 @@ class _SheetListScreenState extends State<SheetListScreen> {
           builder: (context) => SizedBox(
             width: MediaQuery.of(context).size.width * 0.5,
             child: Padding(
-              padding: const EdgeInsets.only(bottom: 20),
+              padding: EdgeInsets.only(bottom: 20.h),
               child: Wrap(
                 children: [
-                  const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 12.0),
+                  Padding(
+                    padding: EdgeInsets.symmetric(vertical: 12.h),
                     child: Center(
                       child: Text(
                         '정렬',
                         style: TextStyle(
-                            fontSize: 18, fontWeight: FontWeight.bold),
+                            fontSize: 7.sp, fontWeight: FontWeight.bold),
                       ),
                     ),
                   ),
@@ -1102,7 +1094,7 @@ class _SheetListScreenState extends State<SheetListScreen> {
         );
       },
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 8),
+        padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 8.h),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(32),
@@ -1120,10 +1112,10 @@ class _SheetListScreenState extends State<SheetListScreen> {
               Icons.swap_vert,
               color: const Color.fromARGB(119, 0, 0, 0),
             ),
-            const SizedBox(width: 8),
+            SizedBox(width: 3.w),
             Text(
               _sortLabel,
-              style: const TextStyle(fontSize: 14, color: Colors.black),
+              style: TextStyle(fontSize: 5.sp, color: Colors.black),
             ),
           ],
         ),
@@ -1138,13 +1130,13 @@ class _SheetListScreenState extends State<SheetListScreen> {
       title: Text(
         label,
         style: TextStyle(
-          fontSize: 16,
+          fontSize: 6.sp,
           fontWeight: FontWeight.w600,
           color: isSelected ? Color(0xffd97d6c) : Color(0xff646464),
         ),
       ),
       trailing: isSelected
-          ? const Icon(Icons.check, color: Color(0xffd97d6c), size: 20)
+          ? Icon(Icons.check, color: Color(0xffd97d6c), size: 9.sp)
           : null,
       onTap: () {
         _onSortSelected(option);
