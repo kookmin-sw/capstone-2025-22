@@ -309,7 +309,9 @@ class _PatternFillMainState extends State<PatternFillMain> {
         bool isCleared = (lastPatternId > index);
         bool isLocked = (lastPatternId + 1 < index);
 
-        return clickedListItem(context, index, isCleared, isLocked);
+        return mounted
+            ? clickedListItem(context, index, isCleared, isLocked)
+            : const SizedBox.shrink();
       }).toList();
     } else {
       print(patterns['errMessage']);
