@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'drum_info_popup.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class DrumBasicsPage extends StatefulWidget {
   const DrumBasicsPage({super.key});
@@ -58,7 +59,7 @@ class _DrumBasicsPageState extends State<DrumBasicsPage> {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 40.0),
+      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 30.h),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -67,7 +68,7 @@ class _DrumBasicsPageState extends State<DrumBasicsPage> {
             child: Text(
               '드럼 기초',
               style: TextStyle(
-                  fontSize: 26,
+                  fontSize: 9.sp,
                   color: Color(0xff595959),
                   fontWeight: FontWeight.w800),
             ),
@@ -82,7 +83,7 @@ class _DrumBasicsPageState extends State<DrumBasicsPage> {
                 final bool isLast = index == stepInfo.length - 1;
                 return Padding(
                   padding: EdgeInsets.only(
-                    bottom: isLast ? 70.0 : 13.0,
+                    bottom: isLast ? 75.h : 15.h,
                   ),
                   child: Container(
                     decoration: BoxDecoration(
@@ -100,8 +101,8 @@ class _DrumBasicsPageState extends State<DrumBasicsPage> {
                       children: [
                         // 왼쪽 포인트 바
                         Container(
-                          width: 12,
-                          height: 80,
+                          width: 4.5.w,
+                          height: 93.h,
                           decoration: const BoxDecoration(
                             color: Color(0xFFD97D6C),
                             borderRadius: BorderRadius.only(
@@ -114,26 +115,26 @@ class _DrumBasicsPageState extends State<DrumBasicsPage> {
                         // 텍스트 내용
                         Expanded(
                           child: Padding(
-                            padding: const EdgeInsets.only(
-                              left: 20.0,
-                              top: 17,
-                              bottom: 18,
+                            padding: EdgeInsets.only(
+                              left: 10.w,
+                              top: 17.h,
+                              bottom: 18.h,
                             ),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
                                   step['title']!,
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.w800,
-                                    fontSize: 16,
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 6.5.sp,
                                     color: Color(0xFF595959),
                                   ),
                                 ),
                                 Text(
                                   step['subtitle']!,
-                                  style: const TextStyle(
-                                    fontSize: 14,
+                                  style: TextStyle(
+                                    fontSize: 5.3.sp,
                                     color: Color(0xFF949494),
                                   ),
                                 ),
@@ -148,8 +149,8 @@ class _DrumBasicsPageState extends State<DrumBasicsPage> {
                           onPressed: () => _showPopup(step['popupTitle']!,
                               step['imagePath']!, step['description']!),
                           color: Colors.black45,
-                          iconSize: 26,
-                          padding: const EdgeInsets.only(right: 20),
+                          iconSize: 15.sp,
+                          padding: EdgeInsets.only(right: 10.w),
                         ),
                       ],
                     ),
