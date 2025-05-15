@@ -369,7 +369,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SingleChildScrollView(
         // 스크롤 가능하도록 설정
-        physics: BouncingScrollPhysics(), // 스크롤 효과
+        physics: ClampingScrollPhysics(), // 스크롤 효과
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
