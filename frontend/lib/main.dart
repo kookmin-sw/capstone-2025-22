@@ -1,4 +1,4 @@
-import 'package:capstone_2025/screens/drumSheetPages/drum_sheet_player.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:capstone_2025/screens/introPages/login_screen_google.dart';
 import 'package:capstone_2025/screens/mainPages/navigation_screens.dart';
 import 'package:capstone_2025/services/api_func.dart';
@@ -6,7 +6,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
