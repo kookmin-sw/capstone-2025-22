@@ -337,7 +337,7 @@ class _DrumSheetPlayerState extends State<DrumSheetPlayer> {
     }
   }
 
-  /// 1차 채점 결과 메시지 처리
+  // 1차 채점 결과 메시지 처리
   void _onWsGradingMessage(Map<String, dynamic> msg) {
     print(
         "▶ 받은 채점 메시지 #${_beatGradingResults.length + 1}: measure=${msg['measureNumber']}, played=${msg['answerOnsetPlayed']}");
@@ -352,7 +352,7 @@ class _DrumSheetPlayerState extends State<DrumSheetPlayer> {
     });
   }
 
-  /// 최종 채점 결과 적용 및 결과 화면 이동
+  // 최종 채점 결과 적용 및 결과 화면 이동
   void _applyGradingResults() {
     print("✅ 1차 채점 완료: measureNumbers = "
         "${_beatGradingResults.map((m) => m['measureNumber']).toList()}");
@@ -363,6 +363,7 @@ class _DrumSheetPlayerState extends State<DrumSheetPlayer> {
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
           builder: (_) => PracticeResultMS(
+            sheetId: widget.sheetId,
             musicTitle: widget.title,
             musicArtist: widget.artist,
             score: initialBeatScore,
@@ -374,18 +375,18 @@ class _DrumSheetPlayerState extends State<DrumSheetPlayer> {
     });
   }
 
-  /// 결과 저장을 위한 practiceInfo 변환
+  // 결과 저장을 위한 practiceInfo 변환
   List<Map<String, dynamic>> get practiceInfo {
     return _beatGradingResults.map((msg) {
       return {
         "measureNumber": msg["measureNumber"],
         "beatScoringResults": List<bool>.from(msg["answerOnsetPlayed"]),
-        "finalScoringResults": <bool>[], // 2차 채점은 아직 없으므로 빈 리스트
+        "finalScoringResults": <bool>[],
       };
     }).toList();
   }
 
-  /// 커서 인덱스 계산 (Helper 메서드)
+  // 커서 인덱스 계산 (Helper 메서드)
   int cursorListIndex(Cursor cursor) {
     final cursorsInMeasure = playbackController.sheetInfo!.cursorList
         .where((c) => c.measureNumber == cursor.measureNumber)
@@ -465,7 +466,7 @@ class _DrumSheetPlayerState extends State<DrumSheetPlayer> {
     }
   }
 
-  /// 1차 채점 데이터로 점수 계산
+  // 1차 채점 데이터로 점수 계산
   int computeScoreFrom1stGrading(List<Map<String, dynamic>> results) {
     // 1) 각 마디별 결과를 하나의 리스트로 병합
     final allBeats =

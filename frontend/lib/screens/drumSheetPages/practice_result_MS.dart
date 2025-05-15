@@ -11,6 +11,7 @@ import 'package:flutter/material.dart';
 class PracticeResultMS extends StatefulWidget {
   const PracticeResultMS({
     super.key,
+    required this.sheetId,
     required this.musicTitle,
     required this.musicArtist,
     required this.score,
@@ -18,6 +19,7 @@ class PracticeResultMS extends StatefulWidget {
     required this.practiceInfo,
   });
 
+  final int sheetId; // 악보 ID
   final String musicTitle; // 제목
   final String musicArtist; // 아티스트
   final int score; // 점수
@@ -258,7 +260,11 @@ class _PracticeResultMSState extends State<PracticeResultMS> {
                                               .withOpacity(0.5),
                                       clickedFunc: () {
                                         openModal(
-                                            context, musicTitle, musicArtist);
+                                            context,
+                                            widget.sheetId,
+                                            musicTitle,
+                                            musicArtist,
+                                            widget.xmlDataString);
                                       },
                                     ),
                                   ),
@@ -276,7 +282,7 @@ class _PracticeResultMSState extends State<PracticeResultMS> {
                                           Color.fromARGB(255, 196, 213, 237),
                                       btnIcon: Icons.list,
                                       clickedFunc: () {
-                                        Navigator.push(
+                                        Navigator.pushReplacement(
                                           context,
                                           MaterialPageRoute(
                                             builder: (context) =>
@@ -408,8 +414,10 @@ Widget modalBtn(BuildContext context, String text, Color backgroundColor,
 
 void openModal(
   BuildContext context,
+  int sheetId,
   String musicTitle,
   String musicArtist,
+  String xmlDataString,
 ) {
   // 모달 열기
   showDialog(
@@ -461,12 +469,14 @@ void openModal(
                   ),
                   onPressed: () {
                     // 다시하기 처리
-                    Navigator.push(
+                    Navigator.pushReplacement(
                       context,
                       MaterialPageRoute(
                         builder: (context) => DrumSheetPlayer(
-                          // 나중에 민지가 만든 페이지로 연결
-                          title: "$musicTitle - $musicArtist",
+                          sheetId: sheetId,
+                          title: musicTitle,
+                          artist: musicArtist,
+                          sheetXmlData: xmlDataString,
                         ),
                       ),
                     );
