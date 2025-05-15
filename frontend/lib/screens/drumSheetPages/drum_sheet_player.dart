@@ -200,20 +200,21 @@ class _DrumSheetPlayerState extends State<DrumSheetPlayer> {
       }
       // 재생 상태 변경 콜백
       ..onPlaybackStateChange = (isPlaying) async {
+        // setState(() {});
+        // if (isPlaying) {
+        //   // 연주 시작 시 identifier 요청
+        //   final identifier = await fetchPracticeIdentifier();
+        //   if (identifier != null) {
+        //     if (_drumRecordingKey.currentState?.isRecording == true) {
+        //       _drumRecordingKey.currentState?.resumeRecording();
+        //     } else {
+        //       _drumRecordingKey.currentState?.startRecording();
+        //     }
+        //   }
+        // } else {
+        //   _drumRecordingKey.currentState?.pauseRecording();
+        // }
         setState(() {});
-        if (isPlaying) {
-          // 연주 시작 시 identifier 요청
-          final identifier = await fetchPracticeIdentifier();
-          if (identifier != null) {
-            if (_drumRecordingKey.currentState?.isRecording == true) {
-              _drumRecordingKey.currentState?.resumeRecording();
-            } else {
-              _drumRecordingKey.currentState?.startRecording();
-            }
-          }
-        } else {
-          _drumRecordingKey.currentState?.pauseRecording();
-        }
       }
       // 카운트다운 업데이트 콜백
       ..onCountdownUpdate = (count) {
