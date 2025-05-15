@@ -811,9 +811,40 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
   @override
   void dispose() {
     _isDisposed = true;
-    cleanupResources();
+
+    // 1) 녹음 중이면 즉시 중지
+    if (_recorder != null && _recorder!.isRecording) {
+      try {
+        _recorder!.stopRecorder();
+      } catch (_) {}
+    }
+    // 2) 녹음기 닫기
+    try {
+      _recorder?.closeRecorder();
+    } catch (_) {}
+
+    // 3) WebSocket 구독 해제 & 연결 종료
+    _stompUnsubscribe?.call();
+    try {
+      _stompClient?.deactivate();
+    } catch (_) {}
+
+    // 4) 타이머 취소
+    _countdownTimer?.cancel();
+    _recordingTimer?.cancel();
+
+    // 5) 스트림 구독 취소
+    _recorderSubscription?.cancel();
+
+    // 6) PlaybackController 콜백 해제
+    widget.playbackController
+      ..onMeasureChange = null
+      ..onCountdownComplete = null
+      ..onPlaybackComplete = null;
+
+    // 7) 애니메이션 컨트롤러 해제
     _overlayController.dispose();
-    widget.playbackController.onMeasureChange = null;
+
     super.dispose();
   }
 
