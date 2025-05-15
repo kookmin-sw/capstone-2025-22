@@ -17,6 +17,7 @@ class NavigationPanel extends StatelessWidget {
       physics: const NeverScrollableScrollPhysics(),
       child: Container(
         width: 105.w, // 네비게이션 바 고정 크기
+        height: MediaQuery.of(context).size.height, // 네비게이션 바 고정 크기
         decoration: BoxDecoration(
           color: Colors.white,
           boxShadow: [
