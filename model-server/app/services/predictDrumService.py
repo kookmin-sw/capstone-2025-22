@@ -1,4 +1,5 @@
 import os
+import tempfile
 from io import BytesIO
 
 import torch
@@ -28,8 +29,15 @@ def split_audio_and_predict(audio_buffer:BytesIO, onset_times:list):
     shift = 0.05 
     
     # 전체 오디오 메모리에 로드
-    audio_buffer.seek(0)
-    y, sr = librosa.load(audio_buffer, sr=None)
+    # audio_buffer.seek(0)
+    # y, sr = librosa.load(audio_buffer, sr=None)
+
+    with tempfile.NamedTemporaryFile(suffix=".aac", delete=True) as tmp:
+        tmp.write(audio_buffer.getbuffer())
+        tmp.flush()
+
+        # librosa로 로드
+        y, sr = librosa.load(tmp.name, sr=None)
 
     predictions = []
     # 온셋별 구간 분할 및 예측
