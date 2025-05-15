@@ -16,37 +16,32 @@ class introPageHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
+    return Stack(
       children: [
-        // 뒤로가기 버튼: 화면의 flex 1 차지
-        Expanded(
-          flex: 1,
-          child: Align(
-            alignment: Alignment.centerLeft,
-            child: IconButton(
-              onPressed: previous
-                  ? () {
-                      Navigator.pop(context);
-                    }
-                  : () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => targetPage),
-                      );
-                    },
-              icon: Icon(
-                Icons.arrow_back_sharp,
-                size: 65,
-                color: Colors.black,
-              ),
+        Positioned(
+          top: 20,
+          left: 20,
+          child: IconButton(
+            onPressed: previous
+                ? () {
+                    Navigator.pop(context);
+                  }
+                : () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => targetPage),
+                    );
+                  },
+            icon: Icon(
+              Icons.arrow_back_sharp,
+              size: 50,
+              color: Color(0xff646464),
             ),
           ),
         ),
-        // 제목: 화면의 flex 2 차지
-        Expanded(
-          flex: 1,
-          child: Center(
+        Center(
+          child: Padding(
+            padding: const EdgeInsets.only(top: 80.0),
             child: Text(
               title,
               style: TextStyle(
@@ -55,11 +50,6 @@ class introPageHeader extends StatelessWidget {
               ),
             ),
           ),
-        ),
-        // 오른쪽 빈 공간: 화면의 flex 1 차지
-        Expanded(
-          flex: 1,
-          child: SizedBox(), // 빈 공간
         ),
       ],
     );
