@@ -6,6 +6,7 @@ import com.capstone.exception.DataNotFoundException;
 import com.capstone.practice.entity.PatternPractice;
 import com.capstone.practice.repository.PatternPracticeRepository;
 import com.capstone.sheet.dto.PatternResponseDto;
+import com.capstone.sheet.dto.PatternWavResponseDto;
 import com.capstone.sheet.entity.Pattern;
 import com.capstone.sheet.repository.PatternRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -74,5 +75,14 @@ public class PatternRetrieveService {
             log.error(e.getMessage(), e);
             throw new InternalServerErrorException("Json Mapping Error");
         }
+    }
+
+    public PatternWavResponseDto findPatternWavInfo(Long patternId){
+        Pattern pattern = patternRepository.findById(patternId)
+                .orElseThrow(() -> new DataNotFoundException("Pattern Not Found"));
+        return PatternWavResponseDto.builder()
+                .patternWav(pattern.getPatternWav())
+                .patternId(pattern.getId())
+                .build();
     }
 }

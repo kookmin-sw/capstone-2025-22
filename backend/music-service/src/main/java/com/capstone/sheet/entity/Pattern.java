@@ -23,6 +23,10 @@ public class Pattern {
     @Column(columnDefinition = "MEDIUMBLOB")
     private byte[] patternInfo;
 
+    @Lob
+    @Column(columnDefinition = "MEDIUMBLOB")
+    private byte[] patternWav;
+
     @Column(columnDefinition = "TEXT")
     private String patternJson;
 }
