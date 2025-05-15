@@ -185,7 +185,7 @@ class _SetNewPwScreenState extends State<SetNewPwScreen> {
                             },
                           );
                           if (response['errMessage'] == null) {
-                            if (response['status'] == 200) {
+                            if (response['status'] == 200)
                               // 비밀번호 변경 성공
                               showDialog(
                                 context: context,
@@ -204,18 +204,12 @@ class _SetNewPwScreenState extends State<SetNewPwScreen> {
                                   );
                                 },
                               );
-                              // 로그인 화면으로 이동
-                              if (mounted) {
-                                Navigator.pushReplacement(
-                                  context,
-                                  MaterialPageRoute(
-                                      builder: (context) => LoginScreen()),
-                                );
-                              }
-                            } else {
-                              // 비밀번호 변경 실패
-                              print("비밀번호 재설정 실패: ${response['errMessage']}");
-                            }
+                            // 로그인 화면으로 이동
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) => LoginScreen()),
+                            );
                           } else {
                             print("비밀번호 재설정 실패: ${response['errMessage']}");
                           }
