@@ -8,10 +8,17 @@ import 'package:capstone_2025/widgets/openSheetModal.dart';
 import 'package:flutter/material.dart';
 
 class PracticeResultPP extends StatefulWidget {
-  const PracticeResultPP({super.key, required this.idx, required this.score});
+  const PracticeResultPP(
+      {super.key,
+      required this.idx,
+      required this.score,
+      required this.xmlDataString,
+      required this.practiceInfo});
 
   final int idx; // 패턴 번호
   final int score; // 점수
+  final String xmlDataString; // musicxml
+  final List<Map<String, dynamic>> practiceInfo; // 1차 채점 결과
 
   @override
   State<PracticeResultPP> createState() => _PracticeResultPPState();
@@ -231,9 +238,8 @@ class _PracticeResultPPState extends State<PracticeResultPP> {
                               clickedFunc: () {
                                 openMusicSheet(
                                   context: context,
-                                  xmlDataString: '',
-                                  practiceInfo: <Map<String,
-                                      dynamic>>[], // TODO
+                                  xmlDataString: widget.xmlDataString,
+                                  practiceInfo: widget.practiceInfo,
                                 );
                               },
                               btnIcon: Icons.insert_drive_file_rounded,
@@ -271,7 +277,7 @@ class _PracticeResultPPState extends State<PracticeResultPP> {
                                           Color.fromARGB(255, 196, 213, 237),
                                       btnIcon: Icons.list,
                                       clickedFunc: () {
-                                        Navigator.push(
+                                        Navigator.pushReplacement(
                                           context,
                                           MaterialPageRoute(
                                             builder: (context) =>
@@ -296,7 +302,7 @@ class _PracticeResultPPState extends State<PracticeResultPP> {
                                           Color.fromARGB(255, 243, 235, 211),
                                       clickedFunc: lvCleared
                                           ? () {
-                                              Navigator.push(
+                                              Navigator.pushReplacement(
                                                 context,
                                                 MaterialPageRoute(
                                                   builder: (context) =>
@@ -497,7 +503,7 @@ void openModal(
                   ),
                   onPressed: () {
                     // 다시하기 처리
-                    Navigator.push(
+                    Navigator.pushReplacement(
                       context,
                       MaterialPageRoute(
                         builder: (context) => PatternFillScreen(
