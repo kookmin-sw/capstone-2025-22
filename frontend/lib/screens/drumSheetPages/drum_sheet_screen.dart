@@ -146,7 +146,14 @@ class _SheetListScreenState extends State<SheetListScreen> {
     if (response.statusCode == 200) {
       print('파일 업로드 성공');
       final Map<String, dynamic> decoded = json.decode(response.body);
-      return Sheet.fromJson(decoded['body']);
+      final body = decoded['body'];
+      try {
+        body['sheetName'] =
+            utf8.decode(body['sheetName'].toString().codeUnits); // 문자열 디코딩
+      } catch (e) {
+        print('문자열 디코딩 실패: $e');
+      }
+      return Sheet.fromJson(body);
     } else {
       throw Exception('파일 업로드 실패 - 상태코드: ${response.statusCode}');
     }

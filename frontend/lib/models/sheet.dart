@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 
 class Sheet {
@@ -23,9 +22,7 @@ class Sheet {
   factory Sheet.fromJson(Map<String, dynamic> json) {
     print("json: ${json}");
     return Sheet(
-      title: json['sheetName'] != null
-          ? utf8.decode(json['sheetName'].toString().runes.toList())
-          : "error", // 제목 디코딩
+      title: json['sheetName'] ?? "error",
       artistName: json['artistName'] ?? "errorName",
       createdDate: json['createdDate'] != null
           ? DateTime.parse(json['createdDate'])
