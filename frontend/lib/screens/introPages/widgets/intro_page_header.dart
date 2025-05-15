@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 // intro 페이지 헤더 : 뒤로가기 버튼 + 제목
 // 제목과 이동할 페이지를 인자로 받음
@@ -19,8 +20,8 @@ class introPageHeader extends StatelessWidget {
     return Stack(
       children: [
         Positioned(
-          top: 20,
-          left: 20,
+          top: 25.h,
+          left: 10.w,
           child: IconButton(
             onPressed: previous
                 ? () {
@@ -33,20 +34,21 @@ class introPageHeader extends StatelessWidget {
                     );
                   },
             icon: Icon(
-              Icons.arrow_back_sharp,
-              size: 50,
+              Icons.arrow_back_ios,
+              size: 14.sp,
               color: Color(0xff646464),
             ),
           ),
         ),
         Center(
           child: Padding(
-            padding: const EdgeInsets.only(top: 80.0),
+            padding: EdgeInsets.only(top: title == "회원가입" ? 30.h : 80.h),
             child: Text(
               title,
               style: TextStyle(
-                fontSize: 30,
-                fontWeight: FontWeight.w900,
+                fontSize: 11.5.sp,
+                fontWeight: FontWeight.w800,
+                color: Colors.black.withOpacity(0.8),
               ),
             ),
           ),
