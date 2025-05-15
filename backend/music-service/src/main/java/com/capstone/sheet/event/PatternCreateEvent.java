@@ -14,4 +14,5 @@ import org.springframework.web.multipart.MultipartFile;
 public class PatternCreateEvent {
     PatternCreateDto patternCreateDto;
     byte[] sheetFile;
+    byte[] patternWav;
 }

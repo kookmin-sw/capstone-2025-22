@@ -28,13 +28,14 @@ public class PatternManageService {
     private final ObjectMapper objectMapper;
 
     @Transactional
-    public PatternResponseDto savePattern(PatternCreateDto createDto, byte[] sheetFile){
+    public PatternResponseDto savePattern(PatternCreateDto createDto, byte[] sheetFile, byte[] patternWav){
         try{
             byte[] sheetXml = sheetToXmlConverter.convertToXml(createDto, sheetFile);
             String sheetJson = objectMapper.writeValueAsString(sheetXmlInfoParser.parseXmlInfo(sheetXml));
             Pattern pattern = patternRepository.save(Pattern.builder()
                     .patternJson(sheetJson)
                     .patternInfo(sheetXml)
+                    .patternWav(patternWav)
                     .patternName(createDto.getPatternName()).build());
             return PatternResponseDto.from(pattern);
         }catch (Exception e){

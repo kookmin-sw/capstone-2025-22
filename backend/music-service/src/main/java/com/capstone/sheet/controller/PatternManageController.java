@@ -28,8 +28,9 @@ public class PatternManageController {
     @Operation(summary = "create pattern data")
     public ResponseEntity<CustomResponseDto<String>> createPattern(
             @RequestPart PatternCreateDto patternCreateDto,
-            @RequestPart MultipartFile sheetFile) throws Exception{
-        eventPublisher.publishEvent(new PatternCreateEvent(patternCreateDto, sheetFile.getBytes()));
+            @RequestPart MultipartFile sheetFile,
+            @RequestPart MultipartFile patternWav) throws Exception{
+        eventPublisher.publishEvent(new PatternCreateEvent(patternCreateDto, sheetFile.getBytes(), patternWav.getBytes()));
         return ApiResponse.success(SuccessFlag.SUCCESS.getLabel());
     }
 

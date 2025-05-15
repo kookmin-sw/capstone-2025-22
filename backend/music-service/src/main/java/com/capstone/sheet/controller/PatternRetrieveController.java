@@ -4,6 +4,8 @@ import com.capstone.dto.musicXml.MeasureInfo;
 import com.capstone.response.ApiResponse;
 import com.capstone.response.CustomResponseDto;
 import com.capstone.sheet.dto.PatternResponseDto;
+import com.capstone.sheet.dto.PatternWavResponseDto;
+import com.capstone.sheet.entity.Pattern;
 import com.capstone.sheet.service.PatternRetrieveService;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
@@ -49,5 +51,11 @@ public class PatternRetrieveController {
             @PathVariable("patternId") Long patternId,
             @RequestParam("measureNumber") String measureNumber){
         return ApiResponse.success(patternRetrieveService.findMeasureInfo(patternId, measureNumber));
+    }
+
+    @GetMapping("/{patternId}/wavs")
+    @Operation(summary = "특정 패턴의 샘플 wav 파일 조회")
+    public ResponseEntity<CustomResponseDto<PatternWavResponseDto>> retrievePatternWav(@PathVariable("patternId") Long patternId){
+        return ApiResponse.success(patternRetrieveService.findPatternWavInfo(patternId));
     }
 }
