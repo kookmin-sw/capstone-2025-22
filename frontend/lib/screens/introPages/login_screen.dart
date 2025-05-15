@@ -7,6 +7,7 @@ import 'package:capstone_2025/screens/introPages/find_pw_screen.dart';
 import 'package:capstone_2025/screens/mainPages/navigation_screens.dart';
 import 'package:capstone_2025/screens/introPages/login_screen_google.dart';
 import 'package:capstone_2025/screens/introPages/widgets/build_text_field.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 /// 일반 로그인 화면
 class LoginScreen extends StatefulWidget {
@@ -122,81 +123,86 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      body: Center(
-        child: Stack(
-          children: [
-            Positioned(
-              top: 20,
-              left: 20,
-              child: IconButton(
-                  onPressed: () {
-                    Navigator.pushAndRemoveUntil(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) => LoginScreenGoogle()),
-                      (route) => false,
-                    );
-                  },
-                  icon: Icon(Icons.arrow_back,
-                      size: 50, color: Color(0xff646464))),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Container(
-                    alignment: Alignment.center,
-                    child: Image.asset(
-                      "assets/images/appLogo.png",
-                      height: MediaQuery.of(context).size.height * 0.16,
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  SizedBox(
-                    width: 400, // 입력 필드의 최대 너비 설정
-                    child: Column(
-                      children: [
-                        buildTextField(
-                          // 아이디 입력 필드
-                          controller: _emailController,
-                          hint: '아이디(이메일)',
-                          obscureText: false, // 가려지지 않음
-                          suffixIcon: null,
-                        ),
-                        const SizedBox(height: 10),
-                        buildTextField(
-                          // 비밀번호 입력 필드
-                          controller: _passwordController,
-                          hint: '비밀번호',
-                          obscureText: !_isPasswordVisible, // 비밀번호 보기 상태 기능 활성화
-                          suffixIcon: IconButton(
-                            // 눈 모양 아이콘 클릭하면 비밀번호 보이게 함
-                            icon: Icon(_isPasswordVisible
-                                ? Icons.visibility
-                                : Icons.visibility_off),
-                            onPressed: () {
-                              // 아이콘 클릭할 때마다 상태 변경
-                              setState(() =>
-                                  _isPasswordVisible = !_isPasswordVisible);
-                            },
-                          ),
-                        ),
-                        if (_errorMessage != null) _buildErrorMessage(),
-                        const SizedBox(height: 10),
-                        _isLoading
-                            ? const CircularProgressIndicator() // 로딩 중이면 로딩스피너 표시
-                            : _buildLoginButton(), // _isLoading이 false이면 로그인 버튼 활성화
-                        _buildBottomLinks(),
-                      ],
-                    ),
-                  ),
-                ],
+      body: SingleChildScrollView(
+        physics: const NeverScrollableScrollPhysics(),
+        child: Center(
+          child: Stack(
+            children: [
+              Positioned(
+                top: 25.h,
+                left: 10.w,
+                child: IconButton(
+                    onPressed: () {
+                      Navigator.pushAndRemoveUntil(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => LoginScreenGoogle()),
+                        (route) => false,
+                      );
+                    },
+                    icon: Icon(Icons.arrow_back_ios,
+                        size: 14.sp, color: Color(0xff646464))),
               ),
-            ),
-          ],
+              Padding(
+                padding: EdgeInsets.symmetric(vertical: 20.w),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Container(
+                      alignment: Alignment.center,
+                      child: Image.asset(
+                        "assets/images/appLogo.png",
+                        height: 95.h,
+                      ),
+                    ),
+                    SizedBox(height: 30.h),
+                    SizedBox(
+                      width: 170.w, // 입력 필드의 최대 너비 설정
+                      child: Column(
+                        children: [
+                          buildTextField(
+                            // 아이디 입력 필드
+                            controller: _emailController,
+                            hint: '아이디(이메일)',
+                            obscureText: false, // 가려지지 않음
+                            suffixIcon: null,
+                          ),
+                          SizedBox(height: 10.h),
+                          buildTextField(
+                            // 비밀번호 입력 필드
+                            controller: _passwordController,
+                            hint: '비밀번호',
+                            obscureText:
+                                !_isPasswordVisible, // 비밀번호 보기 상태 기능 활성화
+                            suffixIcon: IconButton(
+                              // 눈 모양 아이콘 클릭하면 비밀번호 보이게 함
+                              icon: Icon(_isPasswordVisible
+                                  ? Icons.visibility
+                                  : Icons.visibility_off),
+                              onPressed: () {
+                                // 아이콘 클릭할 때마다 상태 변경
+                                setState(() =>
+                                    _isPasswordVisible = !_isPasswordVisible);
+                              },
+                            ),
+                          ),
+                          if (_errorMessage != null) _buildErrorMessage(),
+                          SizedBox(height: 20.h),
+                          _isLoading
+                              ? const CircularProgressIndicator() // 로딩 중이면 로딩스피너 표시
+                              : _buildLoginButton(), // _isLoading이 false이면 로그인 버튼 활성화
+                          _buildBottomLinks(),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -227,10 +233,10 @@ class _LoginScreenState extends State<LoginScreen> {
         backgroundColor: Color(0xFF424242),
       ),
       onPressed: _login, // 로그인 버튼 클릭하면 _login 함수 호출
-      child: const Center(
+      child: Center(
         child: Text(
           '로그인',
-          style: TextStyle(fontSize: 15.0, color: Colors.white),
+          style: TextStyle(fontSize: 6.sp, color: Colors.white),
         ),
       ),
     );
@@ -245,14 +251,16 @@ class _LoginScreenState extends State<LoginScreen> {
           // '비밀번호 찾기' 버튼
           onPressed: () => Navigator.push(
               context, MaterialPageRoute(builder: (_) => const FindPwScreen())),
-          child: const Text('비밀번호 찾기', style: TextStyle(fontSize: 13)),
+          child: Text('비밀번호 찾기',
+              style: TextStyle(fontSize: 5.5.sp, color: Colors.black54)),
         ),
         const Text('|'),
         TextButton(
           // '회원가입' 버튼
           onPressed: () => Navigator.push(
               context, MaterialPageRoute(builder: (_) => const SignUpScreen())),
-          child: const Text('회원가입', style: TextStyle(fontSize: 13)),
+          child: Text('회원가입',
+              style: TextStyle(fontSize: 5.5.sp, color: Colors.black54)),
         ),
       ],
     );

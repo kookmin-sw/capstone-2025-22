@@ -4,8 +4,6 @@ import 'package:capstone_2025/screens/introPages/widgets/intro_page_header.dart'
 import 'package:capstone_2025/services/api_func.dart';
 import 'package:capstone_2025/services/storage_service.dart';
 import 'package:flutter/material.dart';
-import 'dart:convert';
-import 'package:http/http.dart' as http;
 
 // 사용자가 본인 인증 완료 후 새로운 비밀번호를 설정하는 화면
 class SetNewPwScreen extends StatefulWidget {

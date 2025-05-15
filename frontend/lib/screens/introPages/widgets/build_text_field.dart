@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 // ignore: camel_case_types
 class buildTextField extends StatelessWidget {
@@ -22,7 +23,7 @@ class buildTextField extends StatelessWidget {
       obscureText: obscureText, // true이면 값을 .로 표시(비밀번호 필드)
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: TextStyle(fontSize: 15),
+        hintStyle: TextStyle(fontSize: 5.5.sp),
         filled: true,
         fillColor: Colors.white, // 배경색 흰색으로 설정
         border: OutlineInputBorder(
