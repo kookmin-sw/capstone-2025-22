@@ -25,6 +25,7 @@ class _PatternFillMainState extends State<PatternFillMain> {
 
   Future<void> loadPatternList() async {
     _patternWidgets = await buildPatternList();
+    if (!mounted) return;
     setState(() {
       _isLoading = false;
     });
