@@ -10,6 +10,7 @@ import com.capstone.sheet.dto.SheetResponseDto;
 import com.capstone.sheet.dto.SheetUpdateRequestDto;
 import com.capstone.sheet.service.SheetManageService;
 import com.capstone.sheet.service.SheetUpdateService;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Encoding;
 import org.springframework.http.MediaType;
@@ -32,6 +33,7 @@ public class SheetManageController {
      * @param sheetFile 악보 파일 (pdf 혹은 이미지)
     * */
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(summary = "create user's sheet")
     public ResponseEntity<CustomResponseDto<SheetResponseDto>> createSheet(
             @RequestPart("sheetCreateMeta") SheetCreateMeta sheetCreateMeta,
             @RequestPart("sheetFile") MultipartFile sheetFile){
@@ -44,6 +46,7 @@ public class SheetManageController {
      * @return SheetResponseDto
     * */
     @PutMapping("/{userSheetId}/name")
+    @Operation(summary = "update user's sheet name")
     public ResponseEntity<CustomResponseDto<SheetResponseDto>> updateSheetName(
             @PathVariable("userSheetId") int userSheetId,
             @RequestBody SheetUpdateRequestDto requestDto) {
@@ -63,6 +66,7 @@ public class SheetManageController {
      * @return SheetResponseDto
      * */
     @PutMapping("/{userSheetId}/color")
+    @Operation(summary = "update user's sheet color")
     public ResponseEntity<CustomResponseDto<SheetResponseDto>> updateSheetColor(
     @PathVariable("userSheetId") int userSheetId,
     @RequestBody SheetUpdateRequestDto requestDto) {
@@ -82,6 +86,7 @@ public class SheetManageController {
      * @return valid | invalid
      * */
     @DeleteMapping("")
+    @Operation(summary = "delete user's sheet by id list")
     public ResponseEntity<CustomResponseDto<String>> deleteSheet(
             @RequestParam("email") String email,
             @RequestBody SheetListRequestDto requestDto) {
