@@ -529,13 +529,25 @@ class _SheetListScreenState extends State<SheetListScreen> {
                           ),
                         ),
                         onPressed: () async {
-                          // 연주 시작 페이지로 이동하는 코드 추가하기
+                          // Show loading dialog
+                          showDialog(
+                            context: context,
+                            barrierDismissible: false,
+                            builder: (_) => const Dialog(
+                              backgroundColor: Colors.transparent,
+                              child: Center(
+                                child: CircularProgressIndicator(),
+                              ),
+                            ),
+                          );
+                          // 연주 시작 페이지로 이동
                           final response =
                               await getHTTP('/sheets/${sheet.sheetId}', {});
                           print("sheetID: ${sheet.sheetId}");
 
                           if (response['body']['sheetInfo'] == null) {
-                            Navigator.of(context).pop();
+                            Navigator.of(context).pop(); // close loading dialog
+                            Navigator.of(context).pop(); // close confirm dialog
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
                                 content: const Text(
@@ -555,7 +567,8 @@ class _SheetListScreenState extends State<SheetListScreen> {
                               ),
                             );
                           } else {
-                            Navigator.of(context).pop();
+                            Navigator.of(context).pop(); // close loading dialog
+                            Navigator.of(context).pop(); // close confirm dialog
                             Navigator.push(
                               context,
                               MaterialPageRoute(
