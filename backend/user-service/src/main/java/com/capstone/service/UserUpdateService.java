@@ -42,9 +42,6 @@ public class UserUpdateService {
             throw new InvalidRequestException("Invalid email token : expired or invalid");
         }
         String email = jwtUtils.getUserEmail(updateDto.getEmailToken());
-        if(!authClientService.findEmailTokenSync(email).equals(updateDto.getEmailToken())){
-            throw new InvalidTokenException("Invalid email token : expired or invalid");
-        }
         String encodedPassword = passwordEncoder.encode(updateDto.getNewPassword());
         User user = userRepository.findByEmail(email)
                 .orElseThrow(()->new InvalidUserInfoException("User not found"));
