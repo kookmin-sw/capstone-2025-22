@@ -88,7 +88,10 @@ class _LoginScreenGoogleState extends State<LoginScreenGoogle> {
   // Response 받은 정보들 저장하는 함수
   Future<void> saveUserInfo(Map<String, dynamic> userInfo) async {
     await storage.write(key: "user_email", value: userInfo["email"]);
-    await storage.write(key: "user_name", value: userInfo["name"]);
+    await storage.write(
+      key: 'user_name',
+      value: utf8.decode(userInfo["name"].toString().codeUnits),
+    );
     await storage.write(key: "access_token", value: userInfo["access_token"]);
     await storage.write(key: "refresh_token", value: userInfo["refresh_token"]);
   }

@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:capstone_2025/screens/introPages/login_screen_google.dart';
 import 'package:capstone_2025/screens/introPages/widgets/intro_page_header.dart';
 import 'package:capstone_2025/services/api_func.dart';
@@ -257,7 +259,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
   Future<void> saveUserInfo(Map<String, dynamic> userInfo) async {
     // secure Storage에 저장
     await storage.write(key: "user_email", value: userInfo["email"]);
-    await storage.write(key: "user_name", value: userInfo["name"]);
+    await storage.write(
+      key: 'user_name',
+      value: utf8.decode(userInfo["name"].toString().codeUnits),
+    );
   }
 
   // 회원가입 완료 여부 확인 함수
