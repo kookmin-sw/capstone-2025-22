@@ -13,33 +13,37 @@ class NavigationPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 105.w, // 네비게이션 바 고정 크기
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(color: Colors.black26, blurRadius: 10, offset: Offset(3, 0))
-        ],
-      ),
-      child: Column(
-        // 네비게이션 바 메뉴
-        children: [
-          SizedBox(height: 35.h),
-          Container(
-            alignment: Alignment.center,
-            child: Image.asset('assets/images/appLogo.png'),
-            height: 55.h,
-          ),
-          SizedBox(
-            height: 10.h,
-          ),
-          // 네비게이션 바 메뉴 아이템
-          _navItem(FaIcon(FontAwesomeIcons.drum), "드럼 기초", 0),
-          _navItem(FaIcon(FontAwesomeIcons.handsClapping), "메트로놈", 1),
-          _navItem(FaIcon(FontAwesomeIcons.music), "패턴 및 필인 연습", 2),
-          _navItem(FaIcon(FontAwesomeIcons.sliders), "악보 연습", 3),
-          _navItem(FaIcon(FontAwesomeIcons.circleUser), "마이페이지", 4),
-        ],
+    return SingleChildScrollView(
+      physics: const NeverScrollableScrollPhysics(),
+      child: Container(
+        width: 105.w, // 네비게이션 바 고정 크기
+        decoration: BoxDecoration(
+          color: Colors.white,
+          boxShadow: [
+            BoxShadow(
+                color: Colors.black26, blurRadius: 10, offset: Offset(3, 0))
+          ],
+        ),
+        child: Column(
+          // 네비게이션 바 메뉴
+          children: [
+            SizedBox(height: 35.h),
+            Container(
+              alignment: Alignment.center,
+              child: Image.asset('assets/images/appLogo.png'),
+              height: 55.h,
+            ),
+            SizedBox(
+              height: 10.h,
+            ),
+            // 네비게이션 바 메뉴 아이템
+            _navItem(FaIcon(FontAwesomeIcons.drum), "드럼 기초", 0),
+            _navItem(FaIcon(FontAwesomeIcons.handsClapping), "메트로놈", 1),
+            _navItem(FaIcon(FontAwesomeIcons.music), "패턴 및 필인 연습", 2),
+            _navItem(FaIcon(FontAwesomeIcons.sliders), "악보 연습", 3),
+            _navItem(FaIcon(FontAwesomeIcons.circleUser), "마이페이지", 4),
+          ],
+        ),
       ),
     );
   }
