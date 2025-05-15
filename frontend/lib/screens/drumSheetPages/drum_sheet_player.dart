@@ -271,7 +271,8 @@ class _DrumSheetPlayerState extends State<DrumSheetPlayer> {
             '<?xml version="1.0" encoding="UTF-8"?>\n$xmlDataString';
       }
 
-      // 5. OSMD 서비스 시작
+      // 5. 기존에 띄워진 서버가 있으면 닫아주고, 다시 렌더링 시작
+      await osmdService.dispose();
       await osmdService.startOSMDService(
         xmlData: utf8.encode(xmlDataString),
         pageWidth: 1080,
@@ -401,6 +402,8 @@ class _DrumSheetPlayerState extends State<DrumSheetPlayer> {
   @override
   void dispose() {
     // 리소스 해제
+    // OSMDService 서버도 닫아주기
+    osmdService.dispose();
     _recordingDataTimer?.cancel();
     super.dispose();
   }
