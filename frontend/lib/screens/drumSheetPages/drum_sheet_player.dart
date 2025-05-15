@@ -1,3 +1,5 @@
+// ignore_for_file: avoid_print
+
 import 'dart:io';
 import 'dart:async';
 import 'dart:convert';
@@ -269,7 +271,8 @@ class _DrumSheetPlayerState extends State<DrumSheetPlayer> {
             '<?xml version="1.0" encoding="UTF-8"?>\n$xmlDataString';
       }
 
-      // 5. OSMD 서비스 시작
+      // 5. 기존에 띄워진 서버가 있으면 닫아주고, 다시 렌더링 시작
+      await osmdService.dispose();
       await osmdService.startOSMDService(
         xmlData: utf8.encode(xmlDataString),
         pageWidth: 1080,
@@ -399,71 +402,10 @@ class _DrumSheetPlayerState extends State<DrumSheetPlayer> {
   @override
   void dispose() {
     // 리소스 해제
+    // OSMDService 서버도 닫아주기
+    osmdService.dispose();
     _recordingDataTimer?.cancel();
     super.dispose();
-  }
-
-  /// 리소스 정리 및 녹음 중지
-  void _cleanupResourcesAndStopRecording() {
-    // 1. 녹음 중지
-    final drumRecordingState = _drumRecordingKey.currentState;
-    if (drumRecordingState != null && drumRecordingState.isRecording) {
-      drumRecordingState.stopRecording();
-    }
-
-    // 2. 결과 및 리소스 정리
-    _beatGradingResults.clear();
-    playbackController.missedCursors.clear();
-    _drumRecordingKey.currentState?.cleanupResources();
-    _recordingDataTimer?.cancel();
-  }
-
-  /// 재시작 처리
-  void _handleReset() {
-    playbackController.stopPlayback();
-
-    showDialog(
-      context: context,
-      barrierDismissible: true,
-      builder: (_) => ConfirmationDialog(
-        message: "처음부터 다시 연주하시겠습니까?",
-        onConfirm: () async {
-          Navigator.of(context).pop();
-
-          // 1. 녹음 중이면 중지하고 리소스 정리
-          final recorder = _drumRecordingKey.currentState;
-          if (recorder?.isRecording == true) {
-            await recorder!.stopRecording();
-          }
-
-          // 2. 상태 리셋
-          setState(() {
-            _currentMeasureOneBased = 0;
-            _beatGradingResults.clear();
-            playbackController.missedCursors.clear();
-            playbackController.resetToStart();
-          });
-        },
-        onCancel: () {
-          Navigator.of(context).pop();
-        },
-      ),
-    );
-  }
-
-  /// 재생/일시정지 토글
-  void _togglePlayback() async {
-    if (playbackController.isPlaying) {
-      // 재생 중이면 일시정지 & 녹음 중지
-      playbackController.stopPlayback();
-      _drumRecordingKey.currentState?.pauseRecording();
-    } else {
-      setState(() {
-        _beatGradingResults.clear();
-        playbackController.missedCursors.clear();
-      });
-      playbackController.showCountdownAndStart();
-    }
   }
 
   // 1차 채점 데이터로 점수 계산
