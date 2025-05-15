@@ -204,40 +204,51 @@ class _FindPwScreenState extends State<FindPwScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       backgroundColor: Theme.of(context).scaffoldBackgroundColor, // 테마 공유해서 사용
-      body: Center(
-        child: Column(
-          children: [
-            introPageHeader(title: '본인 확인', targetPage: LoginScreen()),
-            const Text("본인인증을 위해 가입하신 이메일 주소로 인증번호를 발송합니다."),
-            const SizedBox(height: 30),
-            SizedBox(
-              width: 450,
-              child: Column(
-                children: [
-                  _buildTextField(
-                    controller: _emailController,
-                    hint: '이메일',
-                    buttonText: '전송',
-                    onButtonPressed: _sendVerificationEmail,
-                  ),
-                  _buildMessageText(_emailMessage, _emailMessageColor),
-                  const SizedBox(height: 5),
-                  _buildTextField(
-                    controller: _codeController,
-                    hint: '인증번호',
-                    timerText:
-                        _isTimerRunning ? _formatTime(_timeRemaining) : null,
-                    buttonText: '확인',
-                    onButtonPressed: _verifyCode,
-                  ),
-                  _buildMessageText(_codeMessage, _codeMessageColor),
-                ],
+      body: SingleChildScrollView(
+        physics: const NeverScrollableScrollPhysics(),
+        child: Center(
+          child: Column(
+            children: [
+              introPageHeader(title: '비밀번호 재설정', targetPage: LoginScreen()),
+              SizedBox(height: 5.h),
+              Text(
+                "본인인증을 위해 가입하신 이메일 주소로 인증번호를 발송합니다.",
+                style: TextStyle(
+                    fontSize: 5.sp,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.black54),
               ),
-            ),
-            const SizedBox(height: 20),
-            _buildNextButton(),
-          ],
+              SizedBox(height: 30.h),
+              SizedBox(
+                width: 170.w,
+                child: Column(
+                  children: [
+                    _buildTextField(
+                      controller: _emailController,
+                      hint: '이메일',
+                      buttonText: '전송',
+                      onButtonPressed: _sendVerificationEmail,
+                    ),
+                    _buildMessageText(_emailMessage, _emailMessageColor),
+                    SizedBox(height: 2.h),
+                    _buildTextField(
+                      controller: _codeController,
+                      hint: '인증번호',
+                      timerText:
+                          _isTimerRunning ? _formatTime(_timeRemaining) : null,
+                      buttonText: '확인',
+                      onButtonPressed: _verifyCode,
+                    ),
+                    _buildMessageText(_codeMessage, _codeMessageColor),
+                  ],
+                ),
+              ),
+              SizedBox(height: 20.h),
+              _buildNextButton(),
+            ],
+          ),
         ),
       ),
     );
@@ -254,13 +265,14 @@ class _FindPwScreenState extends State<FindPwScreen> {
     return Row(
       children: [
         Expanded(
+          flex: 9,
           child: Stack(
             children: [
               TextField(
                 controller: controller,
                 decoration: InputDecoration(
                   hintText: hint,
-                  hintStyle: TextStyle(fontSize: 15),
+                  hintStyle: TextStyle(fontSize: 5.5.sp),
                   filled: true,
                   fillColor: Colors.white,
                   border: OutlineInputBorder(
@@ -280,14 +292,14 @@ class _FindPwScreenState extends State<FindPwScreen> {
               // 타이머 추가
               if (timerText != null)
                 Positioned(
-                  top: 18,
-                  right: 15, // 타이머를 오른쪽으로 배치
+                  top: 20.h,
+                  right: 7.w, // 타이머를 오른쪽으로 배치
 
                   child: Text(
                     timerText,
                     style: TextStyle(
-                      fontSize: 15,
-                      color: Color(0xFFCF8A7A),
+                      fontSize: 6.sp,
+                      color: Colors.red,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -295,21 +307,24 @@ class _FindPwScreenState extends State<FindPwScreen> {
             ],
           ),
         ),
-        SizedBox(width: 10),
-        ElevatedButton(
-          onPressed: (buttonText == "전송" && !_isEmailButtonEnabled)
-              ? null
-              : onButtonPressed,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFFCF8A7A),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12.0),
+        SizedBox(width: 5.w),
+        Expanded(
+          flex: 2,
+          child: ElevatedButton(
+            onPressed: (buttonText == "전송" && !_isEmailButtonEnabled)
+                ? null
+                : onButtonPressed,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFCF8A7A),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12.0),
+              ),
+              padding: EdgeInsets.symmetric(vertical: 6.w),
             ),
-            padding: EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
-          ),
-          child: Text(
-            buttonText,
-            style: TextStyle(color: Colors.white),
+            child: Text(
+              buttonText,
+              style: TextStyle(color: Colors.white),
+            ),
           ),
         ),
       ],
@@ -321,8 +336,10 @@ class _FindPwScreenState extends State<FindPwScreen> {
     return Align(
       alignment: Alignment.centerLeft, // 왼쪽 정렬
       child: Padding(
-        padding: const EdgeInsets.only(left: 8.0),
-        child: Text(message, style: TextStyle(color: color)),
+        padding: EdgeInsets.only(left: 1.w, top: 1.h),
+        child: Text(message,
+            style: TextStyle(
+                color: color, fontSize: 5.sp, fontWeight: FontWeight.w500)),
       ),
     );
   }
@@ -330,13 +347,13 @@ class _FindPwScreenState extends State<FindPwScreen> {
   // 다음 버튼
   Widget _buildNextButton() {
     return SizedBox(
-      width: 300,
+      width: 135.w,
       child: ElevatedButton(
         style: ElevatedButton.styleFrom(
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12.0),
           ),
-          padding: EdgeInsets.symmetric(vertical: 16.0),
+          padding: EdgeInsets.symmetric(vertical: 20.h),
           backgroundColor: Colors.grey[800],
         ),
         onPressed: _isCodeValid
@@ -353,7 +370,7 @@ class _FindPwScreenState extends State<FindPwScreen> {
             : null, // 인증 실패 시 버튼 비활성화
         child: Text(
           '다음',
-          style: TextStyle(fontSize: 15.0, color: Colors.white),
+          style: TextStyle(fontSize: 6.sp, color: Colors.white),
         ),
       ),
     );
