@@ -1,7 +1,9 @@
+import 'dart:io';
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:flutter_sound/flutter_sound.dart' as fs;
 import 'package:stomp_dart_client/stomp_dart_client.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -104,6 +106,23 @@ class _DrumSheetPlayerState extends State<DrumSheetPlayer> {
     required List<dynamic> lineBounds,
     required int totalMeasures,
   }) async {
+    // 악보 상세 페이지에서 악보 전체 이미지 사용하기 위해 로컬에 저장
+    try {
+      final dir = await getApplicationDocumentsDirectory();
+      final previewPath = '${dir.path}/sheet_preview_${widget.sheetId}.png';
+      final file = File(previewPath);
+
+      if (!await file.exists()) {
+        // 파일이 없을 때만 생성
+        await file.writeAsBytes(base64Image, flush: true);
+        debugPrint('📁 preview 이미지 저장: $previewPath');
+      } else {
+        debugPrint('📁 preview 이미지 이미 존재, 스킵');
+      }
+    } catch (e) {
+      debugPrint('⚠️ Preview save failed: $e');
+    }
+
     try {
       // 1. 기본 데이터 추출
       final int totalLines = (json['lineCount'] is int)
