@@ -42,6 +42,7 @@ class _MyPageState extends State<MyPage> {
 
   // Secure Storage에서 데이터 불러와서 상태 업데이트
   Future<void> _loadUserData() async {
+    if (!mounted) return;
     setState(() => _isLoading = true);
     // Secure Storage에서 사용자 데이터 불러오기
     String? storedEmail = await storage.read(key: 'user_email');
@@ -54,12 +55,14 @@ class _MyPageState extends State<MyPage> {
     };
     if (infoQueryParam["email"] == "") {
       print("이메일 정보가 없습니다.");
+      if (!mounted) return;
       setState(() => _isLoading = false);
       return;
     }
 
     if (storedAccessToken == null) {
       print("액세스 토큰 정보가 없습니다.");
+      if (!mounted) return;
       setState(() => _isLoading = false);
       return;
     }
@@ -68,10 +71,7 @@ class _MyPageState extends State<MyPage> {
 
     if (clientInfo['errMessage'] == null) {
       // 정상적으로 정보 받아온 경우
-      if (!mounted) {
-        setState(() => _isLoading = false);
-        return;
-      }
+      if (!mounted) return;
       setState(() {
         profileImage = clientInfo["body"]["profileImage"];
         email = clientInfo["body"]["email"];
@@ -82,6 +82,7 @@ class _MyPageState extends State<MyPage> {
     } else {
       print("프로필 이미지 정보가 없습니다.");
     }
+    if (!mounted) return;
     setState(() => _isLoading = false);
   }
 
