@@ -130,7 +130,14 @@ class _LoginScreenState extends State<LoginScreen> {
               top: 20,
               left: 20,
               child: IconButton(
-                  onPressed: Navigator.of(context).pop,
+                  onPressed: () {
+                    Navigator.pushAndRemoveUntil(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => LoginScreenGoogle()),
+                      (route) => false,
+                    );
+                  },
                   icon: Icon(Icons.arrow_back,
                       size: 50, color: Color(0xff646464))),
             ),
