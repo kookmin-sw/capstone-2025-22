@@ -14,53 +14,54 @@ class PatternFillMain extends StatefulWidget {
 }
 
 class _PatternFillMainState extends State<PatternFillMain> {
+  bool _isLoading = true;
+  List<Widget> _patternWidgets = [];
+
+  @override
+  void initState() {
+    super.initState();
+    loadPatternList();
+  }
+
+  Future<void> loadPatternList() async {
+    _patternWidgets = await buildPatternList();
+    setState(() {
+      _isLoading = false;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Column(
-        children: [
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                // crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Expanded(
-                    flex: 3,
-                    child: Center(
-                      child: linedText("LEVEL", 35, Colors.black45,
-                          Colors.white, 5.5), // 테두리 있는 텍스트
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : Column(
+              children: [
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      children: [
+                        Expanded(
+                          flex: 3,
+                          child: Center(
+                            child: linedText(
+                                "LEVEL", 35, Colors.black45, Colors.white, 5.5),
+                          ),
+                        ),
+                        Spacer(flex: 1),
+                        Expanded(
+                          flex: 20,
+                          child: SingleChildScrollView(
+                            child: Column(children: _patternWidgets),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  Spacer(flex: 1),
-                  Expanded(
-                    flex: 20,
-                    child: SingleChildScrollView(
-                      child: Column(
-                        children: [
-                          FutureBuilder<List<Widget>>(
-                            future: buildPatternList(),
-                            builder: (context, snapshot) {
-                              if (snapshot.connectionState ==
-                                  ConnectionState.waiting) {
-                                return const CircularProgressIndicator();
-                              } else if (snapshot.hasError) {
-                                return Text('에러 발생: ${snapshot.error}');
-                              } else {
-                                return Column(children: snapshot.data ?? []);
-                              }
-                            },
-                          ),
-                        ],
-                      ),
-                    ),
-                  )
-                ],
-              ),
+                ),
+              ],
             ),
-          ),
-        ],
-      ),
     );
   }
 
