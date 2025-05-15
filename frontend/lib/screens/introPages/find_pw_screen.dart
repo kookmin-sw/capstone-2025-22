@@ -18,6 +18,8 @@ class FindPwScreen extends StatefulWidget {
 }
 
 class _FindPwScreenState extends State<FindPwScreen> {
+  String emailToken = "";
+
   Timer? _timer; // 타이머 객체
   int _timeRemaining = 180; // 타이머 초기값(3분)
   bool _isTimerRunning = false; // 타이머가 실행 여부
@@ -31,7 +33,9 @@ class _FindPwScreenState extends State<FindPwScreen> {
 
   final _emailController = TextEditingController(); // 이메일 입력 컨트롤러
   final _codeController = TextEditingController(); // 인증번호 입력 컨트롤러
-  final _storage = const FlutterSecureStorage(); // 보안 저장소 객체 (이메일 토큰 저장 용도)
+
+  // 이메일 버튼 활성화 상태 변수
+  bool _isEmailButtonEnabled = true;
 
   @override
   void dispose() {
@@ -55,7 +59,10 @@ class _FindPwScreenState extends State<FindPwScreen> {
       } else {
         // 시간이 0이 되면 _isTimerRunning을 false로 변경 (타이머 중지)
         _timer?.cancel(); // 타이머 종료
-        setState(() => _isTimerRunning = false);
+        setState(() {
+          _isTimerRunning = false;
+          _isEmailButtonEnabled = true; // 타이머 만료 시 이메일 버튼 활성화
+        });
         _updateCodeMessage("인증번호 시간이 만료되었습니다. 이메일을 다시 전송해주세요.", Colors.red);
         _updateEmailMessage("", Colors.green); // 메시지 비우기
       }
@@ -107,6 +114,11 @@ class _FindPwScreenState extends State<FindPwScreen> {
       return;
     }
 
+    showLoadingDialog(context); // Show loading
+    setState(() {
+      _isEmailButtonEnabled = false;
+    });
+
     final Map<String, String> queryParam = {
       // API를 통해 전달할 param
       "email": email,
@@ -115,6 +127,8 @@ class _FindPwScreenState extends State<FindPwScreen> {
     // 인증 코드 전송
     Map<String, dynamic> resData =
         await getHTTP("/verification/auth-codes", queryParam);
+
+    if (Navigator.canPop(context)) Navigator.pop(context); // Close loading
 
     if (resData["body"] == "valid") {
       print("이메일 전송 성공");
@@ -160,8 +174,7 @@ class _FindPwScreenState extends State<FindPwScreen> {
 
     if (resData["body"] != null) {
       // 이메일 토큰 받아서 저장
-      await _storage.write(
-          key: 'email_token', value: resData['body']['emailToken']);
+      emailToken = resData['body']['emailToken'];
       _updateCodeMessage("인증되었습니다.", Colors.green);
       setState(() {
         _isCodeValid = true;
@@ -190,53 +203,41 @@ class _FindPwScreenState extends State<FindPwScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return ScreenUtilInit(
-      designSize: const Size(375, 812),
-      minTextAdapt: true,
-      splitScreenMode: true,
-      child: Scaffold(
-        backgroundColor:
-            Theme.of(context).scaffoldBackgroundColor, // 테마 공유해서 사용
-        body: Center(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20.0),
-            child: SingleChildScrollView(
+    return Scaffold(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor, // 테마 공유해서 사용
+      body: Center(
+        child: Column(
+          children: [
+            introPageHeader(title: '본인 확인', targetPage: LoginScreen()),
+            const Text("본인인증을 위해 가입하신 이메일 주소로 인증번호를 발송합니다."),
+            const SizedBox(height: 30),
+            SizedBox(
+              width: 450,
               child: Column(
                 children: [
-                  introPageHeader(title: '본인 확인', targetPage: LoginScreen()),
-                  const Text("본인인증을 위해 가입하신 이메일 주소로 인증번호를 발송합니다."),
-                  const SizedBox(height: 30),
-                  SizedBox(
-                    width: 450,
-                    child: Column(
-                      children: [
-                        _buildTextField(
-                          controller: _emailController,
-                          hint: '이메일',
-                          buttonText: '전송',
-                          onButtonPressed: _sendVerificationEmail,
-                        ),
-                        _buildMessageText(_emailMessage, _emailMessageColor),
-                        const SizedBox(height: 5),
-                        _buildTextField(
-                          controller: _codeController,
-                          hint: '인증번호',
-                          timerText: _isTimerRunning
-                              ? _formatTime(_timeRemaining)
-                              : null,
-                          buttonText: '확인',
-                          onButtonPressed: _verifyCode,
-                        ),
-                        _buildMessageText(_codeMessage, _codeMessageColor),
-                      ],
-                    ),
+                  _buildTextField(
+                    controller: _emailController,
+                    hint: '이메일',
+                    buttonText: '전송',
+                    onButtonPressed: _sendVerificationEmail,
                   ),
-                  const SizedBox(height: 20),
-                  _buildNextButton(),
+                  _buildMessageText(_emailMessage, _emailMessageColor),
+                  const SizedBox(height: 5),
+                  _buildTextField(
+                    controller: _codeController,
+                    hint: '인증번호',
+                    timerText:
+                        _isTimerRunning ? _formatTime(_timeRemaining) : null,
+                    buttonText: '확인',
+                    onButtonPressed: _verifyCode,
+                  ),
+                  _buildMessageText(_codeMessage, _codeMessageColor),
                 ],
               ),
             ),
-          ),
+            const SizedBox(height: 20),
+            _buildNextButton(),
+          ],
         ),
       ),
     );
@@ -296,7 +297,9 @@ class _FindPwScreenState extends State<FindPwScreen> {
         ),
         SizedBox(width: 10),
         ElevatedButton(
-          onPressed: onButtonPressed,
+          onPressed: (buttonText == "전송" && !_isEmailButtonEnabled)
+              ? null
+              : onButtonPressed,
           style: ElevatedButton.styleFrom(
             backgroundColor: const Color(0xFFCF8A7A),
             shape: RoundedRectangleBorder(
@@ -341,8 +344,9 @@ class _FindPwScreenState extends State<FindPwScreen> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) =>
-                        const SetNewPwScreen(), // '다음' 버튼 클릭하면 페이지 이동.
+                    builder: (context) => SetNewPwScreen(
+                      emailToken: emailToken,
+                    ), // '다음' 버튼 클릭하면 페이지 이동.
                   ),
                 );
               }
@@ -354,4 +358,20 @@ class _FindPwScreenState extends State<FindPwScreen> {
       ),
     );
   }
+}
+
+// 로딩 다이얼로그 함수
+void showLoadingDialog(BuildContext context) {
+  showDialog(
+    context: context,
+    barrierDismissible: false,
+    builder: (context) {
+      return const Dialog(
+        backgroundColor: Colors.transparent,
+        child: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    },
+  );
 }
