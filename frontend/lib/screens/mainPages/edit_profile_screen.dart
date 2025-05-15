@@ -2,6 +2,7 @@ import 'dart:io'; // 파일 및 디렉토리 관련 기능 제공
 import 'dart:convert'; // JSON 인코딩 및 디코딩을 위해 필요
 import 'dart:typed_data'; // 바이트 데이터를 다루기 위해 필요
 import 'package:capstone_2025/services/api_func.dart';
+import 'package:capstone_2025/services/storage_service.dart';
 import 'package:flutter/material.dart'; // Flutter UI 요소 사용
 import 'package:http/http.dart' as http; // HTTP 요청 위해 사용
 import 'package:http_parser/http_parser.dart'; // HTTP 요청에서 파일 업로드 시 사용
@@ -25,9 +26,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       TextEditingController(); // 이메일 입력 필드 컨트롤러
   final TextEditingController _nicknameController =
       TextEditingController(); // 닉네임 입력 필드 컨트롤러
-
-  // secure storage
-  final _storage = const FlutterSecureStorage();
 
   // Secure Storage 또는 api로부터 불러온 사용자 정보 저장하는 변수
   String? email;
@@ -64,9 +62,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   /// Secure Storage 또는 api로부터 데이터 불러와 UI 업데이트
   Future<void> _loadUserData() async {
-    email = await _storage.read(key: 'user_email');
-    nickName = await _storage.read(key: 'nick_name');
-    accessToken = await _storage.read(key: 'access_token');
+    email = await storage.read(key: 'user_email');
+    nickName = await storage.read(key: 'user_name');
+    print("닉네임: $nickName");
+    accessToken = await storage.read(key: 'access_token');
 
     // UI 업데이트
     setState(() {
@@ -273,27 +272,44 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   /// 사용자 정보 저장 (secure storage)
   Future<void> _saveUserData(Map<String, dynamic> userData) async {
-    await _storage.write(key: 'profile_image', value: userData['profileImage']);
-    await _storage.write(key: 'nick_name', value: userData['nickname']);
+    await storage.write(key: 'profile_image', value: userData['profileImage']);
+    await storage.write(
+      key: 'user_name',
+      value: userData['nickname'],
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor, // 공유된 테마 사용
-      body: Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 20.0),
-          child: Column(
-            children: [
-              introPageHeader(title: '', targetPage: NavigationScreens()),
-              _buildProfileImage(),
-              const SizedBox(height: 10),
-              _buildUserInfoForm(),
-              _buildUpdateButton(),
-            ],
+      body: Padding(
+        padding: const EdgeInsets.all(30),
+        child: Stack(children: [
+          Positioned(
+            child: IconButton(
+                onPressed: Navigator.of(context).pop,
+                icon: Icon(
+                  Icons.arrow_back_ios,
+                  size: 40,
+                  color: Color(0xff646464),
+                )),
           ),
-        ),
+          Padding(
+            padding: const EdgeInsets.only(top: 40),
+            child: Center(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  _buildProfileImage(),
+                  const SizedBox(height: 10),
+                  _buildUserInfoForm(),
+                  _buildUpdateButton(),
+                ],
+              ),
+            ),
+          ),
+        ]),
       ),
     );
   }
@@ -306,7 +322,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       children: [
         CircleAvatar(
           // 원형 프로필 이미지
-          radius: 50, // 원형 프로필 이미지 크기 (반지름 50)
+          radius: 70, // 원형 프로필 이미지 크기 (반지름 50)
           backgroundImage: _profileImage != null
               ? FileImage(_profileImage!)
               : (_profileImageBytes != null && _profileImageBytes!.isNotEmpty)
@@ -341,7 +357,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   /// 사용자 정보 입력 폼 (아이디, 닉네임, 중복확인 버튼)
   Widget _buildUserInfoForm() {
     return SizedBox(
-      width: 450, // 전체 입력 폼의 너비 설정
+      width: 520, // 전체 입력 폼의 너비 설정
       child: Column(
         children: [
           // 테이블 형식의 입력 필드 (아이디 & 닉네임)
@@ -447,7 +463,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               ),
               backgroundColor: const Color(0xFFCF8A7A), // 버튼 색상
               foregroundColor: Colors.white, // 버튼 글자색
-              padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 13),
+              padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
             ),
             onPressed: _checkNickname, // 중복 확인 버튼 클릭 시 실행
             child: const Text("중복확인"),

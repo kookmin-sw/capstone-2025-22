@@ -1,15 +1,12 @@
 import 'dart:convert'; // JSON 변환을 위한 패키지
+import 'package:capstone_2025/services/storage_service.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:http/http.dart' as http; // HTTP 요청을 위한 패키지
 import 'package:capstone_2025/services/api_func.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart'; // secure storage
 import 'package:capstone_2025/screens/introPages/sign_up_screen.dart';
 import 'package:capstone_2025/screens/introPages/find_pw_screen.dart';
 import 'package:capstone_2025/screens/mainPages/navigation_screens.dart';
 import 'package:capstone_2025/screens/introPages/login_screen_google.dart';
 import 'package:capstone_2025/screens/introPages/widgets/build_text_field.dart';
-import 'package:capstone_2025/screens/introPages/widgets/intro_page_header.dart';
 
 /// 일반 로그인 화면
 class LoginScreen extends StatefulWidget {
@@ -22,8 +19,6 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   late final TextEditingController _emailController; // 이메일 입력 필드 컨트롤러
   late final TextEditingController _passwordController; // 비밀번호 입력 필드 컨트롤러
-  final FlutterSecureStorage _storage =
-      const FlutterSecureStorage(); // 로그인 성공 시 받은 JWT 토큰을 저장. 이후 자동 로그인 기능 구현할 때 사용
 
   bool _isPasswordVisible = false; // 비밀번호 보기&숨기기 상태
   bool _isLoading = false; // 로딩 상태
@@ -84,7 +79,9 @@ class _LoginScreenState extends State<LoginScreen> {
         // 페이지 하단에 환영 메시지 출력
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('${userInfo['body']['nickname']}님 환영합니다.')),
+            SnackBar(
+                content: Text(
+                    '${utf8.decode(userInfo['body']['nickname'].toString().runes.toList())}님 환영합니다.')),
           );
         }
 
@@ -110,13 +107,16 @@ class _LoginScreenState extends State<LoginScreen> {
 
   /// 로그인 성공 시 사용자 정보 저장
   Future<void> saveUserData(Map<String, dynamic> userData) async {
-    await _storage.deleteAll(); // 기존 데이터 초기화
+    await storage.deleteAll(); // 기존 데이터 초기화
     userData = userData['body'];
 
-    await _storage.write(key: 'user_email', value: userData['email']);
-    await _storage.write(key: 'nick_name', value: userData['nickname']);
-    await _storage.write(key: 'access_token', value: userData['accessToken']);
-    await _storage.write(key: 'refresh_token', value: userData['refreshToken']);
+    await storage.write(key: 'user_email', value: userData['email']);
+    await storage.write(
+      key: 'user_name',
+      value: utf8.decode(userData['nickname'].toString().codeUnits),
+    );
+    await storage.write(key: 'access_token', value: userData['accessToken']);
+    await storage.write(key: 'refresh_token', value: userData['refreshToken']);
   }
 
   @override
@@ -130,7 +130,14 @@ class _LoginScreenState extends State<LoginScreen> {
               top: 20,
               left: 20,
               child: IconButton(
-                  onPressed: Navigator.of(context).pop,
+                  onPressed: () {
+                    Navigator.pushAndRemoveUntil(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => LoginScreenGoogle()),
+                      (route) => false,
+                    );
+                  },
                   icon: Icon(Icons.arrow_back,
                       size: 50, color: Color(0xff646464))),
             ),

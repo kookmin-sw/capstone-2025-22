@@ -41,37 +41,31 @@ class NavigationScreensState extends State<NavigationScreens> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: selectedIndex == 1
-          ? _getPage(
-              selectedIndex) // When Metronome is selected, show only the page
-          : Row(
-              children: [
-                // 좌측 네비게이션 바 (고정)
-                NavigationPanel(
-                  selectedIndex: selectedIndex, // 선택된 메뉴 인덱스
-                  onItemSelected: (index) {
-                    setState(() {
-                      // 메뉴 선택 시 해당 메뉴 인덱스로 변경
-                      selectedIndex = index;
-                    });
-                  },
-                ),
-
-                // 오른쪽 화면 (선택된 메뉴에 따라 변경)
-                Expanded(
-                  child: AnimatedSwitcher(
-                    // 화면 전환 애니메이션
-                    duration: Duration(milliseconds: 300), // 부드러운 화면 전환 애니메이션
-                    transitionBuilder:
-                        (Widget child, Animation<double> animation) {
-                      return FadeTransition(
-                          opacity: animation, child: child); // 페이드 효과
-                    },
-                    child: _getPage(selectedIndex),
-                  ),
-                ),
-              ],
+      body: Row(
+        children: [
+          if (selectedIndex != 1)
+            NavigationPanel(
+              selectedIndex: selectedIndex,
+              onItemSelected: (index) {
+                setState(() {
+                  selectedIndex = index;
+                });
+              },
             ),
+          Expanded(
+            child: AnimatedSwitcher(
+              duration: Duration(milliseconds: 300),
+              transitionBuilder: (Widget child, Animation<double> animation) {
+                return FadeTransition(
+                  opacity: animation,
+                  child: child,
+                );
+              },
+              child: _getPage(selectedIndex),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
