@@ -1,12 +1,11 @@
-import 'package:capstone_2025/screens/drumPatternFillPages/pattern_fill_screen.dart';
 import 'package:capstone_2025/screens/drumSheetPages/drum_sheet_player.dart';
 import 'package:capstone_2025/widgets/innerShadow.dart';
 import 'package:capstone_2025/widgets/linedText.dart';
 import 'package:capstone_2025/screens/drumSheetPages/widgets/resultText.dart';
-import 'package:capstone_2025/screens/mainPages/musicsheet_detail.dart';
 import 'package:capstone_2025/screens/mainPages/navigation_screens.dart';
 import 'package:capstone_2025/widgets/openSheetModal.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class PracticeResultMS extends StatefulWidget {
   const PracticeResultMS({
@@ -83,7 +82,7 @@ class _PracticeResultMSState extends State<PracticeResultMS> {
 
     return linedText(
       '$score',
-      95,
+      35.sp,
       borderColor,
       txtColor,
       9.5,
@@ -97,7 +96,7 @@ class _PracticeResultMSState extends State<PracticeResultMS> {
       body: Container(
         color: Color(0xFFF2F1F3),
         child: Padding(
-          padding: const EdgeInsets.only(left: 20, top: 20),
+          padding: EdgeInsets.only(left: 10.w, top: 30.h),
           child: Stack(
             children: [
               IconButton(
@@ -112,14 +111,14 @@ class _PracticeResultMSState extends State<PracticeResultMS> {
                 },
                 icon: Icon(
                   Icons.home_filled,
-                  size: 40,
+                  size: 14.sp,
                 ),
               ),
               Padding(
                 // 결과창 padding
                 padding: EdgeInsets.symmetric(
                   // padding으로 사이즈 조절
-                  vertical: MediaQuery.of(context).size.height * 0.08,
+                  vertical: MediaQuery.of(context).size.height * 0.065,
                   horizontal: isPerfect
                       ? MediaQuery.of(context).size.width * 0.08
                       : MediaQuery.of(context).size.width * 0.1,
@@ -155,7 +154,8 @@ class _PracticeResultMSState extends State<PracticeResultMS> {
                       ),
                       Padding(
                         padding: EdgeInsets.symmetric(
-                            vertical: 30, horizontal: (isPerfect) ? 55 : 70),
+                            vertical: 30.h,
+                            horizontal: (isPerfect) ? 5.w : 20.w),
                         child: Column(
                           // 결과창 내부 요소들
                           children: [
@@ -165,19 +165,19 @@ class _PracticeResultMSState extends State<PracticeResultMS> {
                               children: [
                                 Padding(
                                   padding: EdgeInsets.only(
-                                      left: isPerfect ? 10 : 30),
+                                      left: isPerfect ? 0 : 10.w),
                                   child: Column(
                                     // 성공 여부 텍스트
                                     children: [
                                       SizedBox(
                                         child: linedText(
                                             "$musicTitle - $musicArtist",
-                                            32,
+                                            12.sp,
                                             Colors.black.withOpacity(0.3),
                                             Colors.white,
                                             7),
                                       ),
-                                      SizedBox(height: 10),
+                                      SizedBox(height: 10.h),
                                       resultKeyword(score),
                                     ],
                                   ),
@@ -193,23 +193,24 @@ class _PracticeResultMSState extends State<PracticeResultMS> {
                                   ),
                                   child: Padding(
                                     padding: EdgeInsets.symmetric(
-                                        vertical: 10,
-                                        horizontal: ((isPerfect) ? 70 : 90)),
+                                        vertical: 10.h,
+                                        horizontal:
+                                            ((isPerfect) ? 15.w : 35.w)),
                                     child: Column(children: [
                                       linedText(
                                         'SCORE',
-                                        28,
+                                        10.sp,
                                         Colors.black26,
                                         Colors.white,
                                         4.5,
                                       ),
-                                      SizedBox(height: 10),
+                                      SizedBox(height: 10.h),
                                       Stack(children: [
                                         Text(
                                           "$score",
                                           style: TextStyle(
                                             height: 1,
-                                            fontSize: 95,
+                                            fontSize: 35.sp,
                                             color: Colors.transparent,
                                             shadows: [
                                               Shadow(
@@ -228,7 +229,7 @@ class _PracticeResultMSState extends State<PracticeResultMS> {
                                 ),
                               ],
                             ),
-                            SizedBox(height: 15),
+                            SizedBox(height: 15.h),
                             ButtonForm(
                               btnName: "상세 기록 확인하기",
                               buttonColor: Color(0xff949494),
@@ -244,7 +245,7 @@ class _PracticeResultMSState extends State<PracticeResultMS> {
                               },
                               btnIcon: Icons.insert_drive_file_rounded,
                             ),
-                            SizedBox(height: 20),
+                            SizedBox(height: 20.h),
                             Row(
                               children: [
                                 Expanded(
@@ -269,7 +270,7 @@ class _PracticeResultMSState extends State<PracticeResultMS> {
                                     ),
                                   ),
                                 ),
-                                SizedBox(width: 15),
+                                SizedBox(width: 5.w),
                                 Expanded(
                                   flex: 1,
                                   child: Material(
@@ -335,7 +336,7 @@ class ButtonForm extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 60,
+      height: 70.h,
       width: width,
       child: Stack(
         children: [
@@ -349,7 +350,7 @@ class ButtonForm extends StatelessWidget {
                 color: buttonColor,
                 borderRadius: BorderRadius.circular(20),
               ),
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              padding: EdgeInsets.symmetric(horizontal: 16.w),
               child: Center(
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -357,11 +358,12 @@ class ButtonForm extends StatelessWidget {
                     if (btnIcon != null)
                       Icon(
                         btnIcon,
-                        size: 30,
+                        size: 11.sp,
                         color: Colors.white,
                       ),
-                    if (btnIcon != null) SizedBox(width: 15),
-                    linedText("$btnName", 20, borderColor, Colors.white, 4.8),
+                    if (btnIcon != null) SizedBox(width: 5.w),
+                    linedText(
+                        "$btnName", 7.5.sp, borderColor, Colors.white, 4.8),
                   ],
                 ),
               ),
@@ -395,10 +397,8 @@ Widget modalBtn(BuildContext context, String text, Color backgroundColor,
     bool isTextblack) {
   // 모달 버튼
   return Container(
-    width: 155,
-    // MediaQuery.of(context).size.width * 0.168,
-    height: 50,
-    // MediaQuery.of(context).size.height * 0.135,
+    width: 43.w,
+    height: 60.h,
     alignment: Alignment.center,
     decoration: BoxDecoration(
       color: backgroundColor,
@@ -407,7 +407,7 @@ Widget modalBtn(BuildContext context, String text, Color backgroundColor,
     child: Text(text,
         style: TextStyle(
             color: isTextblack ? Colors.black : Colors.white,
-            fontSize: 15,
+            fontSize: 6.sp,
             fontWeight: FontWeight.w500)),
   );
 }
@@ -425,28 +425,28 @@ void openModal(
     builder: (context) => AlertDialog(
       alignment: Alignment.center,
       insetPadding: EdgeInsets.zero,
-      contentPadding: EdgeInsets.only(top: 20, bottom: 20),
+      contentPadding: EdgeInsets.only(top: 20.h, bottom: 10.h),
       backgroundColor: Colors.white,
       content: SizedBox(
-        width: 360,
-        height: 130,
+        width: 150.h,
+        height: 150.h,
         child: Column(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           mainAxisSize: MainAxisSize.min,
           children: [
             SizedBox(
-              height: 15,
+              height: 15.h,
             ),
             Text(
               '다시 시작하시겠습니까?',
               textAlign: TextAlign.center,
               style: TextStyle(
-                fontSize: 18.5,
+                fontSize: 7.sp,
                 color: Color(0xFF4A4A4A),
                 fontWeight: FontWeight.w600,
               ),
             ),
-            const SizedBox(height: 20),
+            SizedBox(height: 25.h),
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -461,7 +461,7 @@ void openModal(
                   child: modalBtn(
                       context, '취소', Color.fromARGB(255, 205, 203, 202), true),
                 ),
-                SizedBox(width: 10),
+                SizedBox(width: 5.w),
                 TextButton(
                   style: TextButton.styleFrom(
                     padding: EdgeInsets.zero,
