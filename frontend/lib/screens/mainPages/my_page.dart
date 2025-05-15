@@ -1,3 +1,4 @@
+import 'package:capstone_2025/screens/introPages/find_pw_screen.dart';
 import 'package:capstone_2025/screens/introPages/login_screen_google.dart';
 import 'package:capstone_2025/screens/introPages/set_new_pw_screen.dart';
 import 'package:capstone_2025/screens/mainPages/edit_profile_screen.dart';
@@ -17,6 +18,7 @@ class MyPage extends StatefulWidget {
 }
 
 class _MyPageState extends State<MyPage> {
+  bool _isLoading = true;
   @override
   void initState() {
     super.initState();
@@ -40,6 +42,8 @@ class _MyPageState extends State<MyPage> {
 
   // Secure Storage에서 데이터 불러와서 상태 업데이트
   Future<void> _loadUserData() async {
+    if (!mounted) return;
+    setState(() => _isLoading = true);
     // Secure Storage에서 사용자 데이터 불러오기
     String? storedEmail = await storage.read(key: 'user_email');
     String? storedUserName = await storage.read(key: 'nick_name');
@@ -51,11 +55,15 @@ class _MyPageState extends State<MyPage> {
     };
     if (infoQueryParam["email"] == "") {
       print("이메일 정보가 없습니다.");
+      if (!mounted) return;
+      setState(() => _isLoading = false);
       return;
     }
 
     if (storedAccessToken == null) {
       print("액세스 토큰 정보가 없습니다.");
+      if (!mounted) return;
+      setState(() => _isLoading = false);
       return;
     }
 
@@ -70,20 +78,23 @@ class _MyPageState extends State<MyPage> {
         userName = clientInfo["body"]["nickname"];
       });
 
-      _createInfoList();
+      await _createInfoList();
     } else {
       print("프로필 이미지 정보가 없습니다.");
     }
+    if (!mounted) return;
+    setState(() => _isLoading = false);
   }
 
-  void _createInfoList() async {
+  Future<void> _createInfoList() async {
     final response = await getHTTP(
       '/sheets/practices/representative',
       {'email': email},
     );
 
     if (response['errMessage'] == null &&
-        (response['body'] as List).isNotEmpty) {
+        response['body'] != null &&
+        (response['body'] as List).where((e) => e != null).isNotEmpty) {
       // 악보 연습 기록이 존재하는 경우
       if (!mounted) return;
       setState(() {
@@ -127,7 +138,7 @@ class _MyPageState extends State<MyPage> {
   void _navigateToChangePassword() {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => SetNewPwScreen()),
+      MaterialPageRoute(builder: (_) => FindPwScreen()),
     );
   }
 
@@ -194,21 +205,23 @@ class _MyPageState extends State<MyPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Color(0xFFF8F4F0),
-      body: Center(
-        child: Padding(
-          padding: EdgeInsets.all(20),
-          child: Column(
-            children: [
-              _buildProfileSection(), // 프로필 섹션
-              SizedBox(height: 15),
-              _buildSheetMusicHeader(), // 악보 연습 기록 헤더
-              isSheetMusicUploaded // 악보가 존재하는지 확인
-                  ? Expanded(child: _buildSheetMusicTable()) // 악보 연습 기록 테이블
-                  : _buildNoSheetMusicMessage(), // 악보가 없을 때 표시할 메시지
-            ],
-          ),
-        ),
-      ),
+      body: _isLoading
+          ? Center(child: CircularProgressIndicator())
+          : Center(
+              child: Padding(
+                padding: EdgeInsets.all(20),
+                child: Column(
+                  children: [
+                    _buildProfileSection(),
+                    SizedBox(height: 15),
+                    _buildSheetMusicHeader(),
+                    isSheetMusicUploaded
+                        ? Expanded(child: _buildSheetMusicTable())
+                        : _buildNoSheetMusicMessage(),
+                  ],
+                ),
+              ),
+            ),
     );
   }
 
@@ -316,7 +329,7 @@ class _MyPageState extends State<MyPage> {
       child: Padding(
         padding: const EdgeInsets.only(top: 80),
         child: Text(
-          "지정된 악보가 없습니다. \n악보 연습에서 악보를 추가해보세요!",
+          "연습 기록이 없습니다. \n악보 연습에서 악보를 추가하고 연습해보세요!",
           textAlign: TextAlign.center,
           style: TextStyle(
               fontSize: 22,

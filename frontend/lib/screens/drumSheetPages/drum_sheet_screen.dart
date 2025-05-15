@@ -146,7 +146,14 @@ class _SheetListScreenState extends State<SheetListScreen> {
     if (response.statusCode == 200) {
       print('파일 업로드 성공');
       final Map<String, dynamic> decoded = json.decode(response.body);
-      return Sheet.fromJson(decoded['body']);
+      final body = decoded['body'];
+      try {
+        body['sheetName'] =
+            utf8.decode(body['sheetName'].toString().codeUnits); // 문자열 디코딩
+      } catch (e) {
+        print('문자열 디코딩 실패: $e');
+      }
+      return Sheet.fromJson(body);
     } else {
       throw Exception('파일 업로드 실패 - 상태코드: ${response.statusCode}');
     }
@@ -326,6 +333,17 @@ class _SheetListScreenState extends State<SheetListScreen> {
                     children: customColors.map((color) {
                       return GestureDetector(
                         onTap: () async {
+                          // 로딩바 출력
+                          showDialog(
+                            context: context,
+                            barrierDismissible: false,
+                            builder: (_) => const Dialog(
+                              backgroundColor: Colors.transparent,
+                              child: Center(
+                                child: CircularProgressIndicator(),
+                              ),
+                            ),
+                          );
                           var requestBody = {
                             'email': userEmail,
                             "color":
@@ -347,6 +365,7 @@ class _SheetListScreenState extends State<SheetListScreen> {
                               }
                             });
                           }
+                          Navigator.of(context).pop();
                           Navigator.of(context).pop();
                         },
                         child: Container(
@@ -433,6 +452,17 @@ class _SheetListScreenState extends State<SheetListScreen> {
                           ),
                         ),
                         onPressed: () async {
+                          // 로딩바 출력
+                          showDialog(
+                            context: context,
+                            barrierDismissible: false,
+                            builder: (_) => const Dialog(
+                              backgroundColor: Colors.transparent,
+                              child: Center(
+                                child: CircularProgressIndicator(),
+                              ),
+                            ),
+                          );
                           var response = await deleteHTTP(
                               '/sheets', selectedSheetsId(_sheets));
 
@@ -441,10 +471,14 @@ class _SheetListScreenState extends State<SheetListScreen> {
                               _sheets.removeWhere(
                                   (sheet) => sheets.contains(sheet));
                             });
-                          } else
-                            (print(response['errMessage']));
-
-                          Navigator.of(context).pop();
+                            Navigator.of(context).pop(); // 로딩바 닫기
+                            Navigator.of(context).pop(); // 확인 다이얼로그 닫기
+                            _toggleSelectionMode(); // Exit selection mode
+                          } else {
+                            print(response['errMessage']);
+                            Navigator.of(context).pop(); // 로딩바 닫기
+                            Navigator.of(context).pop(); // 확인 다이얼로그 닫기
+                          }
                         },
                         child: const Text(
                           '확인',
@@ -529,13 +563,25 @@ class _SheetListScreenState extends State<SheetListScreen> {
                           ),
                         ),
                         onPressed: () async {
-                          // 연주 시작 페이지로 이동하는 코드 추가하기
+                          // 로딩화면 출력
+                          showDialog(
+                            context: context,
+                            barrierDismissible: false,
+                            builder: (_) => const Dialog(
+                              backgroundColor: Colors.transparent,
+                              child: Center(
+                                child: CircularProgressIndicator(),
+                              ),
+                            ),
+                          );
+                          // 연주 시작 페이지로 이동
                           final response =
                               await getHTTP('/sheets/${sheet.sheetId}', {});
                           print("sheetID: ${sheet.sheetId}");
 
                           if (response['body']['sheetInfo'] == null) {
-                            Navigator.of(context).pop();
+                            Navigator.of(context).pop(); // 로딩바 닫기
+                            Navigator.of(context).pop(); // 확인 다이얼로그 닫기
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
                                 content: const Text(
@@ -555,7 +601,9 @@ class _SheetListScreenState extends State<SheetListScreen> {
                               ),
                             );
                           } else {
-                            Navigator.of(context).pop();
+                            Navigator.of(context).pop(); // 로딩바 닫기
+                            Navigator.of(context).pop(); // 확인 다이얼로그 닫기
+
                             Navigator.push(
                               context,
                               MaterialPageRoute(
