@@ -93,7 +93,8 @@ class _MyPageState extends State<MyPage> {
     );
 
     if (response['errMessage'] == null &&
-        (response['body'] as List).isNotEmpty) {
+        response['body'] != null &&
+        (response['body'] as List).where((e) => e != null).isNotEmpty) {
       // 악보 연습 기록이 존재하는 경우
       if (!mounted) return;
       setState(() {
@@ -328,7 +329,7 @@ class _MyPageState extends State<MyPage> {
       child: Padding(
         padding: const EdgeInsets.only(top: 80),
         child: Text(
-          "지정된 악보가 없습니다. \n악보 연습에서 악보를 추가해보세요!",
+          "연습 기록이 없습니다. \n악보 연습에서 악보를 추가하고 연습해보세요!",
           textAlign: TextAlign.center,
           style: TextStyle(
               fontSize: 22,
