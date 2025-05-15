@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 /// 드럼 기초 팝업 창
 class DrumInfoPopup extends StatefulWidget {
@@ -46,7 +47,7 @@ class _DrumInfoPopupState extends State<DrumInfoPopup> {
               child: Column(
                 children: [
                   _buildTitle(), // 제목: 스크롤되지 않음
-                  const SizedBox(height: 20), // 제목과 내용 사이 간격
+                  SizedBox(height: 23.h), // 제목과 내용 사이 간격
                   Expanded(
                     child: Stack(
                       children: [
@@ -65,7 +66,7 @@ class _DrumInfoPopupState extends State<DrumInfoPopup> {
                               child: Column(
                                 children: [
                                   _buildImage(), // 이미지 (옵션)
-                                  const SizedBox(height: 20), // 이미지와 설명 사이 간격
+                                  SizedBox(height: 20.h), // 이미지와 설명 사이 간격
                                   _buildDescription(), // 설명 텍스트
                                 ],
                               ),
