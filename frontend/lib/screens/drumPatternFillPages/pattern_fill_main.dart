@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:capstone_2025/widgets/innerShadow.dart';
 import 'package:capstone_2025/widgets/linedText.dart';
 import 'package:capstone_2025/screens/drumPatternFillPages/pattern_fill_screen.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class PatternFillMain extends StatefulWidget {
   const PatternFillMain({super.key});
@@ -40,20 +41,21 @@ class _PatternFillMainState extends State<PatternFillMain> {
               children: [
                 Expanded(
                   child: Padding(
-                    padding: const EdgeInsets.all(20),
+                    padding: EdgeInsets.all(25.h),
                     child: Column(
                       children: [
                         Expanded(
                           flex: 3,
                           child: Center(
-                            child: linedText(
-                                "LEVEL", 35, Colors.black45, Colors.white, 5.5),
+                            child: linedText("LEVEL", 12.5.sp, Colors.black45,
+                                Colors.white, 5.5),
                           ),
                         ),
                         Spacer(flex: 1),
                         Expanded(
                           flex: 20,
                           child: SingleChildScrollView(
+                            physics: ClampingScrollPhysics(),
                             child: Column(children: _patternWidgets),
                           ),
                         ),
@@ -92,10 +94,8 @@ class _PatternFillMainState extends State<PatternFillMain> {
       bool isTextblack) {
     // 모달 버튼
     return Container(
-      width: 150,
-      // MediaQuery.of(context).size.width * 0.168,
-      height: 53,
-      // MediaQuery.of(context).size.height * 0.135,
+      width: 50.w,
+      height: 60.h,
       alignment: Alignment.center,
       decoration: BoxDecoration(
         color: backgroundColor,
@@ -104,7 +104,7 @@ class _PatternFillMainState extends State<PatternFillMain> {
       child: Text(text,
           style: TextStyle(
               color: isTextblack ? Colors.black : Colors.white,
-              fontSize: 15,
+              fontSize: 5.5.sp,
               fontWeight: FontWeight.w500)),
     );
   }
@@ -118,18 +118,18 @@ class _PatternFillMainState extends State<PatternFillMain> {
         insetPadding: EdgeInsets.symmetric(horizontal: 0, vertical: 0),
         backgroundColor: Colors.white,
         content: SizedBox(
-          width: 315,
-          height: 140,
+          width: 105.w,
+          height: 165.h,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Padding(
-                padding: const EdgeInsets.only(top: 10, bottom: 0),
+                padding: EdgeInsets.only(top: 15.h, bottom: 0),
                 child: Text(
                   'Basic Pattern $index',
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    fontSize: 21,
+                    fontSize: 7.5.sp,
                     fontWeight: FontWeight.bold,
                     color: Color(0xFF4A4A4A),
                   ),
@@ -139,11 +139,11 @@ class _PatternFillMainState extends State<PatternFillMain> {
                 '연습을 시작하시겠습니까?',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  fontSize: 18,
+                  fontSize: 6.5.sp,
                   color: Color(0xFF4A4A4A),
                 ),
               ),
-              const SizedBox(height: 20),
+              SizedBox(height: 23.h),
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -158,7 +158,7 @@ class _PatternFillMainState extends State<PatternFillMain> {
                     child: modalBtn(context, '취소',
                         Color.fromARGB(255, 205, 203, 202), true),
                   ),
-                  SizedBox(width: 15),
+                  SizedBox(width: 5.w),
                   TextButton(
                     style: TextButton.styleFrom(
                       padding: EdgeInsets.zero,
@@ -185,14 +185,14 @@ class _PatternFillMainState extends State<PatternFillMain> {
 
   Widget patternFillList(BuildContext context, int index, bool isLevelCleared,
       bool isLevelLocked) {
-    double containerHeight = 50;
+    double containerHeight = 65.h;
     double containerWidth = MediaQuery.of(context).size.width * 0.67;
     double borderRadius = 13;
-    double fontSize = 19;
+    double fontSize = 8.sp;
     int score = 95;
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
+      padding: EdgeInsets.only(bottom: 10.h),
       child: Stack(children: [
         InnerShadow(
           // List item 내부 그림자
@@ -217,13 +217,13 @@ class _PatternFillMainState extends State<PatternFillMain> {
               borderRadius: BorderRadius.circular(borderRadius),
             ),
             child: Padding(
-              padding: const EdgeInsets.all(5.0),
+              padding: EdgeInsets.all(5.0.h),
               child: Row(
                 // List item 내부 요소 - 텍스트 점수 등
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Padding(
-                    padding: const EdgeInsets.only(left: 35),
+                    padding: EdgeInsets.only(left: 13.w),
                     child: linedText(
                       "$index. Basic Pattern $index",
                       fontSize,
@@ -237,9 +237,9 @@ class _PatternFillMainState extends State<PatternFillMain> {
                     ),
                   ),
                   Padding(
-                    padding: const EdgeInsets.only(right: 35),
+                    padding: EdgeInsets.only(right: 13.w),
                     child: SizedBox(
-                      width: 50,
+                      width: 20.w,
                       child: isLevelCleared
                           ? linedText(
                               '$score점',
@@ -251,7 +251,7 @@ class _PatternFillMainState extends State<PatternFillMain> {
                           : isLevelLocked
                               ? Icon(
                                   Icons.lock,
-                                  size: 30,
+                                  size: 12.sp,
                                   color: Colors.white,
                                 )
                               : linedText(
