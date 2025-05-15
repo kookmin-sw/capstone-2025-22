@@ -1,7 +1,6 @@
 package com.capstone.config;
 
 import com.capstone.dto.musicXml.MeasureInfo;
-import com.capstone.dto.musicXml.NoteInfo;
 import com.capstone.dto.musicXml.PartInfo;
 import com.capstone.dto.score.FinalMeasureResult;
 import com.capstone.practice.entity.SheetPractice;
@@ -11,7 +10,6 @@ import com.capstone.sheet.entity.UserSheet;
 import com.capstone.sheet.repository.SheetRepository;
 import com.capstone.sheet.repository.UserSheetRepository;
 import com.capstone.sheet.service.SheetXmlInfoParser;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.javafaker.Faker;
 import jakarta.annotation.PostConstruct;
@@ -21,14 +19,13 @@ import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.stereotype.Component;
 
 import java.io.InputStream;
-import java.nio.file.Files;
 import java.time.LocalDateTime;
 import java.util.*;
 
 @Component
 @Profile("dev")
 @RequiredArgsConstructor
-public class FakeDataGenerator {
+public class FakeSheetDataGenerator {
     private final SheetRepository sheetRepository;
     private final UserSheetRepository userSheetRepository;
     private final SheetPracticeRepository sheetPracticeRepository;
