@@ -55,7 +55,7 @@ Future<void> openMusicSheet({
                         const info = await window.flutter_inappwebview.callHandler('sendPracticeInfo');
                         await renderDetailedScore(xml, info, {
                           colorDefault:    '#000000',
-                          colorWrong1:     '#888888',
+                          colorWrong1:     '#b2b2b2',
                           colorBothWrong:  '#f5260f',
                           colorWrong1Only: '#f5a00f',
                           colorWrong2Only: '#f5e90f'

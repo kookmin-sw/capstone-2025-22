@@ -19,6 +19,7 @@ import '../drumSheetPages/widgets/confirmation_dialog.dart';
 import 'package:capstone_2025/screens/drumSheetPages/widgets/confirmation_dialog.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../../services/api_func.dart';
+import './practice_result_PP.dart';
 
 /// MenuController에 toggle()을 추가하는 확장 메서드
 extension MenuControllerToggle on MenuController {
@@ -75,7 +76,7 @@ class _CountdownPageState extends State<CountdownPage>
   StreamSubscription? _playerCompleteSubscription;
   StreamSubscription? _positionSubscription;
 
-  // 악보 띄우려고 추가한 부분
+  // 악보 관련
   late PlaybackController playbackController;
   late OSMDService osmdService;
   bool _isControllerInitialized = false;
@@ -84,6 +85,9 @@ class _CountdownPageState extends State<CountdownPage>
   late MenuController _speedMenuController;
 
   final _storage = const FlutterSecureStorage();
+
+  // 채점 결과 처리
+  final List<Map<String, dynamic>> _beatGradingResults = [];
 
   // 페이지 로딩 시 API 호출 후 받아오는 데이터
   String patternName = 'Default Pattern Name';
@@ -126,9 +130,6 @@ class _CountdownPageState extends State<CountdownPage>
   void initState() {
     super.initState();
 
-    // 페이지가 로드될 때 API 호출
-    _fetchData();
-
     // 오버레이 애니메이션 초기화
     _overlayController = AnimationController(
       vsync: this,
@@ -141,60 +142,65 @@ class _CountdownPageState extends State<CountdownPage>
     _audioPlayer = ap.AudioPlayer();
     _setupAudioListeners();
 
-    // OSMDService 초기화할 때 onDataLoaded 연결
-    osmdService = OSMDService(
-      onDataLoaded: ({
-        required Uint8List base64Image,
-        required Map<String, dynamic> json,
-        required double bpm,
-        required double canvasWidth,
-        required double canvasHeight,
-        required List<dynamic> lineBounds,
-        required int totalMeasures,
-      }) async {
-        try {
-          final List<Uint8List> lineImages =
-              (json['lineImages'] as List<dynamic>)
-                  .map((e) => base64Decode(e))
-                  .toList();
+    // OSMDService 생성 (데이터 로드 완료 콜백만 정의)
+    osmdService = OSMDService(onDataLoaded: _onDataLoaded);
 
-          final sheetInfo = SheetInfo(
-            id: '', // 일단 빈 값 (추후 백엔드 연동시 수정)
-            title: '그라데이션',
-            artist: '10CM',
-            bpm: bpm.toInt(),
-            canvasHeight: canvasHeight,
-            cursorList: (json['cursorList'] as List<dynamic>)
-                .map((e) => Cursor.fromJson(e))
-                .toList(),
-            fullSheetImage: base64Image,
-            xmlData: json['xmlData'] as String?,
-            lineImages: lineImages,
-            createdDate: DateTime.now(),
-          );
-
-          setState(() {
-            playbackController.loadSheetInfo(sheetInfo);
-            playbackController.canvasWidth = canvasWidth;
-            playbackController
-                .calculateTotalDurationFromCursorList(bpm); // 총 재생시간 계산
-
-            playbackController.currentLineImage =
-                lineImages.isNotEmpty ? lineImages[0] : null;
-          });
-        } catch (e, st) {
-          debugPrint('🔴 onDataLoaded error: $e\n$st');
-        }
-      },
-    );
-    Future.microtask(() async {
-      final xmlData = await rootBundle.load('assets/music/test_pattern.xml');
-      if (!mounted) return;
-      await osmdService.startOSMDService(
-        xmlData: xmlData.buffer.asUint8List(),
+    // 페이지가 로드될 때 API 호출
+    _fetchData().then((_) {
+      // base64 → bytes → utf8 string
+      final xmlBytes = base64Decode(patternInfo);
+      final xmlString = utf8.decode(xmlBytes);
+      // 악보 렌더 실행
+      osmdService.startOSMDService(
+        xmlData: utf8.encode(xmlString),
         pageWidth: 1080,
       );
     });
+  }
+
+  // OSMDService 초기화할 때 onDataLoaded 연결
+  Future<void> _onDataLoaded({
+    required Uint8List base64Image,
+    required Map<String, dynamic> json,
+    required double bpm,
+    required double canvasWidth,
+    required double canvasHeight,
+    required List<dynamic> lineBounds,
+    required int totalMeasures,
+  }) async {
+    try {
+      final List<Uint8List> lineImages = (json['lineImages'] as List<dynamic>)
+          .map((e) => base64Decode(e))
+          .toList();
+
+      final sheetInfo = SheetInfo(
+        id: '', // 일단 빈 값 (추후 백엔드 연동시 수정)
+        title: '그라데이션',
+        artist: '10CM',
+        bpm: bpm.toInt(),
+        canvasHeight: canvasHeight,
+        cursorList: (json['cursorList'] as List<dynamic>)
+            .map((e) => Cursor.fromJson(e))
+            .toList(),
+        fullSheetImage: base64Image,
+        xmlData: json['xmlData'] as String?,
+        lineImages: lineImages,
+        createdDate: DateTime.now(),
+      );
+
+      setState(() {
+        playbackController.loadSheetInfo(sheetInfo);
+        playbackController.canvasWidth = canvasWidth;
+        playbackController
+            .calculateTotalDurationFromCursorList(bpm); // 총 재생시간 계산
+        playbackController.rawCursorList = sheetInfo.cursorList;
+
+        playbackController.currentLineImage =
+            lineImages.isNotEmpty ? lineImages[0] : null;
+      });
+    } catch (e, st) {
+      debugPrint('🔴 onDataLoaded error: $e\n$st');
+    }
   }
 
   // API 호출 함수
@@ -367,6 +373,86 @@ class _CountdownPageState extends State<CountdownPage>
     } else {
       print('Identifier 요청 실패: ${response['errMessage']}');
       return null;
+    }
+  }
+
+  // 1차 채점 결과 처리
+  void _handleScoringResult(Map<String, dynamic> scoringResult) {
+    final measureNumber = scoringResult['measureNumber'];
+    final answerOnsetPlayed =
+        List<bool>.from(scoringResult['answerOnsetPlayed']);
+    final measureIndex = int.parse(measureNumber) - 1;
+
+    // 틀린 박자 인덱스만 골라내기
+    final missedNotesIndices = <int>[];
+    for (int i = 0; i < answerOnsetPlayed.length; i++) {
+      if (!answerOnsetPlayed[i]) missedNotesIndices.add(i);
+    }
+
+    // PlaybackController 에 커서 추가
+    playbackController.addMissedNotesCursor(
+      measureIndex: measureIndex,
+      missedIndices: missedNotesIndices,
+    );
+    setState(() {}); // 화면 갱신
+  }
+
+  // 1차 채점 데이터로 점수 계산
+  int computeScoreFrom1stGrading(List<Map<String, dynamic>> results) {
+    // 1) 각 마디별 결과를 하나의 리스트로 병합
+    final allBeats =
+        results.expand((m) => List<bool>.from(m['answerOnsetPlayed'])).toList();
+
+    // 2) 틀린 음표 개수 세기
+    final wrongCount = allBeats.where((b) => b == false).length;
+    final totalCount = allBeats.length;
+
+    if (totalCount == 0) return 0; // 예외 처리
+
+    // 3) 100점 만점으로 환산
+    final correctCount = totalCount - wrongCount;
+    return ((correctCount / totalCount) * 100).round();
+  }
+
+  // 결과 저장을 위한 practiceInfo 변환
+  List<Map<String, dynamic>> get practiceInfo {
+    return _beatGradingResults.map((msg) {
+      return {
+        "measureNumber": msg["measureNumber"],
+        "beatScoringResults": List<bool>.from(msg["answerOnsetPlayed"]),
+        "finalScoringResults": <bool>[],
+      };
+    }).toList();
+  }
+
+  // 최종 채점 결과 적용 및 결과 화면 이동
+  void _applyGradingResults() {
+    print("✅ 1차 채점 완료: measureNumbers = "
+        "${_beatGradingResults.map((m) => m['measureNumber']).toList()}");
+    final initialBeatScore = computeScoreFrom1stGrading(_beatGradingResults);
+
+    // 2초 딜레이 후 결과창으로 이동
+    Future.delayed(const Duration(seconds: 2), () {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+          builder: (_) => PracticeResultPP(
+            idx: widget.index,
+            score: initialBeatScore,
+            xmlDataString: patternInfo,
+            practiceInfo: practiceInfo,
+          ),
+        ),
+      );
+    });
+  }
+
+  void _onWsGradingMessage(Map<String, dynamic> msg) {
+    _beatGradingResults.add(msg);
+    // 모든 마디 (4마디) 데이터가 수신되면 결과 처리
+    if (_beatGradingResults.length == 4) {
+      print(
+          "🗒️ 전체 마디 데이터 수신 완료: ${_beatGradingResults.map((m) => m['measureNumber']).toList()}");
+      _applyGradingResults();
     }
   }
 
@@ -668,7 +754,22 @@ class _CountdownPageState extends State<CountdownPage>
 
                             return Stack(
                               children: [
-                                // 커서
+                                // 틀린 박자: 회색 커서
+                                for (final missed in playbackController
+                                    .missedCursors
+                                    .where((c) =>
+                                        c.lineIndex ==
+                                        playbackController.currentPage))
+                                  CursorWidget(
+                                    cursor: missed,
+                                    imageWidth: boxW,
+                                    height: boxH,
+                                    decoration: BoxDecoration(
+                                      color: Colors.grey.withOpacity(0.6),
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                  ),
+                                // 재생 커서
                                 if (playbackController.currentDuration >
                                         Duration.zero ||
                                     playbackController.isPlaying ||
@@ -940,6 +1041,10 @@ class _CountdownPageState extends State<CountdownPage>
                 setState(() {
                   _detectedOnsets = onsets;
                 });
+              },
+              onGradingResult: (msg) {
+                _handleScoringResult(msg); // 1) 즉시 화면에 틀린 박자 커서 표시
+                _onWsGradingMessage(msg); // 2) 리스트에 쌓아서, 마지막에 전체 점수 계산
               },
             ),
           ),
