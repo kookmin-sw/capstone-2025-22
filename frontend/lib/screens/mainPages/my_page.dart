@@ -1,5 +1,6 @@
 import 'package:capstone_2025/screens/introPages/find_pw_screen.dart';
 import 'package:capstone_2025/screens/introPages/login_screen_google.dart';
+import 'package:capstone_2025/main.dart';
 import 'package:capstone_2025/screens/introPages/set_new_pw_screen.dart';
 import 'package:capstone_2025/screens/mainPages/edit_profile_screen.dart';
 import 'package:capstone_2025/screens/mainPages/musicsheet_detail.dart';
@@ -525,11 +526,10 @@ void openModal(
                     getHTTP('/auth/signout', {}, reqHeader: {
                       'authorization': accessToken ?? "",
                     });
-                    Navigator.pushReplacement(
+                    Navigator.pushAndRemoveUntil(
                       context,
-                      MaterialPageRoute(
-                        builder: (context) => LoginScreenGoogle(),
-                      ),
+                      MaterialPageRoute(builder: (_) => const MyApp()),
+                      (route) => false,
                     );
                   },
                   child: modalBtn(context, '확인', Color(0xffD97D6C), false),
