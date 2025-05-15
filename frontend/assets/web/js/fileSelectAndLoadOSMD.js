@@ -290,6 +290,12 @@ window.startOSMDFromFlutter = async function () {
   osmd.cursor.reset()
   osmd.cursor.hide();
 
+  // 줄별 뷰(캔버스) 보이기
+  document.getElementById('osmdCanvas').style.display     = 'block';
+  // 상세 뷰(SVG) 숨기기
+  document.getElementById('detailedOsmd').style.display   = 'none';
+
+
   await new Promise(resolve => setTimeout(resolve, 100)); // JS 이벤트 루프 돌기
   await new Promise(requestAnimationFrame);
 

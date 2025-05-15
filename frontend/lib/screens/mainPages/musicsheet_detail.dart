@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:ui';
+import 'dart:convert';
 import 'package:capstone_2025/services/api_func.dart';
 import 'package:capstone_2025/services/storage_service.dart';
 import 'package:capstone_2025/widgets/linedText.dart';
@@ -26,9 +27,9 @@ class _MusicsheetDetailState extends State<MusicsheetDetail> {
   List<Map<String, String>> scoreData = [];
   // 테이블 + 디테일 호출용 practiceId 포함
   List<Map<String, dynamic>> practiceList = [];
-  Uint8List? previewBytes; // 악보 프리뷰 이미지 띄울 용도
+  Uint8List? previewBytes; // 악보 프리뷰 이미지
   int? _selectedPracticeId; // 선택된 연습 기록 ID
-  String? _xmlDataString; // 악보 xml 저장용
+  String? _xmlDataString; // 악보 XML 저장용
 
   @override
   void initState() {
@@ -106,7 +107,7 @@ class _MusicsheetDetailState extends State<MusicsheetDetail> {
                   '점수': e['점수'] as String,
                 })
             .toList();
-        // 기본 선택 첫번째로 ID 지정
+        // 기본 선택 첫 번째로 ID 지정
         if (practiceList.isNotEmpty) {
           _selectedPracticeId = practiceList.first['practiceId'] as int;
         }
@@ -397,7 +398,7 @@ class _MusicsheetDetailState extends State<MusicsheetDetail> {
                       ),
                       SizedBox(width: 5),
                       Expanded(
-                        // 악보 출력 예정 공간
+                        // 채점 결과 악보
                         flex: 3,
                         child: Padding(
                           padding: const EdgeInsets.all(8.0),
@@ -423,7 +424,7 @@ class _MusicsheetDetailState extends State<MusicsheetDetail> {
                                   child: Stack(
                                     fit: StackFit.expand,
                                     children: [
-                                      // ② 이미지: 위쪽부터 꽉 차게, 아래는 잘림
+                                      // 악보 프리뷰 이미지
                                       if (previewBytes != null)
                                         Positioned(
                                           top: 20,
@@ -436,8 +437,7 @@ class _MusicsheetDetailState extends State<MusicsheetDetail> {
                                       else
                                         Center(
                                             child: CircularProgressIndicator()),
-
-                                      // ③ 블러 오버레이
+                                      // 블러 오버레이
                                       Positioned.fill(
                                         child: BackdropFilter(
                                           filter: ImageFilter.blur(
@@ -450,8 +450,8 @@ class _MusicsheetDetailState extends State<MusicsheetDetail> {
                                       ),
                                     ],
                                   ),
-                                ), // ← ClipRRect 닫기
-                              ), // ← Container 닫기
+                                ),
+                              ),
                               Positioned(
                                 // 악보 확대 버튼
                                 top: MediaQuery.of(context).size.height * 0.755,
@@ -461,10 +461,13 @@ class _MusicsheetDetailState extends State<MusicsheetDetail> {
                                   onPressed: () async {
                                     if (_selectedPracticeId == null ||
                                         _xmlDataString == null) return;
+
+                                    final BuildContext localContext = context;
                                     try {
-                                      final buildContext = context;
                                       final detail = await fetchPracticeDetail(
                                           _selectedPracticeId!);
+                                      if (!mounted) return;
+
                                       final rawInfo = detail['body']
                                           ['practiceInfo'] as List<dynamic>;
                                       final practiceInfo = rawInfo
@@ -473,12 +476,13 @@ class _MusicsheetDetailState extends State<MusicsheetDetail> {
                                           .toList();
 
                                       openMusicSheet(
-                                        context: buildContext,
+                                        context: localContext,
                                         xmlDataString: _xmlDataString!,
                                         practiceInfo: practiceInfo,
                                       );
                                     } catch (e) {
-                                      ScaffoldMessenger.of(context)
+                                      if (!mounted) return;
+                                      ScaffoldMessenger.of(localContext)
                                           .showSnackBar(
                                         SnackBar(content: Text('상세 로딩 실패: $e')),
                                       );
