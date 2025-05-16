@@ -53,12 +53,15 @@ public class PracticeResultResolver {
         int[] matchedUserOnsetIndices = onsetMatchResult.getMatchedUserOnsetIndices();
         List<Double> answerOnsets = onsetMatchResult.getAnswerOnset();
         List<Boolean> beatMatchingResult = new ArrayList<>();
-        for(int noteInfoIdx : matchedUserOnsetIndices) {
-            if(noteInfoIdx < 0 || noteInfoIdx >= answerOnsets.size()) {
-                beatMatchingResult.add(false);
-            }else{
-                beatMatchingResult.add(true);
+        for(int i=0; i<answerOnsets.size(); i++){
+            boolean flag = false;
+            for (int matchedAnswerOnsetIdx : matchedUserOnsetIndices) {
+                if (i == matchedAnswerOnsetIdx) {
+                    flag = true;
+                    break;
+                }
             }
+            beatMatchingResult.add(flag);
         }
         return beatMatchingResult;
     }
@@ -70,22 +73,23 @@ public class PracticeResultResolver {
         List<Boolean> finalMatchingResult = new ArrayList<>();
         List<NoteInfo> noteInfoList = measureInfo.getNoteList();
         int[] matchedUserOnsetIndices = onsetMatchResult.getMatchedUserOnsetIndices();
-        for (int noteInfoIdx : matchedUserOnsetIndices) {
-            if(noteInfoIdx >= 0 && noteInfoIdx < noteInfoList.size() && noteInfoIdx < drumPredictList.size()){
-                NoteInfo answerNoteInfo = noteInfoList.get(noteInfoIdx);
+        for (int i=0; i<noteInfoList.size(); i++){
+            boolean flag = false;
+            for(int j=0; j<matchedUserOnsetIndices.length; j++){
+                int matchedAnswerOnsetIdx = matchedUserOnsetIndices[j];
+                if(matchedAnswerOnsetIdx < 0 || i != matchedAnswerOnsetIdx) continue;
+                NoteInfo answerNoteInfo = noteInfoList.get(matchedAnswerOnsetIdx);
                 String[] answerNotePrediction = answerNoteInfo.getPitchList()
                         .stream().map(PitchInfo::getInstrumentType).toArray(String[]::new);
-                String[] userNotePrediction = drumPredictList.get(noteInfoIdx);
+                String[] userNotePrediction = drumPredictList.get(j);
                 Arrays.sort(answerNotePrediction);
                 Arrays.sort(userNotePrediction);
                 if (Arrays.equals(answerNotePrediction, userNotePrediction)) {
-                    finalMatchingResult.add(true);
-                }else{
-                    finalMatchingResult.add(false);
+                    flag = true;
+                    break;
                 }
-            }else{
-                finalMatchingResult.add(false);
             }
+            finalMatchingResult.add(flag);
         }
         return finalMatchingResult;
     }
