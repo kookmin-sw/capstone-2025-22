@@ -3,6 +3,7 @@ import 'package:file_selector/file_selector.dart';
 import 'dart:math';
 import 'dart:io';
 import 'dart:async';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class AddSheetDialog extends StatefulWidget {
   final Function(String, String, String?) onSubmit;
@@ -91,8 +92,8 @@ class _AddSheetDialogState extends State<AddSheetDialog> {
       ),
       child: SingleChildScrollView(
         child: Container(
-          width: 330,
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 20),
+          width: 120.w,
+          padding: EdgeInsets.symmetric(horizontal: 5.w, vertical: 20.h),
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(16),
@@ -119,50 +120,49 @@ class _AddSheetDialogState extends State<AddSheetDialog> {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const Text(
+        Text(
           '악보 파일 업로드',
           style: TextStyle(
-            fontSize: 18,
+            fontSize: 7.sp,
             fontWeight: FontWeight.w600,
             color: Colors.black87,
           ),
           textAlign: TextAlign.center,
         ),
-        const SizedBox(height: 5),
-        const Text(
+        SizedBox(height: 5.h),
+        Text(
           '연주할 악보 PDF 파일을 선택해주세요.',
           style: TextStyle(
-            fontSize: 14,
+            fontSize: 5.sp,
             color: Colors.black54,
           ),
           textAlign: TextAlign.center,
         ),
-        const SizedBox(height: 20),
+        SizedBox(height: 20.h),
         _selectedFilePath == null
             ? Center(
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFFD97D6C),
-                    minimumSize: const Size(140, 35),
+                    minimumSize: Size(60.w, 50.h),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
                   onPressed: _uploadPDF,
-                  child: const Text(
+                  child: Text(
                     '파일 선택',
                     style: TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.w600,
-                      fontSize: 14,
+                      fontSize: 5.5.sp,
                     ),
                   ),
                 ),
               )
             : Container(
-                margin: const EdgeInsets.symmetric(horizontal: 20),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                margin: EdgeInsets.symmetric(horizontal: 5.w),
+                padding: EdgeInsets.symmetric(horizontal: 5.w, vertical: 10.h),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(8),
@@ -171,12 +171,12 @@ class _AddSheetDialogState extends State<AddSheetDialog> {
                 ),
                 child: Row(
                   children: [
-                    const Icon(
+                    Icon(
                       Icons.insert_drive_file_outlined,
                       color: Color(0xFFE57373),
-                      size: 35,
+                      size: 10.sp,
                     ),
-                    const SizedBox(width: 12),
+                    SizedBox(width: 7.w),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -184,15 +184,16 @@ class _AddSheetDialogState extends State<AddSheetDialog> {
                         children: [
                           Text(
                             '${_sheetNameController.text}.pdf',
-                            style: const TextStyle(
-                              fontSize: 16,
+                            style: TextStyle(
+                              fontSize: 5.5.sp,
                               color: Colors.black87,
                             ),
                           ),
+                          SizedBox(height: 5.h),
                           Text(
                             _fileSize,
-                            style: const TextStyle(
-                              fontSize: 12,
+                            style: TextStyle(
+                              fontSize: 4.8.sp,
                               color: Colors.black38,
                               letterSpacing: -0.5,
                               height: 1,
@@ -203,16 +204,16 @@ class _AddSheetDialogState extends State<AddSheetDialog> {
                     ),
                     GestureDetector(
                       onTap: _clearSelectedFile,
-                      child: const Icon(
+                      child: Icon(
                         Icons.delete,
                         color: Colors.black38,
-                        size: 20,
+                        size: 9.sp,
                       ),
                     ),
                   ],
                 ),
               ),
-        const SizedBox(height: 20),
+        SizedBox(height: 25.h),
         _buildNavigationButtons(
           onPrevious: () => Navigator.of(context).pop(),
           previousText: '취소',
@@ -234,16 +235,16 @@ class _AddSheetDialogState extends State<AddSheetDialog> {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const Text(
+        Text(
           '악보명을 입력해주세요.',
           style: TextStyle(
-            fontSize: 16,
+            fontSize: 6.sp,
             fontWeight: FontWeight.w600,
             color: Color(0xFF646464),
           ),
           textAlign: TextAlign.center,
         ),
-        const SizedBox(height: 24),
+        SizedBox(height: 24.h),
         Container(
           decoration: BoxDecoration(
             border: Border.all(color: const Color(0xFFD5D5D5)),
@@ -256,19 +257,19 @@ class _AddSheetDialogState extends State<AddSheetDialog> {
             onChanged: (text) {
               setState(() {}); // 값 변경 시 상태를 즉시 갱신
             },
-            decoration: const InputDecoration(
+            decoration: InputDecoration(
               hintText: '악보명',
               hintStyle: TextStyle(
                 color: Colors.black45,
-                fontSize: 14,
+                fontSize: 5.sp,
               ),
               contentPadding:
-                  EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  EdgeInsets.symmetric(horizontal: 8.w, vertical: 12.h),
               border: InputBorder.none,
             ),
           ),
         ),
-        const SizedBox(height: 20),
+        SizedBox(height: 25.h),
         _buildNavigationButtons(
           onPrevious: () {
             setState(() {
@@ -294,16 +295,16 @@ class _AddSheetDialogState extends State<AddSheetDialog> {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const Text(
+        Text(
           '가수명을 입력해주세요.',
           style: TextStyle(
-            fontSize: 16,
+            fontSize: 6.sp,
             fontWeight: FontWeight.w600,
             color: Color(0xFF646464),
           ),
           textAlign: TextAlign.center,
         ),
-        const SizedBox(height: 24),
+        SizedBox(height: 24.h),
         Container(
           decoration: BoxDecoration(
             border: Border.all(color: const Color(0xFFD5D5D5)),
@@ -316,19 +317,19 @@ class _AddSheetDialogState extends State<AddSheetDialog> {
             onChanged: (text) {
               setState(() {}); // 값 변경 시 상태를 즉시 갱신
             },
-            decoration: const InputDecoration(
+            decoration: InputDecoration(
               hintText: '가수명',
               hintStyle: TextStyle(
                 color: Colors.black45,
-                fontSize: 14,
+                fontSize: 5.sp,
               ),
               contentPadding:
-                  EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  EdgeInsets.symmetric(horizontal: 8.w, vertical: 12.h),
               border: InputBorder.none,
             ),
           ),
         ),
-        const SizedBox(height: 20),
+        SizedBox(height: 25.h),
         _buildNavigationButtons(
           onPrevious: () {
             setState(() {
@@ -359,38 +360,38 @@ class _AddSheetDialogState extends State<AddSheetDialog> {
     required String nextText,
   }) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
+      padding: EdgeInsets.symmetric(horizontal: 12.h),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           SizedBox(
-            width: 130,
+            width: 48.w,
             child: TextButton(
               onPressed: onPrevious,
               style: TextButton.styleFrom(
                 backgroundColor: const Color(0xFFF5F5F5),
-                padding: const EdgeInsets.symmetric(vertical: 12),
+                padding: EdgeInsets.symmetric(vertical: 17.h),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
               ),
               child: Text(
                 previousText,
-                style: const TextStyle(
+                style: TextStyle(
                   color: Colors.black54,
-                  fontSize: 16,
+                  fontSize: 6.sp,
                   fontWeight: FontWeight.w600,
                 ),
               ),
             ),
           ),
           SizedBox(
-            width: 130,
+            width: 48.w,
             child: TextButton(
               onPressed: onNext,
               style: TextButton.styleFrom(
                 backgroundColor: const Color(0xFFD97D6C),
-                padding: const EdgeInsets.symmetric(vertical: 12),
+                padding: EdgeInsets.symmetric(vertical: 17.h),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
@@ -399,9 +400,9 @@ class _AddSheetDialogState extends State<AddSheetDialog> {
               ),
               child: Text(
                 nextText,
-                style: const TextStyle(
+                style: TextStyle(
                   color: Colors.white,
-                  fontSize: 16,
+                  fontSize: 6.sp,
                   fontWeight: FontWeight.w600,
                 ),
               ),

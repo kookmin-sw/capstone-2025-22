@@ -1,6 +1,6 @@
 import 'dart:io';
 import 'dart:ui';
-import 'dart:convert';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:capstone_2025/services/api_func.dart';
 import 'package:capstone_2025/services/storage_service.dart';
 import 'package:capstone_2025/widgets/linedText.dart';
@@ -80,9 +80,6 @@ class _MusicsheetDetailState extends State<MusicsheetDetail> {
       '/sheets/${widget.songID}/practices',
       {"pageSize": 100, "pageNumber": 0, "email": email},
     );
-    print("DEBUG - 호출한 API: /sheets/${widget.songID}/practices");
-    print("DEBUG - 전달한 email: $email");
-    print("DEBUG - 응답 결과: $response");
 
     if (response['errMessage'] == null) {
       List<dynamic> rawData = response['body'];
@@ -167,15 +164,15 @@ class _MusicsheetDetailState extends State<MusicsheetDetail> {
         ],
       ),
       child: Padding(
-        padding: const EdgeInsets.all(15),
+        padding: EdgeInsets.all(15.h),
         child: LineChart(
           // LineChart 위젯 추가
           LineChartData(
               // 그래프 상하좌우 여백
-              minX: -0.3,
-              maxX: 4.3,
+              minX: -0.1.w,
+              maxX: 1.55.w,
               minY: getMinY(), // 최소값 - 5점
-              maxY: 105,
+              maxY: 120.h,
 
               // 배경색
               backgroundColor: Colors.grey.shade100,
@@ -264,7 +261,7 @@ class _MusicsheetDetailState extends State<MusicsheetDetail> {
                         TextStyle(
                           color: Colors.black,
                           fontWeight: FontWeight.w500,
-                          fontSize: 10,
+                          fontSize: 13.sp,
                         ),
                         // 여러 스타일을 적용할 수 있는 TextSpan 사용
                         textAlign: TextAlign.center,
@@ -272,7 +269,7 @@ class _MusicsheetDetailState extends State<MusicsheetDetail> {
                           TextSpan(
                             text: '${spot.y.toInt()}점',
                             style: TextStyle(
-                              fontSize: 16, // 점수는 크게
+                              fontSize: 7.sp, // 점수는 크게
                               color: Color(0xffD97D6C), // 점수는 주황색
                               fontWeight: FontWeight.bold, // 점수는 볼드체
                             ),
@@ -280,7 +277,7 @@ class _MusicsheetDetailState extends State<MusicsheetDetail> {
                           TextSpan(
                             text: '\n${lastFive[(spot.x).toInt()]['연습 날짜']}',
                             style: TextStyle(
-                              fontSize: 10, // 날짜는 작게
+                              fontSize: 4.sp, // 날짜는 작게
                               color: Colors.black, // 날짜는 검은색
                             ),
                           ),
@@ -303,10 +300,10 @@ class _MusicsheetDetailState extends State<MusicsheetDetail> {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Padding(
-        padding: const EdgeInsets.only(
-          left: 20,
-          right: 20,
-          top: 15,
+        padding: EdgeInsets.only(
+          left: 8.w,
+          right: 8.w,
+          top: 20.h,
         ),
         child: Column(
           children: [
@@ -319,7 +316,8 @@ class _MusicsheetDetailState extends State<MusicsheetDetail> {
                     onTap: () => Navigator.pop(context),
                     child: FaIcon(
                       FontAwesomeIcons.chevronLeft,
-                      size: 25,
+                      size: 9.sp,
+                      color: Color(0xff646464),
                     ),
                   ),
                   Expanded(
@@ -327,7 +325,7 @@ class _MusicsheetDetailState extends State<MusicsheetDetail> {
                     child: Center(
                       child: linedText(
                         widget.songTitle,
-                        27,
+                        10.sp,
                         Colors.black54,
                         Colors.white,
                         4,
@@ -337,12 +335,12 @@ class _MusicsheetDetailState extends State<MusicsheetDetail> {
                 ],
               ),
             ),
-            SizedBox(height: 7),
+            SizedBox(height: 7.h),
             Expanded(
               // 그래프와 표
               child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 25,
+                padding: EdgeInsets.symmetric(
+                  horizontal: 5.w,
                 ),
                 child: IntrinsicHeight(
                   child: Row(
@@ -352,7 +350,7 @@ class _MusicsheetDetailState extends State<MusicsheetDetail> {
                         flex: 2,
                         child: Column(
                           children: [
-                            SizedBox(height: 10),
+                            SizedBox(height: 10.h),
                             Expanded(
                               // 그래프
                               flex: 5,
@@ -372,7 +370,7 @@ class _MusicsheetDetailState extends State<MusicsheetDetail> {
                                 child: _buildGraph(),
                               ),
                             ),
-                            SizedBox(height: 10),
+                            SizedBox(height: 10.h),
                             Expanded(
                               // 표
                               flex: 5,
@@ -392,16 +390,16 @@ class _MusicsheetDetailState extends State<MusicsheetDetail> {
                                 child: _buildScoreTable(),
                               ),
                             ),
-                            SizedBox(height: 10),
+                            SizedBox(height: 10.h),
                           ],
                         ),
                       ),
-                      SizedBox(width: 5),
+                      SizedBox(width: 4.w),
                       Expanded(
                         // 채점 결과 악보
                         flex: 3,
                         child: Padding(
-                          padding: const EdgeInsets.all(8.0),
+                          padding: EdgeInsets.all(8.h),
                           child: Stack(
                             children: [
                               Container(
@@ -424,13 +422,13 @@ class _MusicsheetDetailState extends State<MusicsheetDetail> {
                                   child: Stack(
                                     fit: StackFit.expand,
                                     children: [
-                                      // 악보 프리뷰 이미지
+                                      // 악보 프리뷰 이미지 - Todo : 이미지 안 떠서 사이즈 제대로 설정 못함
                                       if (previewBytes != null)
                                         Positioned(
-                                          top: 20,
-                                          left: 20,
-                                          right: 20,
-                                          bottom: 50,
+                                          top: 20.h,
+                                          left: 20.w,
+                                          right: 20.w,
+                                          bottom: 50.h,
                                           child: Image.memory(previewBytes!,
                                               fit: BoxFit.cover),
                                         )
@@ -489,7 +487,7 @@ class _MusicsheetDetailState extends State<MusicsheetDetail> {
                                     }
                                   },
                                   icon: FaIcon(FontAwesomeIcons.expand,
-                                      size: 28, color: Color(0xffD97D6C)),
+                                      size: 9.sp, color: Color(0xffD97D6C)),
                                 ),
                               ),
                             ],
@@ -512,14 +510,14 @@ class _MusicsheetDetailState extends State<MusicsheetDetail> {
       // 표와 헤더 겹치기 - 헤더 두께 조정을 위해
       children: [
         Positioned.fill(
-          top: 20,
+          top: 20.h,
           child: Scrollbar(
             thumbVisibility: true, // 항상 스크롤바 보이기
             thickness: 8, // 스크롤바 두께 조정
             radius: Radius.circular(10), // 스크롤바 끝부분 둥글게 처리
             child: ListView.builder(
               itemCount: practiceList.length,
-              padding: EdgeInsets.only(top: 10),
+              padding: EdgeInsets.only(top: 13.h),
               physics: ClampingScrollPhysics(),
               shrinkWrap: true,
               itemBuilder: (context, index) {
@@ -534,7 +532,7 @@ class _MusicsheetDetailState extends State<MusicsheetDetail> {
                     _onRowTap(_selectedPracticeId!);
                   },
                   child: Container(
-                      padding: EdgeInsets.symmetric(vertical: 12),
+                      padding: EdgeInsets.symmetric(vertical: 15.h),
                       decoration: BoxDecoration(
                         color: isSelected
                             ? Colors.grey.shade100 // 선택된 색
@@ -557,7 +555,7 @@ class _MusicsheetDetailState extends State<MusicsheetDetail> {
         ),
         Container(
           // 표 헤더
-          height: 30,
+          height: 35.h,
           decoration: BoxDecoration(
             color: Color(0xffD97D6C),
             borderRadius: BorderRadius.vertical(top: Radius.circular(10)),
@@ -586,7 +584,7 @@ class _MusicsheetDetailState extends State<MusicsheetDetail> {
             style: TextStyle(
               fontWeight: FontWeight.bold,
               color: Colors.white,
-              fontSize: 16,
+              fontSize: 6.sp,
             ),
           ),
         ),
@@ -596,11 +594,11 @@ class _MusicsheetDetailState extends State<MusicsheetDetail> {
       // 왼쪽 정렬
       flex: flex,
       child: Padding(
-        padding: const EdgeInsets.only(left: 65),
+        padding: EdgeInsets.only(left: 23.w),
         child: Text(
           text,
           style: TextStyle(
-              fontWeight: FontWeight.bold, color: Colors.white, fontSize: 16),
+              fontWeight: FontWeight.bold, color: Colors.white, fontSize: 6.sp),
           textAlign: TextAlign.start,
         ),
       ),
@@ -616,7 +614,7 @@ class _MusicsheetDetailState extends State<MusicsheetDetail> {
         child: Center(
           child: Text(
             text,
-            style: TextStyle(fontSize: 19, fontWeight: FontWeight.w500),
+            style: TextStyle(fontSize: 7.sp, fontWeight: FontWeight.w500),
             textAlign: TextAlign.center,
           ),
         ),
@@ -626,10 +624,10 @@ class _MusicsheetDetailState extends State<MusicsheetDetail> {
       // 왼쪽 정렬
       flex: flex,
       child: Padding(
-        padding: const EdgeInsets.only(left: 50),
+        padding: EdgeInsets.only(left: 19.w),
         child: Text(
           text,
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w400),
+          style: TextStyle(fontSize: 6.5.sp, fontWeight: FontWeight.w400),
           textAlign: TextAlign.left,
         ),
       ),

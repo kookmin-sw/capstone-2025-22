@@ -6,6 +6,7 @@ import 'package:capstone_2025/services/api_func.dart';
 import 'package:capstone_2025/services/server_addr.dart';
 import '/services/storage_service.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:http/http.dart' as http;
@@ -100,89 +101,91 @@ class _LoginScreenGoogleState extends State<LoginScreenGoogle> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor, // 배경색
-      body: Center(
-        child: Padding(
-          padding: EdgeInsets.symmetric(
-            vertical: 70,
-            horizontal: 20,
-          ),
-          child: Column(
-            children: [
-              SizedBox(
-                width: 500,
-                child: Container(
-                  alignment: Alignment.center,
-                  child: Image.asset(
-                    "assets/images/appLogo.png",
-                    height: MediaQuery.of(context).size.height * 0.16,
-                  ),
-                ),
-              ),
-              SizedBox(height: 40),
-              SizedBox(
-                // 이메일 로그인 버튼
-                width: 500,
-                height: 60,
-                child: ButtonForm(
-                  btnName: "이메일로 로그인",
-                  buttonColor: Color(0xFF424242),
-                  clickedFunc: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        // 이메일 로그인 페이지로 이동
-                        builder: (_) => LoginScreen(),
-                      ),
-                    );
-                  },
-                ),
-              ),
-              SizedBox(height: 20), // 간격
-              SizedBox(
-                // 구글 로그인 버튼
-                width: 500,
-                height: 60,
-                child: ButtonForm(
-                  btnName: "구글 계정으로 로그인",
-                  isTextBlack: true,
-                  buttonColor: Color(0xFFE1E1E1),
-                  needGoogle: true,
-                  clickedFunc: _handleGoogleSignIn, // Google 로그인 함수 적용
-                ),
-              ),
-              SizedBox(height: 15),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    "회원이 아니신가요?",
-                    style: TextStyle(
-                      fontWeight: FontWeight.w600,
-                      color: Colors.black54,
-                      fontSize: 17,
+      body: SingleChildScrollView(
+        physics: const NeverScrollableScrollPhysics(),
+        child: Center(
+          child: Padding(
+            padding: EdgeInsets.symmetric(
+              vertical: 80.h,
+              horizontal: 50.w,
+            ),
+            child: Column(
+              children: [
+                SizedBox(
+                  child: Container(
+                    alignment: Alignment.center,
+                    child: Image.asset(
+                      "assets/images/appLogo.png",
+                      height: 95.h,
                     ),
                   ),
-                  SizedBox(width: 15),
-                  TextButton(
-                    // 회원가입 버튼
-                    onPressed: () {
-                      Navigator.of(context).pushReplacement(
+                ),
+                SizedBox(height: 40.h),
+                SizedBox(
+                  // 이메일 로그인 버튼
+                  width: 190.w,
+                  height: 70.h,
+                  child: ButtonForm(
+                    btnName: "이메일로 로그인",
+                    buttonColor: Color(0xFF424242),
+                    clickedFunc: () {
+                      Navigator.of(context).push(
                         MaterialPageRoute(
-                          builder: (_) => SignUpScreen(),
+                          // 이메일 로그인 페이지로 이동
+                          builder: (_) => LoginScreen(),
                         ),
                       );
                     },
-                    child: Text(
-                      "회원가입",
+                  ),
+                ),
+                SizedBox(height: 20.h), // 간격
+                SizedBox(
+                  // 구글 로그인 버튼
+                  width: 190.w,
+                  height: 70.h,
+                  child: ButtonForm(
+                    btnName: "구글 계정으로 로그인",
+                    isTextBlack: true,
+                    buttonColor: Colors.white,
+                    needGoogle: true,
+                    clickedFunc: _handleGoogleSignIn, // Google 로그인 함수 적용
+                  ),
+                ),
+                SizedBox(height: 20.h),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      "회원이 아니신가요?",
                       style: TextStyle(
                         fontWeight: FontWeight.w600,
                         color: Colors.black54,
-                        fontSize: 17,
+                        fontSize: 6.sp,
                       ),
                     ),
-                  )
-                ],
-              )
-            ],
+                    SizedBox(width: 3.w),
+                    TextButton(
+                      // 회원가입 버튼
+                      onPressed: () {
+                        Navigator.of(context).pushReplacement(
+                          MaterialPageRoute(
+                            builder: (_) => SignUpScreen(),
+                          ),
+                        );
+                      },
+                      child: Text(
+                        "회원가입",
+                        style: TextStyle(
+                          fontWeight: FontWeight.w500,
+                          color: Colors.black54,
+                          fontSize: 6.5.sp,
+                        ),
+                      ),
+                    )
+                  ],
+                )
+              ],
+            ),
           ),
         ),
       ),
@@ -208,34 +211,43 @@ class ButtonForm extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ElevatedButton(
-      style: ElevatedButton.styleFrom(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12.0),
-        ),
-        padding: EdgeInsets.symmetric(vertical: 16.5, horizontal: 10),
-        backgroundColor: buttonColor,
+    return Container(
+      decoration: BoxDecoration(
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            offset: Offset(0, 4),
+            blurRadius: 2.0,
+          ),
+        ],
+        borderRadius: BorderRadius.circular(12.0),
       ),
-      onPressed: clickedFunc,
-      child: Center(
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            if (needGoogle) // 구글 아이콘 유무
-              Icon(
-                FontAwesomeIcons.google, // Google 아이콘 유지
-                size: 20,
-                color: Colors.black,
+      child: ElevatedButton(
+        style: ElevatedButton.styleFrom(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12.0),
+          ),
+          padding: EdgeInsets.symmetric(vertical: 16.5.h, horizontal: 10.w),
+          backgroundColor: buttonColor,
+          shadowColor: Colors.transparent, // Prevent double shadows
+        ),
+        onPressed: clickedFunc,
+        child: Center(
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              if (needGoogle)
+                Image.asset("assets/images/googleLogo.png", height: 32.h),
+              SizedBox(width: 5.w),
+              Text(
+                btnName,
+                style: TextStyle(
+                  fontSize: 6.sp,
+                  color: isTextBlack ? Colors.black54 : Colors.white,
+                ),
               ),
-            SizedBox(width: 10),
-            Text(
-              btnName,
-              style: TextStyle(
-                fontSize: 15.0,
-                color: isTextBlack ? Colors.black : Colors.white,
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

@@ -71,6 +71,7 @@ class DrumRecordingWidget extends StatefulWidget {
 class DrumRecordingWidgetState extends State<DrumRecordingWidget>
     with SingleTickerProviderStateMixin {
 // 상태 플래그
+  bool _isRecorderReady = false;
   bool _isDisposed = false;
   bool isRecording = false;
   bool isCountingDown = false;
@@ -123,8 +124,11 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
         Tween<double>(begin: 0.0, end: 1.0).animate(_overlayController);
 
     // 데이터 초기화
-    _initializeData();
     _parseMusicXML();
+    _initializeData().then((_) {
+      _isRecorderReady = true;
+      print('[InitState] ✅ recorder ready');
+    });
 
     // PlaybackController의 이벤트 구독
     widget.playbackController.onMeasureChange = _handleMeasureChange;
@@ -133,6 +137,7 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
   }
 
   Future<void> _initializeData() async {
+    print('[InitData] ▶️ 시작');
     if (_isDisposed) return;
 
     // 저장된 이메일 불러오기
@@ -149,19 +154,32 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
   Future<void> _initRecorder() async {
     if (_isDisposed) return;
 
-    // 마이크 권한 요청
+    // 1) 마이크 권한 요청
     var status = await Permission.microphone.request();
     if (status != PermissionStatus.granted) {
       throw RecordingPermissionException('마이크 권한이 부여되지 않았습니다.');
+    }
+    print('[Permission] ✅ 마이크 권한 획득');
+
+    // 2) 기존 레코더가 있으면 닫기
+    if (_recorder != null) {
+      try {
+        await _recorder!.closeRecorder();
+      } catch (e) {
+        print('⚠️ 기존 레코더 종료 중 오류: $e');
+      }
     }
 
     // 녹음기 초기화
     _recorder = fs.FlutterSoundRecorder(logLevel: Level.off);
     await _recorder?.openRecorder();
+    print('🎤 녹음기 초기화 완료');
 
     // 녹음 파일 저장 경로 설정
-    final appDocDir = await getApplicationDocumentsDirectory();
-    _recordingPath = '${appDocDir.path}/current_measure.wav';
+    final dir = await getApplicationDocumentsDirectory();
+    _recordingPath = '${dir.path}/current_measure.aac';
+
+    _isRecorderReady = true;
   }
 
   Future<void> _setupWebSocket() async {
@@ -191,6 +209,17 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
             _retryWebSocketConnect();
           }
         },
+        // STOMP 계층에서 에러가 왔을 때
+        onStompError: (StompFrame frame) {
+          print('❌ STOMP 프로토콜 에러: ${frame.body}');
+        },
+        // 핸들링되지 않은 모든 프레임을 찍어본다
+        onUnhandledFrame: (dynamic frame) {
+          print('⚠️ Unhandled STOMP frame: $frame');
+        },
+        onUnhandledMessage: (StompFrame frame) {
+          print('⚠️ Unhandled STOMP message: ${frame.body}');
+        },
         onDisconnect: (frame) {
           print('🔌 WebSocket 연결 끊어짐');
           if (!_isDisposed) {
@@ -216,6 +245,7 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
     _stompUnsubscribe = _stompClient!.subscribe(
       destination: '/topic/onset/$_userEmail',
       callback: (frame) {
+        print('🛰️ [RAW FRAME] headers=${frame.headers}, body=${frame.body}');
         if (_isDisposed) return;
 
         if (frame.body != null) {
@@ -343,9 +373,26 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
   }
 
   // PlaybackController 콜백 메소드 - 카운트다운 완료 처리
-  void _handleCountdownComplete() {
+  void _handleCountdownComplete() async {
+    print('[Countdown] ▶️ 완료 콜백 진입');
+    print('[Countdown] recorder 상태: isStopped=${_recorder?.isStopped}');
+    await _initRecorder();
+    print('[Countdown] ✅ _initRecorder() 리턴');
+
     if (!mounted || _isDisposed) return;
+
+    print('[Countdown] ▶️ 완료 콜백 진입 (_isRecorderReady=$_isRecorderReady)');
+    if (!_isRecorderReady) {
+      print('[Countdown] ❌ recorder not ready, skip startRecording');
+      return;
+    }
+    // 녹음기가 아직 열려있지 않으면 재초기화
+    if (_recorder == null || !(_recorder!.isStopped ?? false)) {
+      await _initRecorder();
+    }
+
     startRecording();
+    print('[Countdown] ▶️ startRecording 호출됨');
   }
 
   // 연주 완료 처리
@@ -372,14 +419,19 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
   void _handleMeasureChange(int measureNumber) {
     if (!isRecording || _isDisposed) return;
 
+    print('🎼 마디 변경 감지: ${_currentMeasure + 1} -> ${measureNumber + 1}');
+
     // 첫 번째 마디 변경 감지인 경우 (녹음 시작)
     if (_currentMeasure == 0 && measureNumber == 0) {
       _startMeasureRecording();
       return;
     }
 
-    // 현재 마디 녹음 중지 및 데이터 전송
-    _processCurrentMeasure();
+    // 측정값 측정이 변경될 때만 현재 마디 처리
+    if (measureNumber > _currentMeasure) {
+      // 현재 마디 녹음 중지 및 데이터 전송
+      _processCurrentMeasure();
+    }
   }
 
   /// 카운트다운 애니메이션 시작
@@ -515,6 +567,8 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
     if (!isRecording || _isDisposed || _recorder == null) return;
 
     try {
+      print('📝 마디 ${_currentMeasure + 1} 처리 시작');
+
       // 현재 녹음 중지
       if (_recorder!.isRecording) {
         await _recorder!.stopRecorder();
@@ -551,7 +605,7 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
 
       await _recorder!.startRecorder(
         toFile: _recordingPath,
-        codec: fs.Codec.pcm16WAV,
+        codec: fs.Codec.aacADTS,
         sampleRate: 16000,
         numChannels: 1,
         bitRate: 16000,
@@ -587,6 +641,9 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
       final file = File(_recordingPath!);
       if (await file.exists()) {
         final base64String = base64Encode(await file.readAsBytes());
+        print('📁 녹음 파일 크기: ${base64String.length} bytes');
+        // print(base64String);
+
         final originalBpm =
             ((_beatsPerMeasure * 60) / (_totalDuration / _totalMeasures))
                 .toInt();
@@ -595,7 +652,10 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
 
         final message = {
           'bpm': adjustedBpm,
-          'userSheetId': widget.userSheetId,
+          if (widget.patternId != null) // 이 부분 잘 동작하는지 확인해보기
+            'patternId': widget.patternId!
+          else
+            'userSheetId': widget.userSheetId,
           'identifier': _identifier,
           'email': _userEmail,
           'message': base64String,
@@ -751,9 +811,40 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
   @override
   void dispose() {
     _isDisposed = true;
-    cleanupResources();
+
+    // 1) 녹음 중이면 즉시 중지
+    if (_recorder != null && _recorder!.isRecording) {
+      try {
+        _recorder!.stopRecorder();
+      } catch (_) {}
+    }
+    // 2) 녹음기 닫기
+    try {
+      _recorder?.closeRecorder();
+    } catch (_) {}
+
+    // 3) WebSocket 구독 해제 & 연결 종료
+    _stompUnsubscribe?.call();
+    try {
+      _stompClient?.deactivate();
+    } catch (_) {}
+
+    // 4) 타이머 취소
+    _countdownTimer?.cancel();
+    _recordingTimer?.cancel();
+
+    // 5) 스트림 구독 취소
+    _recorderSubscription?.cancel();
+
+    // 6) PlaybackController 콜백 해제
+    widget.playbackController
+      ..onMeasureChange = null
+      ..onCountdownComplete = null
+      ..onPlaybackComplete = null;
+
+    // 7) 애니메이션 컨트롤러 해제
     _overlayController.dispose();
-    widget.playbackController.onMeasureChange = null;
+
     super.dispose();
   }
 
@@ -788,7 +879,10 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
 
         final message = {
           'bpm': adjustedBpm,
-          'userSheetId': widget.userSheetId,
+          if (widget.patternId != null) // 이 부분 잘 동작하는지 확인해보기
+            'patternId': widget.patternId!
+          else
+            'userSheetId': widget.userSheetId,
           'identifier': _identifier,
           'email': _userEmail,
           'message': base64String,
