@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'package:capstone_2025/screens/drumSheetPages/sheetXmlDataTemp.dart'
     as pattern_info_default;
 import 'package:flutter/material.dart';
@@ -96,6 +97,9 @@ class _CountdownPageState extends State<CountdownPage>
 
   final _storage = const FlutterSecureStorage();
 
+// 서버에서 받아온 패턴 WAV를 저장한 로컬 경로
+  String? _patternAudioPath;
+
   // 채점 결과 처리
   final List<Map<String, dynamic>> _beatGradingResults = [];
 
@@ -152,6 +156,9 @@ class _CountdownPageState extends State<CountdownPage>
     _audioPlayer = ap.AudioPlayer();
     _setupAudioListeners();
 
+    // 서버에서 패턴 WAV를 미리 받아오기
+    _downloadPatternWav();
+
     // OSMDService 생성 (데이터 로드 완료 콜백만 정의)
     osmdService = OSMDService(onDataLoaded: _onDataLoaded);
 
@@ -166,6 +173,48 @@ class _CountdownPageState extends State<CountdownPage>
         pageWidth: 1080,
       );
     });
+  }
+
+  Future<void> _downloadPatternWav() async {
+    final patternId = widget.index.toString();
+    print('⬇️ [Download] 패턴 $patternId WAV 다운로드 시작');
+
+    try {
+      final resData = await getHTTP("/patterns/$patternId/wavs", {});
+      print('🔍 [Download] resData 전체: $resData');
+
+      if (resData['errMessage'] != null) {
+        print('❌ [Download] 서버 에러: ${resData['errMessage']}');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('WAV 다운로드 실패: ${resData['errMessage']}')),
+        );
+        return;
+      }
+
+      final b64 = resData['body']['patternWav'] as String;
+
+      if (b64.isEmpty) {
+        print('❌ [Download] patternWav 필드가 비어있음!');
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('WAV 데이터가 없습니다.')),
+        );
+        return;
+      }
+
+      final bytes = base64Decode(b64);
+      final dir = await getTemporaryDirectory();
+      final file = File('${dir.path}/pattern_$patternId.wav');
+      await file.writeAsBytes(bytes, flush: true);
+      print('✅ [Download] 파일 저장 완료: ${file.path}');
+      setState(() {
+        _patternAudioPath = file.path;
+      });
+    } catch (e) {
+      print("❌ [Download] 예외 발생: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('WAV 다운로드 중 예외 발생: $e')),
+      );
+    }
   }
 
   // OSMDService 초기화할 때 onDataLoaded 연결
@@ -246,10 +295,12 @@ class _CountdownPageState extends State<CountdownPage>
       setState(() {
         _isPlaying = state == ap.PlayerState.playing;
       });
+      print('▶️ PlayerState: $state');
     });
 
     // 오디오 재생 위치 리스너
-    _positionSubscription = _audioPlayer.onPositionChanged.listen((position) {
+    final positionSubscription =
+        _audioPlayer.onPositionChanged.listen((position) {
       if (!mounted) return;
       setState(() {
         // 밀리초 단위로
@@ -288,8 +339,32 @@ class _CountdownPageState extends State<CountdownPage>
       if (mounted) setState(() => _showPracticeMessage = false);
     });
 
+    // 다운로드가 아직 안 끝났으면 최대 5초까지 기다려 봄
+    if (_patternAudioPath == null) {
+      print('⏳ 아직 다운로드 중… 최대 5초 대기');
+      await Future.any([
+        Future.delayed(const Duration(seconds: 5)),
+        Future.doWhile(() async {
+          await Future.delayed(const Duration(milliseconds: 200));
+          return _patternAudioPath == null;
+        }),
+      ]);
+    }
+
     // 시범 연주 오디오 재생
-    await _audioPlayer.play(ap.AssetSource('sounds/test_pattern.wav'));
+    if (_patternAudioPath != null) {
+      print('🎧 Playing server-fetched WAV: $_patternAudioPath');
+      await _audioPlayer.play(
+        ap.DeviceFileSource(_patternAudioPath!),
+      );
+    } else {
+      const errMsg = '❌ 서버에서 WAV 파일을 불러오지 못했습니다.';
+      print(errMsg);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text(errMsg)),
+      );
+      return; // 함수 종료
+    }
 
     StreamSubscription<Duration>? oneShotSub;
     oneShotSub = _audioPlayer.onDurationChanged.listen((d) {
@@ -1071,7 +1146,7 @@ class _CountdownPageState extends State<CountdownPage>
               patternId: widget.index,
               title: 'Basic Pattern ${widget.index}',
               xmlDataString: patternInfo,
-              audioFilePath: 'assets/sounds/test_pattern.wav',
+              audioFilePath: _patternAudioPath ?? '',
               playbackController: playbackController,
               fetchPracticeIdentifier:
                   fetchPracticeIdentifier, // identifier 요청 함수
