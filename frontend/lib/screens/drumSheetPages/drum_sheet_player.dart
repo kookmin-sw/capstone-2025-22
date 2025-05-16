@@ -91,14 +91,14 @@ class _DrumSheetPlayerState extends State<DrumSheetPlayer> {
     _initializeOSMDService();
   }
 
-  /// OSMD 서비스 초기화 메서드
+  // OSMD 서비스 초기화 메서드
   void _initializeOSMDService() {
     osmdService = OSMDService(
       onDataLoaded: _handleOSMDDataLoaded,
     );
   }
 
-  /// OSMD 데이터 로드 완료 시 처리 콜백
+  // OSMD 데이터 로드 완료 시 처리 콜백
   Future<void> _handleOSMDDataLoaded({
     required Uint8List base64Image,
     required Map<String, dynamic> json,
@@ -108,7 +108,7 @@ class _DrumSheetPlayerState extends State<DrumSheetPlayer> {
     required List<dynamic> lineBounds,
     required int totalMeasures,
   }) async {
-    // 악보 상세 페이지에서 악보 전체 이미지 사용하기 위해 로컬에 저장
+    // 악보 상세 페이지 -> 악보 프리뷰 이미지 위해 로컬에 저장
     try {
       final dir = await getApplicationDocumentsDirectory();
       final previewPath = '${dir.path}/sheet_preview_${widget.sheetId}.png';
@@ -253,7 +253,7 @@ class _DrumSheetPlayerState extends State<DrumSheetPlayer> {
       };
   }
 
-  /// XML 데이터를 백엔드에서 로드
+  // XML 데이터를 백엔드에서 로드
   Future<void> _loadXMLDataFromBackend() async {
     try {
       // 1. 백엔드에서 전달받은 base64 인코딩된 XML 데이터

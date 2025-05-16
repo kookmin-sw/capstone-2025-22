@@ -1019,6 +1019,37 @@ class _CountdownPageState extends State<CountdownPage>
                 ),
               ),
             ),
+          // // 보미 녹음 다 수정하면 바꾸기
+          // Offstage(
+          //   offstage: true, // UI를 화면에 표시하지 않음
+          //   child: DrumRecordingWidget(
+          //     key: _drumRecordingKey,
+          //     playbackController: playbackController,
+          //     title: 'Basic Pattern ${widget.index}',
+          //     xmlDataString: patternInfo,
+          //     userSheetId: widget.index,
+          //     audioFilePath: 'assets/sounds/test_pattern.wav',
+          //     fetchPracticeIdentifier:
+          //         fetchPracticeIdentifier, // identifier 요청 함수
+          //     onMusicXMLParsed: (info) {
+          //       _drumRecordingKey.currentState?.setMeasureInfo(info);
+          //     },
+          //     onRecordingComplete: (onsets) {
+          //       setState(() {
+          //         _detectedOnsets = onsets;
+          //       });
+          //     },
+          //     onOnsetsReceived: (onsets) {
+          //       setState(() {
+          //         _detectedOnsets = onsets;
+          //       });
+          //     },
+          //     onGradingResult: (msg) {
+          //       _handleScoringResult(msg); // 1) 즉시 화면에 틀린 박자 커서 표시
+          //       _onWsGradingMessage(msg); // 2) 리스트에 쌓아서, 마지막에 전체 점수 계산
+          //     },
+          //   ),
+          // ),
 
           // DrumRecordingWidget 추가 (보이지 않지만 기능 사용)
           Offstage(
@@ -1028,10 +1059,13 @@ class _CountdownPageState extends State<CountdownPage>
               playbackController: playbackController,
               title: 'Basic Pattern ${widget.index}',
               xmlDataString: patternInfo,
+              userSheetId: widget.index,
               audioFilePath: 'assets/sounds/test_pattern.wav',
               fetchPracticeIdentifier:
                   fetchPracticeIdentifier, // identifier 요청 함수
-
+              onMusicXMLParsed: (info) {
+                _drumRecordingKey.currentState?.setMeasureInfo(info);
+              },
               onRecordingComplete: (onsets) {
                 setState(() {
                   _detectedOnsets = onsets;
