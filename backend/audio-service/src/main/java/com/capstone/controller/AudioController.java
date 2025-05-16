@@ -1,6 +1,7 @@
 package com.capstone.controller;
 
 import com.capstone.dto.AudioMessageDto;
+import com.capstone.dto.PatternMessageDto;
 import com.capstone.service.CustomProvider;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -18,5 +19,10 @@ public class AudioController {
     public void sendAudio(AudioMessageDto audio){
         log.info("Sending audio message");
         provider.produceAudioEvent(audio);
+    }
+
+    @MessageMapping("/pattern")
+    public void sendPatternAudio(PatternMessageDto patternDto){
+        provider.producePatternEvent(patternDto);
     }
 }

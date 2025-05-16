@@ -42,10 +42,10 @@ public class AudioMessageConsumer {
         MeasureInfo measureInfo;
     }
 
-    private OnsetMeasureData getOnsetResultAndSendToUser(OnsetMeasureData onsetMeasureData, String measureNumber, String email){
+    private OnsetMeasureData getOnsetResultAndSendToUser(OnsetMeasureData onsetMeasureData, String measureNumber, String email, double weight){
         OnsetResponseDto onsetResponse = onsetMeasureData.getOnsetResponse();
         MeasureInfo measureInfo = onsetMeasureData.getMeasureInfo();
-        OnsetMatchResult matchResult = practiceResultResolver.matchOnset(onsetResponse, measureInfo);
+        OnsetMatchResult matchResult = practiceResultResolver.matchOnset(onsetResponse, measureInfo, weight);
         matchResult.setMeasureNumber(measureNumber);
         onsetMeasureData.setOnsetMatchResult(matchResult);
         messagingTemplate.convertAndSend("/topic/onset/" + email, matchResult);
@@ -78,7 +78,7 @@ public class AudioMessageConsumer {
                 .score(score).build();
     }
 
-    @KafkaListener(topics = "audio", groupId = "${spring.kafka.consumer.group-id}")
+    @KafkaListener(topics = "audio", groupId = "${spring.kafka.consumer.group-id}", containerFactory = "audioKafkaListenerFactory")
     public Mono<Void> sendAudioConversionResult(@Payload final AudioMessageDto audioMessageDto) {
         OnsetRequestDto requestDto = OnsetRequestDto.fromMessageDto(audioMessageDto);
         return audioModelClient.getOnsetFromWav(requestDto)
@@ -87,7 +87,8 @@ public class AudioMessageConsumer {
                                 .onsetResponse(onset)
                                 .measureInfo(measureInfo)))
                 .map(onsetMeasureDataBuilder -> { // get the onset match result and send it to the client
-                    return getOnsetResultAndSendToUser(onsetMeasureDataBuilder.build(), audioMessageDto.getMeasureNumber(), audioMessageDto.getEmail());
+                    double weight = (double) 60 / audioMessageDto.getBpm();
+                    return getOnsetResultAndSendToUser(onsetMeasureDataBuilder.build(), audioMessageDto.getMeasureNumber(), audioMessageDto.getEmail(), weight);
                 })
                 .flatMap(onsetMeasureDataBuilder -> { // get the drum prediction list from the AudioModelClient
                     return getDrumPredictionList(onsetMeasureDataBuilder, audioMessageDto.getMessage());
@@ -114,7 +115,7 @@ public class AudioMessageConsumer {
                         })).then();
     }
 
-    @KafkaListener(topics = "pattern")
+    @KafkaListener(topics = "pattern", containerFactory = "patternKafkaListenerFactory")
     public void sendPatternResultAndSavePatternPractice(@Payload final PatternMessageDto patternMessageDto){
         OnsetRequestDto requestDto = OnsetRequestDto.fromPatternMessage(patternMessageDto);
         audioModelClient.getOnsetFromWav(requestDto)
@@ -123,7 +124,8 @@ public class AudioMessageConsumer {
                                 .onsetResponse(onset)
                                 .measureInfo(measureInfo)))
                 .map(onsetMeasureDataBuilder -> { // get the onset match result and send it to the client
-                    return getOnsetResultAndSendToUser(onsetMeasureDataBuilder.build(), patternMessageDto.getMeasureNumber(), patternMessageDto.getEmail());
+                    double weight = (double) 60 / patternMessageDto.getBpm();
+                    return getOnsetResultAndSendToUser(onsetMeasureDataBuilder.build(), patternMessageDto.getMeasureNumber(), patternMessageDto.getEmail(), weight);
                 })
                 .flatMap(onsetMeasureDataBuilder -> { // get the drum prediction list from the AudioModelClient
                     return getDrumPredictionList(onsetMeasureDataBuilder, patternMessageDto.getAudioBase64());
