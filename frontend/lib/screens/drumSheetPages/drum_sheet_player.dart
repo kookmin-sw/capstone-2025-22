@@ -840,7 +840,7 @@ class _DrumSheetPlayerState extends State<DrumSheetPlayer> {
                           ],
                         ),
 
-                        Spacer(),
+                        SizedBox(height: 40.h), // 악보와 진행 바 사이 간격
 
                         // 📊 진행 바 + 시간 Row
                         Padding(
