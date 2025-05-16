@@ -17,10 +17,10 @@ class DTWMatcherTest {
         List<Double> userOnset4 = List.of(1.0, 2.0, 3.9, 4.0, 5.0);
         List<Double> answerOnset = List.of(1.0, 2.0, 3.0, 4.0, 5.0);
         // when
-        OnsetMatchResult result1 = DTWMatcher.match(userOnset1, answerOnset, 0.0);
-        OnsetMatchResult result2 = DTWMatcher.match(userOnset2, answerOnset, 0.0);
-        OnsetMatchResult result3 = DTWMatcher.match(userOnset3, answerOnset, 0.0);
-        OnsetMatchResult result4 = DTWMatcher.match(userOnset4, answerOnset, 0.0);
+        OnsetMatchResult result1 = DTWMatcher.match(userOnset1, answerOnset, 0.0, 1);
+        OnsetMatchResult result2 = DTWMatcher.match(userOnset2, answerOnset, 0.0, 1);
+        OnsetMatchResult result3 = DTWMatcher.match(userOnset3, answerOnset, 0.0, 1);
+        OnsetMatchResult result4 = DTWMatcher.match(userOnset4, answerOnset, 0.0, 1);
         // then
         assert Arrays.equals(result1.getAnswerOnsetPlayed(), new boolean[]{true, true, true, true, true});
         assert Arrays.equals(result1.getMatchedUserOnsetIndices(), new int[]{0, 1, 2, 3, 4});
