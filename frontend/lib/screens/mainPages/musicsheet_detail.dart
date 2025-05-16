@@ -437,10 +437,10 @@ class _MusicsheetDetailState extends State<MusicsheetDetail> {
                                       // 악보 프리뷰 이미지 - Todo : 이미지 안 떠서 사이즈 제대로 설정 못함
                                       if (previewBytes != null)
                                         Positioned(
-                                          top: 20.h,
-                                          left: 20.w,
-                                          right: 20.w,
-                                          bottom: 50.h,
+                                          top: 40.h,
+                                          left: 10.w,
+                                          right: 10.w,
+                                          bottom: 20.h,
                                           child: Image.memory(previewBytes!,
                                               fit: BoxFit.cover),
                                         )
