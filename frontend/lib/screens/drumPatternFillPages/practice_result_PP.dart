@@ -31,322 +31,353 @@ class _PracticeResultPPState extends State<PracticeResultPP> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SingleChildScrollView(
-        physics: NeverScrollableScrollPhysics(),
-        child: Container(
-          color: Color(0xFFF2F1F3),
-          child: Padding(
-            padding: EdgeInsets.only(left: 10.w, top: 30.h),
-            child: Stack(
-              children: [
-                IconButton(
-                  // 홈 버튼
-                  onPressed: () => {
-                    Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) =>
-                              NavigationScreens(firstSelectedIndex: 4),
-                        ))
-                  },
-                  icon: Icon(
-                    Icons.home_filled,
-                    size: 14.sp,
-                  ),
-                ),
-                Padding(
-                  // 결과창 padding
-                  padding: EdgeInsets.symmetric(
-                    // padding으로 사이즈 조절
-                    vertical: MediaQuery.of(context).size.height * 0.08,
-                    horizontal: MediaQuery.of(context).size.width * 0.12,
-                  ),
-                  child: Container(
-                    // 결과창 container
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(30),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.45),
-                          blurRadius: 10,
-                          spreadRadius: 2,
-                          offset: Offset(0, 0),
-                        ),
-                      ],
-                    ),
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          return SingleChildScrollView(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minHeight: constraints.maxHeight),
+              child: IntrinsicHeight(
+                child: Container(
+                  color: Color(0xFFF2F1F3),
+                  child: Padding(
+                    padding: EdgeInsets.only(left: 10.w, top: 30.h),
                     child: Stack(
                       children: [
-                        // 내부 그림자, 내부 요소 구분
-                        InnerShadow(
-                          shadowColor: const Color.fromARGB(255, 244, 244, 244)
-                              .withOpacity(0.7),
-                          blur: 6,
-                          offset: Offset(0, 0),
-                          borderRadius: BorderRadius.circular(30),
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: Color(0xFFD9D9D9),
-                              borderRadius: BorderRadius.circular(30),
-                            ),
+                        IconButton(
+                          // 홈 버튼
+                          onPressed: () => {
+                            Navigator.pushReplacement(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      NavigationScreens(firstSelectedIndex: 4),
+                                ))
+                          },
+                          icon: Icon(
+                            Icons.home_filled,
+                            size: 14.sp,
                           ),
                         ),
                         Padding(
+                          // 결과창 padding
                           padding: EdgeInsets.symmetric(
-                              vertical: 20.h, horizontal: 20.w),
-                          child: Column(
-                            // 결과창 내부 요소들
-                            children: [
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                // 성공 여부 텍스트 및 점수 row
-                                children: [
-                                  Padding(
-                                    padding: EdgeInsets.only(
-                                        left: lvCleared ? 0 : 10.w),
-                                    child: Column(
-                                      // 성공 여부 텍스트
-                                      children: [
-                                        SizedBox(
-                                          child: linedText(
-                                              "Basic Pattern $idx",
-                                              12.sp,
-                                              Colors.black.withOpacity(0.3),
-                                              Colors.white,
-                                              7),
-                                        ),
-                                        SizedBox(height: 10.h),
-                                        lvCleared
-                                            ? Stack(children: [
-                                                Text(
-                                                  "CLEAR",
-                                                  style: TextStyle(
-                                                    fontSize: 32.sp,
-                                                    fontWeight: FontWeight.bold,
-                                                    color: Colors.transparent,
-                                                    shadows: [
-                                                      Shadow(
-                                                        offset: Offset(4, 4),
-                                                        blurRadius: 35,
-                                                        color: Colors.black
-                                                            .withOpacity(0.7),
-                                                      ),
-                                                    ],
-                                                    height: 1,
-                                                  ),
-                                                ),
-                                                linedText(
-                                                  "CLEAR",
-                                                  32.sp,
-                                                  Color(0xffB95D4C),
-                                                  Color(0xffFD9B8A),
-                                                  9.5,
-                                                ),
-                                              ])
-                                            : Stack(children: [
-                                                Text(
-                                                  "FAIL",
-                                                  style: TextStyle(
-                                                    fontSize: 35.sp,
-                                                    fontWeight: FontWeight.bold,
-                                                    color: Colors.transparent,
-                                                    shadows: [
-                                                      Shadow(
-                                                        offset: Offset(4, 4),
-                                                        blurRadius: 35,
-                                                        color: Colors.black
-                                                            .withOpacity(0.7),
-                                                      ),
-                                                    ],
-                                                    height: 1,
-                                                  ),
-                                                ),
-                                                linedText(
-                                                    "FAIL",
-                                                    35.sp,
-                                                    Color(0xff4C7FB9),
-                                                    Color(0xff8ABCFD),
-                                                    9.5),
-                                              ]),
-                                      ],
+                            // padding으로 사이즈 조절
+                            vertical: MediaQuery.of(context).size.height * 0.08,
+                            horizontal:
+                                MediaQuery.of(context).size.width * 0.12,
+                          ),
+                          child: Container(
+                            // 결과창 container
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(30),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.45),
+                                  blurRadius: 10,
+                                  spreadRadius: 2,
+                                  offset: Offset(0, 0),
+                                ),
+                              ],
+                            ),
+                            child: Stack(
+                              children: [
+                                // 내부 그림자, 내부 요소 구분
+                                InnerShadow(
+                                  shadowColor:
+                                      const Color.fromARGB(255, 244, 244, 244)
+                                          .withOpacity(0.7),
+                                  blur: 6,
+                                  offset: Offset(0, 0),
+                                  borderRadius: BorderRadius.circular(30),
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      color: Color(0xFFD9D9D9),
+                                      borderRadius: BorderRadius.circular(30),
                                     ),
                                   ),
-                                  Container(
-                                    decoration: BoxDecoration(
-                                      color: Colors.white,
-                                      border: Border.all(
-                                        color: Colors.black26,
-                                        width: 5,
-                                      ),
-                                      borderRadius: BorderRadius.circular(38),
-                                    ),
-                                    child: Padding(
-                                      padding: EdgeInsets.symmetric(
-                                          vertical: 10.h, horizontal: 28.w),
-                                      child: Column(children: [
-                                        linedText(
-                                          'SCORE',
-                                          11.sp,
-                                          Colors.black26,
-                                          Colors.white,
-                                          4.5,
-                                        ),
-                                        SizedBox(height: 10.h),
-                                        Stack(children: [
-                                          Text(
-                                            "$score",
-                                            style: TextStyle(
-                                              height: 1,
-                                              fontSize: 35.sp,
-                                              color: Colors.transparent,
-                                              shadows: [
-                                                Shadow(
-                                                  offset: Offset(4, 4),
-                                                  blurRadius: 35,
-                                                  color: Colors.black
-                                                      .withOpacity(0.7),
+                                ),
+                                Padding(
+                                  padding: EdgeInsets.symmetric(
+                                      vertical: 20.h, horizontal: 20.w),
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    // 결과창 내부 요소들
+                                    children: [
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        // 성공 여부 텍스트 및 점수 row
+                                        children: [
+                                          Padding(
+                                            padding: EdgeInsets.only(
+                                                left: lvCleared ? 0 : 10.w),
+                                            child: Column(
+                                              // 성공 여부 텍스트
+                                              children: [
+                                                SizedBox(
+                                                  child: linedText(
+                                                      "Basic Pattern $idx",
+                                                      12.sp,
+                                                      Colors.black
+                                                          .withOpacity(0.3),
+                                                      Colors.white,
+                                                      7),
                                                 ),
+                                                SizedBox(height: 10.h),
+                                                lvCleared
+                                                    ? Stack(children: [
+                                                        Text(
+                                                          "CLEAR",
+                                                          style: TextStyle(
+                                                            fontSize: 32.sp,
+                                                            fontWeight:
+                                                                FontWeight.bold,
+                                                            color: Colors
+                                                                .transparent,
+                                                            shadows: [
+                                                              Shadow(
+                                                                offset: Offset(
+                                                                    4, 4),
+                                                                blurRadius: 35,
+                                                                color: Colors
+                                                                    .black
+                                                                    .withOpacity(
+                                                                        0.7),
+                                                              ),
+                                                            ],
+                                                            height: 1,
+                                                          ),
+                                                        ),
+                                                        linedText(
+                                                          "CLEAR",
+                                                          32.sp,
+                                                          Color(0xffB95D4C),
+                                                          Color(0xffFD9B8A),
+                                                          9.5,
+                                                        ),
+                                                      ])
+                                                    : Stack(children: [
+                                                        Text(
+                                                          "FAIL",
+                                                          style: TextStyle(
+                                                            fontSize: 35.sp,
+                                                            fontWeight:
+                                                                FontWeight.bold,
+                                                            color: Colors
+                                                                .transparent,
+                                                            shadows: [
+                                                              Shadow(
+                                                                offset: Offset(
+                                                                    4, 4),
+                                                                blurRadius: 35,
+                                                                color: Colors
+                                                                    .black
+                                                                    .withOpacity(
+                                                                        0.7),
+                                                              ),
+                                                            ],
+                                                            height: 1,
+                                                          ),
+                                                        ),
+                                                        linedText(
+                                                            "FAIL",
+                                                            35.sp,
+                                                            Color(0xff4C7FB9),
+                                                            Color(0xff8ABCFD),
+                                                            9.5),
+                                                      ]),
                                               ],
                                             ),
                                           ),
-                                          lvCleared
-                                              ? linedText(
-                                                  '$score',
-                                                  35.sp,
-                                                  Color(0xffF1B45F),
-                                                  Color(0xffFFE89B),
-                                                  9.5,
-                                                )
-                                              : linedText(
-                                                  '$score',
-                                                  35.sp,
-                                                  Color(0xff949494),
-                                                  Color(0xffD9D9D9),
-                                                  9.5,
-                                                ),
-                                        ])
-                                      ]),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              SizedBox(height: 10.h),
-                              ButtonForm(
-                                btnName: "상세 기록 확인하기",
-                                buttonColor: Color(0xff949494),
-                                borderColor: Color.fromARGB(255, 104, 104, 104),
-                                shadowColor: Color.fromARGB(255, 177, 177, 177),
-                                width: MediaQuery.of(context).size.width * 0.65,
-                                clickedFunc: () {
-                                  openMusicSheet(
-                                    context: context,
-                                    xmlDataString: widget.xmlDataString,
-                                    practiceInfo: widget.practiceInfo,
-                                  );
-                                },
-                                btnIcon: Icons.insert_drive_file_rounded,
-                              ),
-                              SizedBox(height: 20.h),
-                              Row(
-                                children: [
-                                  Expanded(
-                                    flex: 12,
-                                    child: Material(
-                                      type: MaterialType.transparency,
-                                      child: ButtonForm(
-                                        btnName: '다시 하기',
-                                        buttonColor: Color(0xffD97D6C),
-                                        borderColor: Color(0xffC76A59),
-                                        shadowColor:
-                                            Color.fromARGB(255, 248, 180, 168)
-                                                .withOpacity(0.5),
-                                        clickedFunc: () {
-                                          openModal(context, idx);
-                                        },
-                                      ),
-                                    ),
-                                  ),
-                                  SizedBox(width: 5.w),
-                                  Expanded(
-                                    flex: 10,
-                                    child: Material(
-                                      type: MaterialType.transparency,
-                                      child: ButtonForm(
-                                        btnName: '목록',
-                                        buttonColor: Color(0xff8ABCFD),
-                                        borderColor: Color(0xff4C7FB9),
-                                        shadowColor:
-                                            Color.fromARGB(255, 196, 213, 237),
-                                        btnIcon: Icons.list,
-                                        clickedFunc: () {
-                                          Navigator.pushReplacement(
-                                            context,
-                                            MaterialPageRoute(
-                                              builder: (context) =>
-                                                  NavigationScreens(
-                                                firstSelectedIndex: 2,
+                                          Container(
+                                            decoration: BoxDecoration(
+                                              color: Colors.white,
+                                              border: Border.all(
+                                                color: Colors.black26,
+                                                width: 5,
                                               ),
+                                              borderRadius:
+                                                  BorderRadius.circular(38),
                                             ),
-                                          );
-                                        },
-                                      ),
-                                    ),
-                                  ),
-                                  SizedBox(width: 5.w),
-                                  Expanded(
-                                    flex: 12,
-                                    child: Stack(children: [
-                                      ButtonForm(
-                                        btnName: '다음 단계',
-                                        buttonColor: Color(0xFFFFE89B),
-                                        borderColor: Color(0xFFF1B45F),
-                                        shadowColor:
-                                            Color.fromARGB(255, 243, 235, 211),
-                                        clickedFunc: lvCleared
-                                            ? () {
-                                                Navigator.pushReplacement(
-                                                  context,
-                                                  MaterialPageRoute(
-                                                    builder: (context) =>
-                                                        PatternFillScreen(
-                                                      index: idx + 1,
+                                            child: Padding(
+                                              padding: EdgeInsets.symmetric(
+                                                  vertical: 10.h,
+                                                  horizontal: 28.w),
+                                              child: Column(children: [
+                                                linedText(
+                                                  'SCORE',
+                                                  11.sp,
+                                                  Colors.black26,
+                                                  Colors.white,
+                                                  4.5,
+                                                ),
+                                                SizedBox(height: 10.h),
+                                                Stack(children: [
+                                                  Text(
+                                                    "$score",
+                                                    style: TextStyle(
+                                                      height: 1,
+                                                      fontSize: 35.sp,
+                                                      color: Colors.transparent,
+                                                      shadows: [
+                                                        Shadow(
+                                                          offset: Offset(4, 4),
+                                                          blurRadius: 35,
+                                                          color: Colors.black
+                                                              .withOpacity(0.7),
+                                                        ),
+                                                      ],
                                                     ),
                                                   ),
-                                                );
-                                              }
-                                            : null,
-                                      ),
-                                      if (!lvCleared)
-                                        Container(
-                                          width: double.infinity,
-                                          height: 70.h,
-                                          decoration: BoxDecoration(
-                                            color: Colors.black26,
-                                            borderRadius:
-                                                BorderRadius.circular(20),
+                                                  lvCleared
+                                                      ? linedText(
+                                                          '$score',
+                                                          35.sp,
+                                                          Color(0xffF1B45F),
+                                                          Color(0xffFFE89B),
+                                                          9.5,
+                                                        )
+                                                      : linedText(
+                                                          '$score',
+                                                          35.sp,
+                                                          Color(0xff949494),
+                                                          Color(0xffD9D9D9),
+                                                          9.5,
+                                                        ),
+                                                ])
+                                              ]),
+                                            ),
                                           ),
-                                          child: Center(
-                                              child: Icon(
-                                            Icons.lock,
-                                            size: 10.spMax,
-                                            color: Colors.white,
-                                          )),
-                                        ),
-                                    ]),
+                                        ],
+                                      ),
+                                      SizedBox(height: 10.h),
+                                      ButtonForm(
+                                        btnName: "상세 기록 확인하기",
+                                        buttonColor: Color(0xff949494),
+                                        borderColor:
+                                            Color.fromARGB(255, 104, 104, 104),
+                                        shadowColor:
+                                            Color.fromARGB(255, 177, 177, 177),
+                                        width:
+                                            MediaQuery.of(context).size.width *
+                                                0.65,
+                                        clickedFunc: () {
+                                          openMusicSheet(
+                                            context: context,
+                                            xmlDataString: widget.xmlDataString,
+                                            practiceInfo: widget.practiceInfo,
+                                          );
+                                        },
+                                        btnIcon:
+                                            Icons.insert_drive_file_rounded,
+                                      ),
+                                      SizedBox(height: 20.h),
+                                      Row(
+                                        children: [
+                                          Expanded(
+                                            flex: 12,
+                                            child: Material(
+                                              type: MaterialType.transparency,
+                                              child: ButtonForm(
+                                                btnName: '다시 하기',
+                                                buttonColor: Color(0xffD97D6C),
+                                                borderColor: Color(0xffC76A59),
+                                                shadowColor: Color.fromARGB(
+                                                        255, 248, 180, 168)
+                                                    .withOpacity(0.5),
+                                                clickedFunc: () {
+                                                  openModal(context, idx);
+                                                },
+                                              ),
+                                            ),
+                                          ),
+                                          SizedBox(width: 5.w),
+                                          Expanded(
+                                            flex: 10,
+                                            child: Material(
+                                              type: MaterialType.transparency,
+                                              child: ButtonForm(
+                                                btnName: '목록',
+                                                buttonColor: Color(0xff8ABCFD),
+                                                borderColor: Color(0xff4C7FB9),
+                                                shadowColor: Color.fromARGB(
+                                                    255, 196, 213, 237),
+                                                btnIcon: Icons.list,
+                                                clickedFunc: () {
+                                                  Navigator.pushReplacement(
+                                                    context,
+                                                    MaterialPageRoute(
+                                                      builder: (context) =>
+                                                          NavigationScreens(
+                                                        firstSelectedIndex: 2,
+                                                      ),
+                                                    ),
+                                                  );
+                                                },
+                                              ),
+                                            ),
+                                          ),
+                                          SizedBox(width: 5.w),
+                                          Expanded(
+                                            flex: 12,
+                                            child: Stack(children: [
+                                              ButtonForm(
+                                                btnName: '다음 단계',
+                                                buttonColor: Color(0xFFFFE89B),
+                                                borderColor: Color(0xFFF1B45F),
+                                                shadowColor: Color.fromARGB(
+                                                    255, 243, 235, 211),
+                                                clickedFunc: lvCleared
+                                                    ? () {
+                                                        Navigator
+                                                            .pushReplacement(
+                                                          context,
+                                                          MaterialPageRoute(
+                                                            builder: (context) =>
+                                                                PatternFillScreen(
+                                                              index: idx + 1,
+                                                            ),
+                                                          ),
+                                                        );
+                                                      }
+                                                    : null,
+                                              ),
+                                              if (!lvCleared)
+                                                Container(
+                                                  width: double.infinity,
+                                                  height: 70.h,
+                                                  decoration: BoxDecoration(
+                                                    color: Colors.black26,
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            20),
+                                                  ),
+                                                  child: Center(
+                                                      child: Icon(
+                                                    Icons.lock,
+                                                    size: 10.spMax,
+                                                    color: Colors.white,
+                                                  )),
+                                                ),
+                                            ]),
+                                          ),
+                                        ],
+                                      )
+                                    ],
                                   ),
-                                ],
-                              )
-                            ],
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ],
                     ),
                   ),
                 ),
-              ],
+              ),
             ),
-          ),
-        ),
+          );
+        },
       ),
     );
   }

@@ -5,6 +5,7 @@ import 'package:capstone_2025/screens/metronomePages/widgets/metronome_header.da
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:capstone_2025/providers/metronome_provider.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class Metronome extends ConsumerStatefulWidget {
   const Metronome({super.key});
@@ -25,6 +26,7 @@ class _MetronomeState extends ConsumerState<Metronome> {
         ref.watch(selectedTimeSignatureProvider).toString();
 
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       body: GestureDetector(
         onTap: () => FocusScope.of(context).unfocus(),
         behavior: HitTestBehavior.translucent,
@@ -44,8 +46,8 @@ class _MetronomeState extends ConsumerState<Metronome> {
             SizedBox(
               height: (selectedTimeSignature == '9/8' ||
                       selectedTimeSignature == '12/8')
-                  ? 20
-                  : 30,
+                  ? 5.h
+                  : 30.h,
             ),
             Expanded(
               flex: (selectedTimeSignature == '9/8' ||

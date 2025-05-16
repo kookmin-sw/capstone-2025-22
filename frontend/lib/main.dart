@@ -1,3 +1,4 @@
+import 'package:capstone_2025/screens/introPages/login_screen.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:capstone_2025/screens/introPages/login_screen_google.dart';
 import 'package:capstone_2025/screens/mainPages/navigation_screens.dart';
@@ -81,7 +82,7 @@ class _MyAppState extends State<MyApp> {
       builder: (context, child) {
         return MaterialApp(
           theme: ThemeData(scaffoldBackgroundColor: Color(0xFFF2F1F3)),
-          home: _isLoggedIn! ? NavigationScreens() : LoginScreenGoogle(),
+          home: _isLoggedIn! ? NavigationScreens() : LoginScreen(),
         );
       },
     );

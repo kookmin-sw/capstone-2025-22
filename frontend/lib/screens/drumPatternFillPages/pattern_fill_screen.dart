@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'package:capstone_2025/screens/drumSheetPages/sheetXmlDataTemp.dart'
     as pattern_info_default;
 import 'package:flutter/material.dart';
@@ -20,6 +21,7 @@ import 'package:capstone_2025/screens/drumSheetPages/widgets/confirmation_dialog
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../../services/api_func.dart';
 import './practice_result_PP.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 /// MenuController에 toggle()을 추가하는 확장 메서드
 extension MenuControllerToggle on MenuController {
@@ -50,6 +52,16 @@ class CountdownPage extends StatefulWidget {
 
 class _CountdownPageState extends State<CountdownPage>
     with SingleTickerProviderStateMixin {
+// ===== 악보 및 XML 관련 변수 =====
+  late String xmlDataString;
+  int _beatsPerMeasure = 4;
+  int _totalMeasures = 1;
+  double _bpm = 60.0;
+
+  // ===== 재생 및 마디 관련 변수 =====
+  final int _currentMeasure = 0; // 녹음 마디 (0-based)
+  final int _currentMeasureOneBased = 0; // 채점용 마디 (1-based)
+
   // 상태 변수 선언
   bool _isPlaying = false;
   bool _showPracticeMessage = false;
@@ -85,6 +97,9 @@ class _CountdownPageState extends State<CountdownPage>
   late MenuController _speedMenuController;
 
   final _storage = const FlutterSecureStorage();
+
+// 서버에서 받아온 패턴 WAV를 저장한 로컬 경로
+  String? _patternAudioPath;
 
   // 채점 결과 처리
   final List<Map<String, dynamic>> _beatGradingResults = [];
@@ -142,6 +157,9 @@ class _CountdownPageState extends State<CountdownPage>
     _audioPlayer = ap.AudioPlayer();
     _setupAudioListeners();
 
+    // 서버에서 패턴 WAV를 미리 받아오기
+    _downloadPatternWav();
+
     // OSMDService 생성 (데이터 로드 완료 콜백만 정의)
     osmdService = OSMDService(onDataLoaded: _onDataLoaded);
 
@@ -156,6 +174,48 @@ class _CountdownPageState extends State<CountdownPage>
         pageWidth: 1080,
       );
     });
+  }
+
+  Future<void> _downloadPatternWav() async {
+    final patternId = widget.index.toString();
+    print('⬇️ [Download] 패턴 $patternId WAV 다운로드 시작');
+
+    try {
+      final resData = await getHTTP("/patterns/$patternId/wavs", {});
+      print('🔍 [Download] resData 전체: $resData');
+
+      if (resData['errMessage'] != null) {
+        print('❌ [Download] 서버 에러: ${resData['errMessage']}');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('WAV 다운로드 실패: ${resData['errMessage']}')),
+        );
+        return;
+      }
+
+      final b64 = resData['body']['patternWav'] as String;
+
+      if (b64.isEmpty) {
+        print('❌ [Download] patternWav 필드가 비어있음!');
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('WAV 데이터가 없습니다.')),
+        );
+        return;
+      }
+
+      final bytes = base64Decode(b64);
+      final dir = await getTemporaryDirectory();
+      final file = File('${dir.path}/pattern_$patternId.wav');
+      await file.writeAsBytes(bytes, flush: true);
+      print('✅ [Download] 파일 저장 완료: ${file.path}');
+      setState(() {
+        _patternAudioPath = file.path;
+      });
+    } catch (e) {
+      print("❌ [Download] 예외 발생: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('WAV 다운로드 중 예외 발생: $e')),
+      );
+    }
   }
 
   // OSMDService 초기화할 때 onDataLoaded 연결
@@ -236,10 +296,12 @@ class _CountdownPageState extends State<CountdownPage>
       setState(() {
         _isPlaying = state == ap.PlayerState.playing;
       });
+      print('▶️ PlayerState: $state');
     });
 
     // 오디오 재생 위치 리스너
-    _positionSubscription = _audioPlayer.onPositionChanged.listen((position) {
+    final positionSubscription =
+        _audioPlayer.onPositionChanged.listen((position) {
       if (!mounted) return;
       setState(() {
         // 밀리초 단위로
@@ -278,8 +340,32 @@ class _CountdownPageState extends State<CountdownPage>
       if (mounted) setState(() => _showPracticeMessage = false);
     });
 
+    // 다운로드가 아직 안 끝났으면 최대 5초까지 기다려 봄
+    if (_patternAudioPath == null) {
+      print('⏳ 아직 다운로드 중… 최대 5초 대기');
+      await Future.any([
+        Future.delayed(const Duration(seconds: 5)),
+        Future.doWhile(() async {
+          await Future.delayed(const Duration(milliseconds: 200));
+          return _patternAudioPath == null;
+        }),
+      ]);
+    }
+
     // 시범 연주 오디오 재생
-    await _audioPlayer.play(ap.AssetSource('sounds/test_pattern.wav'));
+    if (_patternAudioPath != null) {
+      print('🎧 Playing server-fetched WAV: $_patternAudioPath');
+      await _audioPlayer.play(
+        ap.DeviceFileSource(_patternAudioPath!),
+      );
+    } else {
+      const errMsg = '❌ 서버에서 WAV 파일을 불러오지 못했습니다.';
+      print(errMsg);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text(errMsg)),
+      );
+      return; // 함수 종료
+    }
 
     StreamSubscription<Duration>? oneShotSub;
     oneShotSub = _audioPlayer.onDurationChanged.listen((d) {
@@ -494,25 +580,25 @@ class _CountdownPageState extends State<CountdownPage>
           SafeArea(
             child: Column(
               children: [
-                const SizedBox(height: 10), // 상단 여백
+                SizedBox(height: 10.h), // 상단 여백
 
                 // 상단 영역: 홈 버튼 + 제목 + 속도 변경 버튼
                 Padding(
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 46, vertical: 10),
+                      EdgeInsets.symmetric(horizontal: 26.w, vertical: 10.h),
                   child: SizedBox(
-                    height: 60,
+                    height: 70.h,
                     child: Row(children: [
                       SizedBox(
-                        width: 60,
-                        height: 30,
+                        width: 20.w,
+                        height: 30.h,
                         child: Center(
                           child:
                               // 홈 버튼
                               IconButton(
                             padding: EdgeInsets.zero,
                             constraints: const BoxConstraints(),
-                            iconSize: 30,
+                            iconSize: 12.sp,
                             icon: const Icon(Icons.home_filled,
                                 color: Color(0xff646464)),
                             onPressed: () {
@@ -582,9 +668,8 @@ class _CountdownPageState extends State<CountdownPage>
                               return Container(
                                 constraints:
                                     BoxConstraints(maxWidth: screenW * 0.45),
-                                height: 54,
-                                padding:
-                                    const EdgeInsets.symmetric(horizontal: 28),
+                                height: 64.h,
+                                padding: EdgeInsets.symmetric(horizontal: 28.w),
                                 alignment: Alignment.center,
                                 decoration: BoxDecoration(
                                   color: const Color(0xFFC76A59),
@@ -603,7 +688,7 @@ class _CountdownPageState extends State<CountdownPage>
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
                                       style: TextStyle(
-                                        fontSize: 25,
+                                        fontSize: 11.sp,
                                         fontWeight: FontWeight.bold,
                                         foreground: Paint()
                                           ..style = PaintingStyle.stroke
@@ -617,8 +702,8 @@ class _CountdownPageState extends State<CountdownPage>
                                       patternName,
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
-                                      style: const TextStyle(
-                                        fontSize: 25,
+                                      style: TextStyle(
+                                        fontSize: 11.sp,
                                         fontWeight: FontWeight.bold,
                                         color: Colors.white, // 내부 색
                                       ),
@@ -643,11 +728,11 @@ class _CountdownPageState extends State<CountdownPage>
                         ),
                         menuChildren: [
                           ConstrainedBox(
-                            constraints: BoxConstraints(maxWidth: 500),
+                            constraints: BoxConstraints(maxWidth: 500.w),
                             child: Container(
                               margin: const EdgeInsets.fromLTRB(0, 10, 20, 0),
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 18, vertical: 12),
+                              padding: EdgeInsets.symmetric(
+                                  horizontal: 18.w, vertical: 12.h),
                               decoration: BoxDecoration(
                                 color: Colors.white,
                                 borderRadius: BorderRadius.circular(18),
@@ -687,7 +772,7 @@ class _CountdownPageState extends State<CountdownPage>
                                         child: Text(
                                           label,
                                           style: TextStyle(
-                                            fontSize: 20,
+                                            fontSize: 9.sp,
                                             fontWeight: FontWeight.bold,
                                             color: isSelected
                                                 ? const Color(0xffD97D6C)
@@ -705,15 +790,15 @@ class _CountdownPageState extends State<CountdownPage>
                           return GestureDetector(
                             onTap: () => controller.toggle(),
                             child: SizedBox(
-                              width: 60,
-                              height: 30,
+                              width: 20.w,
+                              height: 40.h,
                               child: Center(
                                 child: Text(
                                   _currentSpeed,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     color: Color(0xFF646464),
                                     fontWeight: FontWeight.bold,
-                                    fontSize: 25,
+                                    fontSize: 10.sp,
                                   ),
                                 ),
                               ),
@@ -797,8 +882,8 @@ class _CountdownPageState extends State<CountdownPage>
                       // 감지된 온셋 수 표시
                       if (_detectedOnsets.isNotEmpty)
                         Positioned(
-                          bottom: 10,
-                          left: 10,
+                          bottom: 10.h,
+                          left: 5.w,
                           child: Container(
                             padding: const EdgeInsets.all(8),
                             decoration: BoxDecoration(
@@ -833,7 +918,7 @@ class _CountdownPageState extends State<CountdownPage>
                       children: [
                         // 오디오 재생 위치 표시하는 슬라이더
                         Container(
-                          height: 5,
+                          height: 5.5.h,
                           decoration: BoxDecoration(
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(20),
@@ -852,7 +937,7 @@ class _CountdownPageState extends State<CountdownPage>
                             ),
                           ),
                         ),
-                        const SizedBox(height: 16),
+                        SizedBox(height: 18.h),
 
                         // 재생 / 일시정지 / 리셋 버튼
                         Center(
@@ -900,8 +985,8 @@ class _CountdownPageState extends State<CountdownPage>
                             },
                             child: _playbackComplete
                                 ? Container(
-                                    width: 48,
-                                    height: 48,
+                                    width: 48.w,
+                                    height: 60.h,
                                     decoration: BoxDecoration(
                                       shape: BoxShape.circle,
                                       color: Colors.white,
@@ -910,16 +995,16 @@ class _CountdownPageState extends State<CountdownPage>
                                         width: 2,
                                       ),
                                     ),
-                                    child: const Icon(
+                                    child: Icon(
                                       Icons.replay,
-                                      size: 40,
+                                      size: 13.sp,
                                       color: Color(0xffD97D6C),
                                     ),
                                   )
                                 : (_isPlaying || playbackController.isPlaying)
                                     ? Container(
-                                        width: 48,
-                                        height: 48,
+                                        width: 48.w,
+                                        height: 60.h,
                                         decoration: BoxDecoration(
                                           shape: BoxShape.circle,
                                           color: Colors.white,
@@ -928,22 +1013,22 @@ class _CountdownPageState extends State<CountdownPage>
                                             width: 2,
                                           ),
                                         ),
-                                        child: const Icon(
+                                        child: Icon(
                                           Icons.pause,
-                                          size: 40,
+                                          size: 13.sp,
                                           color: Color(0xffD97D6C),
                                         ),
                                       )
                                     : Container(
-                                        width: 48,
-                                        height: 48,
+                                        width: 48.w,
+                                        height: 60.h,
                                         decoration: const BoxDecoration(
                                           shape: BoxShape.circle,
                                           color: Color(0xffD97D6C),
                                         ),
-                                        child: const Icon(
+                                        child: Icon(
                                           Icons.play_arrow,
-                                          size: 40,
+                                          size: 13.sp,
                                           color: Colors.white,
                                         ),
                                       ),
@@ -964,11 +1049,11 @@ class _CountdownPageState extends State<CountdownPage>
               child: Container(
                 color: Colors.black.withValues(alpha: 0.9),
                 alignment: Alignment.center,
-                child: const Text(
+                child: Text(
                   '시범 연주를 시작하겠습니다',
                   style: TextStyle(
                     color: Colors.white,
-                    fontSize: 24,
+                    fontSize: 12.sp,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -992,7 +1077,7 @@ class _CountdownPageState extends State<CountdownPage>
                           Text(
                             '$number',
                             style: TextStyle(
-                              fontSize: 72,
+                              fontSize: 25.sp,
                               fontWeight: FontWeight.bold,
                               foreground: Paint()
                                 ..style = PaintingStyle.stroke
@@ -1005,7 +1090,7 @@ class _CountdownPageState extends State<CountdownPage>
                           Text(
                             '$number',
                             style: TextStyle(
-                              fontSize: 72,
+                              fontSize: 25.sp,
                               fontWeight: FontWeight.bold,
                               color: playbackController.countdown == number
                                   ? const Color(0xffFD9B8A)
@@ -1019,7 +1104,8 @@ class _CountdownPageState extends State<CountdownPage>
                 ),
               ),
             ),
-          // // 보미 녹음 다 수정하면 바꾸기
+
+          // DrumRecordingWidget 추가
           // Offstage(
           //   offstage: true, // UI를 화면에 표시하지 않음
           //   child: DrumRecordingWidget(
@@ -1048,6 +1134,7 @@ class _CountdownPageState extends State<CountdownPage>
           //       _handleScoringResult(msg); // 1) 즉시 화면에 틀린 박자 커서 표시
           //       _onWsGradingMessage(msg); // 2) 리스트에 쌓아서, 마지막에 전체 점수 계산
           //     },
+
           //   ),
           // ),
 
@@ -1056,21 +1143,48 @@ class _CountdownPageState extends State<CountdownPage>
             offstage: true, // UI를 화면에 표시하지 않음
             child: DrumRecordingWidget(
               key: _drumRecordingKey,
-              playbackController: playbackController,
+              patternId: widget.index,
               title: 'Basic Pattern ${widget.index}',
               xmlDataString: patternInfo,
-              userSheetId: widget.index,
-              audioFilePath: 'assets/sounds/test_pattern.wav',
+              audioFilePath: _patternAudioPath ?? '',
+              playbackController: playbackController,
               fetchPracticeIdentifier:
                   fetchPracticeIdentifier, // identifier 요청 함수
-              onMusicXMLParsed: (info) {
-                _drumRecordingKey.currentState?.setMeasureInfo(info);
-              },
               onRecordingComplete: (onsets) {
                 setState(() {
                   _detectedOnsets = onsets;
                 });
               },
+              onMusicXMLParsed: (info) {
+                print('info: $info');
+                try {
+                  // totalMeasures가 제대로 계산되었는지 확인
+                  final totalMeasures = info['totalMeasures'] as int;
+                  print('Total measures received: $totalMeasures');
+                  // // XML 데이터를 파싱
+                  // final document = XmlDocument.parse(
+                  //     info['xmlData'] as String); // xmlData는 XML 문자열로 받아옴
+
+                  // // 'measure' 태그를 찾아서 마디의 개수 구하기
+                  // final measures = document.findAllElements('measure');
+                  // final int totalMeasures =
+                  //     measures.length; // measure의 개수를 totalMeasures로 설정
+                  // print('Total measures: $totalMeasures'); // 마디의 개수 출력
+
+                  // 기존 info에서 beatsPerMeasure, bpm 등 필요한 값을 가져오고, totalMeasures를 설정
+                  setState(() {
+                    _beatsPerMeasure = info['beatsPerMeasure'] as int;
+                    _totalMeasures = totalMeasures; // 여기서 totalMeasures를 할당
+                    _bpm = info['bpm'] as double;
+                  });
+                } catch (e) {
+                  print('Error parsing XML: $e');
+                }
+              },
+              // onMusicXMLParsed: (info) {
+              //   _drumRecordingKey.currentState?.setMeasureInfo(info);
+              // },
+
               onOnsetsReceived: (onsets) {
                 setState(() {
                   _detectedOnsets = onsets;
@@ -1080,6 +1194,8 @@ class _CountdownPageState extends State<CountdownPage>
                 _handleScoringResult(msg); // 1) 즉시 화면에 틀린 박자 커서 표시
                 _onWsGradingMessage(msg); // 2) 리스트에 쌓아서, 마지막에 전체 점수 계산
               },
+              // playbackController: playbackController, //playbackController 전달
+              // fetchPracticeIdentifier: fetchPracticeIdentifier,
             ),
           ),
         ],

@@ -8,6 +8,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter_sound/flutter_sound.dart' as fs;
+import 'package:android_intent_plus/android_intent.dart';
 import 'package:stomp_dart_client/stomp_dart_client.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter_sound/public/flutter_sound_recorder.dart';
@@ -50,18 +51,18 @@ class DrumRecordingWidget extends StatefulWidget {
 
   const DrumRecordingWidget({
     super.key,
+    this.userSheetId,
+    this.patternId,
     required this.title,
     required this.xmlDataString,
     required this.audioFilePath,
+    required this.playbackController,
+    required this.fetchPracticeIdentifier, // identifier 가져옴
     this.onRecordingComplete,
     this.onMeasureUpdate,
     this.onOnsetsReceived,
     this.onMusicXMLParsed,
-    this.userSheetId,
-    this.patternId,
     this.onGradingResult,
-    required this.playbackController,
-    required this.fetchPracticeIdentifier, // identifier 가져옴
   });
 
   @override
@@ -124,8 +125,13 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
         Tween<double>(begin: 0.0, end: 1.0).animate(_overlayController);
 
     // 데이터 초기화
-    _parseMusicXML();
-    _initializeData().then((_) {
+    // _parseMusicXML();
+    // _initializeData().then((_) {
+    //   _isRecorderReady = true;
+    //   print('[InitState] ✅ recorder ready');
+    // });
+
+    _initializeAll().then((_) {
       _isRecorderReady = true;
       print('[InitState] ✅ recorder ready');
     });
@@ -134,6 +140,51 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
     widget.playbackController.onMeasureChange = _handleMeasureChange;
     widget.playbackController.onCountdownComplete = _handleCountdownComplete;
     widget.playbackController.onPlaybackComplete = _handlePlaybackComplete;
+  }
+
+  Future<void> _initializeAll() async {
+    await _parseMusicXML(); // 1) XML 파싱 완료 보장
+    await _initializeData(); // 2) Recorder·WebSocket 초기화
+  }
+
+  Future<void> openManageAllFilesSettings() async {
+    if (Platform.isAndroid) {
+      final intent = AndroidIntent(
+        action: 'android.settings.MANAGE_APP_ALL_FILES_ACCESS_PERMISSION',
+        data: 'package:com.example.capstone_2025',
+      );
+      await intent.launch();
+    }
+  }
+
+  static const _mediaScanChannel = MethodChannel('media_scanner');
+
+  Future<void> _saveToPublicDownloadAndScan() async {
+    // 1) 모든 파일 접근 권한 요청 (Android 11+)
+    if (!await Permission.manageExternalStorage.request().isGranted) {
+      print('⚠️ 모든 파일 접근 권한 거부됨');
+      return;
+    }
+
+    // 2) public Download/DrumRecordings 폴더 준비
+    final publicDir = Directory('/storage/emulated/0/Download/DrumRecordings');
+    if (!await publicDir.exists()) {
+      await publicDir.create(recursive: true);
+    }
+
+    // 3) 복사
+    final ts = DateTime.now().millisecondsSinceEpoch;
+    final dest = '${publicDir.path}/drum_recording_$ts.aac';
+    await File(_recordingPath!).copy(dest);
+    print('✅ 공용 Download에 저장: $dest');
+
+    // 4) MediaStore에 스캔 요청
+    try {
+      await _mediaScanChannel.invokeMethod('scanFile', {'path': dest});
+      print('▶ MediaScanner scanFile 호출됨');
+    } catch (e) {
+      print('❌ MediaScanner 호출 실패: $e');
+    }
   }
 
   Future<void> _initializeData() async {
@@ -149,6 +200,35 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
 
     // WebSocket 연결 설정
     await _setupWebSocket();
+  }
+
+  /// Android 11+ “모든 파일 접근” 권한 요청
+  Future<bool> _requestManageAllFiles() async {
+    // 이미 허용된 상태라면 바로 true
+    if (await Permission.manageExternalStorage.isGranted) {
+      return true;
+    }
+
+    // 권한 요청
+    final status = await Permission.manageExternalStorage.request();
+    if (status.isGranted) {
+      return true;
+    }
+
+    // 사용자가 거부하거나 영구 거부(PermanentlyDenied) 상태라면
+    // 직접 설정 화면으로 유도
+    if (status.isDenied || status.isPermanentlyDenied) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('설정 > 권한에서 “모든 파일 접근”을 허용해 주세요.'),
+          action: SnackBarAction(
+            label: '설정 열기',
+            onPressed: () => openAppSettings(),
+          ),
+        ),
+      );
+    }
+    return false;
   }
 
   Future<void> _initRecorder() async {
@@ -509,11 +589,14 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
 
   /// 오디오 녹음 중지
   Future<void> stopRecording() async {
+    print('▶ stopRecording 실행됨');
+
     if (!isRecording || !mounted || _isDisposed || _recorder == null) return;
 
     try {
       if (_recorder!.isRecording) {
         await _recorder!.stopRecorder(); // 현재 진행 중인 녹음 중지
+        print('🎙️ 내부 녹음 중지 완료');
       }
 
       if (!_isDisposed) {
@@ -522,6 +605,9 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
           recordingStatusMessage = '녹음이 중지되었습니다.';
         });
       }
+      // — 여기에 로컬 저장 호출 추가 —
+      await _saveRecordingLocally();
+      await _saveToPublicDownloadAndScan(); // 공용 Download 폴더
 
       // 부모 위젯에 결과 전달
       if (widget.onRecordingComplete != null && !_isDisposed) {
@@ -650,22 +736,30 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
         final adjustedBpm =
             (originalBpm * widget.playbackController.speed).round();
 
-        final message = {
-          'bpm': adjustedBpm,
-          if (widget.patternId != null) // 이 부분 잘 동작하는지 확인해보기
-            'patternId': widget.patternId!
-          else
-            'userSheetId': widget.userSheetId,
-          'identifier': _identifier,
-          'email': _userEmail,
-          'message': base64String,
-          'measureNumber': (_currentMeasure + 1).toString(),
-          'endOfMeasure': _currentMeasure + 1 == _totalMeasures,
-        };
+        final Map<String, dynamic> payload = (widget.patternId != null)
+            // 패턴 필인 페이지
+            ? {
+                'audioBase64': base64String,
+                'identifier': _identifier,
+                'email': _userEmail,
+                'measureNumber': (_currentMeasure + 1).toString(),
+                'endOfMeasure': _currentMeasure + 1 == _totalMeasures,
+                'patternId': widget.patternId,
+              }
+            // 악보 연습 페이지
+            : {
+                'bpm': adjustedBpm,
+                'userSheetId': widget.userSheetId,
+                'identifier': _identifier,
+                'email': _userEmail,
+                'message': base64String,
+                'measureNumber': (_currentMeasure + 1).toString(),
+                'endOfMeasure': _currentMeasure + 1 == _totalMeasures,
+              };
 
         _stompClient!.send(
           destination: '/app/audio/forwarding',
-          body: json.encode(message),
+          body: json.encode(payload),
           headers: {
             'content-type': 'application/json',
             'receipt': 'measure-${_currentMeasure + 1}',
@@ -758,6 +852,33 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
     });
 
     print('✅ DrumRecordingWidget: 마디 정보 업데이트 완료');
+  }
+
+  /// 녹음된 aac 파일을 외부 저장소(Downloads/DrumRecordings)로 복사 저장
+  Future<void> _saveRecordingLocally() async {
+    print('▶ _saveRecordingLocally 실행됨');
+    if (_recordingPath == null) return;
+
+    // 앱 전용 외부 저장소 경로
+    final extDir = await getExternalStorageDirectory();
+    print('▶ extDir.path: ${extDir?.path}');
+    final saveDir = Directory('${extDir!.path}/DrumRecordings');
+    if (!await saveDir.exists()) {
+      await saveDir.create(recursive: true);
+      print('▶ 폴더 생성됨: ${saveDir.path}');
+    }
+
+    final timestamp = DateTime.now().millisecondsSinceEpoch;
+    final newPath = '${saveDir.path}/drum_recording_$timestamp.aac';
+    try {
+      await File(_recordingPath!).copy(newPath);
+      print('✅ 녹음 파일 로컬 저장 완료: $newPath');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('녹음 파일이 저장되었습니다:\n$newPath')),
+      );
+    } catch (e) {
+      print('❌ 파일 저장 중 오류: $e');
+    }
   }
 
   /// 모든 리소스를 안전하게 정리하는 메서드
