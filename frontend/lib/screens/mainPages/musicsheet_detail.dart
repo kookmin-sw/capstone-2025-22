@@ -485,10 +485,20 @@ class _MusicsheetDetailState extends State<MusicsheetDetail> {
                                               e as Map))
                                           .toList();
 
+                                      // measureNumber 오름차순 정렬
+                                      practiceInfo.sort((a, b) {
+                                        final ma = int.parse(
+                                            a['measureNumber'] as String);
+                                        final mb = int.parse(
+                                            b['measureNumber'] as String);
+                                        return ma.compareTo(mb);
+                                      });
+
                                       openMusicSheet(
                                         context: localContext,
                                         xmlDataString: _xmlDataString!,
                                         practiceInfo: practiceInfo,
+                                        isPatternMode: false,
                                       );
                                     } catch (e) {
                                       if (!mounted) return;
