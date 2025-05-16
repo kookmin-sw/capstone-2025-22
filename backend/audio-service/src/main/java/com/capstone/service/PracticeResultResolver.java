@@ -20,7 +20,7 @@ public class PracticeResultResolver {
     @Value("${scoring.beat.threshold:0.2}")
     public Double errorThreshold = 0.2;
 
-    public OnsetMatchResult matchOnset(ModelDto.OnsetResponseDto onsetResponse, MeasureInfo measureInfo){
+    public OnsetMatchResult matchOnset(ModelDto.OnsetResponseDto onsetResponse, MeasureInfo measureInfo, double weight){
         List<Double> userOnset = onsetResponse
                 .getOnsets()
                 .stream()
@@ -31,7 +31,7 @@ public class PracticeResultResolver {
         for(NoteInfo noteInfo : noteInfoList){
             answerOnset.add(noteInfo.getStartOnset());
         }
-        return DTWMatcher.match(userOnset, answerOnset, errorThreshold);
+        return DTWMatcher.match(userOnset, answerOnset, errorThreshold, weight);
     }
 
     public double calculateScore(
@@ -71,7 +71,7 @@ public class PracticeResultResolver {
         List<NoteInfo> noteInfoList = measureInfo.getNoteList();
         int[] matchedUserOnsetIndices = onsetMatchResult.getMatchedUserOnsetIndices();
         for (int noteInfoIdx : matchedUserOnsetIndices) {
-            if(noteInfoIdx >= 0 && noteInfoIdx < noteInfoList.size()){
+            if(noteInfoIdx >= 0 && noteInfoIdx < noteInfoList.size() && noteInfoIdx < drumPredictList.size()){
                 NoteInfo answerNoteInfo = noteInfoList.get(noteInfoIdx);
                 String[] answerNotePrediction = answerNoteInfo.getPitchList()
                         .stream().map(PitchInfo::getInstrumentType).toArray(String[]::new);

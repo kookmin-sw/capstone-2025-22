@@ -87,9 +87,9 @@ class PracticeResultResolverTest {
                 .build();
         MeasureInfo measureInfo = this.getTestMeasureInfo(drumPredictList);
         // when
-        OnsetMatchResult shortOnsetMatchResult = resultResolver.matchOnset(shortOnsetResponseDto, measureInfo);
-        OnsetMatchResult commonOnsetMatchResult = resultResolver.matchOnset(commonOnsetResponseDto, measureInfo);
-        OnsetMatchResult longOnsetMatchResult = resultResolver.matchOnset(longOnsetResponseDto, measureInfo);
+        OnsetMatchResult shortOnsetMatchResult = resultResolver.matchOnset(shortOnsetResponseDto, measureInfo, 1);
+        OnsetMatchResult commonOnsetMatchResult = resultResolver.matchOnset(commonOnsetResponseDto, measureInfo, 1);
+        OnsetMatchResult longOnsetMatchResult = resultResolver.matchOnset(longOnsetResponseDto, measureInfo, 1);
         // then
         assert Arrays.equals(shortOnsetMatchResult.getAnswerOnsetPlayed(), new boolean[]{true, true, true, true, false});
         assert Arrays.equals(commonOnsetMatchResult.getAnswerOnsetPlayed(), new boolean[]{true, true, true, true, true});

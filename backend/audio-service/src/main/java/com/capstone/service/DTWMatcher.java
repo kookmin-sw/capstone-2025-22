@@ -7,10 +7,12 @@ import java.util.List;
 
 public class DTWMatcher {
 
-    public static OnsetMatchResult match(List<Double> userOnset, List<Double> answerOnset, double threshold) {
+    public static OnsetMatchResult match(List<Double> userOnset, List<Double> answerOnset, double threshold, double weight) {
         int n = userOnset.size();
         int m = answerOnset.size();
         double[][] dtwMatrix = new double[n + 1][m + 1];  // DTW 행렬 초기화
+
+        answerOnset = answerOnset.stream().map(x -> x * weight).toList();
 
         // dtwMatrix의 첫 번째 열과 첫 번째 행을 무한대로 설정
         for (int i = 0; i <= n; i++) {
