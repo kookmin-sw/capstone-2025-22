@@ -932,7 +932,7 @@ class _SheetListScreenState extends State<SheetListScreen> {
                                 child: Icon(
                                   Icons.add,
                                   size: 13.sp,
-                                  color: Colors.redAccent,
+                                  color: Color(0xffD97D6C),
                                 ),
                               ),
                             ),
