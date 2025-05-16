@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class NavigationPanel extends StatelessWidget {
   final int selectedIndex; // 선택된 메뉴 인덱스
@@ -12,33 +13,38 @@ class NavigationPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 300, // 네비게이션 바 고정 크기
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(color: Colors.black26, blurRadius: 10, offset: Offset(3, 0))
-        ],
-      ),
-      child: Column(
-        // 네비게이션 바 메뉴
-        children: [
-          SizedBox(height: 32),
-          Container(
-            alignment: Alignment.center,
-            child: Image.asset('assets/images/appLogo.png'),
-            height: 45,
-          ),
-          SizedBox(
-            height: 10,
-          ),
-          // 네비게이션 바 메뉴 아이템
-          _navItem(FaIcon(FontAwesomeIcons.drum), "드럼 기초", 0),
-          _navItem(FaIcon(FontAwesomeIcons.handsClapping), "메트로놈", 1),
-          _navItem(FaIcon(FontAwesomeIcons.music), "패턴 및 필인 연습", 2),
-          _navItem(FaIcon(FontAwesomeIcons.sliders), "악보 연습", 3),
-          _navItem(FaIcon(FontAwesomeIcons.circleUser), "마이페이지", 4),
-        ],
+    return SingleChildScrollView(
+      physics: const NeverScrollableScrollPhysics(),
+      child: Container(
+        width: 105.w, // 네비게이션 바 고정 크기
+        height: 100.sh, // 네비게이션 바 고정 크기
+        decoration: BoxDecoration(
+          color: Colors.white,
+          boxShadow: [
+            BoxShadow(
+                color: Colors.black26, blurRadius: 10, offset: Offset(3, 0))
+          ],
+        ),
+        child: Column(
+          // 네비게이션 바 메뉴
+          children: [
+            SizedBox(height: 35.h),
+            Container(
+              alignment: Alignment.center,
+              child: Image.asset('assets/images/appLogo.png'),
+              height: 55.h,
+            ),
+            SizedBox(
+              height: 10.h,
+            ),
+            // 네비게이션 바 메뉴 아이템
+            _navItem(FaIcon(FontAwesomeIcons.drum), "드럼 기초", 0),
+            _navItem(FaIcon(FontAwesomeIcons.handsClapping), "메트로놈", 1),
+            _navItem(FaIcon(FontAwesomeIcons.music), "패턴 및 필인 연습", 2),
+            _navItem(FaIcon(FontAwesomeIcons.sliders), "악보 연습", 3),
+            _navItem(FaIcon(FontAwesomeIcons.circleUser), "마이페이지", 4),
+          ],
+        ),
       ),
     );
   }
@@ -54,11 +60,11 @@ class NavigationPanel extends StatelessWidget {
           // 강조 바 - 선택되었을 때
           if (isSelected)
             Positioned(
-              left: 10, // 왼쪽으로 좀 더 빼줌
-              top: 4, // 위쪽 정렬 맞춤
-              bottom: 2, // 아래쪽 정렬 맞춤
+              left: 3.w, // 왼쪽으로 좀 더 빼줌
+              top: 5.h, // 위쪽 정렬 맞춤
+              bottom: 4.h, // 아래쪽 정렬 맞춤
               child: Container(
-                width: 6, // 강조 바 두께
+                width: 2.8.w, // 강조 바 두께
                 decoration: BoxDecoration(
                   color: Color.fromARGB(255, 195, 112, 97), // 강조 바 색상
                   borderRadius: BorderRadius.circular(10), // 둥글게 처리
@@ -68,8 +74,9 @@ class NavigationPanel extends StatelessWidget {
 
           // 네비게이션 버튼 박스
           Container(
-            padding: EdgeInsets.symmetric(horizontal: 15, vertical: 17),
-            margin: EdgeInsets.only(top: 4, bottom: 4, left: 25, right: 15),
+            padding: EdgeInsets.symmetric(horizontal: 20.h, vertical: 6.w),
+            margin:
+                EdgeInsets.only(top: 5.h, bottom: 5.h, left: 9.w, right: 4.w),
             decoration: BoxDecoration(
               color: isSelected
                   ? Color.fromARGB(255, 249, 231, 227)
@@ -81,7 +88,7 @@ class NavigationPanel extends StatelessWidget {
                         color: Colors.black26, // 그림자 색상
                         blurRadius: 5, // 흐림 정도
                         spreadRadius: 0.5, // 퍼짐 정도
-                        offset: Offset(0, 5), // 그림자 조정
+                        offset: Offset(0, 4), // 그림자 조정
                       ),
                     ]
                   : [],
@@ -89,22 +96,22 @@ class NavigationPanel extends StatelessWidget {
             child: Row(
               // 네비게이션 버튼 아이콘, 타이틀
               children: [
-                SizedBox(width: 10),
+                SizedBox(width: 2.w),
                 IconTheme(
                   data: IconThemeData(
                     color: isSelected ? Color(0XFFD97D6C) : Color(0XFF646464),
-                    size: 30,
+                    size: 10.sp,
                   ),
                   child: icon,
                 ),
-                SizedBox(width: 17),
+                SizedBox(width: 10.w),
                 Expanded(
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 2),
+                    padding: EdgeInsets.symmetric(vertical: 2.5.h),
                     child: Text(title,
                         textAlign: TextAlign.center,
                         style: TextStyle(
-                            fontSize: 20,
+                            fontSize: 7.2.sp,
                             fontWeight: FontWeight.bold,
                             color: isSelected
                                 ? Color(0XFFD97D6C)

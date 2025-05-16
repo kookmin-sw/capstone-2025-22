@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:capstone_2025/widgets/linedText.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class ResultText extends StatelessWidget {
   // 결과창 텍스트 (linedText + 그림자 효과)
@@ -20,7 +21,7 @@ class ResultText extends StatelessWidget {
       Text(
         "$keyword",
         style: TextStyle(
-          fontSize: (keyword == "PERFECT") ? 85 : 90,
+          fontSize: (keyword == "PERFECT") ? 27.sp : 32.sp,
           fontWeight: FontWeight.bold,
           color: Colors.transparent,
           shadows: [
@@ -35,7 +36,7 @@ class ResultText extends StatelessWidget {
       ),
       linedText(
         "$keyword",
-        (keyword == "PERFECT") ? 85 : 90,
+        (keyword == "PERFECT") ? 27.sp : 32.sp,
         borderColor,
         txtColor,
         9.5,

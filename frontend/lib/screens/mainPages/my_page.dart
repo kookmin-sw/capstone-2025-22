@@ -1,12 +1,12 @@
 import 'package:capstone_2025/screens/introPages/find_pw_screen.dart';
-import 'package:capstone_2025/screens/introPages/login_screen_google.dart';
-import 'package:capstone_2025/screens/introPages/set_new_pw_screen.dart';
+import 'package:capstone_2025/main.dart';
 import 'package:capstone_2025/screens/mainPages/edit_profile_screen.dart';
 import 'package:capstone_2025/screens/mainPages/musicsheet_detail.dart';
 import 'package:capstone_2025/services/api_func.dart';
 import 'package:capstone_2025/services/storage_service.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'dart:convert'; // Base64 디코딩
 import 'dart:typed_data'; // Uint8List 변환
 
@@ -46,9 +46,7 @@ class _MyPageState extends State<MyPage> {
     setState(() => _isLoading = true);
     // Secure Storage에서 사용자 데이터 불러오기
     String? storedEmail = await storage.read(key: 'user_email');
-    String? storedUserName = await storage.read(key: 'nick_name');
     String? storedAccessToken = await storage.read(key: 'access_token');
-    String? storedProfileImage = await storage.read(key: "profile_image");
 
     Map<String, String> infoQueryParam = {
       "email": storedEmail ?? "",
@@ -155,8 +153,8 @@ class _MyPageState extends State<MyPage> {
           ),
           child: Container(
             // 모달 내용
-            width: 300,
-            padding: EdgeInsets.symmetric(vertical: 15, horizontal: 20),
+            width: 100.w,
+            padding: EdgeInsets.symmetric(vertical: 15.h, horizontal: 7.w),
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(15),
@@ -188,13 +186,16 @@ class _MyPageState extends State<MyPage> {
         action();
       },
       child: Padding(
-        padding: EdgeInsets.symmetric(vertical: 12),
+        padding: EdgeInsets.symmetric(vertical: 13.h),
         child: Row(
           children: [
-            Icon(icon, color: const Color(0xFF646464), size: 24),
-            SizedBox(width: 10),
+            Icon(icon, color: const Color(0xFF646464), size: 9.sp),
+            SizedBox(width: 8.w),
             Text(text,
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500)),
+                style: TextStyle(
+                    fontSize: 6.5.sp,
+                    fontWeight: FontWeight.w500,
+                    color: const Color(0xFF646464))),
           ],
         ),
       ),
@@ -209,11 +210,11 @@ class _MyPageState extends State<MyPage> {
           ? Center(child: CircularProgressIndicator())
           : Center(
               child: Padding(
-                padding: EdgeInsets.all(20),
+                padding: EdgeInsets.all(7.w),
                 child: Column(
                   children: [
                     _buildProfileSection(),
-                    SizedBox(height: 15),
+                    SizedBox(height: 16.h),
                     _buildSheetMusicHeader(),
                     isSheetMusicUploaded
                         ? Expanded(child: _buildSheetMusicTable())
@@ -228,7 +229,7 @@ class _MyPageState extends State<MyPage> {
   // 프로필 섹션
   Widget _buildProfileSection() {
     return Container(
-      padding: EdgeInsets.symmetric(vertical: 10, horizontal: 20),
+      padding: EdgeInsets.symmetric(vertical: 15.h, horizontal: 8.w),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(10),
@@ -243,28 +244,24 @@ class _MyPageState extends State<MyPage> {
       ),
       child: Row(
         children: [
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: SizedBox(
-              height: 70,
-              width: 70,
-              child: (profileImage == null)
-                  ? CircleAvatar(
-                      // 프로필 이미지 - 아이콘 처리(사진으로 바꿔야 함)
-                      radius: 40,
-                      backgroundColor: Colors.grey[300],
-                      child: Icon(Icons.person, size: 60, color: Colors.white),
-                    )
-                  : CircleAvatar(
-                      // 프로필 이미지 - 사진 처리
-                      radius: 40,
-                      backgroundColor: Colors.grey[300],
-                      backgroundImage: MemoryImage(
-                          Uint8List.fromList(base64Decode(profileImage!))),
-                    ),
-            ),
+          SizedBox(
+            height: 100.h,
+            child: (profileImage == null)
+                ? CircleAvatar(
+                    // 프로필 이미지
+                    radius: 40,
+                    backgroundColor: Colors.grey[300],
+                    child: Icon(Icons.person, size: 60, color: Colors.white),
+                  )
+                : CircleAvatar(
+                    // 프로필 이미지 - 사진 처리
+                    radius: 40,
+                    backgroundColor: Colors.grey[300],
+                    backgroundImage: MemoryImage(
+                        Uint8List.fromList(base64Decode(profileImage!))),
+                  ),
           ),
-          SizedBox(width: 20),
+          SizedBox(width: 10.w),
           Expanded(
             // 사용자 정보
             child: Column(
@@ -274,18 +271,20 @@ class _MyPageState extends State<MyPage> {
                   children: [
                     Text(userName == null ? "홍길동" : userName!, // 사용자 이름
                         style: TextStyle(
-                            fontSize: 23, fontWeight: FontWeight.bold)),
-                    SizedBox(width: 10),
+                            fontSize: 8.3.sp,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xff595959))),
+                    SizedBox(width: 4.sp),
                     GestureDetector(
                       // 편집 버튼
                       onTap: () => _showCustomModal(context),
                       child: FaIcon(FontAwesomeIcons.edit,
-                          size: 22, color: Colors.black),
+                          size: 8.sp, color: Color(0xff646464)),
                     ),
                   ],
                 ),
                 Text(email == null ? "example@gmail.com" : email!, // 사용자 이메일
-                    style: TextStyle(fontSize: 19, color: Colors.grey)),
+                    style: TextStyle(fontSize: 7.3.sp, color: Colors.grey)),
               ],
             ),
           ),
@@ -295,9 +294,9 @@ class _MyPageState extends State<MyPage> {
               openModal(context);
             },
             child: FaIcon(FontAwesomeIcons.rightFromBracket,
-                size: 30, color: Colors.black38),
+                size: 10.sp, color: Color(0xff646464)),
           ),
-          SizedBox(width: 10),
+          SizedBox(width: 8.w),
         ],
       ),
     );
@@ -306,15 +305,16 @@ class _MyPageState extends State<MyPage> {
   // 악보 연습 기록 타이틀
   Widget _buildSheetMusicHeader() {
     return Padding(
-      padding: const EdgeInsets.only(left: 20, bottom: 10),
+      padding: EdgeInsets.only(left: 5.w, bottom: 10.h),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.queue_music_rounded, size: 32, color: Color(0xff646464)),
-          SizedBox(width: 7),
+          Icon(Icons.queue_music_rounded,
+              size: 13.sp, color: Color(0xff646464)),
+          SizedBox(width: 3.sp),
           Text("악보 연습 기록",
               style: TextStyle(
-                  fontSize: 20,
+                  fontSize: 7.5.sp,
                   fontWeight: FontWeight.bold,
                   color: Color(0xff646464))),
         ],
@@ -327,12 +327,12 @@ class _MyPageState extends State<MyPage> {
     return Expanded(
       flex: 3,
       child: Padding(
-        padding: const EdgeInsets.only(top: 80),
+        padding: EdgeInsets.only(top: 85.h),
         child: Text(
           "연습 기록이 없습니다. \n악보 연습에서 악보를 추가하고 연습해보세요!",
           textAlign: TextAlign.center,
           style: TextStyle(
-              fontSize: 22,
+              fontSize: 8.sp,
               color: Colors.grey.withOpacity(0.7),
               fontWeight: FontWeight.bold),
         ),
@@ -346,7 +346,7 @@ class _MyPageState extends State<MyPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Container(
-          padding: EdgeInsets.symmetric(vertical: 12),
+          padding: EdgeInsets.symmetric(vertical: 14.h),
           decoration: BoxDecoration(
             color: Color(0xffD97D6C),
             borderRadius: BorderRadius.vertical(top: Radius.circular(10)),
@@ -373,12 +373,12 @@ class _MyPageState extends State<MyPage> {
 
               return Container(
                 // 테이블 셀
-                padding: EdgeInsets.symmetric(vertical: 12),
+                padding: EdgeInsets.symmetric(vertical: 14.h),
                 decoration: BoxDecoration(
                   color: index.isEven ? Colors.white : Colors.grey.shade100,
                   border: Border(
-                      bottom:
-                          BorderSide(color: Colors.grey.shade300, width: 1)),
+                      bottom: BorderSide(
+                          color: Colors.grey.shade300, width: 0.5.w)),
                 ),
                 child: Row(
                   children: [
@@ -437,7 +437,7 @@ Widget _buildListCell(String text, {int flex = 1}) {
         text,
         textAlign: TextAlign.center,
         style: TextStyle(
-          fontSize: 16,
+          fontSize: 5.sp,
         ),
       ),
     ),
@@ -448,10 +448,8 @@ Widget modalBtn(BuildContext context, String text, Color backgroundColor,
     bool isTextblack) {
   // 모달 버튼
   return Container(
-    width: 155,
-    // MediaQuery.of(context).size.width * 0.168,
-    height: 50,
-    // MediaQuery.of(context).size.height * 0.135,
+    width: 50.w,
+    height: 58.h,
     alignment: Alignment.center,
     decoration: BoxDecoration(
       color: backgroundColor,
@@ -460,7 +458,7 @@ Widget modalBtn(BuildContext context, String text, Color backgroundColor,
     child: Text(text,
         style: TextStyle(
             color: isTextblack ? Colors.black : Colors.white,
-            fontSize: 15,
+            fontSize: 5.3.sp,
             fontWeight: FontWeight.w500)),
   );
 }
@@ -474,28 +472,28 @@ void openModal(
     builder: (context) => AlertDialog(
       alignment: Alignment.center,
       insetPadding: EdgeInsets.zero,
-      contentPadding: EdgeInsets.only(top: 20, bottom: 20),
+      contentPadding: EdgeInsets.only(top: 20.h, bottom: 20.h),
       backgroundColor: Colors.white,
       content: SizedBox(
-        width: 360,
-        height: 130,
+        width: 115.w,
+        height: 150.h,
         child: Column(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           mainAxisSize: MainAxisSize.min,
           children: [
             SizedBox(
-              height: 15,
+              height: 15.h,
             ),
             Text(
               '로그아웃 하시겠습니까?',
               textAlign: TextAlign.center,
               style: TextStyle(
-                fontSize: 18.5,
-                color: Color(0xFF4A4A4A),
+                fontSize: 6.8.sp,
+                color: Color(0xFF646464),
                 fontWeight: FontWeight.w600,
               ),
             ),
-            const SizedBox(height: 20),
+            SizedBox(height: 30.h),
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -510,7 +508,7 @@ void openModal(
                   child: modalBtn(
                       context, '취소', Color.fromARGB(255, 205, 203, 202), true),
                 ),
-                SizedBox(width: 10),
+                SizedBox(width: 5.w),
                 TextButton(
                   style: TextButton.styleFrom(
                     padding: EdgeInsets.zero,
@@ -525,11 +523,10 @@ void openModal(
                     getHTTP('/auth/signout', {}, reqHeader: {
                       'authorization': accessToken ?? "",
                     });
-                    Navigator.pushReplacement(
+                    Navigator.pushAndRemoveUntil(
                       context,
-                      MaterialPageRoute(
-                        builder: (context) => LoginScreenGoogle(),
-                      ),
+                      MaterialPageRoute(builder: (_) => const MyApp()),
+                      (route) => false,
                     );
                   },
                   child: modalBtn(context, '확인', Color(0xffD97D6C), false),
