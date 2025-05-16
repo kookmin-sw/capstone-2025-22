@@ -16,4 +16,5 @@ public class PatternMessageDto {
     String measureNumber;
     boolean endOfMeasure;
     Long patternId;
+    int bpm = 60;
 }
