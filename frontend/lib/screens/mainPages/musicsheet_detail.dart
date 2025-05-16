@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:ui';
+import 'dart:convert';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:capstone_2025/services/api_func.dart';
 import 'package:capstone_2025/services/storage_service.dart';
@@ -57,7 +58,18 @@ class _MusicsheetDetailState extends State<MusicsheetDetail> {
     final resp = await getHTTP('/sheets/${widget.songID}', {});
     if (resp['errMessage'] == null) {
       setState(() {
-        _xmlDataString = resp['body']['sheetInfo'] as String;
+        // 1) 서버가 준 Base64
+        final base64Xml = resp['body']['sheetInfo'] as String;
+        // 2) Base64 → bytes → UTF8 문자열
+        final bytes = base64Decode(base64Xml);
+        var xml = utf8.decode(bytes);
+        // 3) XML 선언이 없으면 붙여주기
+        if (!xml.startsWith('<?xml')) {
+          xml = '<?xml version="1.0" encoding="UTF-8"?>\n' + xml;
+        }
+        setState(() {
+          _xmlDataString = xml;
+        });
       });
     } else {
       debugPrint('악보 XML 로딩 실패: ${resp['errMessage']}');
@@ -466,8 +478,8 @@ class _MusicsheetDetailState extends State<MusicsheetDetail> {
                                           _selectedPracticeId!);
                                       if (!mounted) return;
 
-                                      final rawInfo = detail['body']
-                                          ['practiceInfo'] as List<dynamic>;
+                                      final rawInfo = detail['practiceInfo']
+                                          as List<dynamic>;
                                       final practiceInfo = rawInfo
                                           .map((e) => Map<String, dynamic>.from(
                                               e as Map))
