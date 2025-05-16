@@ -50,18 +50,18 @@ class DrumRecordingWidget extends StatefulWidget {
 
   const DrumRecordingWidget({
     super.key,
+    this.userSheetId,
+    this.patternId,
     required this.title,
     required this.xmlDataString,
     required this.audioFilePath,
+    required this.playbackController,
+    required this.fetchPracticeIdentifier, // identifier 가져옴
     this.onRecordingComplete,
     this.onMeasureUpdate,
     this.onOnsetsReceived,
     this.onMusicXMLParsed,
-    this.userSheetId,
-    this.patternId,
     this.onGradingResult,
-    required this.playbackController,
-    required this.fetchPracticeIdentifier, // identifier 가져옴
   });
 
   @override
@@ -650,22 +650,30 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
         final adjustedBpm =
             (originalBpm * widget.playbackController.speed).round();
 
-        final message = {
-          'bpm': adjustedBpm,
-          if (widget.patternId != null) // 이 부분 잘 동작하는지 확인해보기
-            'patternId': widget.patternId!
-          else
-            'userSheetId': widget.userSheetId,
-          'identifier': _identifier,
-          'email': _userEmail,
-          'message': base64String,
-          'measureNumber': (_currentMeasure + 1).toString(),
-          'endOfMeasure': _currentMeasure + 1 == _totalMeasures,
-        };
+        final Map<String, dynamic> payload = (widget.patternId != null)
+            // 패턴 필인 페이지
+            ? {
+                'audioBase64': base64String,
+                'identifier': _identifier,
+                'email': _userEmail,
+                'measureNumber': (_currentMeasure + 1).toString(),
+                'endOfMeasure': _currentMeasure + 1 == _totalMeasures,
+                'patternId': widget.patternId,
+              }
+            // 악보 연습 페이지
+            : {
+                'bpm': adjustedBpm,
+                'userSheetId': widget.userSheetId,
+                'identifier': _identifier,
+                'email': _userEmail,
+                'message': base64String,
+                'measureNumber': (_currentMeasure + 1).toString(),
+                'endOfMeasure': _currentMeasure + 1 == _totalMeasures,
+              };
 
         _stompClient!.send(
           destination: '/app/audio/forwarding',
-          body: json.encode(message),
+          body: json.encode(payload),
           headers: {
             'content-type': 'application/json',
             'receipt': 'measure-${_currentMeasure + 1}',
