@@ -8,20 +8,25 @@ import 'package:capstone_2025/screens/introPages/login_screen.dart';
 import 'package:capstone_2025/screens/mainPages/navigation_screens.dart';
 import 'package:capstone_2025/screens/drumPatternFillPages/pattern_fill_screen.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // 앱을 가로 모드로 고정
-  SystemChrome.setPreferredOrientations([
+  // 1) Orientation 고정
+  await SystemChrome.setPreferredOrientations([
     DeviceOrientation.landscapeLeft,
     DeviceOrientation.landscapeRight,
-  ]).then((_) {
-    runApp(
-      ProviderScope(
-        child: const MyApp(),
-      ),
-    );
-  });
+  ]);
+
+  // 2) Status Bar 숨기기 (및 네비게이션 바도 숨기고 싶으면 overlays: [])
+  SystemChrome.setEnabledSystemUIMode(
+    SystemUiMode.manual,
+    // overlays: [SystemUiOverlay.bottom], // bottom만 두면 네비게이션바만 남고 상태표시줄은 숨김
+    overlays: [], // 완전 풀스크린 (네비바까지 모두 숨기고 싶다면
+  );
+
+  runApp(
+    ProviderScope(child: const MyApp()),
+  );
 }
 
 class MyApp extends StatefulWidget {
