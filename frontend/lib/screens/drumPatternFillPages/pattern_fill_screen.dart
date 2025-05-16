@@ -59,7 +59,7 @@ class _CountdownPageState extends State<CountdownPage>
   double _bpm = 60.0;
 
   // ===== 재생 및 마디 관련 변수 =====
-  final int _currentMeasure = 0; // 녹음 마디 (0-based)
+  int _currentMeasure = 0; // 녹음 마디 (0-based)
   final int _currentMeasureOneBased = 0; // 채점용 마디 (1-based)
 
   // 상태 변수 선언
@@ -98,6 +98,8 @@ class _CountdownPageState extends State<CountdownPage>
 
   final _storage = const FlutterSecureStorage();
 
+  String? _practiceIdentifier; // 연주 식별자 캐시
+
 // 서버에서 받아온 패턴 WAV를 저장한 로컬 경로
   String? _patternAudioPath;
 
@@ -107,6 +109,9 @@ class _CountdownPageState extends State<CountdownPage>
   // 페이지 로딩 시 API 호출 후 받아오는 데이터
   String patternName = 'Default Pattern Name';
   String patternInfo = pattern_info_default.temp;
+
+  // 디코딩된 XML 데이터
+  late String decodedXml;
 
   @override
   void didChangeDependencies() {
@@ -134,7 +139,18 @@ class _CountdownPageState extends State<CountdownPage>
         ..onCountdownUpdate = (count) {
           setState(() {});
           if (count == 0) {
-            _drumRecordingKey.currentState?.startRecording();
+            // ────── 사용자 녹음 직전 식별자 요청 ──────
+            fetchPracticeIdentifier().then((id) {
+              if (id != null) {
+                // 식별자 수신 완료 후 녹음 시작
+                _drumRecordingKey.currentState?.startRecording();
+              } else {
+                // 실패 시 에러 표시
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('연주 식별자 요청에 실패했습니다.')),
+                );
+              }
+            });
           }
         };
       _isControllerInitialized = true;
@@ -167,10 +183,11 @@ class _CountdownPageState extends State<CountdownPage>
     _fetchData().then((_) {
       // base64 → bytes → utf8 string
       final xmlBytes = base64Decode(patternInfo);
-      final xmlString = utf8.decode(xmlBytes);
+      decodedXml = utf8.decode(xmlBytes);
+      setState(() {}); // build() 재실행
       // 악보 렌더 실행
       osmdService.startOSMDService(
-        xmlData: utf8.encode(xmlString),
+        xmlData: utf8.encode(decodedXml),
         pageWidth: 1080,
       );
     });
@@ -279,10 +296,12 @@ class _CountdownPageState extends State<CountdownPage>
         await getHTTP("/patterns/$patternId", queryParam);
 
     if (resData['errMessage'] == null) {
-      patternName = resData['body']['patternName'] ??
-          'Default Pattern Name'; // null일 경우 기본값 설정
-      patternInfo = resData['body']['patternInfo'] ??
-          pattern_info_default.temp; // null일 경우 기본값 설정
+      setState(() {
+        patternName = resData['body']['patternName'] ??
+            'Default Pattern Name'; // null일 경우 기본값 설정
+        patternInfo = resData['body']['patternInfo'] ??
+            pattern_info_default.temp; // null일 경우 기본값 설정
+      });
     } else {
       print("패턴 정보 요청 실패: ${resData['errMessage']}");
     }
@@ -442,22 +461,33 @@ class _CountdownPageState extends State<CountdownPage>
     );
   }
 
+  /// 연주 식별자 가져오기
   Future<String?> fetchPracticeIdentifier() async {
-    // 1) 토큰 읽기
-    final token = await _storage.read(key: 'access_token');
+    // 이미 캐시에 ID가 있으면 바로 반환
+    if (_practiceIdentifier != null) {
+      return _practiceIdentifier;
+    }
 
-    // 2) POST 호출
-    final response = await postHTTP(
-      '/audio/practice',
-      null,
-      reqHeader: {'authorization': token ?? ''},
-    );
+    try {
+      final token = await _storage.read(key: 'access_token');
+      if (token == null) {
+        print('❌ 토큰이 없습니다');
+        return null;
+      }
 
-    // 3) 결과 처리
-    if (response['errMessage'] == null) {
-      return response['body'] as String;
-    } else {
-      print('Identifier 요청 실패: ${response['errMessage']}');
+      final response = await postHTTP('/audio/practice', null,
+          reqHeader: {'authorization': token});
+
+      final body = response['body'];
+      if (body != null && body is String) {
+        _practiceIdentifier = body;
+        print('✅ 연주 식별자 수신(캐시 저장): $_practiceIdentifier');
+        return _practiceIdentifier;
+      }
+      print('❌ 연주 식별자 요청 실패: ${response['message']}');
+      return null;
+    } catch (e) {
+      print('❌ 연주 식별자 요청 중 오류: $e');
       return null;
     }
   }
@@ -524,7 +554,7 @@ class _CountdownPageState extends State<CountdownPage>
           builder: (_) => PracticeResultPP(
             idx: widget.index,
             score: initialBeatScore,
-            xmlDataString: patternInfo,
+            xmlDataString: decodedXml,
             practiceInfo: practiceInfo,
           ),
         ),
@@ -1145,22 +1175,37 @@ class _CountdownPageState extends State<CountdownPage>
               key: _drumRecordingKey,
               patternId: widget.index,
               title: 'Basic Pattern ${widget.index}',
-              xmlDataString: patternInfo,
+              xmlDataString: decodedXml,
               audioFilePath: _patternAudioPath ?? '',
               playbackController: playbackController,
-              fetchPracticeIdentifier:
-                  fetchPracticeIdentifier, // identifier 요청 함수
-              onRecordingComplete: (onsets) {
+              fetchPracticeIdentifier: () async =>
+                  _practiceIdentifier, // identifier 요청 함수
+
+              // 마디가 바뀔 때마다 호출 → 커서 이동
+              onMeasureUpdate: (current, total) {
+                setState(() {
+                  _currentMeasure = current;
+                  _totalMeasures = total;
+                });
+              },
+
+              // 온셋(onset)이 생길 때마다 호출 → 실시간 히트 표시
+              onOnsetsReceived: (onsets) {
                 setState(() {
                   _detectedOnsets = onsets;
                 });
               },
+
+              // MusicXML 파싱 후 정보 전달 → 전체 마디 수·BPM 설정
               onMusicXMLParsed: (info) {
                 print('info: $info');
+                _drumRecordingKey.currentState?.setMeasureInfo(info);
+
                 try {
                   // totalMeasures가 제대로 계산되었는지 확인
                   final totalMeasures = info['totalMeasures'] as int;
                   print('Total measures received: $totalMeasures');
+
                   // // XML 데이터를 파싱
                   // final document = XmlDocument.parse(
                   //     info['xmlData'] as String); // xmlData는 XML 문자열로 받아옴
@@ -1181,21 +1226,19 @@ class _CountdownPageState extends State<CountdownPage>
                   print('Error parsing XML: $e');
                 }
               },
-              // onMusicXMLParsed: (info) {
-              //   _drumRecordingKey.currentState?.setMeasureInfo(info);
-              // },
 
-              onOnsetsReceived: (onsets) {
-                setState(() {
-                  _detectedOnsets = onsets;
-                });
-              },
+              // 채점 결과가 올 때마다 호출 → missedCursors에 회색 커서 추가
               onGradingResult: (msg) {
                 _handleScoringResult(msg); // 1) 즉시 화면에 틀린 박자 커서 표시
                 _onWsGradingMessage(msg); // 2) 리스트에 쌓아서, 마지막에 전체 점수 계산
               },
-              // playbackController: playbackController, //playbackController 전달
-              // fetchPracticeIdentifier: fetchPracticeIdentifier,
+
+              // 녹음 완료 후 호출 → 온셋 저장
+              onRecordingComplete: (onsets) {
+                setState(() {
+                  _detectedOnsets = onsets;
+                });
+              },
             ),
           ),
         ],
