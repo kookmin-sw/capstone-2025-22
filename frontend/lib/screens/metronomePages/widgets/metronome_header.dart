@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:capstone_2025/screens/mainPages/navigation_screens.dart';
 import 'dart:async';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class MetronomeHeader extends ConsumerStatefulWidget {
   final AudioPlayer firstBeatPlayer;
@@ -242,7 +243,7 @@ class _MetronomeHeaderState extends ConsumerState<MetronomeHeader> {
   Widget build(BuildContext context) {
     final isSoundOn = ref.watch(isSoundOnProvider);
     return Padding(
-      padding: const EdgeInsets.only(top: 25),
+      padding: EdgeInsets.only(top: 25.h),
       child: Row(
         children: [
           Expanded(
@@ -250,9 +251,9 @@ class _MetronomeHeaderState extends ConsumerState<MetronomeHeader> {
             flex: 1,
             child: IconButton(
               onPressed: clickedBackBtn,
-              icon: const Icon(
+              icon: Icon(
                 Icons.arrow_back_ios,
-                size: 35,
+                size: 14.sp,
               ),
             ),
           ),
@@ -262,8 +263,8 @@ class _MetronomeHeaderState extends ConsumerState<MetronomeHeader> {
             alignment: Alignment.center,
             child: Container(
               // 재생 버튼 배경
-              height: 50,
-              width: 150,
+              height: 65.h,
+              width: 60.w,
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(30),
@@ -284,7 +285,7 @@ class _MetronomeHeaderState extends ConsumerState<MetronomeHeader> {
                     ref.watch(isPlayingProvider) // 재생 상태에 따라 아이콘 변경
                         ? Icons.stop
                         : Icons.play_arrow,
-                    size: 60,
+                    size: 23.sp,
                   ),
                   highlightColor: Colors.transparent,
                   color: const Color(0xffD97D6C),
@@ -301,7 +302,7 @@ class _MetronomeHeaderState extends ConsumerState<MetronomeHeader> {
                   {ref.read(isSoundOnProvider.notifier).state = !isSoundOn},
               icon: Icon(
                 isSoundOn ? Icons.volume_up : Icons.volume_off,
-                size: 45,
+                size: 18.sp,
               ),
             ),
           ),
