@@ -20,7 +20,14 @@ def detect_onset(audio_buffer:BytesIO)->ndarray:
     onset_frames = librosa.onset.onset_detect(
         onset_envelope=onset_env_smooth, 
         sr=sr,
-        )
+        backtrack=True,
+        pre_max=10,
+        post_max=10,
+        pre_avg=30,
+        post_avg=30,
+        delta=0.2,
+        wait=10
+    )
     onset_times = librosa.frames_to_time(onset_frames, sr=sr)
 
     return onset_times
