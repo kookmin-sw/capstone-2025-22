@@ -49,7 +49,6 @@ class MetronomeControls extends ConsumerStatefulWidget {
 
 class _MetronomeControlsState extends ConsumerState<MetronomeControls> {
   late final TextEditingController bpmController;
-  late final FocusNode bpmFocusNode;
   late Image currBeatPatternImg;
   double beatPatternImgSize = 60.h; // 비트 패턴 이미지 크기
 
@@ -57,42 +56,20 @@ class _MetronomeControlsState extends ConsumerState<MetronomeControls> {
   void initState() {
     // 위젯이 생성될 때 호출
     super.initState();
-
-    bpmFocusNode = FocusNode();
     currBeatPatternImg = Image.asset('assets/images/notes/quarter.png');
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-
     bpmController = TextEditingController(
       text: ref.watch(currBPMProvider).toString(),
     );
-
-    bpmFocusNode.addListener(() {
-      setState(() {
-        if (bpmFocusNode.hasFocus) {
-          bpmController.clear();
-        } else {
-          final bpm = int.tryParse(bpmController.text);
-          if (bpm != null && bpm >= 10 && bpm <= 400) {
-            ref.read(currBPMProvider.notifier).state = bpm;
-            if (ref.read(isPlayingProvider)) {
-              (widget.metronomeHeaderKey.currentState as dynamic)
-                  ?.updateMetronomeTiming();
-            }
-          }
-          bpmController.text = ref.watch(currBPMProvider).toString();
-        }
-      });
-    });
   }
 
   @override
   void dispose() {
     bpmController.dispose();
-    bpmFocusNode.dispose();
     super.dispose();
   }
 
@@ -469,47 +446,55 @@ class _MetronomeControlsState extends ConsumerState<MetronomeControls> {
                       SizedBox(
                         width: 50.w,
                         height: 60.h,
-                        child: TextField(
-                          // BPM 입력 필드
-                          controller: bpmController,
-                          focusNode: bpmFocusNode,
-                          textAlign: TextAlign.center,
-                          showCursor: false,
-                          maxLength: 3,
-                          buildCounter: (context,
-                                  {required currentLength,
-                                  required isFocused,
-                                  maxLength}) =>
-                              null,
-                          decoration: const InputDecoration(
-                            border: InputBorder.none,
-                            counterText: '',
-                          ),
-                          style: TextStyle(
-                            fontSize: 23.sp,
-                            fontWeight: FontWeight.bold,
-                            color: bpmFocusNode.hasFocus // 포커스 여부에 따라 색상 변경
-                                ? const Color(0xffD97D6C)
-                                : const Color(0xff424242),
-                          ),
-                          keyboardType: TextInputType.number,
-                          onSubmitted: (value) {
-                            // BPM 입력 후 엔터키 눌렀을 때
-                            final bpm = int.tryParse(value);
-                            if (bpm != null && bpm >= 10 && bpm <= 400) {
-                              // 유효한 BPM 값일 때
-                              ref.read(currBPMProvider.notifier).state = bpm;
-                              if (ref.read(isPlayingProvider)) {
-                                (widget.metronomeHeaderKey.currentState
-                                        as dynamic)
-                                    ?.updateMetronomeTiming();
+                        child: GestureDetector(
+                          onHorizontalDragUpdate: (details) {
+                            if (details.delta.dx > 0) {
+                              // 오른쪽으로 스와이프 → BPM 증가
+                              if (ref.read(currBPMProvider) < 400) {
+                                ref.read(currBPMProvider.notifier).state++;
+                                bpmController.text =
+                                    ref.watch(currBPMProvider).toString();
+                                if (ref.read(isPlayingProvider)) {
+                                  (widget.metronomeHeaderKey.currentState
+                                          as dynamic)
+                                      ?.updateMetronomeTiming();
+                                }
                               }
-                            } else {
-                              // 유효하지 않은 값일 때
-                              bpmController.text =
-                                  ref.watch(currBPMProvider).toString();
+                            } else if (details.delta.dx < 0) {
+                              // 왼쪽으로 스와이프 → BPM 감소
+                              if (ref.read(currBPMProvider) > 10) {
+                                ref.read(currBPMProvider.notifier).state--;
+                                bpmController.text =
+                                    ref.watch(currBPMProvider).toString();
+                                if (ref.read(isPlayingProvider)) {
+                                  (widget.metronomeHeaderKey.currentState
+                                          as dynamic)
+                                      ?.updateMetronomeTiming();
+                                }
+                              }
                             }
                           },
+                          child: TextField(
+                            controller: bpmController,
+                            enabled: false, // disables keyboard input
+                            textAlign: TextAlign.center,
+                            showCursor: false,
+                            maxLength: 3,
+                            buildCounter: (context,
+                                    {required currentLength,
+                                    required isFocused,
+                                    maxLength}) =>
+                                null,
+                            decoration: const InputDecoration(
+                              border: InputBorder.none,
+                              counterText: '',
+                            ),
+                            style: TextStyle(
+                              fontSize: 23.sp,
+                              fontWeight: FontWeight.bold,
+                              color: const Color(0xff424242),
+                            ),
+                          ),
                         ),
                       ),
                       IconButton(
