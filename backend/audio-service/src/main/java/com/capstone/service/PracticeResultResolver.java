@@ -17,7 +17,7 @@ import java.util.List;
 @Component
 public class PracticeResultResolver {
 
-    @Value("${scoring.beat.threshold | 0.2}")
+    @Value("${scoring.beat.threshold : 0.2}")
     public Double errorThreshold;
 
     public OnsetMatchResult matchOnset(ModelDto.OnsetResponseDto onsetResponse, MeasureInfo measureInfo){
