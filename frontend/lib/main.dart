@@ -1,12 +1,12 @@
-import 'package:capstone_2025/screens/introPages/login_screen.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:capstone_2025/screens/introPages/login_screen_google.dart';
-import 'package:capstone_2025/screens/mainPages/navigation_screens.dart';
-import 'package:capstone_2025/services/api_func.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:capstone_2025/services/api_func.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:capstone_2025/screens/introPages/login_screen.dart';
+import 'package:capstone_2025/screens/mainPages/navigation_screens.dart';
+import 'package:capstone_2025/screens/drumPatternFillPages/pattern_fill_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -83,6 +83,7 @@ class _MyAppState extends State<MyApp> {
         return MaterialApp(
           theme: ThemeData(scaffoldBackgroundColor: Color(0xFFF2F1F3)),
           home: _isLoggedIn! ? NavigationScreens() : LoginScreen(),
+          // home: PatternFillScreen(index: 1), // 패턴및필인페이지 확인용
         );
       },
     );
