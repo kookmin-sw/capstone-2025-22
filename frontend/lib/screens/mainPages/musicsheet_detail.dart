@@ -134,10 +134,10 @@ class _MusicsheetDetailState extends State<MusicsheetDetail> {
   List<Map<String, String>> lastFive = []; // 그래프에 출력할 마지막 5개 데이터
 
   List<FlSpot> generateChartData() {
-    // scoreData에서 마지막 5개 데이터만 가져오기
+    // scoreData에서 처음 5개 데이터만 가져오고, 역순으로 정렬
     lastFive = scoreData.length > 5
-        ? scoreData.sublist(scoreData.length - 5)
-        : List.from(scoreData);
+        ? scoreData.sublist(0, 5).reversed.toList()
+        : List.from(scoreData.reversed);
 
     // 차트 데이터로 변환 (x축은 0부터 시작)
     return List.generate(
