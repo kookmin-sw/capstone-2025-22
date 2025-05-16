@@ -713,7 +713,7 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
     }
   }
 
-  /// WebSocket을 통해 녹음 데이터를 서버로 전송
+  // WebSocket을 통해 녹음 데이터를 서버로 전송
   Future<void> _sendRecordingData() async {
     if (!mounted ||
         _isDisposed ||

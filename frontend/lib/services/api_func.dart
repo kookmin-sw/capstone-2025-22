@@ -1,5 +1,6 @@
 import 'package:capstone_2025/services/server_addr.dart'; //serverAddr
 import 'package:capstone_2025/services/storage_service.dart';
+import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert'; //jsonDecode
 
@@ -29,7 +30,7 @@ Future<Map<String, dynamic>> getHTTP(
 
     print("_________________");
     print("응답 상태 코드: ${response.statusCode}");
-    print("응답 본문: ${response.body}");
+    debugPrint("응답 본문: ${response.body}");
     print("_________________");
 
     if (response.statusCode == 200) {
