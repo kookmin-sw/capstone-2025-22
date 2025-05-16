@@ -294,7 +294,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   )),
             ),
             Padding(
-              padding: EdgeInsets.symmetric(vertical: 40.h),
+              padding: EdgeInsets.all(25.h),
               child: Center(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.center,
