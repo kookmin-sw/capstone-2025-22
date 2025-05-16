@@ -1,6 +1,7 @@
 package com.capstone.service;
 
 import com.capstone.constants.DrumInstrument;
+import com.capstone.dto.ModelDto;
 import com.capstone.dto.musicXml.MeasureInfo;
 import com.capstone.dto.musicXml.NoteInfo;
 import com.capstone.dto.musicXml.PitchInfo;
@@ -9,6 +10,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -67,6 +69,32 @@ class PracticeResultResolverTest {
                 new String[]{DrumInstrument.KICK}
         );
         measureInfoMustBe100 = getTestMeasureInfo(drumPredictList);
+    }
+
+    @Test
+    void matchOnset_success(){
+        // given
+        List<String> shortUserOnset = List.of("0.0", "1.0", "2.0", "3.0");
+        List<String> longUserOnset = List.of("0.0", "1.0", "2.0", "3.0", "4.0", "5.0");
+        ModelDto.OnsetResponseDto commonOnsetResponseDto = ModelDto.OnsetResponseDto.builder()
+                .onsets(userOnset)
+                .build();
+        ModelDto.OnsetResponseDto shortOnsetResponseDto = ModelDto.OnsetResponseDto.builder()
+                .onsets(shortUserOnset)
+                .build();
+        ModelDto.OnsetResponseDto longOnsetResponseDto = ModelDto.OnsetResponseDto.builder()
+                .onsets(longUserOnset)
+                .build();
+        MeasureInfo measureInfo = this.getTestMeasureInfo(drumPredictList);
+        // when
+        OnsetMatchResult shortOnsetMatchResult = resultResolver.matchOnset(shortOnsetResponseDto, measureInfo);
+        OnsetMatchResult commonOnsetMatchResult = resultResolver.matchOnset(commonOnsetResponseDto, measureInfo);
+        OnsetMatchResult longOnsetMatchResult = resultResolver.matchOnset(longOnsetResponseDto, measureInfo);
+        // then
+        assert Arrays.equals(shortOnsetMatchResult.getAnswerOnsetPlayed(), new boolean[]{true, true, true, true, false});
+        assert Arrays.equals(commonOnsetMatchResult.getAnswerOnsetPlayed(), new boolean[]{true, true, true, true, true});
+        assert Arrays.equals(longOnsetMatchResult.getAnswerOnsetPlayed(), new boolean[]{true, true, true, true, true});
+
     }
 
     @Test

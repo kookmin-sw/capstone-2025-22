@@ -6,6 +6,7 @@ import com.capstone.dto.musicXml.NoteInfo;
 import com.capstone.dto.musicXml.PitchInfo;
 import com.capstone.dto.score.OnsetMatchResult;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -16,7 +17,8 @@ import java.util.List;
 @Component
 public class PracticeResultResolver {
 
-    public static final Double errorThreshold = 0.2;
+    @Value("${scoring.beat.threshold | 0.2}")
+    public Double errorThreshold;
 
     public OnsetMatchResult matchOnset(ModelDto.OnsetResponseDto onsetResponse, MeasureInfo measureInfo){
         List<Double> userOnset = onsetResponse
