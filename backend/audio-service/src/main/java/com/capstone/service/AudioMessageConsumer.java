@@ -42,13 +42,14 @@ public class AudioMessageConsumer {
         MeasureInfo measureInfo;
     }
 
-    private OnsetMeasureData getOnsetResultAndSendToUser(OnsetMeasureData onsetMeasureData, String measureNumber, String email, double weight){
+    private OnsetMeasureData getOnsetResultAndSendToUser(OnsetMeasureData onsetMeasureData, String measureNumber, String email, String identifier, double weight){
         OnsetResponseDto onsetResponse = onsetMeasureData.getOnsetResponse();
         MeasureInfo measureInfo = onsetMeasureData.getMeasureInfo();
         OnsetMatchResult matchResult = practiceResultResolver.matchOnset(onsetResponse, measureInfo, weight);
         matchResult.setMeasureNumber(measureNumber);
         onsetMeasureData.setOnsetMatchResult(matchResult);
-        messagingTemplate.convertAndSend("/topic/onset/" + email, matchResult);
+        String destination = String.format("/topic/onset/%s/%s", email, identifier);
+        messagingTemplate.convertAndSend(destination, matchResult);
         return onsetMeasureData;
     }
 
@@ -88,7 +89,7 @@ public class AudioMessageConsumer {
                                 .measureInfo(measureInfo)))
                 .map(onsetMeasureDataBuilder -> { // get the onset match result and send it to the client
                     double weight = (double) 60 / audioMessageDto.getBpm();
-                    return getOnsetResultAndSendToUser(onsetMeasureDataBuilder.build(), audioMessageDto.getMeasureNumber(), audioMessageDto.getEmail(), weight);
+                    return getOnsetResultAndSendToUser(onsetMeasureDataBuilder.build(), audioMessageDto.getMeasureNumber(), audioMessageDto.getEmail(), audioMessageDto.getIdentifier(), weight);
                 })
                 .flatMap(onsetMeasureDataBuilder -> { // get the drum prediction list from the AudioModelClient
                     return getDrumPredictionList(onsetMeasureDataBuilder, audioMessageDto.getMessage());
@@ -125,7 +126,7 @@ public class AudioMessageConsumer {
                                 .measureInfo(measureInfo)))
                 .map(onsetMeasureDataBuilder -> { // get the onset match result and send it to the client
                     double weight = (double) 60 / patternMessageDto.getBpm();
-                    return getOnsetResultAndSendToUser(onsetMeasureDataBuilder.build(), patternMessageDto.getMeasureNumber(), patternMessageDto.getEmail(), weight);
+                    return getOnsetResultAndSendToUser(onsetMeasureDataBuilder.build(), patternMessageDto.getMeasureNumber(), patternMessageDto.getEmail(), patternMessageDto.getIdentifier(), weight);
                 })
                 .flatMap(onsetMeasureDataBuilder -> { // get the drum prediction list from the AudioModelClient
                     return getDrumPredictionList(onsetMeasureDataBuilder, patternMessageDto.getAudioBase64());
