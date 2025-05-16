@@ -94,6 +94,7 @@ class _PracticeResultPPState extends State<PracticeResultPP> {
                           padding: EdgeInsets.symmetric(
                               vertical: 20.h, horizontal: 20.w),
                           child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
                             // 결과창 내부 요소들
                             children: [
                               Row(
