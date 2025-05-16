@@ -182,7 +182,7 @@ class _MusicsheetDetailState extends State<MusicsheetDetail> {
           LineChartData(
               // 그래프 상하좌우 여백
               minX: -0.1.w,
-              maxX: 1.55.w,
+              maxX: 1.6.w,
               minY: getMinY(), // 최소값 - 5점
               maxY: 120.h,
 
