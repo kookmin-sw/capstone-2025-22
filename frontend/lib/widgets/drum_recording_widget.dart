@@ -46,6 +46,7 @@ class DrumRecordingWidget extends StatefulWidget {
   /// 채점 결과 콜백
   final void Function(Map<String, dynamic> gradingResult)? onGradingResult;
   final int? userSheetId;
+  final int? patternId;
 
   const DrumRecordingWidget({
     super.key,
@@ -57,6 +58,7 @@ class DrumRecordingWidget extends StatefulWidget {
     this.onOnsetsReceived,
     this.onMusicXMLParsed,
     this.userSheetId,
+    this.patternId,
     this.onGradingResult,
     required this.playbackController,
     required this.fetchPracticeIdentifier, // identifier 가져옴
