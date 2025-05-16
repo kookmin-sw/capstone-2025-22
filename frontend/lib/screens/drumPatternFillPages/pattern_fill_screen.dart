@@ -50,6 +50,16 @@ class CountdownPage extends StatefulWidget {
 
 class _CountdownPageState extends State<CountdownPage>
     with SingleTickerProviderStateMixin {
+// ===== 악보 및 XML 관련 변수 =====
+  late String xmlDataString;
+  int _beatsPerMeasure = 4;
+  int _totalMeasures = 1;
+  double _bpm = 60.0;
+
+  // ===== 재생 및 마디 관련 변수 =====
+  final int _currentMeasure = 0; // 녹음 마디 (0-based)
+  final int _currentMeasureOneBased = 0; // 채점용 마디 (1-based)
+
   // 상태 변수 선언
   bool _isPlaying = false;
   bool _showPracticeMessage = false;
@@ -1019,7 +1029,8 @@ class _CountdownPageState extends State<CountdownPage>
                 ),
               ),
             ),
-          // // 보미 녹음 다 수정하면 바꾸기
+
+          // DrumRecordingWidget 추가
           // Offstage(
           //   offstage: true, // UI를 화면에 표시하지 않음
           //   child: DrumRecordingWidget(
@@ -1048,6 +1059,7 @@ class _CountdownPageState extends State<CountdownPage>
           //       _handleScoringResult(msg); // 1) 즉시 화면에 틀린 박자 커서 표시
           //       _onWsGradingMessage(msg); // 2) 리스트에 쌓아서, 마지막에 전체 점수 계산
           //     },
+
           //   ),
           // ),
 
@@ -1056,21 +1068,48 @@ class _CountdownPageState extends State<CountdownPage>
             offstage: true, // UI를 화면에 표시하지 않음
             child: DrumRecordingWidget(
               key: _drumRecordingKey,
-              playbackController: playbackController,
+              patternId: widget.index,
               title: 'Basic Pattern ${widget.index}',
               xmlDataString: patternInfo,
-              userSheetId: widget.index,
               audioFilePath: 'assets/sounds/test_pattern.wav',
+              playbackController: playbackController,
               fetchPracticeIdentifier:
                   fetchPracticeIdentifier, // identifier 요청 함수
-              onMusicXMLParsed: (info) {
-                _drumRecordingKey.currentState?.setMeasureInfo(info);
-              },
               onRecordingComplete: (onsets) {
                 setState(() {
                   _detectedOnsets = onsets;
                 });
               },
+              onMusicXMLParsed: (info) {
+                print('info: $info');
+                try {
+                  // totalMeasures가 제대로 계산되었는지 확인
+                  final totalMeasures = info['totalMeasures'] as int;
+                  print('Total measures received: $totalMeasures');
+                  // // XML 데이터를 파싱
+                  // final document = XmlDocument.parse(
+                  //     info['xmlData'] as String); // xmlData는 XML 문자열로 받아옴
+
+                  // // 'measure' 태그를 찾아서 마디의 개수 구하기
+                  // final measures = document.findAllElements('measure');
+                  // final int totalMeasures =
+                  //     measures.length; // measure의 개수를 totalMeasures로 설정
+                  // print('Total measures: $totalMeasures'); // 마디의 개수 출력
+
+                  // 기존 info에서 beatsPerMeasure, bpm 등 필요한 값을 가져오고, totalMeasures를 설정
+                  setState(() {
+                    _beatsPerMeasure = info['beatsPerMeasure'] as int;
+                    _totalMeasures = totalMeasures; // 여기서 totalMeasures를 할당
+                    _bpm = info['bpm'] as double;
+                  });
+                } catch (e) {
+                  print('Error parsing XML: $e');
+                }
+              },
+              // onMusicXMLParsed: (info) {
+              //   _drumRecordingKey.currentState?.setMeasureInfo(info);
+              // },
+
               onOnsetsReceived: (onsets) {
                 setState(() {
                   _detectedOnsets = onsets;
@@ -1080,6 +1119,8 @@ class _CountdownPageState extends State<CountdownPage>
                 _handleScoringResult(msg); // 1) 즉시 화면에 틀린 박자 커서 표시
                 _onWsGradingMessage(msg); // 2) 리스트에 쌓아서, 마지막에 전체 점수 계산
               },
+              // playbackController: playbackController, //playbackController 전달
+              // fetchPracticeIdentifier: fetchPracticeIdentifier,
             ),
           ),
         ],
