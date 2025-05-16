@@ -21,6 +21,7 @@ import 'package:capstone_2025/screens/drumSheetPages/widgets/confirmation_dialog
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../../services/api_func.dart';
 import './practice_result_PP.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 /// MenuController에 toggle()을 추가하는 확장 메서드
 extension MenuControllerToggle on MenuController {
@@ -579,25 +580,25 @@ class _CountdownPageState extends State<CountdownPage>
           SafeArea(
             child: Column(
               children: [
-                const SizedBox(height: 10), // 상단 여백
+                SizedBox(height: 10.h), // 상단 여백
 
                 // 상단 영역: 홈 버튼 + 제목 + 속도 변경 버튼
                 Padding(
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 46, vertical: 10),
+                      EdgeInsets.symmetric(horizontal: 26.w, vertical: 10.h),
                   child: SizedBox(
-                    height: 60,
+                    height: 70.h,
                     child: Row(children: [
                       SizedBox(
-                        width: 60,
-                        height: 30,
+                        width: 20.w,
+                        height: 30.h,
                         child: Center(
                           child:
                               // 홈 버튼
                               IconButton(
                             padding: EdgeInsets.zero,
                             constraints: const BoxConstraints(),
-                            iconSize: 30,
+                            iconSize: 12.sp,
                             icon: const Icon(Icons.home_filled,
                                 color: Color(0xff646464)),
                             onPressed: () {
@@ -667,9 +668,8 @@ class _CountdownPageState extends State<CountdownPage>
                               return Container(
                                 constraints:
                                     BoxConstraints(maxWidth: screenW * 0.45),
-                                height: 54,
-                                padding:
-                                    const EdgeInsets.symmetric(horizontal: 28),
+                                height: 64.h,
+                                padding: EdgeInsets.symmetric(horizontal: 28.w),
                                 alignment: Alignment.center,
                                 decoration: BoxDecoration(
                                   color: const Color(0xFFC76A59),
@@ -688,7 +688,7 @@ class _CountdownPageState extends State<CountdownPage>
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
                                       style: TextStyle(
-                                        fontSize: 25,
+                                        fontSize: 11.sp,
                                         fontWeight: FontWeight.bold,
                                         foreground: Paint()
                                           ..style = PaintingStyle.stroke
@@ -702,8 +702,8 @@ class _CountdownPageState extends State<CountdownPage>
                                       patternName,
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
-                                      style: const TextStyle(
-                                        fontSize: 25,
+                                      style: TextStyle(
+                                        fontSize: 11.sp,
                                         fontWeight: FontWeight.bold,
                                         color: Colors.white, // 내부 색
                                       ),
@@ -728,11 +728,11 @@ class _CountdownPageState extends State<CountdownPage>
                         ),
                         menuChildren: [
                           ConstrainedBox(
-                            constraints: BoxConstraints(maxWidth: 500),
+                            constraints: BoxConstraints(maxWidth: 500.w),
                             child: Container(
                               margin: const EdgeInsets.fromLTRB(0, 10, 20, 0),
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 18, vertical: 12),
+                              padding: EdgeInsets.symmetric(
+                                  horizontal: 18.w, vertical: 12.h),
                               decoration: BoxDecoration(
                                 color: Colors.white,
                                 borderRadius: BorderRadius.circular(18),
@@ -772,7 +772,7 @@ class _CountdownPageState extends State<CountdownPage>
                                         child: Text(
                                           label,
                                           style: TextStyle(
-                                            fontSize: 20,
+                                            fontSize: 9.sp,
                                             fontWeight: FontWeight.bold,
                                             color: isSelected
                                                 ? const Color(0xffD97D6C)
@@ -790,15 +790,15 @@ class _CountdownPageState extends State<CountdownPage>
                           return GestureDetector(
                             onTap: () => controller.toggle(),
                             child: SizedBox(
-                              width: 60,
-                              height: 30,
+                              width: 20.w,
+                              height: 40.h,
                               child: Center(
                                 child: Text(
                                   _currentSpeed,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     color: Color(0xFF646464),
                                     fontWeight: FontWeight.bold,
-                                    fontSize: 25,
+                                    fontSize: 10.sp,
                                   ),
                                 ),
                               ),
@@ -882,8 +882,8 @@ class _CountdownPageState extends State<CountdownPage>
                       // 감지된 온셋 수 표시
                       if (_detectedOnsets.isNotEmpty)
                         Positioned(
-                          bottom: 10,
-                          left: 10,
+                          bottom: 10.h,
+                          left: 5.w,
                           child: Container(
                             padding: const EdgeInsets.all(8),
                             decoration: BoxDecoration(
@@ -918,7 +918,7 @@ class _CountdownPageState extends State<CountdownPage>
                       children: [
                         // 오디오 재생 위치 표시하는 슬라이더
                         Container(
-                          height: 5,
+                          height: 5.5.h,
                           decoration: BoxDecoration(
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(20),
@@ -937,7 +937,7 @@ class _CountdownPageState extends State<CountdownPage>
                             ),
                           ),
                         ),
-                        const SizedBox(height: 16),
+                        SizedBox(height: 18.h),
 
                         // 재생 / 일시정지 / 리셋 버튼
                         Center(
@@ -985,8 +985,8 @@ class _CountdownPageState extends State<CountdownPage>
                             },
                             child: _playbackComplete
                                 ? Container(
-                                    width: 48,
-                                    height: 48,
+                                    width: 48.w,
+                                    height: 60.h,
                                     decoration: BoxDecoration(
                                       shape: BoxShape.circle,
                                       color: Colors.white,
@@ -995,16 +995,16 @@ class _CountdownPageState extends State<CountdownPage>
                                         width: 2,
                                       ),
                                     ),
-                                    child: const Icon(
+                                    child: Icon(
                                       Icons.replay,
-                                      size: 40,
+                                      size: 13.sp,
                                       color: Color(0xffD97D6C),
                                     ),
                                   )
                                 : (_isPlaying || playbackController.isPlaying)
                                     ? Container(
-                                        width: 48,
-                                        height: 48,
+                                        width: 48.w,
+                                        height: 60.h,
                                         decoration: BoxDecoration(
                                           shape: BoxShape.circle,
                                           color: Colors.white,
@@ -1013,22 +1013,22 @@ class _CountdownPageState extends State<CountdownPage>
                                             width: 2,
                                           ),
                                         ),
-                                        child: const Icon(
+                                        child: Icon(
                                           Icons.pause,
-                                          size: 40,
+                                          size: 13.sp,
                                           color: Color(0xffD97D6C),
                                         ),
                                       )
                                     : Container(
-                                        width: 48,
-                                        height: 48,
+                                        width: 48.w,
+                                        height: 60.h,
                                         decoration: const BoxDecoration(
                                           shape: BoxShape.circle,
                                           color: Color(0xffD97D6C),
                                         ),
-                                        child: const Icon(
+                                        child: Icon(
                                           Icons.play_arrow,
-                                          size: 40,
+                                          size: 13.sp,
                                           color: Colors.white,
                                         ),
                                       ),
@@ -1049,11 +1049,11 @@ class _CountdownPageState extends State<CountdownPage>
               child: Container(
                 color: Colors.black.withValues(alpha: 0.9),
                 alignment: Alignment.center,
-                child: const Text(
+                child: Text(
                   '시범 연주를 시작하겠습니다',
                   style: TextStyle(
                     color: Colors.white,
-                    fontSize: 24,
+                    fontSize: 12.sp,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -1077,7 +1077,7 @@ class _CountdownPageState extends State<CountdownPage>
                           Text(
                             '$number',
                             style: TextStyle(
-                              fontSize: 72,
+                              fontSize: 25.sp,
                               fontWeight: FontWeight.bold,
                               foreground: Paint()
                                 ..style = PaintingStyle.stroke
@@ -1090,7 +1090,7 @@ class _CountdownPageState extends State<CountdownPage>
                           Text(
                             '$number',
                             style: TextStyle(
-                              fontSize: 72,
+                              fontSize: 25.sp,
                               fontWeight: FontWeight.bold,
                               color: playbackController.countdown == number
                                   ? const Color(0xffFD9B8A)
