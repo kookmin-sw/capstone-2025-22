@@ -1,6 +1,7 @@
 import 'package:capstone_2025/providers/metronome_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class MetronomeBeats extends ConsumerStatefulWidget {
   @override
@@ -34,18 +35,19 @@ class _MetronomeBeatsState extends ConsumerState<MetronomeBeats>
   }
 
   double bloomWidthandHeight(int idx) {
+    // todo - bloom
     // bloom 효과의 크기 결정
     bool currItemBase4 = ref.watch(currItemBase4Provider); // 4분음표 기준인지
 
     if (!currItemBase4) {
       // 4분음표 기준이 아닐 때
       if (idx % 3 == 0) {
-        return 90; // 점4분음표 기준일 때
+        return 34.w; // 점4분음표 기준일 때
       } else {
-        return 60; // 나머지 박자일 때
+        return 26.w; // 나머지 박자일 때
       } // 점4분음표 기준일 때
     }
-    return 90; // 기본값
+    return 34.w; // 기본값
   }
 
   List<dynamic> metronomeItemStyle(int idx) {
@@ -54,8 +56,8 @@ class _MetronomeBeatsState extends ConsumerState<MetronomeBeats>
     bool isSelected = (idx == ref.watch(currItemProvider).toInt()); // 현재 박자인지
     bool currItemBase4 = ref.watch(currItemBase4Provider); // 4분음표 기준인지
 
-    double width = 80;
-    double height = 80;
+    double width = 30.w;
+    double height = 30.w;
     Color color = isSelected
         ? const Color(0xffF28C79)
         : const Color.fromARGB(255, 236, 122, 102);
@@ -66,8 +68,8 @@ class _MetronomeBeatsState extends ConsumerState<MetronomeBeats>
     if (!currItemBase4) {
       if (currBeatPattern == 'dot_quarter') {
         if (idx % 3 != 0) {
-          width = 50;
-          height = 50;
+          width = 22.w;
+          height = 22.w;
           color = isSelected
               ? const Color(0xffF28C79)
               : const Color.fromARGB(255, 108, 107, 106);
@@ -75,13 +77,13 @@ class _MetronomeBeatsState extends ConsumerState<MetronomeBeats>
         }
       } else if (currBeatPattern == "three") {
         if (idx % 3 != 0) {
-          width = 50;
-          height = 50;
+          width = 22.w;
+          height = 22.w;
         }
       } else if (currBeatPattern == 'three_2') {
         if (idx % 3 != 0) {
-          width = 50;
-          height = 50;
+          width = 22.w;
+          height = 22.w;
           color = isSelected
               ? const Color(0xffF28C79)
               : (idx % 3 == 2)
@@ -112,15 +114,15 @@ class _MetronomeBeatsState extends ConsumerState<MetronomeBeats>
     List<dynamic> style = metronomeItemStyle(idx);
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 50),
+      padding: EdgeInsets.symmetric(horizontal: 18.w),
       child: Stack(
         clipBehavior: Clip.none,
         children: [
           if (shouldShowBloom) // bloom 효과 대상 인지 - bloom효과 방식 상황에 따라 정의
             Positioned(
               // 4분음표 기준일 때도 고정된 bloom 효과
-              left: -5,
-              top: -5,
+              left: -2.w,
+              top: -6.h,
               child: Container(
                 width: bloomWidthandHeight(idx),
                 height: bloomWidthandHeight(idx),
