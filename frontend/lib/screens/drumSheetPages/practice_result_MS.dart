@@ -93,219 +93,223 @@ class _PracticeResultMSState extends State<PracticeResultMS> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        color: Color(0xFFF2F1F3),
-        child: Padding(
-          padding: EdgeInsets.only(left: 10.w, top: 30.h),
-          child: Stack(
-            children: [
-              IconButton(
-                // 홈 버튼
-                onPressed: () => {
-                  Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) =>
-                            NavigationScreens(firstSelectedIndex: 4),
-                      ))
-                },
-                icon: Icon(
-                  Icons.home_filled,
-                  size: 14.sp,
-                ),
-              ),
-              Padding(
-                // 결과창 padding
-                padding: EdgeInsets.symmetric(
-                  // padding으로 사이즈 조절
-                  vertical: MediaQuery.of(context).size.height * 0.065,
-                  horizontal: isPerfect
-                      ? MediaQuery.of(context).size.width * 0.08
-                      : MediaQuery.of(context).size.width * 0.1,
-                ),
-                child: Container(
-                  // 결과창 container
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(30),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.45),
-                        blurRadius: 10,
-                        spreadRadius: 2,
-                        offset: Offset(0, 0),
-                      ),
-                    ],
+      body: SingleChildScrollView(
+        physics: NeverScrollableScrollPhysics(),
+        child: Container(
+          color: Color(0xFFF2F1F3),
+          child: Padding(
+            padding: EdgeInsets.only(left: 10.w, top: 30.h),
+            child: Stack(
+              children: [
+                IconButton(
+                  // 홈 버튼
+                  onPressed: () => {
+                    Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              NavigationScreens(firstSelectedIndex: 4),
+                        ))
+                  },
+                  icon: Icon(
+                    Icons.home_filled,
+                    size: 14.sp,
                   ),
-                  child: Stack(
-                    children: [
-                      // 내부 그림자, 내부 요소 구분
-                      InnerShadow(
-                        shadowColor: const Color.fromARGB(255, 244, 244, 244)
-                            .withOpacity(0.7),
-                        blur: 6,
-                        offset: Offset(0, 0),
-                        borderRadius: BorderRadius.circular(30),
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: Color(0xFFD9D9D9),
-                            borderRadius: BorderRadius.circular(30),
+                ),
+                Padding(
+                  // 결과창 padding
+                  padding: EdgeInsets.symmetric(
+                    // padding으로 사이즈 조절
+                    vertical: MediaQuery.of(context).size.height * 0.065,
+                    horizontal: isPerfect
+                        ? MediaQuery.of(context).size.width * 0.08
+                        : MediaQuery.of(context).size.width * 0.1,
+                  ),
+                  child: Container(
+                    // 결과창 container
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(30),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.45),
+                          blurRadius: 10,
+                          spreadRadius: 2,
+                          offset: Offset(0, 0),
+                        ),
+                      ],
+                    ),
+                    child: Stack(
+                      children: [
+                        // 내부 그림자, 내부 요소 구분
+                        InnerShadow(
+                          shadowColor: const Color.fromARGB(255, 244, 244, 244)
+                              .withOpacity(0.7),
+                          blur: 6,
+                          offset: Offset(0, 0),
+                          borderRadius: BorderRadius.circular(30),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: Color(0xFFD9D9D9),
+                              borderRadius: BorderRadius.circular(30),
+                            ),
                           ),
                         ),
-                      ),
-                      Padding(
-                        padding: EdgeInsets.symmetric(
-                            vertical: 30.h,
-                            horizontal: (isPerfect) ? 5.w : 20.w),
-                        child: Column(
-                          // 결과창 내부 요소들
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              // 성공 여부 텍스트 및 점수 row
-                              children: [
-                                Padding(
-                                  padding: EdgeInsets.only(
-                                      left: isPerfect ? 0 : 10.w),
-                                  child: Column(
-                                    // 성공 여부 텍스트
-                                    children: [
-                                      SizedBox(
-                                        child: linedText(
-                                            "$musicTitle - $musicArtist",
-                                            12.sp,
-                                            Colors.black.withOpacity(0.3),
-                                            Colors.white,
-                                            7),
-                                      ),
-                                      SizedBox(height: 10.h),
-                                      resultKeyword(score),
-                                    ],
-                                  ),
-                                ),
-                                Container(
-                                  decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    border: Border.all(
-                                      color: Colors.black26,
-                                      width: 5,
-                                    ),
-                                    borderRadius: BorderRadius.circular(38),
-                                  ),
-                                  child: Padding(
-                                    padding: EdgeInsets.symmetric(
-                                        vertical: 10.h,
-                                        horizontal:
-                                            ((isPerfect) ? 15.w : 35.w)),
-                                    child: Column(children: [
-                                      linedText(
-                                        'SCORE',
-                                        10.sp,
-                                        Colors.black26,
-                                        Colors.white,
-                                        4.5,
-                                      ),
-                                      SizedBox(height: 10.h),
-                                      Stack(children: [
-                                        Text(
-                                          "$score",
-                                          style: TextStyle(
-                                            height: 1,
-                                            fontSize: 35.sp,
-                                            color: Colors.transparent,
-                                            shadows: [
-                                              Shadow(
-                                                offset: Offset(4, 4),
-                                                blurRadius: 35,
-                                                color: Colors.black
-                                                    .withOpacity(0.7),
-                                              ),
-                                            ],
-                                          ),
+                        Padding(
+                          padding: EdgeInsets.symmetric(
+                              vertical: 30.h,
+                              horizontal: (isPerfect) ? 5.w : 20.w),
+                          child: Column(
+                            // 결과창 내부 요소들
+                            children: [
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                // 성공 여부 텍스트 및 점수 row
+                                children: [
+                                  Padding(
+                                    padding: EdgeInsets.only(
+                                        left: isPerfect ? 0 : 10.w),
+                                    child: Column(
+                                      // 성공 여부 텍스트
+                                      children: [
+                                        SizedBox(
+                                          child: linedText(
+                                              "$musicTitle - $musicArtist",
+                                              12.sp,
+                                              Colors.black.withOpacity(0.3),
+                                              Colors.white,
+                                              7),
                                         ),
-                                        resultScore(score),
-                                      ])
-                                    ]),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            SizedBox(height: 15.h),
-                            ButtonForm(
-                              btnName: "상세 기록 확인하기",
-                              buttonColor: Color(0xff949494),
-                              borderColor: Color.fromARGB(255, 104, 104, 104),
-                              shadowColor: Color.fromARGB(255, 177, 177, 177),
-                              width: MediaQuery.of(context).size.width * 0.75,
-                              clickedFunc: () {
-                                openMusicSheet(
-                                  context: context,
-                                  xmlDataString: widget.xmlDataString,
-                                  practiceInfo: widget.practiceInfo,
-                                );
-                              },
-                              btnIcon: Icons.insert_drive_file_rounded,
-                            ),
-                            SizedBox(height: 20.h),
-                            Row(
-                              children: [
-                                Expanded(
-                                  flex: 1,
-                                  child: Material(
-                                    type: MaterialType.transparency,
-                                    child: ButtonForm(
-                                      btnName: '다시 하기',
-                                      buttonColor: Color(0xffD97D6C),
-                                      borderColor: Color(0xffC76A59),
-                                      shadowColor:
-                                          Color.fromARGB(255, 248, 180, 168)
-                                              .withOpacity(0.5),
-                                      clickedFunc: () {
-                                        openModal(
-                                            context,
-                                            widget.sheetId,
-                                            musicTitle,
-                                            musicArtist,
-                                            widget.xmlDataString);
-                                      },
+                                        SizedBox(height: 10.h),
+                                        resultKeyword(score),
+                                      ],
                                     ),
                                   ),
-                                ),
-                                SizedBox(width: 5.w),
-                                Expanded(
-                                  flex: 1,
-                                  child: Material(
-                                    type: MaterialType.transparency,
-                                    child: ButtonForm(
-                                      btnName: '목록',
-                                      buttonColor: Color(0xff8ABCFD),
-                                      borderColor: Color(0xff4C7FB9),
-                                      shadowColor:
-                                          Color.fromARGB(255, 196, 213, 237),
-                                      btnIcon: Icons.list,
-                                      clickedFunc: () {
-                                        Navigator.pushReplacement(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (context) =>
-                                                NavigationScreens(
-                                              firstSelectedIndex: 3,
+                                  Container(
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      border: Border.all(
+                                        color: Colors.black26,
+                                        width: 5,
+                                      ),
+                                      borderRadius: BorderRadius.circular(38),
+                                    ),
+                                    child: Padding(
+                                      padding: EdgeInsets.symmetric(
+                                          vertical: 10.h,
+                                          horizontal:
+                                              ((isPerfect) ? 15.w : 35.w)),
+                                      child: Column(children: [
+                                        linedText(
+                                          'SCORE',
+                                          10.sp,
+                                          Colors.black26,
+                                          Colors.white,
+                                          4.5,
+                                        ),
+                                        SizedBox(height: 10.h),
+                                        Stack(children: [
+                                          Text(
+                                            "$score",
+                                            style: TextStyle(
+                                              height: 1,
+                                              fontSize: 35.sp,
+                                              color: Colors.transparent,
+                                              shadows: [
+                                                Shadow(
+                                                  offset: Offset(4, 4),
+                                                  blurRadius: 35,
+                                                  color: Colors.black
+                                                      .withOpacity(0.7),
+                                                ),
+                                              ],
                                             ),
                                           ),
-                                        );
-                                      },
+                                          resultScore(score),
+                                        ])
+                                      ]),
                                     ),
                                   ),
-                                ),
-                              ],
-                            )
-                          ],
+                                ],
+                              ),
+                              SizedBox(height: 15.h),
+                              ButtonForm(
+                                btnName: "상세 기록 확인하기",
+                                buttonColor: Color(0xff949494),
+                                borderColor: Color.fromARGB(255, 104, 104, 104),
+                                shadowColor: Color.fromARGB(255, 177, 177, 177),
+                                width: MediaQuery.of(context).size.width * 0.75,
+                                clickedFunc: () {
+                                  openMusicSheet(
+                                    context: context,
+                                    xmlDataString: widget.xmlDataString,
+                                    practiceInfo: widget.practiceInfo,
+                                  );
+                                },
+                                btnIcon: Icons.insert_drive_file_rounded,
+                              ),
+                              SizedBox(height: 20.h),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    flex: 1,
+                                    child: Material(
+                                      type: MaterialType.transparency,
+                                      child: ButtonForm(
+                                        btnName: '다시 하기',
+                                        buttonColor: Color(0xffD97D6C),
+                                        borderColor: Color(0xffC76A59),
+                                        shadowColor:
+                                            Color.fromARGB(255, 248, 180, 168)
+                                                .withOpacity(0.5),
+                                        clickedFunc: () {
+                                          openModal(
+                                              context,
+                                              widget.sheetId,
+                                              musicTitle,
+                                              musicArtist,
+                                              widget.xmlDataString);
+                                        },
+                                      ),
+                                    ),
+                                  ),
+                                  SizedBox(width: 5.w),
+                                  Expanded(
+                                    flex: 1,
+                                    child: Material(
+                                      type: MaterialType.transparency,
+                                      child: ButtonForm(
+                                        btnName: '목록',
+                                        buttonColor: Color(0xff8ABCFD),
+                                        borderColor: Color(0xff4C7FB9),
+                                        shadowColor:
+                                            Color.fromARGB(255, 196, 213, 237),
+                                        btnIcon: Icons.list,
+                                        clickedFunc: () {
+                                          Navigator.pushReplacement(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (context) =>
+                                                  NavigationScreens(
+                                                firstSelectedIndex: 3,
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              )
+                            ],
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
