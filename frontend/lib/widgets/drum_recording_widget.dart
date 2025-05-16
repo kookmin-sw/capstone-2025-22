@@ -124,8 +124,13 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
         Tween<double>(begin: 0.0, end: 1.0).animate(_overlayController);
 
     // 데이터 초기화
-    _parseMusicXML();
-    _initializeData().then((_) {
+    // _parseMusicXML();
+    // _initializeData().then((_) {
+    //   _isRecorderReady = true;
+    //   print('[InitState] ✅ recorder ready');
+    // });
+
+    _initializeAll().then((_) {
       _isRecorderReady = true;
       print('[InitState] ✅ recorder ready');
     });
@@ -134,6 +139,11 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
     widget.playbackController.onMeasureChange = _handleMeasureChange;
     widget.playbackController.onCountdownComplete = _handleCountdownComplete;
     widget.playbackController.onPlaybackComplete = _handlePlaybackComplete;
+  }
+
+  Future<void> _initializeAll() async {
+    await _parseMusicXML(); // 1) XML 파싱 완료 보장
+    await _initializeData(); // 2) Recorder·WebSocket 초기화
   }
 
   Future<void> _initializeData() async {
