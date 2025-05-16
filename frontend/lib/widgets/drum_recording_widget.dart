@@ -157,35 +157,35 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
     }
   }
 
-  static const _mediaScanChannel = MethodChannel('media_scanner');
+  // static const _mediaScanChannel = MethodChannel('media_scanner');
 
-  Future<void> _saveToPublicDownloadAndScan() async {
-    // 1) 모든 파일 접근 권한 요청 (Android 11+)
-    if (!await Permission.manageExternalStorage.request().isGranted) {
-      print('⚠️ 모든 파일 접근 권한 거부됨');
-      return;
-    }
+  // [디버깅용] Future<void> _saveToPublicDownloadAndScan() async {
+  //   // 1) 모든 파일 접근 권한 요청 (Android 11+)
+  //   if (!await Permission.manageExternalStorage.request().isGranted) {
+  //     print('⚠️ 모든 파일 접근 권한 거부됨');
+  //     return;
+  //   }
 
-    // 2) public Download/DrumRecordings 폴더 준비
-    final publicDir = Directory('/storage/emulated/0/Download/DrumRecordings');
-    if (!await publicDir.exists()) {
-      await publicDir.create(recursive: true);
-    }
+  //   // 2) public Download/DrumRecordings 폴더 준비
+  //   final publicDir = Directory('/storage/emulated/0/Download/DrumRecordings');
+  //   if (!await publicDir.exists()) {
+  //     await publicDir.create(recursive: true);
+  //   }
 
-    // 3) 복사
-    final ts = DateTime.now().millisecondsSinceEpoch;
-    final dest = '${publicDir.path}/drum_recording_$ts.aac';
-    await File(_recordingPath!).copy(dest);
-    print('✅ 공용 Download에 저장: $dest');
+  //   // 3) 복사
+  //   final ts = DateTime.now().millisecondsSinceEpoch;
+  //   final dest = '${publicDir.path}/drum_recording_$ts.aac';
+  //   await File(_recordingPath!).copy(dest);
+  //   print('✅ 공용 Download에 저장: $dest');
 
-    // 4) MediaStore에 스캔 요청
-    try {
-      await _mediaScanChannel.invokeMethod('scanFile', {'path': dest});
-      print('▶ MediaScanner scanFile 호출됨');
-    } catch (e) {
-      print('❌ MediaScanner 호출 실패: $e');
-    }
-  }
+  //   // 4) MediaStore에 스캔 요청
+  //   try {
+  //     await _mediaScanChannel.invokeMethod('scanFile', {'path': dest});
+  //     print('▶ MediaScanner scanFile 호출됨');
+  //   } catch (e) {
+  //     print('❌ MediaScanner 호출 실패: $e');
+  //   }
+  // }
 
   Future<void> _initializeData() async {
     print('[InitData] ▶️ 시작');
@@ -605,9 +605,9 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
           recordingStatusMessage = '녹음이 중지되었습니다.';
         });
       }
-      // — 여기에 로컬 저장 호출 추가 —
-      await _saveRecordingLocally();
-      await _saveToPublicDownloadAndScan(); // 공용 Download 폴더
+      // [디버깅용]
+      // await _saveRecordingLocally();
+      // await _saveToPublicDownloadAndScan(); // 공용 Download 폴더
 
       // 부모 위젯에 결과 전달
       if (widget.onRecordingComplete != null && !_isDisposed) {
@@ -739,12 +739,13 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
         final Map<String, dynamic> payload = (widget.patternId != null)
             // 패턴 필인 페이지
             ? {
-                'audioBase64': base64String,
+                'bpm': adjustedBpm,
+                'patternId': widget.patternId,
                 'identifier': _identifier,
                 'email': _userEmail,
+                'audioBase64': base64String,
                 'measureNumber': (_currentMeasure + 1).toString(),
                 'endOfMeasure': _currentMeasure + 1 == _totalMeasures,
-                'patternId': widget.patternId,
               }
             // 악보 연습 페이지
             : {
@@ -758,7 +759,9 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
               };
 
         _stompClient!.send(
-          destination: '/app/audio/forwarding',
+          destination: (widget.patternId != null)
+              ? '/app/pattern' // 패턴 필인 페이지
+              : '/app/audio/forwarding', // 악보 연습 페이지
           body: json.encode(payload),
           headers: {
             'content-type': 'application/json',
@@ -854,32 +857,32 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
     print('✅ DrumRecordingWidget: 마디 정보 업데이트 완료');
   }
 
-  /// 녹음된 aac 파일을 외부 저장소(Downloads/DrumRecordings)로 복사 저장
-  Future<void> _saveRecordingLocally() async {
-    print('▶ _saveRecordingLocally 실행됨');
-    if (_recordingPath == null) return;
+  // /// [디버깅용] 녹음된 aac 파일을 외부 저장소(Downloads/DrumRecordings)로 복사 저장
+  // Future<void> _saveRecordingLocally() async {
+  //   print('▶ _saveRecordingLocally 실행됨');
+  //   if (_recordingPath == null) return;
 
-    // 앱 전용 외부 저장소 경로
-    final extDir = await getExternalStorageDirectory();
-    print('▶ extDir.path: ${extDir?.path}');
-    final saveDir = Directory('${extDir!.path}/DrumRecordings');
-    if (!await saveDir.exists()) {
-      await saveDir.create(recursive: true);
-      print('▶ 폴더 생성됨: ${saveDir.path}');
-    }
+  //   // 앱 전용 외부 저장소 경로
+  //   final extDir = await getExternalStorageDirectory();
+  //   print('▶ extDir.path: ${extDir?.path}');
+  //   final saveDir = Directory('${extDir!.path}/DrumRecordings');
+  //   if (!await saveDir.exists()) {
+  //     await saveDir.create(recursive: true);
+  //     print('▶ 폴더 생성됨: ${saveDir.path}');
+  //   }
 
-    final timestamp = DateTime.now().millisecondsSinceEpoch;
-    final newPath = '${saveDir.path}/drum_recording_$timestamp.aac';
-    try {
-      await File(_recordingPath!).copy(newPath);
-      print('✅ 녹음 파일 로컬 저장 완료: $newPath');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('녹음 파일이 저장되었습니다:\n$newPath')),
-      );
-    } catch (e) {
-      print('❌ 파일 저장 중 오류: $e');
-    }
-  }
+  //   final timestamp = DateTime.now().millisecondsSinceEpoch;
+  //   final newPath = '${saveDir.path}/drum_recording_$timestamp.aac';
+  //   try {
+  //     await File(_recordingPath!).copy(newPath);
+  //     print('✅ 녹음 파일 로컬 저장 완료: $newPath');
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       SnackBar(content: Text('녹음 파일이 저장되었습니다:\n$newPath')),
+  //     );
+  //   } catch (e) {
+  //     print('❌ 파일 저장 중 오류: $e');
+  //   }
+  // }
 
   /// 모든 리소스를 안전하게 정리하는 메서드
   void cleanupResources() async {
