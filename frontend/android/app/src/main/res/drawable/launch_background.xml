@@ -1,5 +1,9 @@
-<!-- res/drawable/launch_background.xml -->
+<?xml version="1.0" encoding="utf-8"?>
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-  <!-- 스플래시 배경색 -->
-  <solid android:color="#FFD97D6C"/>
+    <item>
+        <bitmap android:gravity="fill" android:src="@drawable/background"/>
+    </item>
+    <item>
+        <bitmap android:gravity="center" android:src="@drawable/splash"/>
+    </item>
 </layer-list>
