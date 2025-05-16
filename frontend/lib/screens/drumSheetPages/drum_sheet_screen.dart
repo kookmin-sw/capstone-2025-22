@@ -836,21 +836,25 @@ class _SheetListScreenState extends State<SheetListScreen> {
                 PopupMenuItem(
                   value: '선택',
                   height: 45.h,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text('선택'),
-                      Icon(
-                        Icons.check_circle_outline,
-                        color: Color(0xFF595959),
-                      ),
-                    ],
+                  child: Padding(
+                    padding: EdgeInsets.only(bottom: 8.h),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Text('선택'),
+                        Icon(
+                          Icons.check_circle_outline,
+                          color: Color(0xFF595959),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
                 PopupMenuItem(
                   enabled: false,
                   height: 1.h,
-                  padding: EdgeInsets.zero,
+                  padding: EdgeInsets.only(bottom: 8.h),
                   child: Divider(
                     height: 1,
                     thickness: 1,
@@ -859,9 +863,10 @@ class _SheetListScreenState extends State<SheetListScreen> {
                 ),
                 PopupMenuItem(
                   value: '검색',
-                  height: 45.h,
+                  height: 40.h,
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       Text('검색'),
                       Icon(
