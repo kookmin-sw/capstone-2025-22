@@ -10,8 +10,8 @@ flutter_native_splash:
   # of your splash screen to a solid color.  Use background_image to set the background of your
   # splash screen to a png image.  This is useful for gradients. The image will be stretch to the
   # size of the app. Only one parameter can be used, color and background_image cannot both be set.
-  color: "#D97D6C"
-  background_image: "assets/intro.png"
+  # color: "#D97D6C"
+  background_image: "assets/images/intro.png"
 
   # Optional parameters are listed below.  To enable a parameter, uncomment the line by removing
   # the leading # character.
@@ -66,9 +66,9 @@ flutter_native_splash:
 
   # The android, ios and web parameters can be used to disable generating a splash screen on a given
   # platform.
-  #android: false
-  #ios: false
-  #web: false
+  android: true
+  ios: false
+  web: false
 
   # Platform specific images can be specified with the following parameters, which will override
   # the respective image parameter.  You may specify all, selected, or none of these parameters:
