@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:capstone_2025/providers/metronome_provider.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 // 재사용 가능한 모달 함수
 void showCustomModal({
@@ -11,7 +12,7 @@ void showCustomModal({
   showDialog(
     context: context,
     barrierColor: Colors.black54,
-    anchorPoint: anchorPoint ?? const Offset(100, 300),
+    anchorPoint: anchorPoint ?? Offset(100.w, 300.h),
     builder: (BuildContext context) {
       return Dialog(
         insetPadding: EdgeInsets.zero,
@@ -20,10 +21,10 @@ void showCustomModal({
         ),
         child: IntrinsicWidth(
           child: Container(
-            constraints: const BoxConstraints(
-              maxHeight: 400,
+            constraints: BoxConstraints(
+              maxHeight: 400.h,
             ),
-            padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 20),
+            padding: EdgeInsets.symmetric(vertical: 15.h, horizontal: 20.w),
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(15),
@@ -48,50 +49,27 @@ class MetronomeControls extends ConsumerStatefulWidget {
 
 class _MetronomeControlsState extends ConsumerState<MetronomeControls> {
   late final TextEditingController bpmController;
-  late final FocusNode bpmFocusNode;
   late Image currBeatPatternImg;
-  double beatPatternImgSize = 60; // 비트 패턴 이미지 크기
+  double beatPatternImgSize = 60.h; // 비트 패턴 이미지 크기
 
   @override
   void initState() {
     // 위젯이 생성될 때 호출
     super.initState();
-
-    bpmFocusNode = FocusNode();
     currBeatPatternImg = Image.asset('assets/images/notes/quarter.png');
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-
     bpmController = TextEditingController(
       text: ref.watch(currBPMProvider).toString(),
     );
-
-    bpmFocusNode.addListener(() {
-      setState(() {
-        if (bpmFocusNode.hasFocus) {
-          bpmController.clear();
-        } else {
-          final bpm = int.tryParse(bpmController.text);
-          if (bpm != null && bpm >= 10 && bpm <= 400) {
-            ref.read(currBPMProvider.notifier).state = bpm;
-            if (ref.read(isPlayingProvider)) {
-              (widget.metronomeHeaderKey.currentState as dynamic)
-                  ?.updateMetronomeTiming();
-            }
-          }
-          bpmController.text = ref.watch(currBPMProvider).toString();
-        }
-      });
-    });
   }
 
   @override
   void dispose() {
     bpmController.dispose();
-    bpmFocusNode.dispose();
     super.dispose();
   }
 
@@ -139,39 +117,39 @@ class _MetronomeControlsState extends ConsumerState<MetronomeControls> {
     switch (beatPattern) {
       case 'quarter':
         currBeatPatternImg = Image.asset('assets/images/notes/quarter.png');
-        beatPatternImgSize = 50;
+        beatPatternImgSize = 60.h;
         break;
       case 'two':
         currBeatPatternImg = Image.asset('assets/images/notes/two.png');
-        beatPatternImgSize = 45;
+        beatPatternImgSize = 58.h;
         break;
       case 'triplet':
         currBeatPatternImg = Image.asset('assets/images/notes/triplet.png');
-        beatPatternImgSize = 63;
+        beatPatternImgSize = 72.h;
         break;
       case 'triplet2':
         currBeatPatternImg = Image.asset('assets/images/notes/triplet2.png');
-        beatPatternImgSize = 63;
+        beatPatternImgSize = 72.h;
         break;
       case 'four':
         currBeatPatternImg = Image.asset('assets/images/notes/four.png');
-        beatPatternImgSize = 40;
+        beatPatternImgSize = 50.h;
         break;
       case 'four_2':
         currBeatPatternImg = Image.asset('assets/images/notes/four_2.png');
-        beatPatternImgSize = 40;
+        beatPatternImgSize = 50.h;
         break;
       case 'dot_quarter':
         currBeatPatternImg = Image.asset('assets/images/notes/dot_quarter.png');
-        beatPatternImgSize = 50;
+        beatPatternImgSize = 60.h;
         break;
       case 'three':
         currBeatPatternImg = Image.asset('assets/images/notes/three.png');
-        beatPatternImgSize = 45;
+        beatPatternImgSize = 50.h;
         break;
       case 'three_2':
         currBeatPatternImg = Image.asset('assets/images/notes/three_2.png');
-        beatPatternImgSize = 45;
+        beatPatternImgSize = 50.h;
         break;
     }
   }
@@ -184,12 +162,11 @@ class _MetronomeControlsState extends ConsumerState<MetronomeControls> {
     return InkWell(
       onTap: () => {Navigator.pop(context), action()},
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 12),
+        padding: EdgeInsets.symmetric(vertical: 10.h, horizontal: 10.w),
         child: data is String
             ? Text(
                 data,
-                style:
-                    const TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
+                style: TextStyle(fontSize: 10.sp, fontWeight: FontWeight.w500),
               )
             : data is Image
                 ? data
@@ -203,10 +180,11 @@ class _MetronomeControlsState extends ConsumerState<MetronomeControls> {
     showCustomModal(
       context: context,
       content: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Column(
             mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               _buildModalItem(
                 context,
@@ -230,11 +208,14 @@ class _MetronomeControlsState extends ConsumerState<MetronomeControls> {
               ),
             ],
           ),
-          SizedBox(
-            height: 185,
-            child: VerticalDivider(
-              thickness: 4,
-              color: const Color(0xff494949).withOpacity(0.5),
+          Padding(
+            padding: EdgeInsets.only(left: 5.w),
+            child: SizedBox(
+              height: 200.h,
+              child: VerticalDivider(
+                thickness: 4,
+                color: const Color(0xff494949).withOpacity(0.5),
+              ),
             ),
           ),
           Column(
@@ -278,37 +259,35 @@ class _MetronomeControlsState extends ConsumerState<MetronomeControls> {
         content: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const SizedBox(width: 10),
             _buildModalItem(
               context,
               Image.asset(
                 'assets/images/notes/dot_quarter.png',
-                width: 25,
+                width: 11.w,
                 fit: BoxFit.contain,
               ),
               () => changeBeatPattern("dot_quarter"),
             ),
-            const SizedBox(width: 60),
+            SizedBox(width: 10.w),
             _buildModalItem(
               context,
               Image.asset(
                 'assets/images/notes/three.png',
-                width: 65,
+                width: 28.w,
                 fit: BoxFit.contain,
               ),
               () => changeBeatPattern("three"),
             ),
-            const SizedBox(width: 65),
+            SizedBox(width: 10.w),
             _buildModalItem(
               context,
               Image.asset(
                 'assets/images/notes/three_2.png',
-                width: 65,
+                width: 28.w,
                 fit: BoxFit.contain,
               ),
               () => changeBeatPattern("three_2"),
             ),
-            const SizedBox(width: 10),
           ],
         ),
       );
@@ -326,27 +305,27 @@ class _MetronomeControlsState extends ConsumerState<MetronomeControls> {
                   context,
                   Image.asset(
                     'assets/images/notes/quarter.png',
-                    width: 17,
+                    width: 7.w,
                     fit: BoxFit.contain,
                   ),
                   () => changeBeatPattern("quarter"),
                 ),
-                const SizedBox(width: 90),
+                SizedBox(width: 23.w),
                 _buildModalItem(
                   context,
                   Image.asset(
                     'assets/images/notes/two.png',
-                    width: 40,
+                    width: 18.w,
                     fit: BoxFit.contain,
                   ),
                   () => changeBeatPattern("two"),
                 ),
-                const SizedBox(width: 75),
+                SizedBox(width: 15.w),
                 _buildModalItem(
                   context,
                   Image.asset(
                     'assets/images/notes/triplet.png',
-                    width: 60,
+                    width: 24.w,
                     fit: BoxFit.contain,
                   ),
                   () => changeBeatPattern("triplet"),
@@ -357,37 +336,35 @@ class _MetronomeControlsState extends ConsumerState<MetronomeControls> {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                const SizedBox(width: 10),
                 _buildModalItem(
                   context,
                   Image.asset(
                     'assets/images/notes/triplet2.png',
-                    width: 50,
+                    width: 24.w,
                     fit: BoxFit.contain,
                   ),
                   () => changeBeatPattern("triplet2"),
                 ),
-                const SizedBox(width: 50),
+                SizedBox(width: 8.w),
                 _buildModalItem(
                   context,
                   Image.asset(
                     'assets/images/notes/four.png',
-                    width: 80,
+                    width: 35.w,
                     fit: BoxFit.contain,
                   ),
                   () => changeBeatPattern("four"),
                 ),
-                const SizedBox(width: 50),
                 _buildModalItem(
                   context,
                   Image.asset(
                     'assets/images/notes/four_2.png',
-                    width: 80,
+                    width: 35.w,
                     fit: BoxFit.contain,
                   ),
                   () => changeBeatPattern("four_2"),
                 ),
-                const SizedBox(width: 10),
+                SizedBox(width: 5.w),
               ],
             ),
           ],
@@ -409,8 +386,8 @@ class _MetronomeControlsState extends ConsumerState<MetronomeControls> {
             onPressed: () => _showBeatSelectModal(context),
             child: Text(
               ref.watch(selectedTimeSignatureProvider).toString(),
-              style: const TextStyle(
-                fontSize: 35,
+              style: TextStyle(
+                fontSize: 17.sp,
                 fontWeight: FontWeight.w600,
                 color: Color(0xff424242),
               ),
@@ -422,7 +399,7 @@ class _MetronomeControlsState extends ConsumerState<MetronomeControls> {
           // BPM 조절 필드
           flex: 4,
           child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 17),
+            padding: EdgeInsets.symmetric(vertical: 17.h),
             child: Container(
               decoration: BoxDecoration(
                 color: Colors.white,
@@ -439,10 +416,10 @@ class _MetronomeControlsState extends ConsumerState<MetronomeControls> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Text(
+                  Text(
                     'BPM',
                     style: TextStyle(
-                      fontSize: 25,
+                      fontSize: 9.sp,
                       fontWeight: FontWeight.w400,
                     ),
                   ),
@@ -451,6 +428,7 @@ class _MetronomeControlsState extends ConsumerState<MetronomeControls> {
                     children: [
                       IconButton(
                         // BPM 감소 버튼
+                        padding: EdgeInsets.zero,
                         onPressed: currBPM <= 10
                             ? null
                             : () {
@@ -463,56 +441,65 @@ class _MetronomeControlsState extends ConsumerState<MetronomeControls> {
                                       ?.updateMetronomeTiming();
                                 }
                               },
-                        icon: const Icon(Icons.remove, size: 50),
+                        icon: Icon(Icons.remove, size: 20.sp),
                       ),
                       SizedBox(
-                        width: 100,
-                        height: 50,
-                        child: TextField(
-                          // BPM 입력 필드
-                          controller: bpmController,
-                          focusNode: bpmFocusNode,
-                          textAlign: TextAlign.center,
-                          showCursor: false,
-                          maxLength: 3,
-                          buildCounter: (context,
-                                  {required currentLength,
-                                  required isFocused,
-                                  maxLength}) =>
-                              null,
-                          decoration: const InputDecoration(
-                            border: InputBorder.none,
-                            counterText: '',
-                          ),
-                          style: TextStyle(
-                            fontSize: 50,
-                            fontWeight: FontWeight.bold,
-                            color: bpmFocusNode.hasFocus // 포커스 여부에 따라 색상 변경
-                                ? const Color(0xffD97D6C)
-                                : const Color(0xff424242),
-                          ),
-                          keyboardType: TextInputType.number,
-                          onSubmitted: (value) {
-                            // BPM 입력 후 엔터키 눌렀을 때
-                            final bpm = int.tryParse(value);
-                            if (bpm != null && bpm >= 10 && bpm <= 400) {
-                              // 유효한 BPM 값일 때
-                              ref.read(currBPMProvider.notifier).state = bpm;
-                              if (ref.read(isPlayingProvider)) {
-                                (widget.metronomeHeaderKey.currentState
-                                        as dynamic)
-                                    ?.updateMetronomeTiming();
+                        width: 50.w,
+                        height: 60.h,
+                        child: GestureDetector(
+                          onHorizontalDragUpdate: (details) {
+                            if (details.delta.dx > 0) {
+                              // 오른쪽으로 스와이프 → BPM 증가
+                              if (ref.read(currBPMProvider) < 400) {
+                                ref.read(currBPMProvider.notifier).state++;
+                                bpmController.text =
+                                    ref.watch(currBPMProvider).toString();
+                                if (ref.read(isPlayingProvider)) {
+                                  (widget.metronomeHeaderKey.currentState
+                                          as dynamic)
+                                      ?.updateMetronomeTiming();
+                                }
                               }
-                            } else {
-                              // 유효하지 않은 값일 때
-                              bpmController.text =
-                                  ref.watch(currBPMProvider).toString();
+                            } else if (details.delta.dx < 0) {
+                              // 왼쪽으로 스와이프 → BPM 감소
+                              if (ref.read(currBPMProvider) > 10) {
+                                ref.read(currBPMProvider.notifier).state--;
+                                bpmController.text =
+                                    ref.watch(currBPMProvider).toString();
+                                if (ref.read(isPlayingProvider)) {
+                                  (widget.metronomeHeaderKey.currentState
+                                          as dynamic)
+                                      ?.updateMetronomeTiming();
+                                }
+                              }
                             }
                           },
+                          child: TextField(
+                            controller: bpmController,
+                            enabled: false, // disables keyboard input
+                            textAlign: TextAlign.center,
+                            showCursor: false,
+                            maxLength: 3,
+                            buildCounter: (context,
+                                    {required currentLength,
+                                    required isFocused,
+                                    maxLength}) =>
+                                null,
+                            decoration: const InputDecoration(
+                              border: InputBorder.none,
+                              counterText: '',
+                            ),
+                            style: TextStyle(
+                              fontSize: 23.sp,
+                              fontWeight: FontWeight.bold,
+                              color: const Color(0xff424242),
+                            ),
+                          ),
                         ),
                       ),
                       IconButton(
                         // BPM 증가 버튼
+                        padding: EdgeInsets.zero,
                         onPressed: currBPM >= 400
                             ? null
                             : () {
@@ -525,7 +512,10 @@ class _MetronomeControlsState extends ConsumerState<MetronomeControls> {
                                       ?.updateMetronomeTiming();
                                 }
                               },
-                        icon: const Icon(Icons.add, size: 50),
+                        icon: Icon(
+                          Icons.add,
+                          size: 20.sp,
+                        ),
                       ),
                     ],
                   ),

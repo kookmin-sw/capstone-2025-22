@@ -23,6 +23,7 @@ import 'playback_controller.dart';
 import 'package:capstone_2025/screens/mainPages/navigation_screens.dart';
 import 'package:capstone_2025/screens/drumSheetPages/sheetXmlDataTemp.dart'
     as sheet_xml_data_temp;
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class DrumSheetPlayer extends StatefulWidget {
   final int sheetId;
@@ -427,555 +428,594 @@ class _DrumSheetPlayerState extends State<DrumSheetPlayer> {
 
   @override
   Widget build(BuildContext context) {
-    final imageHeight =
-        MediaQuery.of(context).size.height * 0.27; // 악보 이미지 영역 높이
+    final imageHeight = 150.h; // 악보 이미지 영역 높이
     if (playbackController.sheetInfo == null) {
       return const Center(child: CircularProgressIndicator());
     }
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
-      body: Stack(
-        children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 40),
-            child: Column(
-              children: [
-                // 🎵 상단 컨트롤 바 (홈버튼, 제목, 재생, 속도)
-                SizedBox(
-                  height: 60,
-                  child: Stack(
-                    children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Row(
-                              children: [
-                                const SizedBox(width: 30),
-                                // 홈 버튼 눌렀을 때
-                                GestureDetector(
-                                  onTap: () {
-                                    // 오디오 재생 중지
-                                    playbackController.stopPlayback();
-                                    showDialog(
-                                      context: context,
-                                      barrierDismissible: true,
-                                      builder: (_) => ConfirmationDialog(
-                                        message: "메인으로 이동하시겠습니까?",
-                                        onConfirm: () {
-                                          print("다이얼로그 닫기 전");
-                                          // 다이얼로그 닫기
-                                          Navigator.of(context).pop();
-                                          print("다이얼로그 닫음");
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          return ConstrainedBox(
+            constraints: BoxConstraints(minHeight: constraints.maxHeight),
+            child: IntrinsicHeight(
+              child: Stack(
+                children: [
+                  Padding(
+                    padding:
+                        EdgeInsets.symmetric(horizontal: 5.w, vertical: 20.h),
+                    child: Column(
+                      children: [
+                        // 🎵 상단 컨트롤 바 (홈버튼, 제목, 재생, 속도)
+                        SizedBox(
+                          height: 60.h,
+                          child: Stack(
+                            children: [
+                              Row(
+                                children: [
+                                  SizedBox(width: 10.w),
+                                  // 홈 버튼 눌렀을 때
+                                  GestureDetector(
+                                    onTap: () {
+                                      // 오디오 재생 중지
+                                      playbackController.stopPlayback();
+                                      showDialog(
+                                        context: context,
+                                        barrierDismissible: true,
+                                        builder: (_) => ConfirmationDialog(
+                                          message: "메인으로 이동하시겠습니까?",
+                                          onConfirm: () {
+                                            print("다이얼로그 닫기 전");
+                                            // 다이얼로그 닫기
+                                            Navigator.of(context).pop();
+                                            print("다이얼로그 닫음");
 
-                                          // DrumRecordingWidget의 녹음 중지
-                                          final drumRecordingState =
-                                              _drumRecordingKey.currentState;
-                                          if (drumRecordingState != null &&
-                                              drumRecordingState.isRecording) {
-                                            drumRecordingState.stopRecording();
-                                          }
-                                          print("녹음 중지");
-
-                                          _beatGradingResults.clear();
-                                          playbackController.missedCursors
-                                              .clear();
-
-                                          // 리소스 해제 - WebSocket 연결 종료
-                                          _drumRecordingKey.currentState
-                                              ?.cleanupResources();
-
-                                          print("리소스 해제");
-
-                                          // _recordingDataTimer 해제
-                                          _recordingDataTimer?.cancel();
-                                          print("타이머 해제");
-
-                                          // 홈화면으로 이동: NavigationScreens 상태 업데이트 부분 수정
-                                          WidgetsBinding.instance
-                                              .addPostFrameCallback((_) {
-                                            // 1. 먼저 현재 페이지를 스택에서 제거 (순서 변경)
-                                            if (Navigator.canPop(context)) {
-                                              Navigator.of(context).pop();
-                                              print("현재 페이지 스택 제거 완료");
+                                            // DrumRecordingWidget의 녹음 중지
+                                            final drumRecordingState =
+                                                _drumRecordingKey.currentState;
+                                            if (drumRecordingState != null &&
+                                                drumRecordingState
+                                                    .isRecording) {
+                                              drumRecordingState
+                                                  .stopRecording();
                                             }
+                                            print("녹음 중지");
 
-                                            // 2. 그 다음 상위 위젯의 상태 업데이트
-                                            final navigationScreensState =
-                                                context.findAncestorStateOfType<
-                                                    NavigationScreensState>();
-                                            if (navigationScreensState !=
-                                                    null &&
+                                            _beatGradingResults.clear();
+                                            playbackController.missedCursors
+                                                .clear();
+
+                                            // 리소스 해제 - WebSocket 연결 종료
+                                            _drumRecordingKey.currentState
+                                                ?.cleanupResources();
+
+                                            print("리소스 해제");
+
+                                            // _recordingDataTimer 해제
+                                            _recordingDataTimer?.cancel();
+                                            print("타이머 해제");
+
+                                            // 홈화면으로 이동: NavigationScreens 상태 업데이트 부분 수정
+                                            WidgetsBinding.instance
+                                                .addPostFrameCallback((_) {
+                                              // 1. 먼저 현재 페이지를 스택에서 제거 (순서 변경)
+                                              if (Navigator.canPop(context)) {
+                                                Navigator.of(context).pop();
+                                                print("현재 페이지 스택 제거 완료");
+                                              }
+
+                                              // 2. 그 다음 상위 위젯의 상태 업데이트
+                                              final navigationScreensState =
+                                                  context.findAncestorStateOfType<
+                                                      NavigationScreensState>();
+                                              if (navigationScreensState !=
+                                                      null &&
+                                                  navigationScreensState
+                                                      .mounted) {
                                                 navigationScreensState
-                                                    .mounted) {
-                                              navigationScreensState
-                                                  .setState(() {
-                                                navigationScreensState
-                                                        .selectedIndex =
-                                                    2; // 홈 화면 인덱스
-                                              });
-                                              print(
-                                                  "NavigationScreens 상태 업데이트 완료");
-                                            } else {
-                                              print(
-                                                  "NavigationScreensState를 찾을 수 없음");
-                                              // 대안으로 직접 네비게이션 처리
-                                              Navigator.of(context)
-                                                  .pushAndRemoveUntil(
-                                                MaterialPageRoute(
-                                                  builder: (context) =>
-                                                      const NavigationScreens(
-                                                          firstSelectedIndex:
-                                                              3),
-                                                ),
-                                                (route) =>
-                                                    false, // 모든 이전 라우트 제거
-                                              );
-                                            }
-                                          });
-                                        },
-                                        onCancel: () {
-                                          Navigator.of(context).pop();
-                                        },
+                                                    .setState(() {
+                                                  navigationScreensState
+                                                          .selectedIndex =
+                                                      2; // 홈 화면 인덱스
+                                                });
+                                                print(
+                                                    "NavigationScreens 상태 업데이트 완료");
+                                              } else {
+                                                print(
+                                                    "NavigationScreensState를 찾을 수 없음");
+                                                // 대안으로 직접 네비게이션 처리
+                                                Navigator.of(context)
+                                                    .pushAndRemoveUntil(
+                                                  MaterialPageRoute(
+                                                    builder: (context) =>
+                                                        const NavigationScreens(
+                                                            firstSelectedIndex:
+                                                                3),
+                                                  ),
+                                                  (route) =>
+                                                      false, // 모든 이전 라우트 제거
+                                                );
+                                              }
+                                            });
+                                          },
+                                          onCancel: () {
+                                            Navigator.of(context).pop();
+                                          },
+                                        ),
+                                      );
+                                    },
+                                    child: Icon(Icons.home,
+                                        size: 10.sp, color: Color(0xff646464)),
+                                  ),
+                                  SizedBox(width: 10.w),
+                                  Expanded(
+                                    child: Container(
+                                      constraints:
+                                          BoxConstraints(maxWidth: 400.w),
+                                      padding: EdgeInsets.symmetric(
+                                          horizontal: 10.w, vertical: 15.h),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        borderRadius: BorderRadius.circular(18),
+                                        border: Border.all(
+                                            color: const Color(0xFFDFDFDF),
+                                            width: 2),
                                       ),
-                                    );
-                                  },
-                                  child: const Icon(Icons.home,
-                                      size: 30, color: Color(0xff646464)),
-                                ),
-
-                                const SizedBox(width: 30),
-                                Expanded(
-                                  child: Container(
-                                    constraints:
-                                        const BoxConstraints(maxWidth: 400),
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 16, vertical: 12),
-                                    decoration: BoxDecoration(
-                                      color: Colors.white,
-                                      borderRadius: BorderRadius.circular(18),
-                                      border: Border.all(
-                                          color: const Color(0xFFDFDFDF),
-                                          width: 2),
-                                    ),
-                                    child: Text(
-                                      '${playbackController.sheetInfo!.title} - ${playbackController.sheetInfo!.artist}',
-                                      overflow: TextOverflow.ellipsis,
-                                      textAlign: TextAlign.center,
-                                      style: const TextStyle(
-                                          fontSize: 20, height: 1.2),
+                                      child: Text(
+                                        '${playbackController.sheetInfo!.title} - ${playbackController.sheetInfo!.artist}',
+                                        overflow: TextOverflow.ellipsis,
+                                        textAlign: TextAlign.center,
+                                        style: TextStyle(
+                                            fontSize: 7.sp, height: 1.2.h),
+                                      ),
                                     ),
                                   ),
-                                ),
-                                const SizedBox(width: 100),
-                              ],
-                            ),
-                          ),
-                          Row(
-                            children: [
-                              const SizedBox(width: 100),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 23, vertical: 12),
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(18),
-                                  border: Border.all(
-                                      color: const Color(0xFFDFDFDF), width: 2),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Padding(
-                                      padding: const EdgeInsets.only(right: 20),
-                                      child: // 리셋 버튼 눌렀을 때
-                                          GestureDetector(
-                                        onTap: () {
-                                          playbackController.stopPlayback();
-                                          showDialog(
-                                            context: context,
-                                            barrierDismissible: true,
-                                            builder: (_) => ConfirmationDialog(
-                                              message: "처음부터 다시 연주하시겠습니까?",
-                                              onConfirm: () async {
-                                                Navigator.of(context).pop();
-                                                // 1) 녹음 중이면 중지하고 리소스 정리
-                                                final recorder =
-                                                    _drumRecordingKey
-                                                        .currentState;
-                                                if (recorder?.isRecording ==
-                                                    true) {
-                                                  await recorder!
-                                                      .stopRecording();
-                                                }
-                                                // 2) 플레이어 & 내부 상태 리셋
-                                                setState(() {
-                                                  _currentMeasureOneBased = 0;
-                                                  _beatGradingResults.clear();
-                                                  playbackController
-                                                      .missedCursors
-                                                      .clear();
-                                                  playbackController
-                                                      .resetToStart();
-                                                });
+                                  SizedBox(width: 40.w),
+                                  Row(
+                                    children: [
+                                      SizedBox(width: 30.w),
+                                      Container(
+                                        padding: EdgeInsets.symmetric(
+                                            horizontal: 10.w, vertical: 12.h),
+                                        decoration: BoxDecoration(
+                                          color: Colors.white,
+                                          borderRadius:
+                                              BorderRadius.circular(18),
+                                          border: Border.all(
+                                              color: const Color(0xFFDFDFDF),
+                                              width: 2),
+                                        ),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            GestureDetector(
+                                              onTap: () {
+                                                playbackController
+                                                    .stopPlayback();
+                                                showDialog(
+                                                  context: context,
+                                                  barrierDismissible: true,
+                                                  builder: (_) =>
+                                                      ConfirmationDialog(
+                                                    message:
+                                                        "처음부터 다시 연주하시겠습니까?",
+                                                    onConfirm: () async {
+                                                      Navigator.of(context)
+                                                          .pop();
+                                                      // 1) 녹음 중이면 중지하고 리소스 정리
+                                                      final recorder =
+                                                          _drumRecordingKey
+                                                              .currentState;
+                                                      if (recorder
+                                                              ?.isRecording ==
+                                                          true) {
+                                                        await recorder!
+                                                            .stopRecording();
+                                                      }
+                                                      // 2) 플레이어 & 내부 상태 리셋
+                                                      setState(() {
+                                                        _currentMeasureOneBased =
+                                                            0;
+                                                        _beatGradingResults
+                                                            .clear();
+                                                        playbackController
+                                                            .missedCursors
+                                                            .clear();
+                                                        playbackController
+                                                            .resetToStart();
+                                                      });
+                                                    },
+                                                    onCancel: () {
+                                                      Navigator.of(context)
+                                                          .pop();
+                                                      // 이미 멈춰있으니 추가 동작 불필요
+                                                    },
+                                                  ),
+                                                );
                                               },
-                                              onCancel: () {
-                                                Navigator.of(context).pop();
-                                                // 이미 멈춰있으니 추가 동작 불필요
-                                              },
+                                              child: Icon(Icons.replay,
+                                                  size: 10.sp,
+                                                  color: Color(0xff646464)),
                                             ),
-                                          );
-                                        },
-                                        child: const Icon(Icons.replay,
-                                            size: 28, color: Color(0xff646464)),
+                                            ...[
+                                              0.5,
+                                              1.0,
+                                              1.5,
+                                              2.0
+                                            ].map((s) => Padding(
+                                                  padding: EdgeInsets.only(
+                                                      left: 6.5.w,
+                                                      right:
+                                                          s == 2.0 ? 0 : 5.w),
+                                                  child: GestureDetector(
+                                                    onTap: () {
+                                                      // 재생 중일 때는 배속 변경 못하도록 함
+                                                      if (!playbackController
+                                                          .isPlaying) {
+                                                        playbackController
+                                                            .setSpeed(s);
+                                                      }
+                                                    },
+                                                    child: Text(
+                                                      '${s}x',
+                                                      style: TextStyle(
+                                                        fontSize: 7.sp,
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                        color: playbackController
+                                                                    .speed ==
+                                                                s
+                                                            ? const Color(
+                                                                0xffD97D6C)
+                                                            : const Color(
+                                                                0xff646464),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                )),
+                                          ],
+                                        ),
                                       ),
-                                    ),
-                                    ...[0.5, 1.0, 1.5, 2.0].map((s) => Padding(
-                                          padding: EdgeInsets.only(
-                                              left: 15,
-                                              right: s == 2.0 ? 0 : 15),
-                                          child: GestureDetector(
-                                            onTap: () {
-                                              // 재생 중일 때는 배속 변경 못하도록 함
-                                              if (!playbackController
-                                                  .isPlaying) {
-                                                playbackController.setSpeed(s);
-                                              }
-                                            },
-                                            child: Text(
-                                              '${s}x',
-                                              style: TextStyle(
-                                                fontSize: 20,
-                                                fontWeight: FontWeight.bold,
-                                                color: playbackController
-                                                            .speed ==
-                                                        s
-                                                    ? const Color(0xffD97D6C)
-                                                    : const Color(0xff646464),
-                                              ),
-                                            ),
+                                      SizedBox(width: 20.w),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                              Center(
+                                child: GestureDetector(
+                                  onTap: () async {
+                                    if (playbackController.isPlaying) {
+                                      // 재생 중이면 일시정지 & 녹음 중지
+                                      playbackController.stopPlayback();
+                                      _drumRecordingKey.currentState
+                                          ?.pauseRecording();
+                                    } else {
+                                      setState(() {
+                                        _beatGradingResults.clear();
+                                        playbackController.missedCursors
+                                            .clear();
+                                      });
+                                      playbackController
+                                          .showCountdownAndStart();
+                                    }
+                                  },
+                                  child: playbackController.isPlaying
+                                      ? Container(
+                                          width: 60.w,
+                                          height: 60.h,
+                                          decoration: BoxDecoration(
+                                            shape: BoxShape.circle,
+                                            color: Colors.white,
+                                            border: Border.all(
+                                                color: const Color(0xFFDFDFDF),
+                                                width: 2),
                                           ),
-                                        )),
-                                  ],
+                                          child: Icon(Icons.pause,
+                                              size: 15.sp,
+                                              color: Color(0xffD97D6C)),
+                                        )
+                                      : Container(
+                                          width: 60.w,
+                                          height: 60.h,
+                                          decoration: const BoxDecoration(
+                                            shape: BoxShape.circle,
+                                            color: Color(0xffD97D6C),
+                                          ),
+                                          child: Icon(Icons.play_arrow,
+                                              size: 15.sp, color: Colors.white),
+                                        ),
                                 ),
                               ),
-                              const SizedBox(width: 40),
                             ],
                           ),
-                        ],
-                      ),
-                      Center(
-                        child: GestureDetector(
-                          onTap: () async {
-                            if (playbackController.isPlaying) {
-                              // 재생 중이면 일시정지 & 녹음 중지
-                              playbackController.stopPlayback();
-                              _drumRecordingKey.currentState?.pauseRecording();
-                            } else {
-                              setState(() {
-                                _beatGradingResults.clear();
-                                playbackController.missedCursors.clear();
-                              });
-                              playbackController.showCountdownAndStart();
-                            }
-                          },
-                          child: playbackController.isPlaying
-                              ? Container(
-                                  width: 52,
-                                  height: 52,
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    color: Colors.white,
-                                    border: Border.all(
-                                        color: const Color(0xFFDFDFDF),
-                                        width: 2),
-                                  ),
-                                  child: const Icon(Icons.pause,
-                                      size: 40, color: Color(0xffD97D6C)),
-                                )
-                              : Container(
-                                  width: 52,
-                                  height: 52,
-                                  decoration: const BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    color: Color(0xffD97D6C),
-                                  ),
-                                  child: const Icon(Icons.play_arrow,
-                                      size: 40, color: Colors.white),
-                                ),
                         ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 24),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    // 현재 줄 악보
-                    Container(
-                      height: imageHeight,
-                      margin:
-                          const EdgeInsets.only(bottom: 12), // 현재 줄과 다음 줄 간격
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(5),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.08),
-                            blurRadius: 6,
-                            offset: Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(5),
-                        child: LayoutBuilder(
-                          builder: (context, constraints) {
-                            // 실제 악보가 그려지는 폭
-                            final displayWidth = constraints.maxWidth;
-                            return Stack(
-                              children: [
-                                for (final missed in playbackController
-                                    .missedCursors
-                                    .where((c) =>
-                                        c.lineIndex ==
-                                        playbackController.currentPage))
-                                  CursorWidget(
-                                    cursor: missed,
-                                    imageWidth: displayWidth,
-                                    height: imageHeight,
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFFE1E1E1),
-                                      borderRadius: BorderRadius.circular(4),
+                        SizedBox(height: 35.h),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            // 현재 줄 악보
+                            Container(
+                              height: imageHeight,
+                              margin: EdgeInsets.only(
+                                  bottom: 12.h), // 현재 줄과 다음 줄 간격
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(5),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.08),
+                                    blurRadius: 6,
+                                    offset: Offset(0, 4),
+                                  ),
+                                ],
+                              ),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(5),
+                                child: LayoutBuilder(
+                                  builder: (context, constraints) {
+                                    // 실제 악보가 그려지는 폭
+                                    final displayWidth = constraints.maxWidth;
+                                    return Stack(
+                                      children: [
+                                        for (final missed in playbackController
+                                            .missedCursors
+                                            .where((c) =>
+                                                c.lineIndex ==
+                                                playbackController.currentPage))
+                                          CursorWidget(
+                                            cursor: missed,
+                                            imageWidth: displayWidth,
+                                            height: imageHeight,
+                                            decoration: BoxDecoration(
+                                              color: const Color(0xFFE1E1E1),
+                                              borderRadius:
+                                                  BorderRadius.circular(4),
+                                            ),
+                                          ),
+                                        // 재생했거나 재생 중이거나 재생 끝난 뒤에도(=paused 상태 포함) 커서 계속 표시
+                                        if (playbackController.currentDuration >
+                                                Duration.zero ||
+                                            playbackController.isPlaying ||
+                                            playbackController
+                                                    .currentDuration >=
+                                                playbackController
+                                                    .totalDuration)
+                                          CursorWidget(
+                                            cursor: playbackController
+                                                .currentCursor,
+                                            imageWidth: displayWidth,
+                                            height: imageHeight,
+                                          ),
+                                        if (playbackController
+                                                .currentLineImage !=
+                                            null)
+                                          Image.memory(
+                                            playbackController
+                                                .currentLineImage!,
+                                            width: displayWidth,
+                                            height: imageHeight,
+                                            fit: BoxFit.fitWidth,
+                                            gaplessPlayback: true,
+                                          ),
+                                      ],
+                                    );
+                                  },
+                                ),
+                              ),
+                            ),
+
+                            // 👀 다음 줄 미리보기
+                            if (playbackController.nextLineImage != null)
+                              Container(
+                                height: imageHeight,
+                                margin: EdgeInsets.only(bottom: 5.h),
+                                decoration: BoxDecoration(
+                                  // 흰색의 100% → 예: 80% 불투명(20% 투명)으로 조절
+                                  color: Colors.white.withOpacity(0.8),
+                                  borderRadius: BorderRadius.circular(5),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.08),
+                                      blurRadius: 6,
+                                      offset: Offset(0, 4),
+                                    ),
+                                  ],
+                                ),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(5),
+                                  child: Opacity(
+                                    // 악보만 50% 투명
+                                    opacity: 0.5,
+                                    child: Image.memory(
+                                      playbackController.nextLineImage!,
+                                      width: double.infinity,
+                                      height: imageHeight,
+                                      fit: BoxFit.fitWidth,
+                                      gaplessPlayback: true,
                                     ),
                                   ),
-                                // 재생했거나 재생 중이거나 재생 끝난 뒤에도(=paused 상태 포함) 커서 계속 표시
-                                if (playbackController.currentDuration >
-                                        Duration.zero ||
-                                    playbackController.isPlaying ||
-                                    playbackController.currentDuration >=
-                                        playbackController.totalDuration)
-                                  CursorWidget(
-                                    cursor: playbackController.currentCursor,
-                                    imageWidth: displayWidth,
-                                    height: imageHeight,
+                                ),
+                              ),
+                          ],
+                        ),
+
+                        Spacer(),
+
+                        // 📊 진행 바 + 시간 Row
+                        Padding(
+                          padding:
+                              EdgeInsets.symmetric(horizontal: 50.w), // 좌우 마진
+                          child: Row(
+                            children: [
+                              // 현재 재생 시간
+                              Text(
+                                '${playbackController.currentDuration.inMinutes}:'
+                                '${(playbackController.currentDuration.inSeconds % 60).toString().padLeft(2, '0')}',
+                                style: const TextStyle(fontSize: 13),
+                              ),
+
+                              SizedBox(width: 8.w), // 시간과 바 사이 간격
+
+                              // 진행 바
+                              Expanded(
+                                child: Container(
+                                  height: 10.h,
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: const Color(0xffd9d9d9),
+                                        blurRadius: 4,
+                                        offset: const Offset(0, 4),
+                                      ),
+                                    ],
+                                    borderRadius: BorderRadius.circular(20),
                                   ),
-                                if (playbackController.currentLineImage != null)
-                                  Image.memory(
-                                    playbackController.currentLineImage!,
-                                    width: displayWidth,
-                                    height: imageHeight,
-                                    fit: BoxFit.fitWidth,
-                                    gaplessPlayback: true,
+                                  child: FractionallySizedBox(
+                                    alignment: Alignment.centerLeft,
+                                    widthFactor: (playbackController
+                                                .totalDuration.inMilliseconds ==
+                                            0)
+                                        ? 0.0
+                                        : (playbackController.currentDuration
+                                                    .inMilliseconds /
+                                                playbackController.totalDuration
+                                                    .inMilliseconds)
+                                            .clamp(0.0, 1.0),
+                                    child: ClipRRect(
+                                      borderRadius: BorderRadius.circular(20),
+                                      child: Container(
+                                          height: 10.h,
+                                          color: const Color(0xffD97D6C)),
+                                    ),
                                   ),
-                              ],
+                                ),
+                              ),
+
+                              SizedBox(width: 8.w), // 바와 전체 시간 사이 간격
+
+                              // 전체 재생 시간
+                              Text(
+                                '${playbackController.totalDuration.inMinutes}:'
+                                '${(playbackController.totalDuration.inSeconds % 60).toString().padLeft(2, '0')}',
+                                style: TextStyle(fontSize: 5.sp),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // ⏱️ 카운트다운 오버레이
+                  if (playbackController.isCountingDown)
+                    Container(
+                      color: Colors.black.withOpacity(0.6),
+                      child: Center(
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: List.generate(3, (i) {
+                            int number = 3 - i;
+                            return Padding(
+                              padding: EdgeInsets.symmetric(horizontal: 32.h),
+                              child: Stack(
+                                alignment: Alignment.center,
+                                children: [
+                                  Text(
+                                    '$number',
+                                    style: TextStyle(
+                                      fontSize: 25.sp,
+                                      fontWeight: FontWeight.bold,
+                                      foreground: Paint()
+                                        ..style = PaintingStyle.stroke
+                                        ..strokeWidth = 10
+                                        ..color =
+                                            playbackController.countdown ==
+                                                    number
+                                                ? const Color(0xffB95D4C)
+                                                : const Color(0xff949494),
+                                    ),
+                                  ),
+                                  Text(
+                                    '$number',
+                                    style: TextStyle(
+                                      fontSize: 25.sp,
+                                      fontWeight: FontWeight.bold,
+                                      color:
+                                          playbackController.countdown == number
+                                              ? const Color(0xffFD9B8A)
+                                              : const Color(0xfff6f6f6),
+                                    ),
+                                  ),
+                                ],
+                              ),
                             );
-                          },
+                          }),
                         ),
                       ),
                     ),
 
-                    // 👀 다음 줄 미리보기
-                    if (playbackController.nextLineImage != null)
-                      Container(
-                        height: imageHeight,
-                        margin: const EdgeInsets.only(bottom: 5),
-                        decoration: BoxDecoration(
-                          // 흰색의 100% → 예: 80% 불투명(20% 투명)으로 조절
-                          color: Colors.white.withOpacity(0.8),
-                          borderRadius: BorderRadius.circular(5),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.08),
-                              blurRadius: 6,
-                              offset: Offset(0, 4),
-                            ),
-                          ],
-                        ),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(5),
-                          child: Opacity(
-                            // 악보만 50% 투명
-                            opacity: 0.5,
-                            child: Image.memory(
-                              playbackController.nextLineImage!,
-                              width: double.infinity,
-                              height: imageHeight,
-                              fit: BoxFit.fitWidth,
-                              gaplessPlayback: true,
-                            ),
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
+                  // DrumRecordingWidget 추가 (보이지 않지만 기능 사용)
+                  Offstage(
+                    offstage: true,
+                    child: DrumRecordingWidget(
+                      key: _drumRecordingKey,
+                      title: playbackController.sheetInfo?.title ?? '',
+                      xmlDataString: xmlDataString,
+                      audioFilePath: '',
+                      onRecordingComplete: (onsets) {
+                        setState(() {
+                          _detectedOnsets = onsets;
+                        });
+                      },
+                      onOnsetsReceived: (onsets) {
+                        setState(() {
+                          _detectedOnsets = onsets;
+                        });
+                      },
+                      onMusicXMLParsed: (info) {
+                        print('info: $info');
+                        try {
+                          // totalMeasures가 제대로 계산되었는지 확인
+                          final totalMeasures = info['totalMeasures'] as int;
+                          print('Total measures received: $totalMeasures');
+                          // // XML 데이터를 파싱
+                          // final document = XmlDocument.parse(
+                          //     info['xmlData'] as String); // xmlData는 XML 문자열로 받아옴
 
-                Spacer(flex: 2),
+                          // // 'measure' 태그를 찾아서 마디의 개수 구하기
+                          // final measures = document.findAllElements('measure');
+                          // final int totalMeasures =
+                          //     measures.length; // measure의 개수를 totalMeasures로 설정
+                          // print('Total measures: $totalMeasures'); // 마디의 개수 출력
 
-                // 📊 진행 바 + 시간 Row
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 120), // 좌우 마진
-                  child: Row(
-                    children: [
-                      // 현재 재생 시간
-                      Text(
-                        '${playbackController.currentDuration.inMinutes}:'
-                        '${(playbackController.currentDuration.inSeconds % 60).toString().padLeft(2, '0')}',
-                        style: const TextStyle(fontSize: 13),
-                      ),
-
-                      const SizedBox(width: 18), // 시간과 바 사이 간격
-
-                      // 진행 바
-                      Expanded(
-                        child: Container(
-                          height: 7,
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            boxShadow: [
-                              BoxShadow(
-                                color: const Color(0xffd9d9d9),
-                                blurRadius: 4,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: FractionallySizedBox(
-                            alignment: Alignment.centerLeft,
-                            widthFactor: (playbackController
-                                        .totalDuration.inMilliseconds ==
-                                    0)
-                                ? 0.0
-                                : (playbackController
-                                            .currentDuration.inMilliseconds /
-                                        playbackController
-                                            .totalDuration.inMilliseconds)
-                                    .clamp(0.0, 1.0),
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(20),
-                              child: Container(
-                                  height: 7, color: const Color(0xffD97D6C)),
-                            ),
-                          ),
-                        ),
-                      ),
-
-                      const SizedBox(width: 18), // 바와 전체 시간 사이 간격
-
-                      // 전체 재생 시간
-                      Text(
-                        '${playbackController.totalDuration.inMinutes}:'
-                        '${(playbackController.totalDuration.inSeconds % 60).toString().padLeft(2, '0')}',
-                        style: const TextStyle(fontSize: 13),
-                      ),
-                    ],
+                          // 기존 info에서 beatsPerMeasure, bpm 등 필요한 값을 가져오고, totalMeasures를 설정
+                          setState(() {
+                            _beatsPerMeasure = info['beatsPerMeasure'] as int;
+                            _totalMeasures =
+                                totalMeasures; // 여기서 totalMeasures를 할당
+                            _bpm = info['bpm'] as double;
+                          });
+                        } catch (e) {
+                          print('Error parsing XML: $e');
+                        }
+                      },
+                      onGradingResult: (msg) {
+                        _handleScoringResult(msg); // 1) 즉시 화면에 틀린 박자 커서 표시
+                        _onWsGradingMessage(msg); // 2) 리스트에 쌓아서, 마지막에 전체 점수 계산
+                      },
+                      playbackController:
+                          playbackController, //playbackController 전달
+                      fetchPracticeIdentifier: fetchPracticeIdentifier,
+                      userSheetId: widget.sheetId,
+                    ),
                   ),
-                ),
-              ],
-            ),
-          ),
-
-          // ⏱️ 카운트다운 오버레이
-          if (playbackController.isCountingDown)
-            Container(
-              color: Colors.black.withOpacity(0.6),
-              child: Center(
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: List.generate(3, (i) {
-                    int number = 3 - i;
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 32),
-                      child: Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          Text(
-                            '$number',
-                            style: TextStyle(
-                              fontSize: 72,
-                              fontWeight: FontWeight.bold,
-                              foreground: Paint()
-                                ..style = PaintingStyle.stroke
-                                ..strokeWidth = 10
-                                ..color = playbackController.countdown == number
-                                    ? const Color(0xffB95D4C)
-                                    : const Color(0xff949494),
-                            ),
-                          ),
-                          Text(
-                            '$number',
-                            style: TextStyle(
-                              fontSize: 72,
-                              fontWeight: FontWeight.bold,
-                              color: playbackController.countdown == number
-                                  ? const Color(0xffFD9B8A)
-                                  : const Color(0xfff6f6f6),
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  }),
-                ),
+                ],
               ),
             ),
-
-          // DrumRecordingWidget 추가 (보이지 않지만 기능 사용)
-          Offstage(
-            offstage: true,
-            child: DrumRecordingWidget(
-              key: _drumRecordingKey,
-              title: playbackController.sheetInfo?.title ?? '',
-              xmlDataString: xmlDataString,
-              audioFilePath: '',
-              onRecordingComplete: (onsets) {
-                setState(() {
-                  _detectedOnsets = onsets;
-                });
-              },
-              onOnsetsReceived: (onsets) {
-                setState(() {
-                  _detectedOnsets = onsets;
-                });
-              },
-              onMusicXMLParsed: (info) {
-                print('info: $info');
-                try {
-                  // totalMeasures가 제대로 계산되었는지 확인
-                  final totalMeasures = info['totalMeasures'] as int;
-                  print('Total measures received: $totalMeasures');
-                  // // XML 데이터를 파싱
-                  // final document = XmlDocument.parse(
-                  //     info['xmlData'] as String); // xmlData는 XML 문자열로 받아옴
-
-                  // // 'measure' 태그를 찾아서 마디의 개수 구하기
-                  // final measures = document.findAllElements('measure');
-                  // final int totalMeasures =
-                  //     measures.length; // measure의 개수를 totalMeasures로 설정
-                  // print('Total measures: $totalMeasures'); // 마디의 개수 출력
-
-                  // 기존 info에서 beatsPerMeasure, bpm 등 필요한 값을 가져오고, totalMeasures를 설정
-                  setState(() {
-                    _beatsPerMeasure = info['beatsPerMeasure'] as int;
-                    _totalMeasures = totalMeasures; // 여기서 totalMeasures를 할당
-                    _bpm = info['bpm'] as double;
-                  });
-                } catch (e) {
-                  print('Error parsing XML: $e');
-                }
-              },
-              onGradingResult: (msg) {
-                _handleScoringResult(msg); // 1) 즉시 화면에 틀린 박자 커서 표시
-                _onWsGradingMessage(msg); // 2) 리스트에 쌓아서, 마지막에 전체 점수 계산
-              },
-              playbackController: playbackController, //playbackController 전달
-              fetchPracticeIdentifier: fetchPracticeIdentifier,
-              userSheetId: widget.sheetId,
-            ),
-          ),
-        ],
+          );
+        },
       ),
     );
   }

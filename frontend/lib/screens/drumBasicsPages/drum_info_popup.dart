@@ -129,7 +129,10 @@ class _DrumInfoPopupState extends State<DrumInfoPopup> {
     return Center(
       child: Text(
         widget.title, // 전달받은 제목 표시
-        style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+        style: TextStyle(
+            fontSize: 9.sp,
+            fontWeight: FontWeight.bold,
+            color: Color(0xff595959)),
       ),
     );
   }
@@ -143,7 +146,7 @@ class _DrumInfoPopupState extends State<DrumInfoPopup> {
     }
 
     return SizedBox(
-      width: 300, // 이미지 너비 설정
+      width: 180.w, // 이미지 너비 설정
       child: Image.asset(
         widget.imagePath!, // 전달받은 이미지 경로 사용
         fit: BoxFit.contain, // 이미지 비율 유지
@@ -157,7 +160,7 @@ class _DrumInfoPopupState extends State<DrumInfoPopup> {
       padding: const EdgeInsets.fromLTRB(10, 10, 30, 10), // 여백 추가
       child: Text(
         widget.description, // 전달받은 설명 텍스트 사용
-        style: const TextStyle(fontSize: 14, color: Colors.black54),
+        style: TextStyle(fontSize: 7.5.sp, color: Color(0xff646464)),
         textAlign: TextAlign.center, // 가운데 정렬
       ),
     );
@@ -166,8 +169,8 @@ class _DrumInfoPopupState extends State<DrumInfoPopup> {
   /// 닫기 버튼 (오른쪽 상단)
   Positioned _buildCloseButton(BuildContext context) {
     return Positioned(
-      top: 8, // 상단 여백
-      right: 8, // 오른쪽 여백
+      top: 8.h, // 상단 여백
+      right: 7.w, // 오른쪽 여백
       child: IconButton(
         icon: const Icon(Icons.close), // 닫기 아이콘
         onPressed: () => Navigator.of(context).pop(), // 팝업 닫기 기능

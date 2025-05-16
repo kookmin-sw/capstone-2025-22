@@ -127,14 +127,14 @@ class _DrumBasicsPageState extends State<DrumBasicsPage> {
                                   step['title']!,
                                   style: TextStyle(
                                     fontWeight: FontWeight.w700,
-                                    fontSize: 6.5.sp,
+                                    fontSize: 8.sp,
                                     color: Color(0xFF595959),
                                   ),
                                 ),
                                 Text(
                                   step['subtitle']!,
                                   style: TextStyle(
-                                    fontSize: 5.3.sp,
+                                    fontSize: 6.sp,
                                     color: Color(0xFF949494),
                                   ),
                                 ),
