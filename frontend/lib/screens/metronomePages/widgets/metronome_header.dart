@@ -243,7 +243,7 @@ class _MetronomeHeaderState extends ConsumerState<MetronomeHeader> {
   Widget build(BuildContext context) {
     final isSoundOn = ref.watch(isSoundOnProvider);
     return Padding(
-      padding: EdgeInsets.only(top: 25.h),
+      padding: EdgeInsets.only(top: 15.h),
       child: Row(
         children: [
           Expanded(
