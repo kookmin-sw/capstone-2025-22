@@ -270,7 +270,10 @@ class _CountdownPageState extends State<CountdownPage>
         playbackController.canvasWidth = canvasWidth;
         playbackController
             .calculateTotalDurationFromCursorList(bpm); // 총 재생시간 계산
-        playbackController.rawCursorList = sheetInfo.cursorList;
+        playbackController.rawCursorList = (json['rawCursorList'] as List)
+            .map((e) => Cursor.fromJson(e))
+            .toList();
+        playbackController.totalMeasures = totalMeasures;
 
         playbackController.currentLineImage =
             lineImages.isNotEmpty ? lineImages[0] : null;
