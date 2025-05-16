@@ -419,10 +419,13 @@ class _MyPageState extends State<MyPage> {
 Widget _buildListHeaderCell(String text, {int flex = 1}) {
   return Expanded(
     flex: flex,
-    child: Center(
-      child: Text(
-        text,
-        style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+    child: Padding(
+      padding: EdgeInsets.only(left: 3.w),
+      child: Center(
+        child: Text(
+          text,
+          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+        ),
       ),
     ),
   );
@@ -432,12 +435,15 @@ Widget _buildListHeaderCell(String text, {int flex = 1}) {
 Widget _buildListCell(String text, {int flex = 1}) {
   return Expanded(
     flex: flex,
-    child: Center(
-      child: Text(
-        text,
-        textAlign: TextAlign.center,
-        style: TextStyle(
-          fontSize: 5.sp,
+    child: Padding(
+      padding: EdgeInsets.only(left: 3.w),
+      child: Center(
+        child: Text(
+          text,
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 6.5.sp,
+          ),
         ),
       ),
     ),
