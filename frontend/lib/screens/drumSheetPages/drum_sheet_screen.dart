@@ -877,7 +877,7 @@ class _SheetListScreenState extends State<SheetListScreen> {
         ],
       ),
       body: Padding(
-        padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 30.h),
+        padding: EdgeInsets.symmetric(horizontal: 25.w, vertical: 30.h),
         child: Column(
           children: [
             Expanded(
@@ -914,24 +914,26 @@ class _SheetListScreenState extends State<SheetListScreen> {
                       },
                       child: Column(
                         children: [
-                          Container(
-                            height: 220.h,
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(12),
-                              boxShadow: const [
-                                BoxShadow(
-                                  color: Colors.black12,
-                                  blurRadius: 4,
-                                  offset: Offset(0, 2),
+                          AspectRatio(
+                            aspectRatio: 0.9.h,
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(12),
+                                boxShadow: const [
+                                  BoxShadow(
+                                    color: Colors.black12,
+                                    blurRadius: 4,
+                                    offset: Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              child: Center(
+                                child: Icon(
+                                  Icons.add,
+                                  size: 13.sp,
+                                  color: Colors.redAccent,
                                 ),
-                              ],
-                            ),
-                            child: Center(
-                              child: Icon(
-                                Icons.add,
-                                size: 13.sp,
-                                color: Colors.redAccent,
                               ),
                             ),
                           ),
