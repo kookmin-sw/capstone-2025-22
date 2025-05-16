@@ -40,10 +40,7 @@ def split_audio_and_predict(audio_buffer:BytesIO, onset_times:list):
     # 온셋별 구간 분할 및 예측
     for idx, t in enumerate(onset_times):
         start_time = max(0.0, t - margin - shift)
-        if idx < len(onset_times) - 1:
-            end_time = max(0.0, onset_times[idx + 1] - shift)
-        else:
-            end_time = len(y) / sr - shift
+        end_time = start_time + 0.25
 
         start_sample = int(start_time * sr)
         end_sample = int(end_time * sr)
