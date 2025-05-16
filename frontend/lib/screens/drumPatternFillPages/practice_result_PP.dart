@@ -266,6 +266,7 @@ class _PracticeResultPPState extends State<PracticeResultPP> {
                                             context: context,
                                             xmlDataString: widget.xmlDataString,
                                             practiceInfo: widget.practiceInfo,
+                                            isPatternMode: true,
                                           );
                                         },
                                         btnIcon:

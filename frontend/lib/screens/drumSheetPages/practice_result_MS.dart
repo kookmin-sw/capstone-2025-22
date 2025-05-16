@@ -258,6 +258,7 @@ class _PracticeResultMSState extends State<PracticeResultMS> {
                                             context: context,
                                             xmlDataString: widget.xmlDataString,
                                             practiceInfo: widget.practiceInfo,
+                                            isPatternMode: false,
                                           );
                                         },
                                         btnIcon:
