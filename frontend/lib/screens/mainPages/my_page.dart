@@ -369,7 +369,7 @@ class _MyPageState extends State<MyPage> {
             physics: ClampingScrollPhysics(), // 스크롤 끝에서 효과 없애기
             itemBuilder: (context, index) {
               // 테이블 행
-              var item = sheetMusicData[index];
+              var item = sheetMusicData[sheetMusicData.length - 1 - index];
 
               return Container(
                 // 테이블 셀
