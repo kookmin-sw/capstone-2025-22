@@ -155,7 +155,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       alignment: Alignment.center,
                       child: Image.asset(
                         "assets/images/appLogo.png",
-                        height: 95.h,
+                        height: 85.h,
                       ),
                     ),
                     SizedBox(height: 30.h),
@@ -213,7 +213,7 @@ class _LoginScreenState extends State<LoginScreen> {
     return Align(
       alignment: Alignment.centerLeft, // 왼쪽 정렬
       child: Padding(
-        padding: const EdgeInsets.only(left: 8.0),
+        padding: EdgeInsets.only(left: 3.w, top: 5.h),
         child: Text(
           _errorMessage!,
           style: TextStyle(color: Colors.red),
@@ -236,7 +236,7 @@ class _LoginScreenState extends State<LoginScreen> {
       child: Center(
         child: Text(
           '로그인',
-          style: TextStyle(fontSize: 6.sp, color: Colors.white),
+          style: TextStyle(fontSize: 7.5.sp, color: Colors.white),
         ),
       ),
     );

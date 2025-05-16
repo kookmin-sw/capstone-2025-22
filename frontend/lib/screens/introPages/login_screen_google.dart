@@ -116,7 +116,7 @@ class _LoginScreenGoogleState extends State<LoginScreenGoogle> {
                     alignment: Alignment.center,
                     child: Image.asset(
                       "assets/images/appLogo.png",
-                      height: 95.h,
+                      height: 85.h,
                     ),
                   ),
                 ),
@@ -238,11 +238,11 @@ class ButtonForm extends StatelessWidget {
             children: [
               if (needGoogle)
                 Image.asset("assets/images/googleLogo.png", height: 32.h),
-              SizedBox(width: 5.w),
+              if (needGoogle) SizedBox(width: 5.w),
               Text(
                 btnName,
                 style: TextStyle(
-                  fontSize: 6.sp,
+                  fontSize: 7.5.sp,
                   color: isTextBlack ? Colors.black54 : Colors.white,
                 ),
               ),
