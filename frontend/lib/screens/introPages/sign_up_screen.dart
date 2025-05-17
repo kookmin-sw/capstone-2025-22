@@ -6,7 +6,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:capstone_2025/services/api_func.dart';
 import 'package:capstone_2025/widgets/complete_dialog.dart';
 import 'package:capstone_2025/services/storage_service.dart';
-import 'package:capstone_2025/screens/introPages/login_screen_google.dart';
+import 'package:capstone_2025/screens/introPages/login_screen.dart';
 import 'package:capstone_2025/screens/introPages/widgets/intro_page_header.dart';
 
 class SignUpScreen extends StatefulWidget {
@@ -308,7 +308,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 onClose: () {
                   Navigator.of(context).pop();
                   Navigator.of(context).pushReplacement(
-                    MaterialPageRoute(builder: (_) => LoginScreenGoogle()),
+                    MaterialPageRoute(builder: (_) => LoginScreen()),
                   );
                 },
               );
@@ -400,7 +400,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
           children: [
             introPageHeader(
               title: '회원가입',
-              targetPage: LoginScreenGoogle(), // 뒤로가기 버튼 대상
+              targetPage: LoginScreen(), // 뒤로가기 버튼 대상
             ),
             SizedBox(
               height: 35.h,
