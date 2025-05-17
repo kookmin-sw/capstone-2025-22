@@ -1,11 +1,15 @@
-import 'package:capstone_2025/screens/drumSheetPages/drum_sheet_player.dart';
-import 'package:capstone_2025/widgets/innerShadow.dart';
-import 'package:capstone_2025/widgets/linedText.dart';
-import 'package:capstone_2025/screens/drumSheetPages/widgets/resultText.dart';
-import 'package:capstone_2025/screens/mainPages/navigation_screens.dart';
-import 'package:capstone_2025/widgets/openSheetModal.dart';
+// ignore_for_file: file_names
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+
+import 'package:capstone_2025/widgets/linedText.dart';
+import 'package:capstone_2025/widgets/innerShadow.dart';
+import 'package:capstone_2025/widgets/openSheetModal.dart';
+
+import 'package:capstone_2025/screens/mainPages/navigation_screens.dart';
+import 'package:capstone_2025/screens/drumSheetPages/drum_sheet_player.dart';
+import 'package:capstone_2025/screens/drumSheetPages/widgets/resultText.dart';
 
 class PracticeResultMS extends StatefulWidget {
   const PracticeResultMS({
@@ -36,9 +40,9 @@ class _PracticeResultMSState extends State<PracticeResultMS> {
   late String musicArtist = widget.musicArtist; // 아티스트
 
   Widget resultKeyword(int score) {
-    var keyword;
-    var txtColor;
-    var borderColor;
+    String keyword;
+    Color txtColor;
+    Color borderColor;
 
     if (isPerfect) {
       keyword = "PERFECT";
@@ -87,7 +91,6 @@ class _PracticeResultMSState extends State<PracticeResultMS> {
       txtColor,
       9.5,
     );
-    ;
   }
 
   @override
@@ -338,7 +341,7 @@ class _PracticeResultMSState extends State<PracticeResultMS> {
 }
 
 class ButtonForm extends StatelessWidget {
-  ButtonForm({
+  const ButtonForm({
     super.key,
     required this.btnName,
     required this.buttonColor,
@@ -346,7 +349,7 @@ class ButtonForm extends StatelessWidget {
     required this.clickedFunc,
     required this.shadowColor,
     this.width = double.infinity,
-    this.btnIcon = null,
+    this.btnIcon,
   });
 
   final String btnName;
@@ -386,8 +389,7 @@ class ButtonForm extends StatelessWidget {
                         color: Colors.white,
                       ),
                     if (btnIcon != null) SizedBox(width: 5.w),
-                    linedText(
-                        "$btnName", 7.5.sp, borderColor, Colors.white, 4.8),
+                    linedText(btnName, 7.5.sp, borderColor, Colors.white, 4.8),
                   ],
                 ),
               ),
@@ -500,7 +502,8 @@ void openModal(
                           sheetId: sheetId,
                           title: musicTitle,
                           artist: musicArtist,
-                          sheetXmlData: xmlDataString,
+                          sheetXmlData:
+                              base64Encode(utf8.encode(xmlDataString)),
                         ),
                       ),
                     );
