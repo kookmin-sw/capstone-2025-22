@@ -501,8 +501,9 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
   void _handleMeasureChange(int measureNumber) {
     if (!isRecording || _isDisposed) return;
 
-    print('🎼 마디 변경 감지: ${_currentMeasure + 1} -> ${measureNumber + 1}');
-
+    // [디버깅용] 마디 변경 감지 시각 출력
+    print('🎼 마디 변경 감지: ${_currentMeasure + 1} -> ${measureNumber + 1} '
+        'at ${DateTime.now().toIso8601String()}');
     // 첫 번째 마디 변경 감지인 경우 (녹음 시작)
     if (_currentMeasure == 0 && measureNumber == 0) {
       _startMeasureRecording();
@@ -594,14 +595,14 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
 
   /// 오디오 녹음 중지
   Future<void> stopRecording() async {
-    print('▶ stopRecording 실행됨');
+    print('▶ stopRecording 호출됨 at ${DateTime.now().toIso8601String()}');
 
     if (!isRecording || !mounted || _isDisposed || _recorder == null) return;
 
     try {
       if (_recorder!.isRecording) {
         await _recorder!.stopRecorder(); // 현재 진행 중인 녹음 중지
-        print('🎙️ 내부 녹음 중지 완료');
+        print('🎙️ 전체 녹음 중지 완료 시각: ${DateTime.now().toIso8601String()}');
       }
 
       if (!_isDisposed) {
@@ -658,11 +659,11 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
     if (!isRecording || _isDisposed || _recorder == null) return;
 
     try {
-      print('📝 마디 ${_currentMeasure + 1} 처리 시작');
-
       // 현재 녹음 중지
       if (_recorder!.isRecording) {
         await _recorder!.stopRecorder();
+        print(
+            '🎙️ 마디 ${_currentMeasure + 1} 녹음 중지 시각: ${DateTime.now().toIso8601String()}');
       }
 
       // 녹음 데이터 전송
@@ -692,7 +693,8 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
 
     try {
       widget.onMeasureUpdate?.call(_currentMeasure + 1, _totalMeasures);
-      print('🎙️ 마디 ${_currentMeasure + 1} 녹음 시작: ${DateTime.now()}');
+      print(
+          '🎙️ 마디 ${_currentMeasure + 1} 녹음 시작 at ${DateTime.now().toIso8601String()}');
 
       await _recorder!.startRecorder(
         toFile: _recordingPath,
@@ -727,6 +729,10 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
       print('❌ 녹음 데이터 전송 불가: 연결 상태 확인 필요');
       return;
     }
+
+    // 전송 시작 시각
+    print('📤 [${DateTime.now().toIso8601String()}] 녹음 데이터 전송 시작 '
+        '(마디: ${_currentMeasure + 1})');
 
     try {
       final file = File(_recordingPath!);
@@ -773,6 +779,10 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
             'receipt': 'measure-${_currentMeasure + 1}',
           },
         );
+
+        // 전송 완료 시각
+        print('📤 [${DateTime.now().toIso8601String()}] 녹음 데이터 전송 완료 '
+            '(마디: ${_currentMeasure + 1})');
 
         if (!_isDisposed) {
           setState(() => recordingStatusMessage =
