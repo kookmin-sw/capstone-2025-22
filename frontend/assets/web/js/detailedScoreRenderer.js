@@ -19,7 +19,7 @@ window.renderDetailedScore = async function(xmlText, practiceInfo, options = {})
     drawPartNames: false,
     drawingParameters: "compact",
     drawMeasureNumbers: true,
-    pageBackgroundColor: "#d97d6c",
+    pageBackgroundColor: "transparent",
     renderSingleHorizontalStaffline: false,
     });
 

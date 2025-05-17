@@ -33,7 +33,7 @@ Future<void> openMusicSheet({
             onConsoleMessage: (controller, consoleMessage) {
               print("🖥️ [WebView Console] ${consoleMessage.message}");
             },
-            onWebViewCreated: (ctrl) {
+            onWebViewCreated: (ctrl) async {
               // XML 전송 핸들러
               ctrl.addJavaScriptHandler(
                 handlerName: 'sendFileToOSMD',
@@ -65,8 +65,8 @@ Future<void> openMusicSheet({
           Widget content = isPatternMode
               ? Center(
                   child: FractionallySizedBox(
-                    widthFactor: 0.9,
-                    heightFactor: 0.9,
+                    widthFactor: 1.0,
+                    heightFactor: 0.5,
                     child: webview,
                   ),
                 )

@@ -22,9 +22,16 @@
 
       /* 초기엔 detailedOsmd(상세) 숨기기 */
       #detailedOsmd {
-        display: none;
+        width: 100%;
+        display: flex;
         overflow-y: auto;
+        justify-content: center;
         padding-top: 40px;
+      }
+
+      #detailedOsmd svg {
+        width: 100% !important;
+        height: auto !important;
       }
       
       .osmd-cursor {
