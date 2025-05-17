@@ -87,8 +87,8 @@ class _MyAppState extends State<MyApp> {
       builder: (context, child) {
         return MaterialApp(
           theme: ThemeData(scaffoldBackgroundColor: Color(0xFFF2F1F3)),
-          home: _isLoggedIn! ? NavigationScreens() : LoginScreen(),
-          // home: PatternFillScreen(index: 1), // 패턴및필인페이지 확인용
+          // home: _isLoggedIn! ? NavigationScreens() : LoginScreen(),
+          home: PatternFillScreen(index: 1), // 패턴및필인페이지 확인용
         );
       },
     );
