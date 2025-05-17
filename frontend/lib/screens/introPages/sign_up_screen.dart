@@ -141,7 +141,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
           isLoading = false;
           _idSuccessMessage = "인증번호가 전송되었습니다.";
         });
-        _startTimer();
+        // 이메일 저장 (checkAuthCode에서 꺼내 쓸 수 있도록)
+        await storage.write(key: "email", value: value);
+        startTimer();
         return;
       }
       if (resData["errMessage"] != null) {
@@ -167,34 +169,33 @@ class _SignUpScreenState extends State<SignUpScreen> {
       "email": await storage.read(key: "email"), // 저장된 이메일 가져오기
       "authCode": numController.text, // 입력된 인증 코드
     };
-    Map<String, dynamic> resData = // API 호출
-        await getHTTP("/verification/auth-codes/check", queryParam);
+    final resData = await getHTTP("/verification/auth-codes/check", queryParam);
 
+    // 인증 코드 불일치
     if (resData["body"] == null) {
       // 인증 코드 틀렸을 때
+
       print(resData["body"]);
-      _codeErrorMessage = "인증번호가 틀렸습니다.";
-      return;
-    }
-    if (resData['errMessage'] != null) {
-      _codeErrorMessage = "error";
-      return;
-    } else {
-      // 인증 코드 맞았을 때
-      print(resData["body"]);
-      storage.write(
-          key: "emailToken",
-          value: resData["body"]["emailToken"]); // email token 저장
-      isAuthCodeRight = true;
-      _timer.cancel(); // 타이머 종료
       setState(() {
-        _isTimerRunning = false; // 타이머 변수 설정
-        _codeErrorMessage = null; // 인증번호 전송 알림 문구 삭제
-        _idErrorMessage = null;
-        isAuthButtonEnabled = false; // 인증번호 확인 버튼 비활성화
+        _codeErrorMessage = "인증번호가 틀렸습니다.";
       });
       return;
     }
+    // 인증 성공
+    // (여기서는 errMessage==null && body!=null 이 보장됨)
+    storage.write(
+      key: "emailToken",
+      value: resData["body"]["emailToken"],
+    );
+    _timer.cancel();
+    setState(() {
+      isAuthCodeRight = true;
+      _isTimerRunning = false;
+      _codeErrorMessage = null;
+      _idErrorMessage = null;
+      isAuthButtonEnabled = false;
+    });
+    return;
   }
 
   // 닉네임 유효성 검사 함수
@@ -333,7 +334,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   }
 
   // 타이머 시작 함수: 이메일 전송 후 자동으로 3분 타이머 시작
-  void _startTimer() {
+  void startTimer() {
     setState(() {
       _isTimerRunning = true;
       _timeRemaining = 180; // 3분으로 초기화
@@ -365,7 +366,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   }
 
   // 타이머 형식 변환 함수 (초 → MM:SS)
-  String _formatTime(int seconds) {
+  String formatTime(int seconds) {
     final minutes = (seconds ~/ 60).toString().padLeft(2, '0');
     final secs = (seconds % 60).toString().padLeft(2, '0');
     return '$minutes:$secs';
@@ -440,7 +441,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       btnFunc: checkAuthCode,
                       errorMessage: _codeErrorMessage,
                       timerString:
-                          _isTimerRunning ? _formatTime(_timeRemaining) : null,
+                          _isTimerRunning ? formatTime(_timeRemaining) : null,
                       isEnabled: isAuthButtonEnabled),
                   SizedBox(
                     height: 5.h,
@@ -601,7 +602,9 @@ Row inputForm({
                 hintText: hintText,
                 errorText: errorMessage ?? successMessage,
                 errorStyle: TextStyle(
-                  color: errorMessage != null ? Colors.red : Colors.green,
+                  color: errorMessage != null
+                      ? Color(0xFFB00020)
+                      : const Color.fromARGB(255, 12, 148, 16),
                 ),
                 filled: false,
                 fillColor: Colors.white,
@@ -616,13 +619,17 @@ Row inputForm({
                 // 에러/성공 상태엔 밑줄만 그리고 컬러는 에러인지 성공인지 봐서 설정
                 errorBorder: UnderlineInputBorder(
                   borderSide: BorderSide(
-                    color: errorMessage != null ? Colors.red : Colors.green,
+                    color: errorMessage != null
+                        ? Color(0xFFB00020)
+                        : const Color.fromARGB(255, 12, 148, 16),
                     width: 1,
                   ),
                 ),
                 focusedErrorBorder: UnderlineInputBorder(
                   borderSide: BorderSide(
-                    color: errorMessage != null ? Colors.red : Colors.green,
+                    color: errorMessage != null
+                        ? Color(0xFFB00020)
+                        : const Color.fromARGB(255, 12, 148, 16),
                     width: 1.5,
                   ),
                 ),
