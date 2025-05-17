@@ -9,6 +9,8 @@ import soundfile as sf
 from app.model.inference import CNN_inference
 import app.model.utils as utils
 
+from .audioToWavConverter import decode_audio_to_wav
+
 DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 TORCH_MEL_TRANSFORM = utils.get_mel_transform("torch")
 
@@ -28,25 +30,17 @@ def split_audio_and_predict(audio_buffer:BytesIO, onset_times:list):
     margin = 0.00
     shift = 0.05 
     
+    wav_buffer = decode_audio_to_wav(audio_buffer=audio_buffer)
+
     # 전체 오디오 메모리에 로드
-    # audio_buffer.seek(0)
-    # y, sr = librosa.load(audio_buffer, sr=None)
-
-    with tempfile.NamedTemporaryFile(suffix=".aac", delete=True) as tmp:
-        tmp.write(audio_buffer.getbuffer())
-        tmp.flush()
-
-        # librosa로 로드
-        y, sr = librosa.load(tmp.name, sr=None)
+    audio_buffer.seek(0)
+    y, sr = librosa.load(wav_buffer, sr=None)
 
     predictions = []
     # 온셋별 구간 분할 및 예측
     for idx, t in enumerate(onset_times):
         start_time = max(0.0, t - margin - shift)
-        if idx < len(onset_times) - 1:
-            end_time = max(0.0, onset_times[idx + 1] - shift)
-        else:
-            end_time = len(y) / sr - shift
+        end_time = start_time + 0.25
 
         start_sample = int(start_time * sr)
         end_sample = int(end_time * sr)
