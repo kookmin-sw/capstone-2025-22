@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:capstone_2025/widgets/complete_dialog.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:capstone_2025/screens/introPages/login_screen_google.dart';
 import 'package:capstone_2025/screens/introPages/widgets/intro_page_header.dart';
@@ -291,8 +292,20 @@ class _SignUpScreenState extends State<SignUpScreen> {
       if (userInfo['errMessage'] == null) {
         await saveUserInfo(userInfo);
         if (mounted) {
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (_) => LoginScreenGoogle()),
+          await showDialog(
+            context: context,
+            builder: (BuildContext context) {
+              return CompleteDialog(
+                mainText: "회원가입이 완료되었습니다.",
+                subText: "지금 바로 로그인해보세요!",
+                onClose: () {
+                  Navigator.of(context).pop();
+                  Navigator.of(context).pushReplacement(
+                    MaterialPageRoute(builder: (_) => LoginScreenGoogle()),
+                  );
+                },
+              );
+            },
           );
         }
       } else {

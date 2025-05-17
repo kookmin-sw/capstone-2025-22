@@ -3,6 +3,7 @@ import 'dart:convert'; // JSON 인코딩 및 디코딩을 위해 필요
 import 'dart:typed_data'; // 바이트 데이터를 다루기 위해 필요
 import 'package:capstone_2025/services/api_func.dart';
 import 'package:capstone_2025/services/storage_service.dart';
+import 'package:capstone_2025/widgets/complete_dialog.dart';
 import 'package:flutter/material.dart'; // Flutter UI 요소 사용
 import 'package:http/http.dart' as http; // HTTP 요청 위해 사용
 import 'package:http_parser/http_parser.dart'; // HTTP 요청에서 파일 업로드 시 사용
@@ -251,12 +252,18 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         await _saveUserData(data['body']); // Secure Storage에 사용자 정보 저장
 
         // 메인 화면으로 이동
-        if (mounted) {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => NavigationScreens()),
-          );
-        }
+        if (!mounted) return;
+        showDialog(
+          context: context,
+          builder: (context) => CompleteDialog(
+            mainText: "회원정보 수정이 완료되었습니다.",
+            subText: "변경 사항이 저장되었습니다.",
+            onClose: () => Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => NavigationScreens()),
+            ),
+          ),
+        );
       } else {
         print('업데이트 실패: ${response.statusCode}');
       }
