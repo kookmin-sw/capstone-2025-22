@@ -130,21 +130,21 @@ class _LoginScreenState extends State<LoginScreen> {
         child: Center(
           child: Stack(
             children: [
-              Positioned(
-                top: 25.h,
-                left: 10.w,
-                child: IconButton(
-                    onPressed: () {
-                      Navigator.pushAndRemoveUntil(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => LoginScreenGoogle()),
-                        (route) => false,
-                      );
-                    },
-                    icon: Icon(Icons.arrow_back_ios,
-                        size: 14.sp, color: Color(0xff646464))),
-              ),
+              // Positioned(
+              //   top: 25.h,
+              //   left: 10.w,
+              //   child: IconButton(
+              //       onPressed: () {
+              //         Navigator.pushAndRemoveUntil(
+              //           context,
+              //           MaterialPageRoute(
+              //               builder: (context) => LoginScreenGoogle()),
+              //           (route) => false,
+              //         );
+              //       },
+              //       icon: Icon(Icons.arrow_back_ios,
+              //           size: 14.sp, color: Color(0xff646464))),
+              // ),
               Padding(
                 padding: EdgeInsets.symmetric(vertical: 20.w),
                 child: Column(
