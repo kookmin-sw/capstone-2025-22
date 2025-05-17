@@ -1,42 +1,28 @@
-import os, sys
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 
 import app.model.utils as utils
-from app.model.model import MultiCNN
 
-MAX_FRAMES = 86
+MAX_FRAMES = 86 #0.25초 기준 sr=44100, hop=128일 때의 대략적인 멜 스펙토그램의 프레임 수
+class_labels = ["KD", "SD", "CY", "TT", "HH"]  # 5개 레이블
 
-def predict_drum_sound(device, mel_transform, model_path, wav_file, pool):
-    class_labels = ["KD", "SD", "CY", "TT", "HH"]  # 5개 레이블
-    
-    # 모델 로드
-    model = MultiCNN().to(device)
-    state = torch.load(model_path, map_location=device, weights_only=True)
-    model.load_state_dict(state)
-    model.eval() #모델을 평가모드로 전환
+def predict_drum_sound(model, wav_file, mel_transform, device):
+    # 1. base64 오디오 -> 멜스펙트로그램으로 변환
+    features = utils.wav_to_mel(wav_file, mel_transform) #ex. [1=channel, 128=n_mels, T=time_frame]
 
-    # 오디오 파일(바이트 데이터 또는 파일 경로)을 멜스펙트로그램으로 변환
-    features = utils.wav_to_mel(wav_file, mel_transform) #ex. [1, 128=n_mels, T]
-    # 고정 크기 변환
-    _, _, T = features.shape
-    if T < MAX_FRAMES:
-        pad_amount = MAX_FRAMES - T
-        features = F.pad(features, (0, pad_amount))
-    
+    # 2. 고정 크기 변환
+    pool = nn.AdaptiveAvgPool2d((128, MAX_FRAMES)).to(device)
     features = pool(features)
 
-    # 모델에 입력 전에 배치 차원 추가 (학습 때는 DataLoader에서 해줌)
-    if len(features.shape) == 3:  # [채널, 높이, 너비] 형태라면
-        features = features.unsqueeze(0)  # [1, 채널, 높이, 너비]로 변환
+    # 3. 모델 입력 전, 배치 차원 추가 (학습 때는 DataLoader에서 해줌)
+    features = features.unsqueeze(0).to(device)  # [1, 채널, 높이, 너비]로 변환
 
-    features = features.to(device)
-
-    with torch.no_grad(): #학습을 위한 기울기 계산 x
-        outputs = model(features) #입력 데이터를 모델에 통과시켜 예측값 얻기
-        predictions = utils.select_one_or_two_classes(outputs)
+    # 4. 모델 추론
+    with torch.no_grad():
+        outputs = model(features)
+        predictions = utils.select_one_or_two_classes(outputs, debug=False)
     
+    # 5. 추론 결과
     predicted_labels = [] #이진 표기 예측에서 레이블 추출
     for i, pred in enumerate(predictions[0]):
         if pred.item() == 1.0:
@@ -44,11 +30,9 @@ def predict_drum_sound(device, mel_transform, model_path, wav_file, pool):
 
     return predicted_labels
 
-def CNN_inference(device, mel_transform, model_path, segment_audio):
-    pool = nn.AdaptiveAvgPool2d((128, MAX_FRAMES)).to(device)
+def CNN_inference(device, mel_transform, model, segment_audio):
     # test_audio_path = utils.wav_file_to_base64(segment_audio) #wav_path -> base64 문자열로 변환
-    
-    pred_label = predict_drum_sound(device, mel_transform, model_path, segment_audio, pool)
+    pred_label = predict_drum_sound(model, segment_audio, mel_transform, device)
 
     print(f"Predicted Drum Sound: [{pred_label}]")
     print("ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ")

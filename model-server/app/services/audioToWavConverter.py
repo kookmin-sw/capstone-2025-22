@@ -1,6 +1,5 @@
 import subprocess
 from io import BytesIO
-import librosa
 
 def decode_audio_to_wav(audio_buffer: BytesIO) -> BytesIO:
     """ffmpeg를 사용해 어떤 포맷이든 WAV로 변환"""
