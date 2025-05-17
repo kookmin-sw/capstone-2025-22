@@ -1,12 +1,13 @@
+import 'dart:async';
 import 'dart:convert';
-import 'package:capstone_2025/widgets/complete_dialog.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+
+import 'package:capstone_2025/services/api_func.dart';
+import 'package:capstone_2025/widgets/complete_dialog.dart';
+import 'package:capstone_2025/services/storage_service.dart';
 import 'package:capstone_2025/screens/introPages/login_screen_google.dart';
 import 'package:capstone_2025/screens/introPages/widgets/intro_page_header.dart';
-import 'package:capstone_2025/services/api_func.dart';
-import 'package:capstone_2025/services/storage_service.dart';
-import 'package:flutter/material.dart';
-import 'dart:async';
 
 class SignUpScreen extends StatefulWidget {
   // 회원가입 페이지
@@ -28,6 +29,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
   // Error Message들
   String? _idErrorMessage;
+  String? _idSuccessMessage; // 인증번호 전송 성공 메시지
   String? _codeErrorMessage; // 인증번호
   String? _nameErrorMessage;
   String? _pwErrorMessage;
@@ -81,104 +83,80 @@ class _SignUpScreenState extends State<SignUpScreen> {
     super.dispose();
   }
 
-  // 이메일 인증 및 인증코드 전송 로직 함수
   Future<void> emailAuth() async {
-    String value = idController.text; // 입력된 아이디(이메일) 받아오기
-    showLoadingDialog(context); // 로딩창 표시
-    setState(() {
-      isEmailButtonEnabled = false; // 인증번호 전송 버튼 중복 클릭 방지
-      _idErrorMessage = null; // 기존 오류 메시지 초기화
-      _codeErrorMessage = null; // 기존 오류 메시지 초기화
-      isLoading = true; // 로딩 중 변수 업데이트
-    });
+    final value = idController.text.trim();
 
-    setState(() {
-      if (value.isEmpty) {
-        // 이메일을 입력하지 않았을 때
-        // 모달이 떠 있는지 확인 후 닫기 (화면 전체 pop 방지)
-        if (Navigator.canPop(context)) {
-          Navigator.pop(context); // 모달만 닫기
-        } // 로딩창 닫기
+    // 1) 빈값 검사
+    if (value.isEmpty) {
+      setState(() {
         isEmailButtonEnabled = true;
         _idErrorMessage = "이메일을 입력해주세요.";
-        return;
-      }
-      // 이메일 정규 표현식
-      if (!RegExp(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$")
-          .hasMatch(value)) {
-        // 모달이 떠 있는지 확인 후 닫기 (화면 전체 pop 방지)
-        if (Navigator.canPop(context)) {
-          Navigator.pop(context); // 모달만 닫기
-        } // 로딩창 닫기
-        isEmailButtonEnabled = true;
-        _idErrorMessage = "올바른 이메일 형식이 아닙니다.";
-        return;
-      }
-    });
-    // JSON 데이터 정의
-    final Map<String, String> queryParam = {
-      // API를 통해 전달할 param
-      "email": idController.text,
-    };
-    // 이메일 존재 여부 확인
-    Map<String, dynamic> resData =
-        await getHTTP("/verification/emails", queryParam);
-    if (resData["body"] == "invalid") {
-      // 이메일이 이미 존재할 경우
-      _idErrorMessage = "이미 가입된 이메일 주소입니다."; // 이메일이 올바른 경우 메시지 출력
-      setState(() {
-        isEmailButtonEnabled = true; // 인증번호 전송 버튼 활성화
-        // 모달이 떠 있는지 확인 후 닫기 (화면 전체 pop 방지)
-        if (Navigator.canPop(context)) {
-          Navigator.pop(context); // 모달만 닫기
-        } // 로딩창 닫기
       });
-      return;
-    }
-    if (resData['errMessage'] != null) {
-      // error 발생 시
-      _idErrorMessage = resData['errMessage'];
-      // 모달이 떠 있는지 확인 후 닫기 (화면 전체 pop 방지)
-      if (Navigator.canPop(context)) {
-        Navigator.pop(context); // 모달만 닫기
-      } // 로딩창 닫기
       return;
     }
 
-    // 인증 코드 전송
-    resData = await getHTTP("/verification/auth-codes", queryParam);
-    if (resData["body"] == "valid") {
-      // 정상적인 경우
+    // 2) 형식 검사
+    final emailRegex =
+        RegExp(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$");
+    if (!emailRegex.hasMatch(value)) {
       setState(() {
-        // 모달이 떠 있는지 확인 후 닫기 (화면 전체 pop 방지)
-        if (Navigator.canPop(context)) {
-          Navigator.pop(context); // 모달만 닫기
-        } // 로딩창 닫기
-        isEmailValidate = true; // 유효성 변수 업데이트
-        isAuthButtonEnabled = true; // 인증번호 확인 버튼 활성화
-        isLoading = false; // 로딩 중 변수 업데이트
-        _idErrorMessage = "인증번호가 전송되었습니다.";
-        storage.write(key: "email", value: value); // storage에 이메일 저장
-        _startTimer(); // 타이머 시작
+        isEmailButtonEnabled = true;
+        _idErrorMessage = "올바른 이메일 형식이 아닙니다.";
       });
       return;
     }
-    if (resData['errMessage'] != null) {
-      // 모달이 떠 있는지 확인 후 닫기 (화면 전체 pop 방지)
+
+    // 3) 검증 통과 → 다이얼로그 띄우기 & 상태 갱신
+    showLoadingDialog(context);
+    setState(() {
+      isEmailButtonEnabled = false;
+      _idErrorMessage = null;
+      _codeErrorMessage = null;
+      isLoading = true;
+    });
+
+    // 4) 네트워크 호출
+    final queryParam = {"email": value};
+    try {
+      // (1) 이메일 중복 확인
+      var resData = await getHTTP("/verification/emails", queryParam);
+      if (resData["body"] == "invalid") {
+        setState(() {
+          isEmailButtonEnabled = true;
+          _idErrorMessage = "이미 가입된 이메일 주소입니다.";
+        });
+        return;
+      }
+      if (resData["errMessage"] != null) {
+        setState(() => _idErrorMessage = resData["errMessage"]);
+        return;
+      }
+
+      // (2) 인증번호 전송
+      resData = await getHTTP("/verification/auth-codes", queryParam);
+      if (resData["body"] == "valid") {
+        setState(() {
+          isEmailValidate = true;
+          isAuthButtonEnabled = true;
+          isLoading = false;
+          _idSuccessMessage = "인증번호가 전송되었습니다.";
+        });
+        _startTimer();
+        return;
+      }
+      if (resData["errMessage"] != null) {
+        setState(() => _idErrorMessage = resData["errMessage"]);
+        return;
+      }
+      if (resData["body"] == "invalid") {
+        setState(() => _idErrorMessage = "이미 가입된 이메일 주소입니다.");
+        return;
+      }
+    } finally {
+      // 5) 무조건 다이얼로그만 닫기
       if (Navigator.canPop(context)) {
-        Navigator.pop(context); // 모달만 닫기
-      } // 로딩창 닫기
-      _idErrorMessage = resData['errMessage'];
-      return;
-    }
-    if (resData["body"] == "invalid") {
-      // 모달이 떠 있는지 확인 후 닫기 (화면 전체 pop 방지)
-      if (Navigator.canPop(context)) {
-        Navigator.pop(context); // 모달만 닫기
-      } // 로딩창 닫기
-      // 이미 유효할 경우
-      _idErrorMessage = "이미 가입된 이메일 주소입니다."; // 이메일이 올바른 경우 메시지 출력
-      return;
+        Navigator.pop(context);
+      }
     }
   }
 
