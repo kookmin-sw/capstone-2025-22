@@ -1,4 +1,6 @@
 .venv
 venv
+.linux_venv
+linux_venv
 .__pycache__
 __pycache__
