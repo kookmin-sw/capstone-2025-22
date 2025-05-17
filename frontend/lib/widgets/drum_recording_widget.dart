@@ -280,7 +280,7 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
             _webSocketConnected = true;
           });
           _reconnectAttemps = 0;
-          _subscribeToTopic();
+          // _subscribeToTopic();
         },
         beforeConnect: () async => print('🌐 WebSocket 연결 시도 중...'),
         onWebSocketError: (dynamic error) {
@@ -319,11 +319,13 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
     }
   }
 
+  // 구독
   void _subscribeToTopic() {
     if (_isDisposed || _stompClient == null) return;
+    print('🛰️ [구독 경로]=/topic/onset/$_userEmail/$_identifier');
 
     _stompUnsubscribe = _stompClient!.subscribe(
-      destination: '/topic/onset/$_userEmail',
+      destination: '/topic/onset/$_userEmail/$_identifier', // 구독 경로
       callback: (frame) {
         print('🛰️ [RAW FRAME] headers=${frame.headers}, body=${frame.body}');
         if (_isDisposed) return;
@@ -568,6 +570,9 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
       setState(() => recordingStatusMessage = '식별자 획득 실패');
       return;
     }
+
+    // 식별자 획득 후 구독
+    _subscribeToTopic();
 
     try {
       // 전체 녹음 프로세스 시작
