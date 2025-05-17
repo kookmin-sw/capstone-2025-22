@@ -424,6 +424,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     btnFunc: emailAuth,
                     controller: idController,
                     errorMessage: _idErrorMessage,
+                    successMessage: _idSuccessMessage,
                     isEnabled: isEmailButtonEnabled,
                   ),
                   SizedBox(height: 25.h),
@@ -565,6 +566,7 @@ Row inputForm({
   VoidCallback? btnFunc, // 버튼 연결 함수
   TextEditingController? controller, //텍스트 컨트롤러
   String? errorMessage, // 에러메세지
+  String? successMessage, // 성공메시지 (녹색)
   bool isEnabled = true, // 버튼 사용 가능 유무
 }) {
   return Row(
@@ -597,7 +599,10 @@ Row inputForm({
               textAlign: TextAlign.left, // 입력값을 왼쪽 정렬
               decoration: InputDecoration(
                 hintText: hintText,
-                errorText: errorMessage,
+                errorText: errorMessage ?? successMessage,
+                errorStyle: TextStyle(
+                  color: errorMessage != null ? Colors.red : Colors.green,
+                ),
                 filled: false,
                 fillColor: Colors.white,
                 enabledBorder: OutlineInputBorder(
@@ -607,6 +612,19 @@ Row inputForm({
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(15),
                   borderSide: BorderSide(color: Colors.grey, width: 1.5),
+                ),
+                // 에러/성공 상태엔 밑줄만 그리고 컬러는 에러인지 성공인지 봐서 설정
+                errorBorder: UnderlineInputBorder(
+                  borderSide: BorderSide(
+                    color: errorMessage != null ? Colors.red : Colors.green,
+                    width: 1,
+                  ),
+                ),
+                focusedErrorBorder: UnderlineInputBorder(
+                  borderSide: BorderSide(
+                    color: errorMessage != null ? Colors.red : Colors.green,
+                    width: 1.5,
+                  ),
                 ),
               ),
               onChanged: (value) {
