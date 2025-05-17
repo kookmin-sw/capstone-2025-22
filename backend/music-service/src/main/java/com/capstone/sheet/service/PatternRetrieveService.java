@@ -45,7 +45,7 @@ public class PatternRetrieveService {
                 .stream()
                 .map(pattern -> {
                     List<PatternPractice> practices = patternPracticeRepository.findMaxScorePracticesByPatternId(pattern.getId(), userEmail);
-                    if(!practices.isEmpty()) return PatternResponseDto.from(pattern, Integer.parseInt(practices.get(0).getScore()));
+                    if(!practices.isEmpty()) return PatternResponseDto.from(pattern, (int) Double.parseDouble(practices.get(0).getScore()));
                     else return null;
                 }).toList();
     }
@@ -53,7 +53,7 @@ public class PatternRetrieveService {
     public List<PatternResponseDto> getPatternsByEmail(String userEmail){
         return patternRepository.findAll().stream().map(pattern -> {
             List<PatternPractice> practices = patternPracticeRepository.findMaxScorePracticesByPatternId(pattern.getId(), userEmail);
-            if(!practices.isEmpty()) return PatternResponseDto.from(pattern, Integer.parseInt(practices.get(0).getScore()));
+            if(!practices.isEmpty()) return PatternResponseDto.from(pattern, (int) Double.parseDouble(practices.get(0).getScore()));
             else return PatternResponseDto.from(pattern);
         }).toList();
     }

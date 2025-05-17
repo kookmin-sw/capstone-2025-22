@@ -72,11 +72,12 @@ public class FakePatternDataGenerator {
         return savedPatterns;
     }
 
-    public List<Boolean> getRandomBooleans(int count){
+    public List<Boolean> getRandomBooleans(int count, boolean mustBeTrue){
         Random random = new Random();
         List<Boolean> booleans = new ArrayList<>();
         for(int i=0; i<count; i++){
-            booleans.add(random.nextBoolean());
+            if(!mustBeTrue) booleans.add(random.nextBoolean());
+            else booleans.add(true);
         }
         return booleans;
     }
@@ -90,8 +91,8 @@ public class FakePatternDataGenerator {
                 String measureNumber = measureInfo.getMeasureNumber();
                 int noteCount = measureInfo.getNoteList().size();
                 int score = 0;
-                List<Boolean> beatScoringResults = getRandomBooleans(noteCount);
-                List<Boolean> finalScoringResults = getRandomBooleans(noteCount);
+                List<Boolean> beatScoringResults = getRandomBooleans(noteCount, true);
+                List<Boolean> finalScoringResults = getRandomBooleans(noteCount, true);
                 for(int i=0; i<noteCount; i++){
                     double resScore = 0;
                     double unitScore = (double) 100 / noteCount;
