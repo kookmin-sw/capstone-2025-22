@@ -17,7 +17,7 @@ import '../../services/scoring_service.dart';
 import '../../services/api_func.dart';
 import '../../widgets/drum_recording_widget.dart';
 import './widgets/cursor_widget.dart';
-import './widgets/confirmation_dialog.dart';
+import '../../widgets/confirmation_dialog.dart';
 import './practice_result_MS.dart';
 import 'playback_controller.dart';
 import 'package:capstone_2025/screens/mainPages/navigation_screens.dart';

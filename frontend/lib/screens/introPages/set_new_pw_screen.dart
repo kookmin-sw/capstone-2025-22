@@ -2,6 +2,7 @@ import 'package:capstone_2025/screens/introPages/find_pw_screen.dart';
 import 'package:capstone_2025/screens/introPages/login_screen.dart';
 import 'package:capstone_2025/screens/introPages/widgets/intro_page_header.dart';
 import 'package:capstone_2025/services/api_func.dart';
+import 'package:capstone_2025/widgets/complete_dialog.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter/material.dart';
 
@@ -188,30 +189,20 @@ class _SetNewPwScreenState extends State<SetNewPwScreen> {
                               },
                             );
                             if (response['errMessage'] == null) {
-                              if (response['status'] == 200)
-                                // 비밀번호 변경 성공
-                                showDialog(
-                                  context: context,
-                                  builder: (BuildContext context) {
-                                    return AlertDialog(
-                                      title: Text('완료'),
-                                      content: Text('비밀번호가 성공적으로 변경되었습니다.'),
-                                      actions: [
-                                        TextButton(
-                                          onPressed: () {
-                                            Navigator.of(context).pop();
-                                          },
-                                          child: Text('확인'),
-                                        ),
-                                      ],
-                                    );
-                                  },
-                                );
-                              // 로그인 화면으로 이동
-                              Navigator.pushReplacement(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (context) => LoginScreen()),
+                              if (!mounted) return;
+                              return showDialog(
+                                context: context,
+                                builder: (BuildContext context) {
+                                  return CompleteDialog(
+                                      mainText: "비밀번호 변경이 완료되었습니다.",
+                                      subText: "보안을 위해 다시 로그인 해주세요.",
+                                      onClose: () => Navigator.pushReplacement(
+                                            context,
+                                            MaterialPageRoute(
+                                                builder: (context) =>
+                                                    LoginScreen()),
+                                          ));
+                                },
                               );
                             } else {
                               print("비밀번호 재설정 실패: ${response['errMessage']}");
