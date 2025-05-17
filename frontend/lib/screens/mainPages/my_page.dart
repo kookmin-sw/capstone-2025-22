@@ -2,6 +2,7 @@ import 'package:capstone_2025/screens/introPages/find_pw_screen.dart';
 import 'package:capstone_2025/main.dart';
 import 'package:capstone_2025/screens/mainPages/edit_profile_screen.dart';
 import 'package:capstone_2025/screens/mainPages/musicsheet_detail.dart';
+import 'package:capstone_2025/screens/mainPages/navigation_screens.dart';
 import 'package:capstone_2025/services/api_func.dart';
 import 'package:capstone_2025/services/storage_service.dart';
 import 'package:flutter/material.dart';
@@ -30,7 +31,7 @@ class _MyPageState extends State<MyPage> {
   String? email;
   String? userName;
   String? accessToken;
-  String? profileImage = null;
+  String? profileImage;
 
   // 악보 기록 아이콘
   FaIcon sheetIcon = FaIcon(
@@ -137,7 +138,11 @@ class _MyPageState extends State<MyPage> {
   void _navigateToChangePassword() {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => FindPwScreen()),
+      MaterialPageRoute(
+        builder: (_) => FindPwScreen(
+          targetPage: const NavigationScreens(firstSelectedIndex: 4),
+        ),
+      ),
     );
   }
 

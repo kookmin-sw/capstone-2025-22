@@ -11,7 +11,12 @@ import 'package:capstone_2025/screens/introPages/widgets/intro_page_header.dart'
 
 /// 비밀번호 변경 전, 사용자가 이메일을 통해 본인 인증을 수행하는 화면
 class FindPwScreen extends StatefulWidget {
-  const FindPwScreen({super.key});
+  // 뒤로가기 시에 돌아갈 화면
+  final Widget? targetPage;
+  const FindPwScreen({
+    super.key,
+    this.targetPage,
+  });
 
   @override
   State<FindPwScreen> createState() => _FindPwScreenState();
@@ -211,7 +216,10 @@ class _FindPwScreenState extends State<FindPwScreen> {
         child: Center(
           child: Column(
             children: [
-              introPageHeader(title: '비밀번호 재설정', targetPage: LoginScreen()),
+              introPageHeader(
+                title: '비밀번호 재설정',
+                targetPage: widget.targetPage ?? const LoginScreen(),
+              ),
               SizedBox(height: 5.h),
               Text(
                 "본인인증을 위해 가입하신 이메일 주소로 인증번호를 발송합니다.",
