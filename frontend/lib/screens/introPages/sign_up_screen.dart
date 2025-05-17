@@ -53,6 +53,34 @@ class _SignUpScreenState extends State<SignUpScreen> {
   int _timeRemaining = 180; // 남은 시간 3분 (초 단위)
   bool _isTimerRunning = false; // 타이머가 실행 중인지 여부
 
+  @override
+  void initState() {
+    super.initState();
+    // 타이머 시작
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      // 아래 2번 mounted 검사도 함께 적용
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+
+      if (_timeRemaining > 0) {
+        setState(() {
+          _timeRemaining--;
+        });
+      } else {
+        timer.cancel();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    // 화면이 사라질 때 타이머 종료
+    _timer.cancel();
+    super.dispose();
+  }
+
   // 이메일 인증 및 인증코드 전송 로직 함수
   Future<void> emailAuth() async {
     String value = idController.text; // 입력된 아이디(이메일) 받아오기
@@ -334,6 +362,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
     });
 
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+
       if (_timeRemaining > 0) {
         // 1초마다 _timeRemaining 값을 1씩 감소
         setState(() {
@@ -341,7 +374,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
         });
       } else {
         // 시간이 0이 되면 _isTimerRunning을 false로 변경 (타이머 중지)
-        _timer.cancel();
+        timer.cancel();
         print("타이머 종료!"); // 타이머 종료 로그 추가
         setState(() {
           _isTimerRunning = false;
