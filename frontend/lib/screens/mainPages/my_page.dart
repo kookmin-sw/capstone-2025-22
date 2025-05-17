@@ -35,6 +35,7 @@ class _MyPageState extends State<MyPage> {
   // 악보 기록 아이콘
   FaIcon sheetIcon = FaIcon(
     FontAwesomeIcons.fileLines,
+    color: const Color(0xff646464),
     size: 25,
   );
 

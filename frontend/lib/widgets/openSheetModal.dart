@@ -21,7 +21,7 @@ Future<void> openMusicSheet({
   showDialog(
     context: context,
     builder: (_) => Dialog(
-      insetPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 0),
+      insetPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 20),
       backgroundColor: Colors.white,
       child: LayoutBuilder(
         builder: (context, constraints) {
@@ -64,9 +64,9 @@ Future<void> openMusicSheet({
           // 모드에 따라 가운데 정렬 or 풀스크린
           Widget content = isPatternMode
               ? Center(
-                  child: SizedBox(
-                    width: constraints.maxWidth * 0.8,
-                    height: constraints.maxHeight * 0.8,
+                  child: FractionallySizedBox(
+                    widthFactor: 0.9,
+                    heightFactor: 0.9,
                     child: webview,
                   ),
                 )

@@ -676,12 +676,20 @@ class _SheetListScreenState extends State<SheetListScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Icon(Icons.library_music, color: Colors.black54),
+            Icon(
+              Icons.library_music,
+              color: const Color(0xFF646464),
+              size: 9.sp,
+            ),
             SizedBox(width: 5.w),
             Text(
               '악보 목록',
-              style: TextStyle(color: Colors.black87),
+              style: TextStyle(
+                  color: const Color(0xFF646464),
+                  fontSize: 9.sp,
+                  fontWeight: FontWeight.w800),
             ),
           ],
         ),
@@ -1087,7 +1095,9 @@ class _SheetListScreenState extends State<SheetListScreen> {
                       child: Text(
                         '정렬',
                         style: TextStyle(
-                            fontSize: 7.sp, fontWeight: FontWeight.bold),
+                            fontSize: 7.sp,
+                            color: const Color(0xff646464),
+                            fontWeight: FontWeight.bold),
                       ),
                     ),
                   ),
@@ -1134,6 +1144,7 @@ class _SheetListScreenState extends State<SheetListScreen> {
     final isSelected = _selectedSort == option;
 
     return ListTile(
+      contentPadding: EdgeInsets.symmetric(horizontal: 10.w),
       title: Text(
         label,
         style: TextStyle(

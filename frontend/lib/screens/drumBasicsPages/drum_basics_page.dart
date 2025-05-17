@@ -73,7 +73,7 @@ class _DrumBasicsPageState extends State<DrumBasicsPage> {
                   fontWeight: FontWeight.w800),
             ),
           ),
-
+          SizedBox(height: 25.h),
           // 카드 리스트
           Expanded(
             child: ListView.builder(

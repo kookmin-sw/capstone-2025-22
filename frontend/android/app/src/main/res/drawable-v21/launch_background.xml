@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:drawable="@color/launch_color" />
     <item>
-        <bitmap android:gravity="fill" android:src="@drawable/background"/>
+        <bitmap android:gravity="center" android:src="@mipmap/intro_logo" />
     </item>
 </layer-list>

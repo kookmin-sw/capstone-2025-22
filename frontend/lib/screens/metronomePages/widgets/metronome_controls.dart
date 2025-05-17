@@ -416,11 +416,14 @@ class _MetronomeControlsState extends ConsumerState<MetronomeControls> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text(
-                    'BPM',
-                    style: TextStyle(
-                      fontSize: 9.sp,
-                      fontWeight: FontWeight.w400,
+                  Padding(
+                    padding: EdgeInsets.only(bottom: 5.h),
+                    child: Text(
+                      'BPM',
+                      style: TextStyle(
+                        fontSize: 9.sp,
+                        fontWeight: FontWeight.w400,
+                      ),
                     ),
                   ),
                   Row(

@@ -446,6 +446,7 @@ class _DrumSheetPlayerState extends State<DrumSheetPlayer> {
                     padding:
                         EdgeInsets.symmetric(horizontal: 5.w, vertical: 20.h),
                     child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         // 🎵 상단 컨트롤 바 (홈버튼, 제목, 재생, 속도)
                         SizedBox(
@@ -730,89 +731,17 @@ class _DrumSheetPlayerState extends State<DrumSheetPlayer> {
                             ],
                           ),
                         ),
-                        SizedBox(height: 35.h),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            // 현재 줄 악보
-                            Container(
-                              height: imageHeight,
-                              margin: EdgeInsets.only(
-                                  bottom: 12.h), // 현재 줄과 다음 줄 간격
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(5),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withOpacity(0.08),
-                                    blurRadius: 6,
-                                    offset: Offset(0, 4),
-                                  ),
-                                ],
-                              ),
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(5),
-                                child: LayoutBuilder(
-                                  builder: (context, constraints) {
-                                    // 실제 악보가 그려지는 폭
-                                    final displayWidth = constraints.maxWidth;
-                                    return Stack(
-                                      children: [
-                                        for (final missed in playbackController
-                                            .missedCursors
-                                            .where((c) =>
-                                                c.lineIndex ==
-                                                playbackController.currentPage))
-                                          CursorWidget(
-                                            cursor: missed,
-                                            imageWidth: displayWidth,
-                                            height: imageHeight,
-                                            decoration: BoxDecoration(
-                                              color: const Color(0xFFE1E1E1),
-                                              borderRadius:
-                                                  BorderRadius.circular(4),
-                                            ),
-                                          ),
-                                        // 재생했거나 재생 중이거나 재생 끝난 뒤에도(=paused 상태 포함) 커서 계속 표시
-                                        if (playbackController.currentDuration >
-                                                Duration.zero ||
-                                            playbackController.isPlaying ||
-                                            playbackController
-                                                    .currentDuration >=
-                                                playbackController
-                                                    .totalDuration)
-                                          CursorWidget(
-                                            cursor: playbackController
-                                                .currentCursor,
-                                            imageWidth: displayWidth,
-                                            height: imageHeight,
-                                          ),
-                                        if (playbackController
-                                                .currentLineImage !=
-                                            null)
-                                          Image.memory(
-                                            playbackController
-                                                .currentLineImage!,
-                                            width: displayWidth,
-                                            height: imageHeight,
-                                            fit: BoxFit.fitWidth,
-                                            gaplessPlayback: true,
-                                          ),
-                                      ],
-                                    );
-                                  },
-                                ),
-                              ),
-                            ),
-
-                            // 👀 다음 줄 미리보기
-                            if (playbackController.nextLineImage != null)
+                        SizedBox(height: 20.h),
+                        Expanded(
+                          child: Column(
+                            children: [
+                              // 현재 줄 악보
                               Container(
                                 height: imageHeight,
-                                margin: EdgeInsets.only(bottom: 5.h),
+                                margin: EdgeInsets.only(
+                                    bottom: 12.h), // 현재 줄과 다음 줄 간격
                                 decoration: BoxDecoration(
-                                  // 흰색의 100% → 예: 80% 불투명(20% 투명)으로 조절
-                                  color: Colors.white.withOpacity(0.8),
+                                  color: Colors.white,
                                   borderRadius: BorderRadius.circular(5),
                                   boxShadow: [
                                     BoxShadow(
@@ -824,28 +753,100 @@ class _DrumSheetPlayerState extends State<DrumSheetPlayer> {
                                 ),
                                 child: ClipRRect(
                                   borderRadius: BorderRadius.circular(5),
-                                  child: Opacity(
-                                    // 악보만 50% 투명
-                                    opacity: 0.5,
-                                    child: Image.memory(
-                                      playbackController.nextLineImage!,
-                                      width: double.infinity,
-                                      height: imageHeight,
-                                      fit: BoxFit.fitWidth,
-                                      gaplessPlayback: true,
-                                    ),
+                                  child: LayoutBuilder(
+                                    builder: (context, constraints) {
+                                      // 실제 악보가 그려지는 폭
+                                      final displayWidth = constraints.maxWidth;
+                                      return Stack(
+                                        children: [
+                                          for (final missed
+                                              in playbackController
+                                                  .missedCursors
+                                                  .where((c) =>
+                                                      c.lineIndex ==
+                                                      playbackController
+                                                          .currentPage))
+                                            CursorWidget(
+                                              cursor: missed,
+                                              imageWidth: displayWidth,
+                                              height: imageHeight,
+                                              decoration: BoxDecoration(
+                                                color: const Color(0xFFE1E1E1),
+                                                borderRadius:
+                                                    BorderRadius.circular(4),
+                                              ),
+                                            ),
+                                          // 재생했거나 재생 중이거나 재생 끝난 뒤에도(=paused 상태 포함) 커서 계속 표시
+                                          if (playbackController
+                                                      .currentDuration >
+                                                  Duration.zero ||
+                                              playbackController.isPlaying ||
+                                              playbackController
+                                                      .currentDuration >=
+                                                  playbackController
+                                                      .totalDuration)
+                                            CursorWidget(
+                                              cursor: playbackController
+                                                  .currentCursor,
+                                              imageWidth: displayWidth,
+                                              height: imageHeight,
+                                            ),
+                                          if (playbackController
+                                                  .currentLineImage !=
+                                              null)
+                                            Image.memory(
+                                              playbackController
+                                                  .currentLineImage!,
+                                              width: displayWidth,
+                                              height: imageHeight,
+                                              fit: BoxFit.fitWidth,
+                                              gaplessPlayback: true,
+                                            ),
+                                        ],
+                                      );
+                                    },
                                   ),
                                 ),
                               ),
-                          ],
+                              // 👀 다음 줄 미리보기
+                              if (playbackController.nextLineImage != null)
+                                Container(
+                                  height: imageHeight,
+                                  margin: EdgeInsets.only(bottom: 5.h),
+                                  decoration: BoxDecoration(
+                                    // 흰색의 100% → 예: 80% 불투명(20% 투명)으로 조절
+                                    color: Colors.white.withOpacity(0.8),
+                                    borderRadius: BorderRadius.circular(5),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withOpacity(0.08),
+                                        blurRadius: 6,
+                                        offset: Offset(0, 4),
+                                      ),
+                                    ],
+                                  ),
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(5),
+                                    child: Opacity(
+                                      // 악보만 50% 투명
+                                      opacity: 0.5,
+                                      child: Image.memory(
+                                        playbackController.nextLineImage!,
+                                        width: double.infinity,
+                                        height: imageHeight,
+                                        fit: BoxFit.fitWidth,
+                                        gaplessPlayback: true,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
                         ),
-
-                        SizedBox(height: 40.h), // 악보와 진행 바 사이 간격
 
                         // 📊 진행 바 + 시간 Row
                         Padding(
-                          padding:
-                              EdgeInsets.symmetric(horizontal: 50.w), // 좌우 마진
+                          padding: EdgeInsets.fromLTRB(50.w, 0, 50.w, 15.h),
                           child: Row(
                             children: [
                               // 현재 재생 시간
