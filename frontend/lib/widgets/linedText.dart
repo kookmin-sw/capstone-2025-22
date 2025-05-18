@@ -7,7 +7,7 @@ Widget linedText(String text, double fontSize, Color borderColor,
     children: [
       Text(
         text,
-        maxLines: 1, // 한 줄만 보여주고
+        maxLines: 2, // 한 줄만 보여주고
         overflow: TextOverflow.ellipsis, // 뒤에 … 처리
         style: TextStyle(
           fontSize: fontSize,
@@ -22,7 +22,7 @@ Widget linedText(String text, double fontSize, Color borderColor,
       ),
       Text(
         text,
-        maxLines: 1, // 한 줄만 보여주고
+        maxLines: 2, // 한 줄만 보여주고
         overflow: TextOverflow.ellipsis, // 뒤에 … 처리
         style: TextStyle(
           fontSize: fontSize,

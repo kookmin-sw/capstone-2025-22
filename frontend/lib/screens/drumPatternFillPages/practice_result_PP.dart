@@ -115,15 +115,15 @@ class _PracticeResultPPState extends State<PracticeResultPP> {
                                               // 성공 여부 텍스트
                                               children: [
                                                 SizedBox(
+                                                  // height: 90.h,
                                                   child: linedText(
-                                                      "[1차 채점] Basic Pattern $idx",
+                                                      "[1차 채점]\nBasic Pattern $idx",
                                                       12.sp,
                                                       Colors.black
                                                           .withOpacity(0.3),
                                                       Colors.white,
                                                       7),
                                                 ),
-                                                SizedBox(height: 10.h),
                                                 lvCleared
                                                     ? Stack(children: [
                                                         Text(

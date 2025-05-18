@@ -184,14 +184,13 @@ class _PracticeResultMSState extends State<PracticeResultMS> {
                                               children: [
                                                 SizedBox(
                                                   child: linedText(
-                                                      "[1차 채점] $musicTitle",
+                                                      "[1차 채점]\n$musicTitle",
                                                       12.sp,
                                                       Colors.black
                                                           .withOpacity(0.3),
                                                       Colors.white,
                                                       7),
                                                 ),
-                                                SizedBox(height: 10.h),
                                                 resultKeyword(score),
                                               ],
                                             ),
