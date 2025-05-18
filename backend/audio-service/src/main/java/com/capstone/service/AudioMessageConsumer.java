@@ -48,6 +48,7 @@ public class AudioMessageConsumer {
         OnsetMatchResult matchResult = practiceResultResolver.matchOnset(onsetResponse, measureInfo, weight);
         matchResult.setMeasureNumber(measureNumber);
         onsetMeasureData.setOnsetMatchResult(matchResult);
+        log.info("[onset match] {}", matchResult);
         String destination = String.format("/topic/onset/%s/%s", email, identifier);
         messagingTemplate.convertAndSend(destination, matchResult);
         return onsetMeasureData;
