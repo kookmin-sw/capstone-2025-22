@@ -41,7 +41,11 @@ class NavigationPanel extends StatelessWidget {
             _navItem(FaIcon(FontAwesomeIcons.drum), "드럼 기초", 0),
             _navItem(FaIcon(FontAwesomeIcons.handsClapping), "메트로놈", 1),
             _navItem(FaIcon(FontAwesomeIcons.music), "패턴 및 필인 연습", 2),
-            _navItem(FaIcon(FontAwesomeIcons.sliders), "악보 연습", 3),
+            _navItem(
+              Icon(Icons.queue_music_rounded, size: 13.sp),
+              "악보 연습",
+              3,
+            ),
             _navItem(FaIcon(FontAwesomeIcons.circleUser), "마이페이지", 4),
           ],
         ),
