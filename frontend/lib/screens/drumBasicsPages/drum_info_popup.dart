@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 
 /// 드럼 기초 팝업 창
 class DrumInfoPopup extends StatefulWidget {
@@ -158,10 +159,11 @@ class _DrumInfoPopupState extends State<DrumInfoPopup> {
   Padding _buildDescription() {
     return Padding(
       padding: const EdgeInsets.fromLTRB(10, 10, 30, 10), // 여백 추가
-      child: Text(
-        widget.description, // 전달받은 설명 텍스트 사용
-        style: TextStyle(fontSize: 7.5.sp, color: Color(0xff646464)),
-        textAlign: TextAlign.center, // 가운데 정렬
+      child: MarkdownBody(
+        data: widget.description,
+        styleSheet: MarkdownStyleSheet.fromTheme(Theme.of(context)).copyWith(
+          p: TextStyle(fontSize: 7.5.sp, color: Color(0xff646464)),
+        ),
       ),
     );
   }
