@@ -113,7 +113,7 @@ class _SheetListScreenState extends State<SheetListScreen> {
     final sheetMeta = jsonEncode({
       'sheetName': title,
       'artistName': artist,
-      'color': '#646464',
+      'color': '#BEBEBE',
       'userEmail': userEmail,
       'fileExtension': 'pdf',
       'owner': true,
