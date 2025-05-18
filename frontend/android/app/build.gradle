@@ -5,11 +5,11 @@ plugins {
 }
 
 android {
-    namespace "com.example.capstone_2025"
+    namespace "com.capstone_2025.letmedrum"
     compileSdkVersion 35
 
     defaultConfig {
-        applicationId "com.example.capstone_2025"
+        applicationId "com.capstone_2025.letmedrum"
         minSdkVersion 24
         targetSdkVersion 35
         versionCode 1
