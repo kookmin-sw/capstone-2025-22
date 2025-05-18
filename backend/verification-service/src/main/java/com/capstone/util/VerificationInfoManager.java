@@ -10,11 +10,10 @@ import reactor.core.publisher.Mono;
 
 @Component
 public class VerificationInfoManager {
-    @Value("${verification.email-token-expire}")
-    public static int EMAIL_TOKEN_EXPIRE;
-    @Value("${verification.auth-code-expire}")
-    public static int AUTH_CODE_EXPIRE;
+    public static int EMAIL_TOKEN_EXPIRE = 1000000;
+    public static int AUTH_CODE_EXPIRE = 1000000;
     private final RedisSingleDataServiceImpl redisSingleDataService;
+
     public VerificationInfoManager(RedisSingleDataServiceImpl redisSingleDataService) {
         this.redisSingleDataService = redisSingleDataService;
     }

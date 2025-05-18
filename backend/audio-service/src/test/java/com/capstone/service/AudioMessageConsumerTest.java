@@ -2,6 +2,7 @@ package com.capstone.service;
 
 import com.capstone.client.AudioModelClient;
 import com.capstone.client.MusicClientService;
+import com.capstone.config.EmbeddedKafkaConfig;
 import com.capstone.config.EmbeddedRedisConfig;
 import com.capstone.constants.DrumInstrument;
 import com.capstone.dto.AudioMessageDto;
@@ -11,10 +12,12 @@ import com.capstone.dto.musicXml.NoteInfo;
 import com.capstone.dto.musicXml.PitchInfo;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.context.annotation.Import;
+import org.springframework.kafka.test.EmbeddedKafkaBroker;
 import org.springframework.kafka.test.context.EmbeddedKafka;
 import org.springframework.test.context.ActiveProfiles;
 import reactor.core.publisher.Mono;
@@ -30,8 +33,7 @@ import static com.capstone.dto.sheet.MusicServiceClientDto.*;
 
 @SpringBootTest
 @ActiveProfiles({"test", "webclient", "redis"})
-@Import(EmbeddedRedisConfig.class)
-@EmbeddedKafka(partitions = 1, controlledShutdown = true)
+@Import({EmbeddedKafkaConfig.class, EmbeddedRedisConfig.class})
 class AudioMessageConsumerTest {
     @SpyBean
     AudioMessageConsumer audioMessageConsumer;
@@ -120,7 +122,7 @@ class AudioMessageConsumerTest {
         when(musicClientService.saveMeasureScoreInfo(any(SheetPracticeCreateRequest.class))).thenReturn(Mono.just(true));
         // when && then
         assertDoesNotThrow(() -> {
-            audioMessageConsumer.sendAudioConversionResult(messageDto);
+            audioMessageConsumer.sendAudioConversionResult(messageDto).block();
             verify(musicClientService, times(1)).getMeasureInfo(userSheetId, measureNumber);
             verify(audioModelClient, times(1)).getOnsetFromWav(any(OnsetRequestDto.class));
             verify(audioModelClient, times(1)).getDrumPredictions(any(DrumPredictRequest.class));
@@ -154,7 +156,7 @@ class AudioMessageConsumerTest {
         when(musicClientService.saveMeasureScoreInfo(any(SheetPracticeCreateRequest.class))).thenReturn(Mono.just(true));
         // when && then
         assertDoesNotThrow(() -> {
-            audioMessageConsumer.sendAudioConversionResult(messageDto);
+            audioMessageConsumer.sendAudioConversionResult(messageDto).block();
             verify(musicClientService, times(1)).getMeasureInfo(userSheetId, measureNumber);
             verify(audioModelClient, times(1)).getOnsetFromWav(any(OnsetRequestDto.class));
             verify(audioModelClient, times(1)).getDrumPredictions(any(DrumPredictRequest.class));

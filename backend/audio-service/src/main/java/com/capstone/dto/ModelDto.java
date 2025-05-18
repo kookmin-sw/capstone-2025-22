@@ -17,6 +17,10 @@ public class ModelDto {
         public static OnsetRequestDto fromMessageDto(AudioMessageDto dto){
             return new OnsetRequestDto(dto.getMessage());
         }
+
+        public static OnsetRequestDto fromPatternMessage(PatternMessageDto dto){
+            return new OnsetRequestDto(dto.getAudioBase64());
+        }
     }
 
     @Data

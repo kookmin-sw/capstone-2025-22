@@ -1,5 +1,6 @@
 package com.capstone.config;
 
+import com.capstone.dto.musicXml.MeasureInfo;
 import com.capstone.dto.musicXml.PartInfo;
 import com.capstone.dto.score.FinalMeasureResult;
 import com.capstone.practice.entity.SheetPractice;
@@ -9,7 +10,6 @@ import com.capstone.sheet.entity.UserSheet;
 import com.capstone.sheet.repository.SheetRepository;
 import com.capstone.sheet.repository.UserSheetRepository;
 import com.capstone.sheet.service.SheetXmlInfoParser;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.javafaker.Faker;
 import jakarta.annotation.PostConstruct;
@@ -19,17 +19,13 @@ import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.stereotype.Component;
 
 import java.io.InputStream;
-import java.nio.file.Files;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
-import java.util.UUID;
+import java.util.*;
 
 @Component
 @Profile("dev")
 @RequiredArgsConstructor
-public class FakeDataGenerator {
+public class FakeSheetDataGenerator {
     private final SheetRepository sheetRepository;
     private final UserSheetRepository userSheetRepository;
     private final SheetPracticeRepository sheetPracticeRepository;
@@ -48,11 +44,13 @@ public class FakeDataGenerator {
                 .getInputStream()) {
             sheetXml = inputStream.readAllBytes();
         }
-        String sheetJson = objectMapper.writeValueAsString(sheetXmlInfoParser.parseXmlInfo(sheetXml));
+        List<PartInfo> sheetPureJson = sheetXmlInfoParser.parseXmlInfo(sheetXml);
+        String practiceJson = getPracticeInfo(sheetPureJson);
+        String sheetJson = objectMapper.writeValueAsString(sheetPureJson);
         String testUser = "test@test.com";
         List<Sheet> sheets = generateSheets(faker, sheetXml, sheetJson, 10);
         List<UserSheet> userSheets = generateUserSheets(faker, sheets, testUser);
-        generateSheetPractices(faker, userSheets, 10, testUser);
+        generateSheetPractices(faker, userSheets, practiceJson,10, testUser);
     }
     /**
      * generate fake data for sheets
@@ -94,30 +92,61 @@ public class FakeDataGenerator {
     /**
     * generate fake sheet practices
     * */
-    public void generateSheetPractices(Faker faker, List<UserSheet> userSheets, int countPerSheet, String testUser) throws Exception{
-        FinalMeasureResult finalMeasureResult = FinalMeasureResult.builder()
-                .score((double) faker.number().numberBetween(1, 100))
-                .beatScoringResults(List.of(true, true, true, true, true))
-                .finalScoringResults(List.of(true, true, true, true, true)).build();
+    public void generateSheetPractices(
+            Faker faker,
+            List<UserSheet> userSheets,
+            String practiceJson,
+            int countPerSheet,
+            String testUser) throws Exception{
         for(UserSheet userSheet: userSheets){
             for(int i=0; i<countPerSheet; i++){
-                int measureNumber = 1;
-                List<FinalMeasureResult> finalMeasureResults = new ArrayList<>();
-                for(int j=0; j<10; j++){
-                    finalMeasureResult.setMeasureNumber(Integer.toString(measureNumber++));
-                    finalMeasureResults.add(finalMeasureResult);
-                }
-                String practiceInfo = new ObjectMapper().writeValueAsString(finalMeasureResults);
                 sheetPracticeRepository.save(
                         SheetPractice.builder()
                                 .userSheet(userSheet)
                                 .score(faker.number().numberBetween(1, 100))
-                                .practiceInfo(practiceInfo)
+                                .practiceInfo(practiceJson)
                                 .userEmail(testUser)
                                 .createdDate(LocalDateTime.now())
                                 .build()
                 );
             }
         }
+    }
+
+    public List<Boolean> getRandomBooleans(int count){
+        Random random = new Random();
+        List<Boolean> booleans = new ArrayList<>();
+        for(int i=0; i<count; i++){
+            booleans.add(random.nextBoolean());
+        }
+        return booleans;
+    }
+
+    public String getPracticeInfo(List<PartInfo> sheetPureJson) throws Exception {
+        List<FinalMeasureResult> finalMeasureResults = new ArrayList<>();
+        for(PartInfo partInfo: sheetPureJson){
+            for(MeasureInfo measureInfo : partInfo.getMeasureList()){
+                String measureNumber = measureInfo.getMeasureNumber();
+                int noteCount = measureInfo.getNoteList().size();
+                int score = 0;
+                List<Boolean> beatScoringResults = getRandomBooleans(noteCount);
+                List<Boolean> finalScoringResults = getRandomBooleans(noteCount);
+                for(int i=0; i<noteCount; i++){
+                    double resScore = 0;
+                    double unitScore = (double) 100 / noteCount;
+                    if(beatScoringResults.get(i)) resScore += (unitScore * 0.7);
+                    if(finalScoringResults.get(i)) resScore += (unitScore * 0.3);
+                    score += (int) resScore;
+                }
+                FinalMeasureResult finalMeasureResult = FinalMeasureResult.builder()
+                        .beatScoringResults(beatScoringResults)
+                        .finalScoringResults(finalScoringResults)
+                        .score((double) score)
+                        .measureNumber(measureNumber)
+                        .build();
+                finalMeasureResults.add(finalMeasureResult);
+            }
+        }
+        return objectMapper.writeValueAsString(finalMeasureResults);
     }
 }

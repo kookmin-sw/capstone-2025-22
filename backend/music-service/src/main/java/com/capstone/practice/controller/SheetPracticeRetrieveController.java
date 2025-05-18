@@ -6,6 +6,7 @@ import com.capstone.practice.dto.SheetPracticeResponseDto;
 import com.capstone.practice.service.SheetPracticeRetrieveService;
 import com.capstone.response.ApiResponse;
 import com.capstone.response.CustomResponseDto;
+import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -27,6 +28,7 @@ public class SheetPracticeRetrieveController {
      * @return 악보 연습 목록 반환
     * */
     @GetMapping("/{userSheetId}/practices")
+    @Operation(summary = "get practice by user's sheet id")
     private ResponseEntity<CustomResponseDto<List<SheetPracticeResponseDto>>> getPractices(
             @PathVariable("userSheetId") int userSheetId,
             @RequestParam("pageSize") int pageSize,
@@ -41,6 +43,7 @@ public class SheetPracticeRetrieveController {
      * @return 악보 연습 상세 정보 반환
     * */
     @GetMapping("/practices/{practiceId}")
+    @Operation(summary = "get practice by sheet practice id")
     private ResponseEntity<CustomResponseDto<SheetPracticeDetailResponseDto>> getDetailPractice(@PathVariable("practiceId") int practiceId) {
         SheetPracticeDetailResponseDto res = sheetPracticeRetrieveService.getDetailSheetPracticeRecord(practiceId);
         return ApiResponse.success(res);
@@ -52,6 +55,7 @@ public class SheetPracticeRetrieveController {
      * @return 악보 대표 연습 정보 반환
     * */
     @GetMapping("/{userSheetId}/practices/representative")
+    @Operation(summary = "get representative practice record of specific sheet")
     private ResponseEntity<CustomResponseDto<SheetPracticeRepresentResponse>> getRepresentativePractice(
             @PathVariable("userSheetId") int userSheetId,
             @RequestParam("email") String email) {
@@ -64,6 +68,7 @@ public class SheetPracticeRetrieveController {
      * @return 악보 대표 연습 정보 목록
     * */
     @GetMapping("/practices/representative")
+    @Operation(summary = "get all user's sheet representative practice record by email")
     public ResponseEntity<CustomResponseDto<List<SheetPracticeRepresentResponse>>> getRepresentativePractices(@RequestParam("email") String email){
         List<SheetPracticeRepresentResponse> res = sheetPracticeRetrieveService.getRepresentSheetPractices(email);
         return ApiResponse.success(res);
