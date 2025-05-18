@@ -167,7 +167,7 @@ class _CountdownPageState extends State<CountdownPage>
       duration: const Duration(milliseconds: 500),
     );
     _overlayAnimation =
-        Tween<double>(begin: 0.0, end: 1.0).animate(_overlayController);
+        Tween<double>(begin: 0.0, end: 7.0).animate(_overlayController);
 
     // 오디오 플레이어 초기화
     _audioPlayer = ap.AudioPlayer();
@@ -1089,12 +1089,17 @@ class _CountdownPageState extends State<CountdownPage>
               child: Container(
                 color: Colors.black.withValues(alpha: 0.9),
                 alignment: Alignment.center,
-                child: Text(
-                  '시범 연주를 시작하겠습니다',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 12.sp,
-                    fontWeight: FontWeight.bold,
+                child: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 24.w),
+                  child: Text(
+                    '시범 연주 및 연습 중에는 중간에 멈출 수 없습니다.\n시범 연주 시작 후 3초 뒤에 연습이 자동으로 시작됩니다.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 10.sp,
+                      fontWeight: FontWeight.w600,
+                      height: 1.4,
+                    ),
                   ),
                 ),
               ),
