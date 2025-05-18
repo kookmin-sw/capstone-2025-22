@@ -116,7 +116,7 @@ class _PracticeResultPPState extends State<PracticeResultPP> {
                                               children: [
                                                 SizedBox(
                                                   child: linedText(
-                                                      "Basic Pattern $idx",
+                                                      "[1차 채점] Basic Pattern $idx",
                                                       12.sp,
                                                       Colors.black
                                                           .withOpacity(0.3),
