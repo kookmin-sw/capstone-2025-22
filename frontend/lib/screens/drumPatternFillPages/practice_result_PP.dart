@@ -305,8 +305,15 @@ class _PracticeResultPPState extends State<PracticeResultPP> {
                                                     255, 196, 213, 237),
                                                 btnIcon: Icons.list,
                                                 clickedFunc: () {
-                                                  Navigator.of(context)
-                                                      .pop(widget.score);
+                                                  Navigator.pushReplacement(
+                                                    context,
+                                                    MaterialPageRoute(
+                                                      builder: (context) =>
+                                                          NavigationScreens(
+                                                        firstSelectedIndex: 2,
+                                                      ),
+                                                    ),
+                                                  );
                                                 },
                                               ),
                                             ),

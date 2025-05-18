@@ -17,7 +17,6 @@ class PatternFillMain extends StatefulWidget {
 class _PatternFillMainState extends State<PatternFillMain> {
   bool _isLoading = true;
   List<Widget> _patternWidgets = [];
-  Map<int, int> _patternScores = {}; // key: level index, value: 최고 점수
 
   @override
   void initState() {
@@ -168,22 +167,11 @@ class _PatternFillMainState extends State<PatternFillMain> {
                     ),
                     onPressed: () {
                       Navigator.of(context).pop();
-                      Navigator.of(context)
-                          .push<int>(
+                      Navigator.of(context).push(
                         MaterialPageRoute(
                           builder: (context) => PatternFillScreen(index: index),
                         ),
-                      )
-                          .then((newScore) {
-                        if (newScore != null) {
-                          final old = _patternScores[index] ?? 0;
-                          if (newScore > old) {
-                            setState(() {
-                              _patternScores[index] = newScore;
-                            });
-                          }
-                        }
-                      });
+                      );
                     },
                     child: modalBtn(context, '확인', Color(0xffD97D6C), false),
                   ),
