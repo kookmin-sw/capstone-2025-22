@@ -56,16 +56,19 @@ class SheetCard extends StatelessWidget {
           ),
         ),
         SizedBox(height: 8.h),
-        Text(
-          sheet.title,
-          style: TextStyle(
-            fontSize: 6.sp,
-            fontWeight: FontWeight.w800,
-            color: const Color(0xFF646464),
+        Tooltip(
+          message: sheet.title, // 롱프레스/호버 시 전체 텍스트 표시
+          child: Text(
+            sheet.title,
+            style: TextStyle(
+              fontSize: 6.sp,
+              fontWeight: FontWeight.w800,
+              color: const Color(0xFF646464),
+            ),
+            textAlign: TextAlign.center,
+            maxLines: 1, // 한 줄만 보여주고
+            overflow: TextOverflow.ellipsis, // 뒤에 … 처리
           ),
-          textAlign: TextAlign.center,
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
         ),
         Text(
           '${sheet.createdDate.year}.${sheet.createdDate.month.toString().padLeft(2, '0')}.${sheet.createdDate.day.toString().padLeft(2, '0')}',

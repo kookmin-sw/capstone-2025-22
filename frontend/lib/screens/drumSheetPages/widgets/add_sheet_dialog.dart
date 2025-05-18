@@ -124,17 +124,18 @@ class _AddSheetDialogState extends State<AddSheetDialog> {
           '악보 파일 업로드',
           style: TextStyle(
             fontSize: 7.sp,
-            fontWeight: FontWeight.w600,
-            color: Colors.black87,
+            fontWeight: FontWeight.w800,
+            color: const Color(0xff646464),
           ),
           textAlign: TextAlign.center,
         ),
-        SizedBox(height: 5.h),
+        SizedBox(height: 4.h),
         Text(
           '연주할 악보 PDF 파일을 선택해주세요.',
           style: TextStyle(
-            fontSize: 5.sp,
-            color: Colors.black54,
+            fontSize: 6.sp,
+            fontWeight: FontWeight.w400,
+            color: const Color(0xFF646464),
           ),
           textAlign: TextAlign.center,
         ),
@@ -166,8 +167,7 @@ class _AddSheetDialogState extends State<AddSheetDialog> {
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                      color: const Color.fromARGB(255, 149, 148, 148)),
+                  border: Border.all(color: const Color(0xFFBEBEBE)),
                 ),
                 child: Row(
                   children: [
@@ -176,7 +176,7 @@ class _AddSheetDialogState extends State<AddSheetDialog> {
                       color: Color(0xFFE57373),
                       size: 10.sp,
                     ),
-                    SizedBox(width: 7.w),
+                    SizedBox(width: 4.w),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -185,16 +185,17 @@ class _AddSheetDialogState extends State<AddSheetDialog> {
                           Text(
                             '${_sheetNameController.text}.pdf',
                             style: TextStyle(
+                              fontWeight: FontWeight.w600,
                               fontSize: 5.5.sp,
-                              color: Colors.black87,
+                              color: const Color(0xFF646464),
                             ),
                           ),
-                          SizedBox(height: 5.h),
+                          SizedBox(height: 3.h),
                           Text(
                             _fileSize,
                             style: TextStyle(
                               fontSize: 4.8.sp,
-                              color: Colors.black38,
+                              color: const Color(0xFF949494),
                               letterSpacing: -0.5,
                               height: 1,
                             ),
@@ -206,7 +207,7 @@ class _AddSheetDialogState extends State<AddSheetDialog> {
                       onTap: _clearSelectedFile,
                       child: Icon(
                         Icons.delete,
-                        color: Colors.black38,
+                        color: const Color(0xFFBEBEBE),
                         size: 9.sp,
                       ),
                     ),
@@ -247,7 +248,7 @@ class _AddSheetDialogState extends State<AddSheetDialog> {
         SizedBox(height: 24.h),
         Container(
           decoration: BoxDecoration(
-            border: Border.all(color: const Color(0xFFD5D5D5)),
+            border: Border.all(color: const Color(0xFFBEBEBE)),
             borderRadius: BorderRadius.circular(8),
           ),
           child: TextField(
@@ -307,7 +308,7 @@ class _AddSheetDialogState extends State<AddSheetDialog> {
         SizedBox(height: 24.h),
         Container(
           decoration: BoxDecoration(
-            border: Border.all(color: const Color(0xFFD5D5D5)),
+            border: Border.all(color: const Color(0xFFBEBEBE)),
             borderRadius: BorderRadius.circular(8),
           ),
           child: TextField(
@@ -378,7 +379,7 @@ class _AddSheetDialogState extends State<AddSheetDialog> {
               child: Text(
                 previousText,
                 style: TextStyle(
-                  color: Colors.black54,
+                  color: const Color(0xFF646464),
                   fontSize: 6.sp,
                   fontWeight: FontWeight.w600,
                 ),
