@@ -19,6 +19,7 @@ class DrumSheetScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       title: '악보 목록',
       theme: ThemeData(
         fontFamily: 'Pretendard',
