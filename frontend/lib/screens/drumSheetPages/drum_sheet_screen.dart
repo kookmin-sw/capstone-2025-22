@@ -113,7 +113,7 @@ class _SheetListScreenState extends State<SheetListScreen> {
     final sheetMeta = jsonEncode({
       'sheetName': title,
       'artistName': artist,
-      'color': '#646464',
+      'color': '#BEBEBE',
       'userEmail': userEmail,
       'fileExtension': 'pdf',
       'owner': true,
@@ -301,6 +301,15 @@ class _SheetListScreenState extends State<SheetListScreen> {
     Color(0xFFdcb3f4),
   ];
 
+  final Map<Color, Color> _iconColorMap = {
+    Color(0xFFBEBEBE): Color(0xFF646464),
+    Color(0xFFF4B3B3): Color(0xFFD16F6F),
+    Color(0xFFF4DDB3): Color(0xFFD1A36F),
+    Color(0xFFb3f4b5): Color(0xFF6FD172),
+    Color(0xFFb3eaf4): Color(0xFF6FB4D1),
+    Color(0xFFdcb3f4): Color(0xFFB96FD1),
+  };
+
   void _changeSheetColor(Sheet sheet) {
     showDialog(
       context: context,
@@ -309,7 +318,7 @@ class _SheetListScreenState extends State<SheetListScreen> {
         return Stack(
           children: [
             Positioned(
-              bottom: 60.h,
+              bottom: 100.h,
               left: MediaQuery.of(context).size.width / 2 -
                   (customColors.length * 24) / 2 +
                   100,
@@ -677,9 +686,10 @@ class _SheetListScreenState extends State<SheetListScreen> {
       appBar: AppBar(
         backgroundColor: Color(0xFFF5F5F5),
         elevation: 0,
+        titleSpacing: 10.w,
         toolbarHeight: 90.h,
         title: Padding(
-          padding: EdgeInsets.only(top: 4.h),
+          padding: EdgeInsets.only(top: 8.h),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
@@ -702,14 +712,14 @@ class _SheetListScreenState extends State<SheetListScreen> {
         actions: [
           if (_isSelectionMode) ...[
             Container(
-              margin: EdgeInsets.only(right: 5.w),
+              margin: EdgeInsets.only(top: 8.h, right: 5.w),
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(32),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.1),
-                    blurRadius: 4,
+                    color: const Color(0xFFd9d9d9),
+                    blurRadius: 2,
                     offset: const Offset(0, 2),
                   ),
                 ],
@@ -725,22 +735,21 @@ class _SheetListScreenState extends State<SheetListScreen> {
                 child: Text(
                   _isAllSelected ? '전체 선택 해제' : '전체 선택',
                   style: TextStyle(
-                    fontSize: 5.sp,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF595959),
-                  ),
+                      fontSize: 5.5.sp,
+                      fontWeight: FontWeight.bold,
+                      color: const Color(0xFF646464)),
                 ),
               ),
             ),
             Container(
-              margin: EdgeInsets.only(right: 8.w),
+              margin: EdgeInsets.only(top: 8.h, right: 8.w),
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(32),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.1),
-                    blurRadius: 4,
+                    color: const Color(0xFFd9d9d9),
+                    blurRadius: 2,
                     offset: const Offset(0, 2),
                   ),
                 ],
@@ -756,10 +765,9 @@ class _SheetListScreenState extends State<SheetListScreen> {
                 child: Text(
                   '완료',
                   style: TextStyle(
-                    fontSize: 5.sp,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF595959),
-                  ),
+                      fontSize: 5.5.sp,
+                      fontWeight: FontWeight.bold,
+                      color: const Color(0xFF646464)),
                 ),
               ),
             ),
@@ -767,7 +775,7 @@ class _SheetListScreenState extends State<SheetListScreen> {
             Container(
               width: 100.w,
               height: 50.h,
-              margin: EdgeInsets.symmetric(vertical: 8.h, horizontal: 8.w),
+              margin: EdgeInsets.only(top: 8.h, right: 24.w),
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(10),
@@ -793,13 +801,15 @@ class _SheetListScreenState extends State<SheetListScreen> {
                     child: TextField(
                       controller: _searchController,
                       autofocus: true,
+                      textAlignVertical: TextAlignVertical.center,
                       decoration: InputDecoration(
                         hintText: '검색어를 입력해주세요',
                         hintStyle: TextStyle(
-                          color: Color(0xFF949494),
+                          color: Color(0xFFBEBEBE),
                           fontSize: 5.sp,
                         ),
                         border: InputBorder.none,
+                        isDense: true,
                         contentPadding: EdgeInsets.symmetric(
                             horizontal: 2.w, vertical: 11.5.h),
                       ),
@@ -832,7 +842,6 @@ class _SheetListScreenState extends State<SheetListScreen> {
             Padding(
               padding: EdgeInsets.only(top: 8.h, right: 10.w),
               child: PopupMenuButton<String>(
-                // 아이콘을 직접 그려주면 크기 조절이 편리합니다
                 icon: Icon(
                   Icons.more_vert,
                   size: 10.sp, // 기존보다 살짝 큰 크기
@@ -864,10 +873,15 @@ class _SheetListScreenState extends State<SheetListScreen> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-                          Text('선택'),
+                          Text('선택',
+                              style: TextStyle(
+                                fontSize: 5.sp,
+                                fontWeight: FontWeight.w600,
+                                color: const Color(0xFF646464),
+                              )),
                           Icon(
                             Icons.check_circle_outline,
-                            color: Color(0xFF595959),
+                            color: Color(0xFF646464),
                           ),
                         ],
                       ),
@@ -890,10 +904,15 @@ class _SheetListScreenState extends State<SheetListScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        Text('검색'),
+                        Text('검색',
+                            style: TextStyle(
+                              fontSize: 5.sp,
+                              fontWeight: FontWeight.w600,
+                              color: const Color(0xFF646464),
+                            )),
                         Icon(
                           Icons.search,
-                          color: Color(0xFF595959),
+                          color: Color(0xFF646464),
                         ),
                       ],
                     ),
@@ -950,9 +969,9 @@ class _SheetListScreenState extends State<SheetListScreen> {
                                 borderRadius: BorderRadius.circular(12),
                                 boxShadow: const [
                                   BoxShadow(
-                                    color: Colors.black12,
+                                    color: const Color(0xFFd9d9d9),
                                     blurRadius: 4,
-                                    offset: Offset(0, 2),
+                                    offset: Offset(0, 4),
                                   ),
                                 ],
                               ),
@@ -965,61 +984,68 @@ class _SheetListScreenState extends State<SheetListScreen> {
                               ),
                             ),
                           ),
-                          SizedBox(height: 18.h),
+                          SizedBox(height: 15.h),
                           Text(
                             '악보 추가',
                             style: TextStyle(
-                                fontSize: 5.sp, color: Colors.black87),
+                                fontSize: 6.sp,
+                                fontWeight: FontWeight.w800,
+                                color: const Color(0xFF646464)),
                           ),
                         ],
                       ),
                     ),
-                  ...displayedSheets.map((sheet) => GestureDetector(
-                        onTap: () {
-                          if (_isSelectionMode) {
-                            _onSheetSelected(sheet);
-                          } else {
-                            _confirmPracticeStart(sheet);
-                          }
-                        },
-                        child: Stack(
-                          children: [
-                            SheetCard(sheet: sheet),
-                            if (_isSelectionMode)
-                              Positioned(
-                                bottom: 105.h,
-                                left: 0,
-                                right: 0,
-                                child: GestureDetector(
-                                  onTap: () => _onSheetSelected(sheet),
-                                  child: Container(
-                                    width: 35.w,
-                                    height: 35.h,
-                                    decoration: BoxDecoration(
-                                      shape: BoxShape.circle,
-                                      border: Border.all(
-                                        color: sheet.isSelected
-                                            ? Colors.transparent
-                                            : Colors.black26,
-                                        width: 2,
-                                        style: sheet.isSelected
-                                            ? BorderStyle.none
-                                            : BorderStyle.solid,
-                                      ),
+                  ...displayedSheets.map((sheet) {
+                    final iconColor = _iconColorMap[sheet.color] ??
+                        Colors.black.withOpacity(0.4);
+
+                    return GestureDetector(
+                      onTap: () {
+                        if (_isSelectionMode) {
+                          _onSheetSelected(sheet);
+                        } else {
+                          _confirmPracticeStart(sheet);
+                        }
+                      },
+                      child: Stack(
+                        children: [
+                          SheetCard(sheet: sheet, iconColor: iconColor),
+                          if (_isSelectionMode)
+                            Positioned(
+                              bottom: 105.h,
+                              left: 0,
+                              right: 0,
+                              child: GestureDetector(
+                                onTap: () => _onSheetSelected(sheet),
+                                child: Container(
+                                  width: 35.w,
+                                  height: 35.h,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
                                       color: sheet.isSelected
-                                          ? Colors.black54
-                                          : Colors.transparent,
+                                          ? Colors.transparent
+                                          : const Color(0xFF646464),
+                                      width: 2,
+                                      style: sheet.isSelected
+                                          ? BorderStyle.none
+                                          : BorderStyle.solid,
                                     ),
-                                    child: sheet.isSelected
-                                        ? Icon(Icons.check,
-                                            color: Colors.white, size: 6.sp)
-                                        : null,
+                                    color: sheet.isSelected
+                                        ? const Color(0xFF646464)
+                                        : Colors.transparent,
                                   ),
+                                  child: sheet.isSelected
+                                      ? Icon(Icons.check,
+                                          color: Colors.white, size: 8.sp)
+                                      : null,
                                 ),
                               ),
-                          ],
-                        ),
-                      )),
+                            ),
+                        ],
+                      ),
+                    );
+                  }).toList(),
                 ],
               ),
             ),
@@ -1030,6 +1056,13 @@ class _SheetListScreenState extends State<SheetListScreen> {
                   padding: EdgeInsets.symmetric(vertical: 3.h),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(32),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFFd9d9d9),
+                        blurRadius: 4,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
                     color: Colors.white,
                   ),
                   child: Row(
@@ -1037,6 +1070,10 @@ class _SheetListScreenState extends State<SheetListScreen> {
                     children: [
                       TextButton(
                         onPressed: () => _renameSheet(selectedSheets.first),
+                        style: TextButton.styleFrom(
+                            textStyle: TextStyle(
+                          fontSize: 6.sp,
+                        )),
                         child: const Text('이름 변경',
                             style: TextStyle(
                                 fontWeight: FontWeight.bold,
@@ -1045,6 +1082,10 @@ class _SheetListScreenState extends State<SheetListScreen> {
                       TextButton(
                         onPressed: () =>
                             _changeSheetColor(selectedSheets.first),
+                        style: TextButton.styleFrom(
+                            textStyle: TextStyle(
+                          fontSize: 6.sp,
+                        )),
                         child: const Text('색상 변경',
                             style: TextStyle(
                                 fontWeight: FontWeight.bold,
@@ -1052,6 +1093,10 @@ class _SheetListScreenState extends State<SheetListScreen> {
                       ),
                       TextButton(
                         onPressed: () => _confirmDeleteMultiple(selectedSheets),
+                        style: TextButton.styleFrom(
+                            textStyle: TextStyle(
+                          fontSize: 6.sp,
+                        )),
                         child: const Text('삭제',
                             style: TextStyle(
                                 fontWeight: FontWeight.bold,
@@ -1066,12 +1111,23 @@ class _SheetListScreenState extends State<SheetListScreen> {
                   padding: EdgeInsets.symmetric(vertical: 3.h),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(32),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFFd9d9d9),
+                        blurRadius: 4,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
                     color: Colors.white,
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
                       TextButton(
+                        style: TextButton.styleFrom(
+                            textStyle: TextStyle(
+                          fontSize: 6.sp,
+                        )),
                         onPressed: () => _confirmDeleteMultiple(selectedSheets),
                         child: const Text('삭제',
                             style: TextStyle(
@@ -1110,7 +1166,7 @@ class _SheetListScreenState extends State<SheetListScreen> {
                       child: Text(
                         '정렬',
                         style: TextStyle(
-                            fontSize: 7.sp,
+                            fontSize: 6.sp,
                             color: const Color(0xff646464),
                             fontWeight: FontWeight.bold),
                       ),
@@ -1126,29 +1182,25 @@ class _SheetListScreenState extends State<SheetListScreen> {
         );
       },
       child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 8.h),
+        padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 10.h),
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(32),
-          boxShadow: const [
-            BoxShadow(
-              color: Colors.black12,
-              blurRadius: 6,
-              offset: Offset(0, 2),
-            ),
-          ],
-        ),
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(32),
+            border: Border.all(color: const Color(0xFFDFDFDF), width: 2)),
         child: Row(
           children: [
             Icon(
               Icons.swap_vert,
               size: 9.sp, // 아이콘 크기 설정
-              color: const Color.fromARGB(119, 0, 0, 0),
+              color: const Color(0xFF646464),
             ),
             SizedBox(width: 3.w),
             Text(
               _sortLabel,
-              style: TextStyle(fontSize: 5.sp, color: Colors.black),
+              style: TextStyle(
+                  fontSize: 5.5.sp,
+                  fontWeight: FontWeight.bold,
+                  color: const Color(0xFF646464)),
             ),
           ],
         ),

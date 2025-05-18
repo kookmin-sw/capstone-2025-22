@@ -313,7 +313,7 @@ class _MyPageState extends State<MyPage> {
     return Padding(
       padding: EdgeInsets.only(left: 5.w, bottom: 10.h),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Icon(Icons.queue_music_rounded,
               size: 13.sp, color: Color(0xff646464)),
@@ -449,6 +449,8 @@ Widget _buildListCell(String text, {int flex = 1}) {
           textAlign: TextAlign.center,
           style: TextStyle(
             fontSize: 6.5.sp,
+            fontWeight: FontWeight.w500,
+            color: const Color(0xFF646464),
           ),
         ),
       ),
