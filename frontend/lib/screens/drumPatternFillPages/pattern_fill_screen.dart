@@ -641,11 +641,14 @@ class _CountdownPageState extends State<CountdownPage>
                                 builder: (context) => ConfirmationDialog(
                                   message: "메인으로 이동하시겠습니까?",
                                   onConfirm: () {
-                                    // The logic when the user confirms
-                                    // Your existing home button behavior (like stopping playback and going home)
-                                    Navigator.of(context)
-                                        .pop(); // Close the dialog
-                                    // Proceed with your home navigation logic (similar to DrumSheetPlayer)
+                                    Navigator.of(context).pushAndRemoveUntil(
+                                      MaterialPageRoute(
+                                          builder: (_) =>
+                                              const NavigationScreens(
+                                                firstSelectedIndex: 2,
+                                              )),
+                                      (route) => false, // 모든 이전 라우트를 제거
+                                    );
                                     if (_isPlaying) _audioPlayer.stop();
                                     final drumRecordingState =
                                         _drumRecordingKey.currentState;
@@ -660,6 +663,7 @@ class _CountdownPageState extends State<CountdownPage>
 
                                     WidgetsBinding.instance
                                         .addPostFrameCallback((_) {
+                                      if (!mounted) return;
                                       final navigationScreensState =
                                           context.findAncestorStateOfType<
                                               NavigationScreensState>();
