@@ -80,9 +80,7 @@ class _LoginScreenState extends State<LoginScreen> {
         // 페이지 하단에 환영 메시지 출력
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-                content: Text(
-                    '${utf8.decode(userInfo['body']['nickname'].toString().runes.toList())}님 환영합니다.')),
+            SnackBar(content: Text('${userInfo['body']['nickname']}님 환영합니다.')),
           );
         }
 
@@ -114,7 +112,7 @@ class _LoginScreenState extends State<LoginScreen> {
     await storage.write(key: 'user_email', value: userData['email']);
     await storage.write(
       key: 'user_name',
-      value: utf8.decode(userData['nickname'].toString().codeUnits),
+      value: userData['nickname'].toString(),
     );
     await storage.write(key: 'access_token', value: userData['accessToken']);
     await storage.write(key: 'refresh_token', value: userData['refreshToken']);
