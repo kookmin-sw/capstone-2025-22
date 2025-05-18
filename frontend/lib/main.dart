@@ -84,11 +84,15 @@ class _MyAppState extends State<MyApp> {
       splitScreenMode: true,
       builder: (context, child) {
         return MaterialApp(
-            theme: ThemeData(scaffoldBackgroundColor: Color(0xFFF2F1F3)),
-            home: const SplashScreen()
-            // home: _isLoggedIn! ? NavigationScreens() : LoginScreen(),
-            //   home: PatternFillScreen(index: 1), // 패턴및필인페이지 확인용
-            );
+            debugShowCheckedModeBanner: false,
+            theme: ThemeData(
+              scaffoldBackgroundColor: Color(0xFFF2F1F3),
+              fontFamily: 'Inter',
+              textTheme: Theme.of(context).textTheme.apply(
+                fontFamilyFallback: ['Pretendard'],
+              ),
+            ),
+            home: const SplashScreen());
       },
     );
   }
