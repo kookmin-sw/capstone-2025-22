@@ -3,42 +3,41 @@ layout: default
 title: My Site
 ---
 
-## Welcome to GitHub Pages
+![image](https://github.com/user-attachments/assets/c7373fc3-1d30-4bbd-976a-f0490f55c194)
 
-You can use the [editor on GitHub](https://github.com/kookmin-sw/cap-template/edit/master/index.md) to maintain and preview the content for your website in Markdown files.
+<br/>
 
-Whenever you commit to this repository, GitHub Pages will run [Jekyll](https://jekyllrb.com/) to rebuild the pages in your site, from the content in your Markdown files.
+## 드럼 악보 업로드
+### 사용자의 드럼 악보를 업로드하여 연주할 수 있습니다
+![image](https://github.com/user-attachments/assets/9230ecab-b2ab-4ca3-98c7-2558bd1cf1b7)
 
-### Markdown
+<br/>
 
-Markdown is a lightweight and easy-to-use syntax for styling your writing. It includes conventions for
+## 패턴 및 필인
+### 단계별 패턴 및 필인 학습을 통해 초보자도 단계별 학습이 가능합니다.
+![image](https://github.com/user-attachments/assets/cfe5003c-9de2-4f38-ab4f-7f3131d17ec0)
 
-```markdown
-Syntax highlighted code block
+<br/>
 
-# Header 1
+## 악보 연습 및 실시간 피드백
+### 실시간 박자 피드백 기반의 연습 기능을 통해 혼자서도 사용하기 좋습니다.
+![image](https://github.com/user-attachments/assets/6c147498-52da-453d-be63-3c712e4d6ae4)
 
-## Header 2
+<br/>
 
-### Header 3
+## 최종 피드백 제공
+### 연습 후 최종 피드백을 시각적으로 제공하여 보다 상세한 피드백을 받을 수 있습니다.
+![image](https://github.com/user-attachments/assets/0048f577-521a-4041-b897-e5a5ee83be9b)
 
-- Bulleted
-- List
+<br/> 
 
-1. Numbered
-2. List
+## 프로젝트 구조
+![KakaoTalk_20250516_165333854](https://github.com/user-attachments/assets/0b4c8372-2f2c-49b8-baa3-67af8a647276)
 
-**Bold** and _Italic_ and `Code` text
 
-[Link](url) and ![Image](src)
-```
 
-For more details see [GitHub Flavored Markdown](https://guides.github.com/features/mastering-markdown/).
 
-### Jekyll Themes
 
-Your Pages site will use the layout and styles from the Jekyll theme you have selected in your [repository settings](https://github.com/kookmin-sw/cap-template/settings). The name of this theme is saved in the Jekyll `_config.yml` configuration file.
 
-### Support or Contact
 
-Having trouble with Pages? Check out our [documentation](https://help.github.com/categories/github-pages-basics/) or [contact support](https://github.com/contact) and we’ll help you sort it out.
+
