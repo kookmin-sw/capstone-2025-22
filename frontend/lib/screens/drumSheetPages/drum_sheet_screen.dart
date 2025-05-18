@@ -675,27 +675,30 @@ class _SheetListScreenState extends State<SheetListScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.library_music,
-              color: const Color(0xFF646464),
-              size: 9.sp,
-            ),
-            SizedBox(width: 5.w),
-            Text(
-              '악보 목록',
-              style: TextStyle(
-                  color: const Color(0xFF646464),
-                  fontSize: 9.sp,
-                  fontWeight: FontWeight.w800),
-            ),
-          ],
-        ),
         backgroundColor: Color(0xFFF5F5F5),
         elevation: 0,
-        toolbarHeight: 60.h,
+        toolbarHeight: 90.h,
+        title: Padding(
+          padding: EdgeInsets.only(top: 4.h),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.library_music,
+                color: const Color(0xFF646464),
+                size: 9.sp,
+              ),
+              SizedBox(width: 5.w),
+              Text(
+                '악보 목록',
+                style: TextStyle(
+                    color: const Color(0xFF646464),
+                    fontSize: 9.sp,
+                    fontWeight: FontWeight.w800),
+              ),
+            ],
+          ),
+        ),
         actions: [
           if (_isSelectionMode) ...[
             Container(
@@ -822,69 +825,81 @@ class _SheetListScreenState extends State<SheetListScreen> {
               ),
             ),
           ] else ...[
-            _buildSortingButton(context),
-            PopupMenuButton<String>(
-              color: const Color(0xFFfefefe),
-              offset: Offset(-20.h, 20.w),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              constraints: BoxConstraints(
-                minWidth: 70.w,
-                maxWidth: 70.w,
-              ),
-              onSelected: (value) {
-                if (value == '선택') {
-                  _toggleSelectionMode();
-                } else if (value == '검색') {
-                  _toggleSearchMode();
-                }
-              },
-              itemBuilder: (context) => [
-                PopupMenuItem(
-                  value: '선택',
-                  height: 45.h,
-                  child: Padding(
+            Padding(
+              padding: EdgeInsets.only(top: 8.h, right: 2.w),
+              child: _buildSortingButton(context),
+            ),
+            Padding(
+              padding: EdgeInsets.only(top: 8.h, right: 10.w),
+              child: PopupMenuButton<String>(
+                // 아이콘을 직접 그려주면 크기 조절이 편리합니다
+                icon: Icon(
+                  Icons.more_vert,
+                  size: 10.sp, // 기존보다 살짝 큰 크기
+                  color: const Color(0xFF646464),
+                ),
+                color: const Color(0xFFfefefe),
+                offset: Offset(-20.h, 20.w),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                constraints: BoxConstraints(
+                  minWidth: 70.w,
+                  maxWidth: 70.w,
+                ),
+                onSelected: (value) {
+                  if (value == '선택') {
+                    _toggleSelectionMode();
+                  } else if (value == '검색') {
+                    _toggleSearchMode();
+                  }
+                },
+                itemBuilder: (context) => [
+                  PopupMenuItem(
+                    value: '선택',
+                    height: 45.h,
+                    child: Padding(
+                      padding: EdgeInsets.only(bottom: 8.h),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Text('선택'),
+                          Icon(
+                            Icons.check_circle_outline,
+                            color: Color(0xFF595959),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  PopupMenuItem(
+                    enabled: false,
+                    height: 1.h,
                     padding: EdgeInsets.only(bottom: 8.h),
+                    child: Divider(
+                      height: 1,
+                      thickness: 1,
+                      color: Color(0xFFEEEEEE),
+                    ),
+                  ),
+                  PopupMenuItem(
+                    value: '검색',
+                    height: 40.h,
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        Text('선택'),
+                        Text('검색'),
                         Icon(
-                          Icons.check_circle_outline,
+                          Icons.search,
                           color: Color(0xFF595959),
                         ),
                       ],
                     ),
                   ),
-                ),
-                PopupMenuItem(
-                  enabled: false,
-                  height: 1.h,
-                  padding: EdgeInsets.only(bottom: 8.h),
-                  child: Divider(
-                    height: 1,
-                    thickness: 1,
-                    color: Color(0xFFEEEEEE),
-                  ),
-                ),
-                PopupMenuItem(
-                  value: '검색',
-                  height: 40.h,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Text('검색'),
-                      Icon(
-                        Icons.search,
-                        color: Color(0xFF595959),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
           ],
         ],
@@ -1127,6 +1142,7 @@ class _SheetListScreenState extends State<SheetListScreen> {
           children: [
             Icon(
               Icons.swap_vert,
+              size: 9.sp, // 아이콘 크기 설정
               color: const Color.fromARGB(119, 0, 0, 0),
             ),
             SizedBox(width: 3.w),
