@@ -3,6 +3,7 @@ package com.capstone.security;
 import io.swagger.v3.oas.models.servers.Server;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
 import org.springframework.security.config.web.server.SecurityWebFiltersOrder;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
@@ -10,6 +11,7 @@ import org.springframework.security.web.server.SecurityWebFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.reactive.CorsWebFilter;
 import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource;
+import org.springframework.web.server.ServerWebExchange;
 
 import java.util.List;
 
@@ -17,28 +19,40 @@ import java.util.List;
 @EnableWebFluxSecurity
 public class SecurityConfig {
     private final String[] WHITE_LIST = {
+            // swagger
             "/h2-console/**",
             "/favicon.ico",
             "/error",
             "/swagger-ui/**",
             "/webjars/swagger-ui/**",
             "/swagger-resources/**",
-            "/v3/api-docs/**"
+            "/v3/api-docs/**",
+            "/auth/v3/api-docs/**",
+            "/verification/v3/api-docs/**",
+            "/users/v3/api-docs/**",
+            "/music/v3/api-docs/**",
+            "/audio/v3/api-docs/**",
+            // auth service
+            "/auth/**",
+            // verification service
+            "/verification/**",
+            // socket
+            "/ws/**",
     };
-    private final String[] USER_WHITE_LIST = {
-            "/users/nickname",
-            "/users/email",
+    private final String[] WHITE_LIST_GET = {
+            // music service
+            "/sheets/**",
+            "/patterns/**",
+            // user service
+            "/users/**",
+    };
+    private final String[] WHITE_LIST_POST = {
+            // audio service
+            "/audio/practice/**",
+    };
+    private final String[] WHITE_LIST_PUT = {
+            // user service
             "/users/password",
-            "/users/v3/api-docs",
-    };
-    private final String[] VERIFICATION_WHITE_LIST = {
-            "/verification/**"
-    };
-    private final String[] AUTH_WHITE_LIST = {
-            "/auth/**"
-    };
-    private final String[] MUSIC_WHITE_LIST = {
-            "/music/v3/api-docs",
     };
     private JwtAuthFilter jwtAuthFilter;
     public SecurityConfig(JwtAuthFilter jwtAuthFilter) {
@@ -53,23 +67,30 @@ public class SecurityConfig {
                 .addFilterBefore(jwtAuthFilter, SecurityWebFiltersOrder.AUTHENTICATION)
                 .authorizeExchange(exchange -> {
                     exchange.pathMatchers(WHITE_LIST).permitAll();
-                    exchange.pathMatchers(USER_WHITE_LIST).permitAll();
-                    exchange.pathMatchers(VERIFICATION_WHITE_LIST).permitAll();
-                    exchange.pathMatchers(AUTH_WHITE_LIST).permitAll();
-                    exchange.pathMatchers(MUSIC_WHITE_LIST).permitAll();
+                    exchange.pathMatchers(HttpMethod.GET ,WHITE_LIST_GET).permitAll();
+                    exchange.pathMatchers(HttpMethod.POST, WHITE_LIST_POST).permitAll();
+                    exchange.pathMatchers(HttpMethod.PUT, WHITE_LIST_PUT).permitAll();
                     exchange.anyExchange().authenticated();
                 });
         return http.build();
     }
     @Bean
     public CorsWebFilter corsWebFilter(){
-        CorsConfiguration config = new CorsConfiguration();
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        config.setAllowedHeaders(List.of("*"));
-        config.setExposedHeaders(List.of("*"));
-        config.setAllowedOriginPatterns(List.of("*"));
-        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE"));
-        source.registerCorsConfiguration("/**", config);
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource(){
+            @Override
+            public CorsConfiguration getCorsConfiguration(ServerWebExchange exchange) {
+                String path = exchange.getRequest().getURI().getPath();
+                if(path.startsWith("/ws")){
+                    return null;
+                }
+                CorsConfiguration config = new CorsConfiguration();
+                config.setAllowedHeaders(List.of("*"));
+                config.setExposedHeaders(List.of("*"));
+                config.setAllowedOriginPatterns(List.of("*"));
+                config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE"));
+                return config;
+            }
+        };
         return new CorsWebFilter(source);
     }
 }

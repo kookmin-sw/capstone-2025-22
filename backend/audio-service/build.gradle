@@ -16,15 +16,25 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-webflux'
     // eureka-client
     implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
+    // redis
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis-reactive'
     // common module
     implementation project(':common')
+    implementation project(':common-redis')
     // stomp
     implementation("org.springframework.boot:spring-boot-starter-websocket")
     // kafka
     implementation('org.springframework.kafka:spring-kafka')
+    // mvc-ui
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.6.0'
     // test
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation platform('org.junit:junit-bom:5.10.0')
     testImplementation 'org.junit.jupiter:junit-jupiter'
+    testImplementation 'it.ozimov:embedded-redis:0.7.2'
+    testImplementation 'org.springframework.kafka:spring-kafka-test'
+    testImplementation 'com.squareup.okhttp3:okhttp:4.10.0'
+    testImplementation 'com.squareup.okhttp3:mockwebserver:4.12.0'
 }
 
 test {

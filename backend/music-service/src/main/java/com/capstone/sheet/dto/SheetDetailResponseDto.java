@@ -12,14 +12,16 @@ import java.time.LocalDateTime;
 public class SheetDetailResponseDto {
     int userSheetId;
     String sheetName;
+    String artistName;
     LocalDateTime lastPracticeDate;
     String color;
-    String sheetInfo;
+    byte[] sheetInfo;
 
     public static SheetDetailResponseDto from(UserSheet userSheet, LocalDateTime lastPracticeDate) {
         return SheetDetailResponseDto.builder()
                 .userSheetId(userSheet.getUserSheetId())
                 .sheetName(userSheet.getSheetName())
+                .artistName(userSheet.getSheet().getAuthor())
                 .color(userSheet.getColor())
                 .lastPracticeDate(lastPracticeDate)
                 .sheetInfo(userSheet.getSheet().getSheetInfo())

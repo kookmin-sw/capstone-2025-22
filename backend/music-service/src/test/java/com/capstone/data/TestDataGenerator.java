@@ -1,15 +1,18 @@
 package com.capstone.data;
 
+import com.capstone.dto.score.FinalMeasureResult;
 import com.capstone.practice.entity.SheetPractice;
 import com.capstone.practice.repository.SheetPracticeRepository;
 import com.capstone.sheet.entity.Sheet;
 import com.capstone.sheet.entity.UserSheet;
 import com.capstone.sheet.repository.SheetRepository;
 import com.capstone.sheet.repository.UserSheetRepository;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -49,7 +52,7 @@ public class TestDataGenerator {
         List<Sheet> res = new ArrayList<>(List.of());
         for(int i=0; i<10; i++) {
             Sheet sheet = sheetRepository.save(Sheet.builder()
-                    .sheetInfo("sheetInfo")
+                    .sheetInfo("sheetInfo".getBytes(StandardCharsets.UTF_8))
                     .createdDate(LocalDateTime.now()).build());
             res.add(sheet);
         }
@@ -74,20 +77,24 @@ public class TestDataGenerator {
     }
     @Transactional
     public List<SheetPractice> generateTestSheetPractices(String email, List<UserSheet> userSheets){
-        List<SheetPractice> res = new ArrayList<>(List.of());
-        for(UserSheet userSheet : userSheets) {
-            for(int i=0; i<10; i++) {
-                SheetPractice practice = sheetPracticeRepository.save(
-                        SheetPractice.builder()
-                                .practiceInfo("practiceInfo")
-                                .userEmail(email)
-                                .score(90)
-                                .createdDate(LocalDateTime.now())
-                                .userSheet(userSheet).build()
-                );
-                res.add(practice);
+        try {
+            List<SheetPractice> res = new ArrayList<>(List.of());
+            for(UserSheet userSheet : userSheets) {
+                for(int i=1; i<=10; i++) {
+                    SheetPractice practice = sheetPracticeRepository.save(
+                            SheetPractice.builder()
+                                    .practiceInfo(new ObjectMapper().writeValueAsString(List.of(new FinalMeasureResult())))
+                                    .userEmail(email)
+                                    .score(i*10)
+                                    .createdDate(LocalDateTime.now())
+                                    .userSheet(userSheet).build()
+                    );
+                    res.add(practice);
+                }
             }
+            return res;
+        }catch (Exception e){
+            throw new RuntimeException(e);
         }
-        return res;
     }
 }

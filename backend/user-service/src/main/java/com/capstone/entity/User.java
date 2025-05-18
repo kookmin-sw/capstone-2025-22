@@ -40,6 +40,7 @@ public class User {
                 .email(this.email)
                 .password(this.password)
                 .nickname(this.nickname)
+                .profileImage(this.profileImage)
                 .role(this.role)
                 .build();
     }

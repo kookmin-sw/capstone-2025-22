@@ -41,4 +41,6 @@ docker_redis
 db
 
 ### config ###
-**/resources/*.yml
+src/main/resources/**/*.yml
+config-backend
+config-backend/**
