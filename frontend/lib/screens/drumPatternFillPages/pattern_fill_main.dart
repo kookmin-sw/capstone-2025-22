@@ -69,7 +69,7 @@ class _PatternFillMainState extends State<PatternFillMain> {
   }
 
   Widget clickedListItem(BuildContext context, int index, bool isLevelCleared,
-      bool isLevelLocked) {
+      bool isLevelLocked, int score) {
     // List item 클릭 시 동작
     return InkWell(
       onTap: () {
@@ -86,6 +86,7 @@ class _PatternFillMainState extends State<PatternFillMain> {
         index,
         isLevelCleared,
         isLevelLocked,
+        score,
       ),
     );
   }
@@ -184,12 +185,11 @@ class _PatternFillMainState extends State<PatternFillMain> {
   }
 
   Widget patternFillList(BuildContext context, int index, bool isLevelCleared,
-      bool isLevelLocked) {
+      bool isLevelLocked, int score) {
     double containerHeight = 65.h;
     double containerWidth = MediaQuery.of(context).size.width * 0.67;
     double borderRadius = 13;
     double fontSize = 8.sp;
-    int score = 95;
 
     return Padding(
       padding: EdgeInsets.only(bottom: 10.h),
@@ -291,12 +291,15 @@ class _PatternFillMainState extends State<PatternFillMain> {
   Future<List<Widget>> buildPatternList() async {
     String? email = await storage.read(key: "user_email");
     List<Widget> levels = [];
-    int lastPatternId = -1;
+
+    Map<int, int> patternScores = {}; // patternId -> score
 
     var successPatterns = await getHTTP('/patterns/success', {"email": email});
     if (successPatterns['errMessage'] == null) {
       var body = successPatterns['body'] as List;
-      lastPatternId = body.isNotEmpty ? body.last['patternId'] as int : 0;
+      for (var entry in body) {
+        patternScores[entry['patternId'] as int] = entry['score'] as int;
+      }
     } else {
       print(successPatterns['errMessage']);
     }
@@ -306,11 +309,12 @@ class _PatternFillMainState extends State<PatternFillMain> {
       var body = patterns['body'];
       levels = (body as List).asMap().entries.map((entry) {
         int index = entry.key + 1;
-        bool isCleared = (lastPatternId > index);
-        bool isLocked = (lastPatternId + 1 < index);
+        bool isCleared = patternScores.containsKey(index);
+        bool isLocked = !patternScores.containsKey(index - 1) && index != 1;
+        int score = patternScores[index] ?? 0;
 
         return mounted
-            ? clickedListItem(context, index, isCleared, isLocked)
+            ? clickedListItem(context, index, isCleared, isLocked, score)
             : const SizedBox.shrink();
       }).toList();
     } else {
