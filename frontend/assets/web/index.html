@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Drum Sheet Viewer</title>
+    <script src="./js/opensheetmusicdisplay.min.js"></script>
+    <script src="./js/fileSelectAndLoadOSMD.js"></script>
+    <script src="./js/detailedScoreRenderer.js"></script>
+    <style>
+      body {
+        margin: 0 auto;
+        padding: 0;
+        background-color: white;
+      }
+
+      #osmdCanvas canvas{
+        width: auto;
+        position: absolute;
+        pointer-events: none; /* UI 클릭 방지 */
+        overflow: hidden;
+      }
+
+      /* 초기엔 detailedOsmd(상세) 숨기기 */
+      #detailedOsmd {
+        width: 100%;
+        display: flex;
+        overflow-y: auto;
+        justify-content: center;
+        padding-top: 40px;
+      }
+
+      #detailedOsmd svg {
+        width: 100% !important;
+        height: auto !important;
+      }
+      
+      .osmd-cursor {
+        display: none !important;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="osmdCanvas", style="width: auto;"></div>
+    <div id="detailedOsmd" style="width:100%; height:auto;"></div>
+  </body>
+</html>
