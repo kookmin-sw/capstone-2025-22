@@ -251,6 +251,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   // 비밀번호 확인 함수
   void passwordConfirmAuth() {
     setState(() {
+      isPwCorrect = false;
       if (pwConfirmController.text.isEmpty) {
         _pwConfirmErrorMessage = "비밀번호를 한 번 더 입력해주세요.";
       } else if (pwConfirmController.text != pwController.text) {
@@ -273,62 +274,76 @@ class _SignUpScreenState extends State<SignUpScreen> {
     );
   }
 
-  // 회원가입 완료 여부 확인 함수
+  // 회원가입 완료 여부 확인 함수 (리팩토링)
   void signUpComplete() async {
-    if (isEmailValidate &&
+    // 1. 입력값 검증
+    if (idController.text.isEmpty ||
+        nameController.text.isEmpty ||
+        pwController.text.isEmpty ||
+        pwConfirmController.text.isEmpty ||
+        numController.text.isEmpty) {
+      setState(() {
+        submitErr = true;
+        errMessage = "모든 항목을 입력해주세요.";
+      });
+      return;
+    }
+
+    // 2. 유효성 검사 즉시 재실행
+    passwordAuth();
+    passwordConfirmAuth();
+
+    // 3. 조건 검사 (플래그 기반 + 이메일 인증 완료 여부)
+    if (!(isEmailValidate &&
         isNameValidate &&
         isAuthCodeRight &&
         isPwCorrect &&
-        isPwValidate &&
-        !_isTimerRunning) {
-      submitErr = false;
-      showLoadingDialog(context);
-
-      final Map<String, dynamic> requestBody = {
-        "email": idController.text,
-        "password": pwController.text,
-        "nickname": nameController.text,
-      };
-
-      var userInfo = await postHTTP("/auth/signup", requestBody);
-
-      if (Navigator.canPop(context)) {
-        Navigator.pop(context); // 로딩창 닫기
-      }
-
-      if (userInfo['errMessage'] == null) {
-        await saveUserInfo(userInfo);
-        if (mounted) {
-          await showDialog(
-            context: context,
-            builder: (BuildContext context) {
-              return CompleteDialog(
-                mainText: "회원가입이 완료되었습니다.",
-                subText: "지금 바로 로그인해보세요!",
-                onClose: () {
-                  Navigator.of(context).pop();
-                  Navigator.of(context).pushReplacement(
-                    MaterialPageRoute(builder: (_) => LoginScreen()),
-                  );
-                },
-              );
-            },
-          );
-        }
-      } else {
-        setState(() {
-          submitErr = true;
-          errMessage = userInfo['errMessage'] ??
-              "입력된 정보를 다시 확인해주세요. 필수 항목이 비어있거나 조건을 만족하지 않았습니다.";
-        });
-      }
-    } else {
-      if (Navigator.canPop(context)) {
-        Navigator.pop(context); // 로딩창 닫기
-      }
+        isPwValidate)) {
       setState(() {
         submitErr = true;
         errMessage = "입력된 정보를 다시 확인해주세요. 필수 항목이 비어있거나 조건을 만족하지 않았습니다.";
+      });
+      return;
+    }
+
+    // 4. 조건 만족 시 로딩 다이얼로그 + API 호출
+    submitErr = false;
+    showLoadingDialog(context);
+
+    final Map<String, dynamic> requestBody = {
+      "email": idController.text,
+      "password": pwController.text,
+      "nickname": nameController.text,
+    };
+
+    var userInfo = await postHTTP("/auth/signup", requestBody);
+
+    if (Navigator.canPop(context)) Navigator.pop(context); // 로딩창 닫기
+
+    if (userInfo['errMessage'] == null) {
+      await saveUserInfo(userInfo);
+      if (mounted) {
+        await showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return CompleteDialog(
+              mainText: "회원가입이 완료되었습니다.",
+              subText: "지금 바로 로그인해보세요!",
+              onClose: () {
+                Navigator.of(context).pop();
+                Navigator.of(context).pushReplacement(
+                  MaterialPageRoute(builder: (_) => LoginScreen()),
+                );
+              },
+            );
+          },
+        );
+      }
+    } else {
+      setState(() {
+        submitErr = true;
+        errMessage = userInfo['errMessage'] ??
+            "입력된 정보를 다시 확인해주세요. 필수 항목이 비어있거나 조건을 만족하지 않았습니다.";
       });
     }
   }

@@ -108,8 +108,8 @@ class _SetNewPwScreenState extends State<SetNewPwScreen> {
                               child: IconButton(
                                 icon: Icon(
                                   _isPasswordVisible
-                                      ? Icons.visibility_off
-                                      : Icons.visibility,
+                                      ? Icons.visibility
+                                      : Icons.visibility_off,
                                 ),
                                 onPressed: () {
                                   setState(
@@ -152,8 +152,8 @@ class _SetNewPwScreenState extends State<SetNewPwScreen> {
                               child: IconButton(
                                 icon: Icon(
                                   _isConfirmPasswordVisible
-                                      ? Icons.visibility_off
-                                      : Icons.visibility,
+                                      ? Icons.visibility
+                                      : Icons.visibility_off,
                                 ),
                                 onPressed: () {
                                   setState(

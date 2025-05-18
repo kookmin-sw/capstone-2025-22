@@ -717,7 +717,7 @@ class _CountdownPageState extends State<CountdownPage>
                                   children: [
                                     // 아래: 테두리용 텍스트
                                     Text(
-                                      patternName,
+                                      'Basic Pattern ${widget.index}',
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
                                       style: TextStyle(
@@ -732,7 +732,7 @@ class _CountdownPageState extends State<CountdownPage>
                                     ),
                                     // 위: 흰색 채우기 텍스트
                                     Text(
-                                      patternName,
+                                      'Basic Pattern ${widget.index}',
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
                                       style: TextStyle(
@@ -1071,6 +1071,9 @@ class _CountdownPageState extends State<CountdownPage>
                     ),
                   ),
                 ),
+                SizedBox(
+                  height: 10.w,
+                )
               ],
             ),
           ),
