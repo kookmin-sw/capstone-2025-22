@@ -153,7 +153,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   }
 
   /// 프로필 사진 변경 옵션 메뉴 표시
-  void _showImagePicker(BuildContext context) {
+  void _showImagePicker(BuildContext context) async {
     final RenderBox overlay =
         Overlay.of(context).context.findRenderObject() as RenderBox;
     final RenderBox buttonRenderBox =
@@ -176,33 +176,19 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       screenHeight - (buttonPosition.dy + buttonSize.height + offsetY),
     );
 
-    showMenu(
+    // showMenu를 호출하고, 선택된 value를 기다림
+    final choice = await showMenu<String>(
       context: context,
       position: position,
       items: [
-        PopupMenuItem(
-          child: GestureDetector(
-            onTap: () {
-              Navigator.pop(context);
-              _pickImage(ImageSource.camera);
-            },
-            child: _buildMenuItem("사진 촬영", Icons.photo_camera_outlined),
-          ),
+        PopupMenuItem<String>(
+          value: 'camera',
+          child: _buildMenuItem("사진 촬영", Icons.photo_camera_outlined),
         ),
-        PopupMenuItem(
-          padding: EdgeInsets.all(0),
-          enabled: false, // 클릭 안 되게
-          height: 1,
-          child: Divider(thickness: 1, height: 1, indent: 0, endIndent: 0),
-        ),
-        PopupMenuItem(
-          child: GestureDetector(
-            onTap: () {
-              Navigator.pop(context);
-              _pickImage(ImageSource.gallery);
-            },
-            child: _buildMenuItem("앨범에서 선택", Icons.image_outlined),
-          ),
+        const PopupMenuDivider(),
+        PopupMenuItem<String>(
+          value: 'gallery',
+          child: _buildMenuItem("앨범에서 선택", Icons.image_outlined),
         ),
       ],
       shape: RoundedRectangleBorder(
@@ -210,6 +196,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       ),
       color: Colors.white,
     );
+    // value에 따라 한 번만 이미지 피커 호출
+    if (choice == 'camera') {
+      _pickImage(ImageSource.camera);
+    } else if (choice == 'gallery') {
+      _pickImage(ImageSource.gallery);
+    }
   }
 
   Widget _buildMenuItem(String text, IconData icon) {
