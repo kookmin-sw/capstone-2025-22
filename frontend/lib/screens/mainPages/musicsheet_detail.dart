@@ -181,10 +181,10 @@ class _MusicsheetDetailState extends State<MusicsheetDetail> {
           // LineChart 위젯 추가
           LineChartData(
               // 그래프 상하좌우 여백
-              minX: -0.1.w,
-              maxX: 1.6.w,
+              minX: -0.2,
+              maxX: (lastFive.length - 1).toDouble() + 0.2,
               minY: getMinY(), // 최소값 - 5점
-              maxY: 120.h,
+              maxY: 105.0, // 최대 점수는 고정
 
               // 배경색
               backgroundColor: Colors.grey.shade100,
