@@ -146,7 +146,7 @@ class _LoginScreenState extends State<LoginScreen> {
               //           size: 14.sp, color: Color(0xff646464))),
               // ),
               Padding(
-                padding: EdgeInsets.symmetric(vertical: 20.w),
+                padding: EdgeInsets.symmetric(vertical: 25.w),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.center,
