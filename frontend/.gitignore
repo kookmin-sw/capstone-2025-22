@@ -208,3 +208,5 @@ macos/Flutter/ephemeral/Flutter-Generated.xcconfig
 
 .metadata
 android/gradle.properties
+android/fastlane/*
+lib/firebase_options.dart
