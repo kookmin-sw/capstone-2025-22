@@ -50,3 +50,40 @@
 <div align="center">
   <img src="https://github.com/user-attachments/assets/0b4c8372-2f2c-49b8-baa3-67af8a647276" width="80%" alt="프로젝트 구조 이미지" />
 </div>
+
+---
+
+## 👨‍💻 팀원 소개
+
+<div align="center">
+
+<table>
+  <tr>
+    <td align="center">
+      <img src="https://avatars.githubusercontent.com/u/127489230?s=64&v=4" width="100px;" alt="개발자1"/><br />
+      <sub><b>김용민</b></sub>
+    </td>
+    <td align="center">
+      <img src="https://avatars.githubusercontent.com/u/84260219?s=64&v=4" width="100px;" alt="개발자2"/><br />
+      <sub><b>구여진</b></sub>
+    </td>
+    <td align="center">
+      <img src="https://github.com/user-attachments/assets/a93de575-9dfd-4fba-96a6-e4aaaf031d2f" width="100px;" alt="개발자3"/><br />
+      <sub><b>권보미</b></sub>
+    </td>
+    <td align="center">
+      <img src="https://avatars.githubusercontent.com/u/84396904?s=64&v=4" width="100px;" alt="개발자3"/><br />
+      <sub><b>김민지</b></sub>
+    </td>
+    <td align="center">
+      <img src="https://avatars.githubusercontent.com/u/83703870?s=64&v=4" width="100px;" alt="개발자3"/><br />
+      <sub><b>남채원</b></sub>
+    </td>
+    <td align="center">
+      <img src="https://avatars.githubusercontent.com/u/132585956?v=4&size=40" width="100px;" alt="개발자3"/><br />
+      <sub><b>박수연</b></sub>
+    </td>
+  </tr>
+</table>
+
+</div>
