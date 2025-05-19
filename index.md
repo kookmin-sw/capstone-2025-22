@@ -11,6 +11,7 @@ title: 알려드럼
     margin-bottom: 2rem;
     border-radius: 12px;
     box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    max-width: 70vw;
   }
 
   .section:nth-child(even) {
