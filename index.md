@@ -5,12 +5,8 @@ title: 알려드럼
 
 <style>
   html, body {
-    height: 100%;
-    margin: 0;
     display: flex;
     justify-content: center;
-    align-items: center;
-    flex-direction: column;
   }
 
   .section {
