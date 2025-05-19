@@ -8,7 +8,7 @@ title: 알려드럼
     padding: 4rem 1rem;
     text-align: center;
     background-color: #f9f9f9;
-    margin-bottom: 2rem;
+    margin: 2rem auto;  /* 수평 중앙 정렬 */
     border-radius: 12px;
     box-shadow: 0 4px 10px rgba(0,0,0,0.05);
     width: 80vw;
