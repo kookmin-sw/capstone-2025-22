@@ -30,7 +30,6 @@ title: 알려드럼
     max-height: 80vh;
     max-width: 90vw;
     border-radius: 12px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
     margin-bottom: 1rem;
   }
 
