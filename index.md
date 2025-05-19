@@ -5,40 +5,41 @@ title: 알려드럼
 
 <style>
   html, body {
-    height: 100%; /* 페이지가 전체 화면을 채우도록 설정 */
-    margin: 0;    /* 기본 margin 제거 */
-    display: flex; /* Flexbox 레이아웃 활성화 */
-    justify-content: center; /* 수평 중앙 정렬 */
-    align-items: center; /* 수직 중앙 정렬 */
-    flex-direction: column; /* 세로로 콘텐츠 배치 */
+    height: 100%;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
   }
-  
+
   .section {
-    padding: 4rem 1rem;
+    padding: 4rem 2vw;
     text-align: center;
     background-color: #f9f9f9;
     margin-bottom: 2rem;
-    border-radius: 12px;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    border-radius: 1rem;
+    box-shadow: 0 0.4rem 1rem rgba(0, 0, 0, 0.05);
     width: 80vw; /* 섹션 너비 80% */
+    max-width: 40rem; /* 최대 너비를 설정하여 너무 넓어지지 않도록 함 */
   }
-  
+
   .section:nth-child(even) {
     background-color: #ffffff;
   }
-  
+
   .section p {
     font-size: 1.5rem;
     font-weight: 600;
     margin-bottom: 1.5rem;
     color: #333;
   }
-  
+
   .section img {
     max-width: 90%;
     height: auto;
-    border-radius: 8px;
-    box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+    border-radius: 0.8rem;
+    box-shadow: 0 0.4rem 1rem rgba(0, 0, 0, 0.1);
   }
 </style>
 
