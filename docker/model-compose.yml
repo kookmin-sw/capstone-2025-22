@@ -1,0 +1,8 @@
+services:
+  model-server:
+    image: louie8821/model-server:test
+    container_name: model-server
+    restart: unless-stopped
+    platform: linux/amd64
+    ports:
+      - "8048:8048"

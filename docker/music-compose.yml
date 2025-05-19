@@ -1,0 +1,65 @@
+x-common-variables: &common-variables
+  CLIENT_GATEWAY_SERVICE_URL: http://gateway-service:28080
+  SPRING_DATASOURCE_URL: your-datasource-url
+  SPRING_DATASOURCE_USERNAME: your-user-name
+  SPRING_DATASOURCE_PASSWORD: your-password
+  SPRING_DATA_REDIS_HOST: your-redis-host
+  SPRING_DATA_REDIS_PORT: 26379
+  CLIENT_MODEL_SERVICE_URL: your-model-server-url
+  EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: your-eureka-url
+  GATEWAY_SERVICE_URL: your-gateway-url
+  SERVER_MAX_HTTP_REQUEST_HEADER_SIZE: 10MB
+  EUREKA_INSTANCE_PREFER_IP_ADDRESS: true
+  EUREKA_INSTANCE_IP_ADDRESS: your-eureka-ip-address
+  SPRING_SERVLET_MULTIPART_MAX_FILE_SIZE: 15MB
+  SPRING_SERVLET_MULTIPART_MAX_REQUEST_SIZE: 40MB
+
+services:
+  music-service:
+    image: louie8821/music-service:test-latest
+    container_name: music-service
+    restart: unless-stopped
+    platform: linux/amd64
+    ports:
+      - "8085:8085"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /data:/data
+    environment:
+      <<: *common-variables
+  audio-service:
+    image: louie8821/audio-service:test-latest
+    container_name: audio-service
+    restart: unless-stopped
+    platform: linux/amd64
+    ports:
+      - "8084:8084"
+    environment:
+      <<: *common-variables
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      SCORING_BEAT_THRESHOLD: 0.3
+    depends_on:
+      - kafka
+  zookeeper:
+    image: bitnami/zookeeper:latest
+    container_name: zookeeper
+    ports:
+      - "2181:2181"
+    environment:
+      - ALLOW_ANONYMOUS_LOGIN=yes
+
+  kafka:
+    image: bitnami/kafka:3.5.1
+    container_name: kafka
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092" # 외부 접근을 위해 포트 노출
+    environment:
+      - KAFKA_BROKER_ID=1
+      - KAFKA_CFG_ZOOKEEPER_CONNECT=zookeeper:2181
+      - KAFKA_CFG_LISTENERS=PLAINTEXT://0.0.0.0:9092 # 모든 네트워크 인터페이스에서 수신
+      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092 # 다른 컨테이너에서 접근
+      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL=PLAINTEXT
+      - KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE=true
+      - ALLOW_PLAINTEXT_LISTENER=yes

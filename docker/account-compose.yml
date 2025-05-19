@@ -1,0 +1,46 @@
+x-common-variables: &common-variables
+  CLIENT_GATEWAY_SERVICE_URL: http://gateway-service:28080
+  SPRING_DATASOURCE_URL: your-datasource-url
+  SPRING_DATASOURCE_USERNAME: your-user-name
+  SPRING_DATASOURCE_PASSWORD: your-password
+  SPRING_DATA_REDIS_HOST: your-redis-host
+  SPRING_DATA_REDIS_PORT: 26379
+  EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: your-eureka-url
+  GATEWAY_SERVICE_URL: your-gateway-url
+  SERVER_MAX_HTTP_REQUEST_HEADER_SIZE: 10MB
+  EUREKA_INSTANCE_PREFER_IP_ADDRESS: true
+  EUREKA_INSTANCE_IP_ADDRESS: your-eureka-ip-address
+
+services:
+  auth-service:
+    image: louie8821/auth-service:test-latest
+    container_name: auth-service
+    restart: unless-stopped
+    platform: linux/amd64
+    ports:
+      - "8081:8081"
+    environment:
+      <<: *common-variables
+      EUREKA_INSTANCE_HOSTNAME: "auth-service"
+    depends_on:
+      - user-service
+  user-service:
+    image: louie8821/user-service:test-latest
+    container_name: user-service
+    restart: unless-stopped
+    platform: linux/amd64
+    ports:
+      - "8082:8082"
+    environment:
+      <<: *common-variables
+      EUREKA_INSTANCE_HOSTNAME: "user-service"
+  verification-service:
+    image: louie8821/verification-service:test-latest
+    container_name: verification-service
+    restart: unless-stopped
+    platform: linux/amd64
+    ports:
+      - "8083:8083"
+    environment:
+      <<: *common-variables
+      EUREKA_INSTANCE_HOSTNAME: "verification-service"
