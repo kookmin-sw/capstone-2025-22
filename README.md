@@ -10,7 +10,7 @@
 **사용자의 드럼 악보를 업로드하여 연주할 수 있습니다.**
 
 <div align="center">
-  <img src="https://github.com/user-attachments/assets/9230ecab-b2ab-4ca3-98c7-2558bd1cf1b7" width="70%" alt="드럼 악보 업로드 이미지" />
+  <img  src="https://github.com/user-attachments/assets/f6c7ebdc-8086-4adf-b2fe-caed01d584f6" width="70%" alt="드럼 악보 업로드 이미지" />
 </div>
 
 ---
@@ -20,7 +20,7 @@
 **단계별 패턴 및 필인 학습을 통해 초보자도 점진적으로 실력을 키울 수 있습니다.**
 
 <div align="center">
-  <img src="https://github.com/user-attachments/assets/cfe5003c-9de2-4f38-ab4f-7f3131d17ec0" width="70%" alt="패턴 및 필인 학습 이미지" />
+  <img src="https://github.com/user-attachments/assets/e230fea5-40b7-45b2-af85-346acb4f2e04" width="70%" alt="패턴 및 필인 학습 이미지" />
 </div>
 
 ---
