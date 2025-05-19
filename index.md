@@ -47,12 +47,12 @@ title: 알려드럼
 </div>
 
 <div class="section">
-  <img src="https://github.com/user-attachments/assets/9230ecab-b2ab-4ca3-98c7-2558bd1cf1b7" alt="악보 업로드" />
+  <img width="829" alt="악보 연습 - 악보 목록" src="https://github.com/user-attachments/assets/4a3db34b-8a46-4f76-a502-15453326db0a" />
   <p>드럼 악보 업로드</p>
 </div>
 
 <div class="section">
-  <img src="https://github.com/user-attachments/assets/cfe5003c-9de2-4f38-ab4f-7f3131d17ec0" alt="패턴 학습" />
+  <img width="827" alt="패턴 및 필인 연습" src="https://github.com/user-attachments/assets/576f1524-f51d-48e2-8460-f645d0b5209e" />
   <p>패턴 및 필인 학습</p>
 </div>
 
