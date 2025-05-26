@@ -11,6 +11,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:showcaseview/showcaseview.dart';
 
 class MusicsheetDetail extends StatefulWidget {
   final String songID; // 노래 ID
@@ -32,12 +33,25 @@ class _MusicsheetDetailState extends State<MusicsheetDetail> {
   int? _selectedPracticeId; // 선택된 연습 기록 ID
   String? _xmlDataString; // 악보 XML 저장용
 
+  // 코치마크 글로벌키
+  final GlobalKey _chartKey = GlobalKey();
+  final GlobalKey _tableKey = GlobalKey();
+  final GlobalKey _sheetKey = GlobalKey();
+
   @override
   void initState() {
     super.initState();
     _loadPreview();
     createDetailList();
     _fetchSheetXml();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ShowCaseWidget.of(context).startShowCase([
+        _chartKey,
+        _tableKey,
+        _sheetKey,
+      ]);
+    });
   }
 
   // 로컬에 저장된 sheetInfo의 프리뷰용 fullSheetImage 가져오기
@@ -65,7 +79,7 @@ class _MusicsheetDetailState extends State<MusicsheetDetail> {
         var xml = utf8.decode(bytes);
         // 3) XML 선언이 없으면 붙여주기
         if (!xml.startsWith('<?xml')) {
-          xml = '<?xml version="1.0" encoding="UTF-8"?>\n' + xml;
+          xml = '<?xml version="1.0" encoding="UTF-8"?>\n$xml';
         }
         setState(() {
           _xmlDataString = xml;
@@ -175,133 +189,137 @@ class _MusicsheetDetailState extends State<MusicsheetDetail> {
           ),
         ],
       ),
-      child: Padding(
-        padding: EdgeInsets.all(15.h),
-        child: LineChart(
-          // LineChart 위젯 추가
-          LineChartData(
-              // 그래프 상하좌우 여백
-              minX: -0.2,
-              maxX: (lastFive.length - 1).toDouble() + 0.2,
-              minY: getMinY(), // 최소값 - 5점
-              maxY: 105.0, // 최대 점수는 고정
+      child: Showcase(
+        key: _chartKey,
+        description: "여기서 연습 점수 추이를 확인할 수 있어요.",
+        child: Padding(
+          padding: EdgeInsets.all(15.h),
+          child: LineChart(
+            // LineChart 위젯 추가
+            LineChartData(
+                // 그래프 상하좌우 여백
+                minX: -0.2,
+                maxX: (lastFive.length - 1).toDouble() + 0.2,
+                minY: getMinY(), // 최소값 - 5점
+                maxY: 105.0, // 최대 점수는 고정
 
-              // 배경색
-              backgroundColor: Colors.grey.shade100,
+                // 배경색
+                backgroundColor: Colors.grey.shade100,
 
-              // 그래프 속성
-              gridData: FlGridData(
-                show: true, // 그리드 라인 제거
-                drawVerticalLine: true, // 세로선 그리기
-                drawHorizontalLine: true, // 가로선 그리기
-                getDrawingHorizontalLine: (value) => FlLine(
-                  // 가로선 스타일
-                  color: Colors.grey.shade400,
-                  strokeWidth: 0.8,
-                  dashArray: [4, 4],
-                ),
-                getDrawingVerticalLine: (value) => FlLine(
-                  // 세로선 스타일
-                  color: Colors.grey.shade400,
-                  strokeWidth: 0.8,
-                  dashArray: [4, 4],
-                ),
-              ),
-              titlesData: FlTitlesData(
-                // 축 제목
-                leftTitles: AxisTitles(
-                  sideTitles: SideTitles(
-                    // 왼쪽 축 제목
-                    showTitles: true,
-                    reservedSize: 30,
-                    getTitlesWidget: (value, meta) {
-                      if (value > 100) {
-                        // 점수 태그 추가
-                        return Container(); // 100점 초과 값 숨김
-                      }
-                      if (value == getMinY()) return Container(); // 최소값 숨김
-                      return Text(
-                        // 점수 표시
-                        value.toInt().toString(),
-                        style: TextStyle(
-                            fontSize: 12, color: Colors.grey.shade700),
-                      );
-                    },
-                    interval: 10, // 0~100 점수 기준
+                // 그래프 속성
+                gridData: FlGridData(
+                  show: true, // 그리드 라인 제거
+                  drawVerticalLine: true, // 세로선 그리기
+                  drawHorizontalLine: true, // 가로선 그리기
+                  getDrawingHorizontalLine: (value) => FlLine(
+                    // 가로선 스타일
+                    color: Colors.grey.shade400,
+                    strokeWidth: 0.8,
+                    dashArray: [4, 4],
+                  ),
+                  getDrawingVerticalLine: (value) => FlLine(
+                    // 세로선 스타일
+                    color: Colors.grey.shade400,
+                    strokeWidth: 0.8,
+                    dashArray: [4, 4],
                   ),
                 ),
-                rightTitles: AxisTitles(
-                  sideTitles: SideTitles(showTitles: false), // 오른쪽 축 제거
+                titlesData: FlTitlesData(
+                  // 축 제목
+                  leftTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      // 왼쪽 축 제목
+                      showTitles: true,
+                      reservedSize: 30,
+                      getTitlesWidget: (value, meta) {
+                        if (value > 100) {
+                          // 점수 태그 추가
+                          return Container(); // 100점 초과 값 숨김
+                        }
+                        if (value == getMinY()) return Container(); // 최소값 숨김
+                        return Text(
+                          // 점수 표시
+                          value.toInt().toString(),
+                          style: TextStyle(
+                              fontSize: 12, color: Colors.grey.shade700),
+                        );
+                      },
+                      interval: 10, // 0~100 점수 기준
+                    ),
+                  ),
+                  rightTitles: AxisTitles(
+                    sideTitles: SideTitles(showTitles: false), // 오른쪽 축 제거
+                  ),
+                  topTitles: AxisTitles(
+                    sideTitles: SideTitles(showTitles: false), // 위쪽 축 제거
+                  ),
+                  bottomTitles: AxisTitles(
+                    sideTitles: SideTitles(showTitles: false), // 아래쪽 축 제거
+                  ),
                 ),
-                topTitles: AxisTitles(
-                  sideTitles: SideTitles(showTitles: false), // 위쪽 축 제거
+                borderData: FlBorderData(
+                  show: true,
+                  border: Border(
+                    left: BorderSide(color: Colors.black26, width: 2),
+                    bottom: BorderSide(color: Colors.black26, width: 2),
+                  ),
                 ),
-                bottomTitles: AxisTitles(
-                  sideTitles: SideTitles(showTitles: false), // 아래쪽 축 제거
-                ),
-              ),
-              borderData: FlBorderData(
-                show: true,
-                border: Border(
-                  left: BorderSide(color: Colors.black26, width: 2),
-                  bottom: BorderSide(color: Colors.black26, width: 2),
-                ),
-              ),
-              lineBarsData: [
-                // 그래프 데이터
-                LineChartBarData(
-                  spots: generateChartData(),
-                  isCurved: false,
-                  color: Color(0xffD97D6C), // 그래프 색상
-                  barWidth: 2,
-                  isStrokeCapRound: true,
-                ),
-              ],
-              lineTouchData: LineTouchData(
-                // 점 클릭 시 툴팁
-                touchTooltipData: LineTouchTooltipData(
-                  getTooltipColor: (LineBarSpot spot) => Colors.white,
-                  tooltipRoundedRadius: 12,
-                  tooltipPadding:
-                      EdgeInsets.symmetric(horizontal: 25, vertical: 5),
-                  getTooltipItems: (List<LineBarSpot> touchedSpots) {
-                    return touchedSpots.map((spot) {
-                      // TextSpan으로 여러 스타일을 적용
-                      return LineTooltipItem(
-                        // 날짜와 점수 두 부분으로 나누기
-                        '',
-                        TextStyle(
-                          color: Colors.black,
-                          fontWeight: FontWeight.w500,
-                          fontSize: 13.sp,
-                        ),
-                        // 여러 스타일을 적용할 수 있는 TextSpan 사용
-                        textAlign: TextAlign.center,
-                        children: [
-                          TextSpan(
-                            text: '${spot.y.toInt()}점',
-                            style: TextStyle(
-                              fontSize: 7.sp, // 점수는 크게
-                              color: Color(0xffD97D6C), // 점수는 주황색
-                              fontWeight: FontWeight.bold, // 점수는 볼드체
-                            ),
+                lineBarsData: [
+                  // 그래프 데이터
+                  LineChartBarData(
+                    spots: generateChartData(),
+                    isCurved: false,
+                    color: Color(0xffD97D6C), // 그래프 색상
+                    barWidth: 2,
+                    isStrokeCapRound: true,
+                  ),
+                ],
+                lineTouchData: LineTouchData(
+                  // 점 클릭 시 툴팁
+                  touchTooltipData: LineTouchTooltipData(
+                    getTooltipColor: (LineBarSpot spot) => Colors.white,
+                    tooltipRoundedRadius: 12,
+                    tooltipPadding:
+                        EdgeInsets.symmetric(horizontal: 25, vertical: 5),
+                    getTooltipItems: (List<LineBarSpot> touchedSpots) {
+                      return touchedSpots.map((spot) {
+                        // TextSpan으로 여러 스타일을 적용
+                        return LineTooltipItem(
+                          // 날짜와 점수 두 부분으로 나누기
+                          '',
+                          TextStyle(
+                            color: Colors.black,
+                            fontWeight: FontWeight.w500,
+                            fontSize: 13.sp,
                           ),
-                          TextSpan(
-                            text: '\n${lastFive[(spot.x).toInt()]['연습 날짜']}',
-                            style: TextStyle(
-                              fontSize: 4.sp, // 날짜는 작게
-                              color: Colors.black, // 날짜는 검은색
+                          // 여러 스타일을 적용할 수 있는 TextSpan 사용
+                          textAlign: TextAlign.center,
+                          children: [
+                            TextSpan(
+                              text: '${spot.y.toInt()}점',
+                              style: TextStyle(
+                                fontSize: 7.sp, // 점수는 크게
+                                color: Color(0xffD97D6C), // 점수는 주황색
+                                fontWeight: FontWeight.bold, // 점수는 볼드체
+                              ),
                             ),
-                          ),
-                        ],
-                      );
-                    }).toList();
-                  },
-                ),
-                touchCallback: // 터치 이벤트
-                    (FlTouchEvent event, LineTouchResponse? response) {},
-                handleBuiltInTouches: true,
-              )),
+                            TextSpan(
+                              text: '\n${lastFive[(spot.x).toInt()]['연습 날짜']}',
+                              style: TextStyle(
+                                fontSize: 4.sp, // 날짜는 작게
+                                color: Colors.black, // 날짜는 검은색
+                              ),
+                            ),
+                          ],
+                        );
+                      }).toList();
+                    },
+                  ),
+                  touchCallback: // 터치 이벤트
+                      (FlTouchEvent event, LineTouchResponse? response) {},
+                  handleBuiltInTouches: true,
+                )),
+          ),
         ),
       ),
     );
@@ -429,36 +447,42 @@ class _MusicsheetDetailState extends State<MusicsheetDetail> {
                                     ),
                                   ],
                                 ),
-                                child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(9),
-                                  child: Stack(
-                                    fit: StackFit.expand,
-                                    children: [
-                                      // 악보 프리뷰 이미지 - Todo : 이미지 안 떠서 사이즈 제대로 설정 못함
-                                      if (previewBytes != null)
-                                        Positioned(
-                                          top: 40.h,
-                                          left: 10.w,
-                                          right: 10.w,
-                                          bottom: 20.h,
-                                          child: Image.memory(previewBytes!,
-                                              fit: BoxFit.cover),
-                                        )
-                                      else
-                                        Center(
-                                            child: CircularProgressIndicator()),
-                                      // 블러 오버레이
-                                      Positioned.fill(
-                                        child: BackdropFilter(
-                                          filter: ImageFilter.blur(
-                                              sigmaX: 2, sigmaY: 2),
-                                          child: Container(
-                                            color:
-                                                Colors.white.withOpacity(0.3),
+                                child: Showcase(
+                                  key: _sheetKey,
+                                  description: "이곳에서 연습 결과 악보를 확인할 수 있어요.",
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(9),
+                                    child: Stack(
+                                      fit: StackFit.expand,
+                                      children: [
+                                        // 악보 프리뷰 이미지 - Todo : 이미지 안 떠서 사이즈 제대로 설정 못함
+                                        if (previewBytes != null)
+                                          Positioned(
+                                            top: 40.h,
+                                            left: 10.w,
+                                            right: 10.w,
+                                            bottom: 20.h,
+                                            child: Image.memory(previewBytes!,
+                                                fit: BoxFit.cover),
+                                          ),
+
+                                        if (previewBytes == null)
+                                          Center(
+                                              child:
+                                                  CircularProgressIndicator()),
+                                        // 블러 오버레이
+                                        Positioned.fill(
+                                          child: BackdropFilter(
+                                            filter: ImageFilter.blur(
+                                                sigmaX: 2, sigmaY: 2),
+                                            child: Container(
+                                              color:
+                                                  Colors.white.withOpacity(0.3),
+                                            ),
                                           ),
                                         ),
-                                      ),
-                                    ],
+                                      ],
+                                    ),
                                   ),
                                 ),
                               ),
@@ -537,41 +561,46 @@ class _MusicsheetDetailState extends State<MusicsheetDetail> {
             thumbVisibility: true, // 항상 스크롤바 보이기
             thickness: 8, // 스크롤바 두께 조정
             radius: Radius.circular(10), // 스크롤바 끝부분 둥글게 처리
-            child: ListView.builder(
-              itemCount: practiceList.length,
-              padding: EdgeInsets.only(top: 13.h),
-              physics: ClampingScrollPhysics(),
-              shrinkWrap: true,
-              itemBuilder: (context, index) {
-                final item = practiceList[index];
-                final isSelected = item['practiceId'] == _selectedPracticeId;
+            child: Showcase(
+              key: _tableKey,
+              description: "여기서 연습 날짜별 점수를 확인할 수 있어요.",
+              child: ListView.builder(
+                itemCount: practiceList.length,
+                padding: EdgeInsets.only(top: 13.h),
+                physics: ClampingScrollPhysics(),
+                shrinkWrap: true,
+                itemBuilder: (context, index) {
+                  final item = practiceList[index];
+                  final isSelected = item['practiceId'] == _selectedPracticeId;
 
-                return GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      _selectedPracticeId = item['practiceId'] as int;
-                    });
-                    _onRowTap(_selectedPracticeId!);
-                  },
-                  child: Container(
-                      padding: EdgeInsets.symmetric(vertical: 15.h),
-                      decoration: BoxDecoration(
-                        color: isSelected
-                            ? Colors.grey.shade100 // 선택된 색
-                            : Colors.white,
-                        border: Border(
-                          bottom:
-                              BorderSide(color: Colors.grey.shade300, width: 1),
+                  return GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        _selectedPracticeId = item['practiceId'] as int;
+                      });
+                      _onRowTap(_selectedPracticeId!);
+                    },
+                    child: Container(
+                        padding: EdgeInsets.symmetric(vertical: 15.h),
+                        decoration: BoxDecoration(
+                          color: isSelected
+                              ? Colors.grey.shade100 // 선택된 색
+                              : Colors.white,
+                          border: Border(
+                            bottom: BorderSide(
+                                color: Colors.grey.shade300, width: 1),
+                          ),
                         ),
-                      ),
-                      child: Row(
-                        children: [
-                          _buildListCell(item["연습 날짜"]!, flex: 1),
-                          _buildListCell(item["점수"]!, flex: 1, isCenter: true),
-                        ],
-                      )),
-                );
-              },
+                        child: Row(
+                          children: [
+                            _buildListCell(item["연습 날짜"]!, flex: 1),
+                            _buildListCell(item["점수"]!,
+                                flex: 1, isCenter: true),
+                          ],
+                        )),
+                  );
+                },
+              ),
             ),
           ),
         ),

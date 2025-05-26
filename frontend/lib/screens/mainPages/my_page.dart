@@ -10,6 +10,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'dart:convert'; // Base64 디코딩
 import 'dart:typed_data'; // Uint8List 변환
+import 'package:showcaseview/showcaseview.dart';
 
 class MyPage extends StatefulWidget {
   const MyPage({super.key});
@@ -400,12 +401,16 @@ class _MyPageState extends State<MyPage> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => MusicsheetDetail(
-                                songID: item["id"]!,
-                                songTitle: item['악보명'] ?? "-",
+                              builder: (context) => ShowCaseWidget(
+                                builder: Builder(
+                                  builder: (context) => MusicsheetDetail(
+                                    songID: item["id"]!,
+                                    songTitle: item['악보명'] ?? "-",
+                                  ),
+                                ),
                               ),
                             ),
-                          ),
+                          )
                         },
                         child: Center(child: sheetIcon),
                       ),
