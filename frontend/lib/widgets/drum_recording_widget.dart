@@ -94,6 +94,11 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
   Timer? _recordingTimer;
   StreamSubscription<fs.RecordingDisposition>? _recorderSubscription;
 
+  // 온셋 감지 및 딜레이 측정을 위한 변수 🔴
+  bool firstBufferReceived = false; // 첫 오디오 버퍼 수신 여부
+  DateTime? firstBufferTime; // 첫 오디오 버퍼 수신 시각
+  DateTime? recordingStartTime; // 녹음 시작 시각
+
   // XML 파싱 및 타이밍 관련
   int _beatsPerMeasure = 4;
   int _beatType = 4;
@@ -134,12 +139,76 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
     _initializeAll().then((_) {
       _isRecorderReady = true;
       print('[InitState] ✅ recorder ready');
+
+      // 녹음기가 준비되면 오디오 데이터 수신 리스너 등록 🔴
+      if (_recorder != null) {
+        _setupAudioDataListener();
+      }
     });
 
     // PlaybackController의 이벤트 구독
     widget.playbackController.onMeasureChange = _handleMeasureChange;
     widget.playbackController.onCountdownComplete = _handleCountdownComplete;
     widget.playbackController.onPlaybackComplete = _handlePlaybackComplete;
+  }
+
+  // 오디오 데이터 수신 리스너 등록 함수 🔴
+  void _setupAudioDataListener() {
+    firstBufferReceived = false;
+
+    _recorderSubscription?.cancel();
+    _recorderSubscription = _recorder!.onProgress!.listen((event) {
+      // fs.RecordingDisposition 이벤트 예시 사용
+      // 실제 버퍼 데이터를 받는 스트림이 있다면 그걸 사용해야 함
+      final now = DateTime.now();
+
+      if (!firstBufferReceived) {
+        firstBufferReceived = true;
+        firstBufferTime = now;
+        if (recordingStartTime != null) {
+          final bufferDelay =
+              now.difference(recordingStartTime!).inMilliseconds / 1000.0;
+          print("첫 버퍼 수신까지 지연 시간: $bufferDelay 초");
+        }
+      }
+
+      // 임시로 event.duration 을 온셋으로 사용 (실제 버퍼 분석 로직 대체 필요)
+      Duration onsetDuration = detectOnset(event, now);
+      print("감지된 온셋 타임스탬프: $onsetDuration, 현재 시각: $now");
+
+      if (recordingStartTime != null) {
+        final relativeOnset = onsetDuration.inMilliseconds / 1000.0;
+        print("상대 온셋 시간: $relativeOnset 초");
+
+        if (_webSocketConnected) {
+          final sendStart = DateTime.now();
+          _stompClient?.send(
+            destination: (widget.patternId != null)
+                ? '/app/pattern'
+                : '/app/audio/forwarding',
+            body: jsonEncode({'onset': relativeOnset}),
+            headers: {
+              'content-type': 'application/json',
+            },
+          );
+          final sendEnd = DateTime.now();
+
+          final sendDuration = sendEnd.difference(sendStart).inMilliseconds;
+          print("웹소켓 전송 완료, 소요 시간: ${sendDuration}ms, 전송 시각: $sendEnd");
+        } else {
+          print('❌ 웹소켓 연결 안 됨, 전송 불가');
+        }
+      }
+    });
+  }
+
+  /// 간단 샘플 온셋 감지 함수 (실제 신호 분석 로직 대체 필요) 🔴
+  Duration detectOnset(fs.RecordingDisposition event, DateTime now) {
+    if (recordingStartTime != null) {
+      return now.difference(recordingStartTime!);
+    } else {
+      return Duration.zero;
+    }
   }
 
   Future<void> _initializeAll() async {
@@ -551,6 +620,13 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
     });
   }
 
+  /// 오디오 녹음 시작 시각 기록 🔴
+  void _recordingStarted() {
+    recordingStartTime = DateTime.now();
+    firstBufferReceived = false;
+    print("녹음 시작 시각: $recordingStartTime");
+  }
+
   /// 오디오 녹음 시작
   void startRecording() async {
     if (isRecording || !mounted || _isDisposed || _recorder == null) return;
@@ -582,6 +658,8 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
         _currentMeasure = 0;
         recordingStatusMessage = '녹음이 시작되었습니다.';
       });
+
+      _recordingStarted(); // 녹음 시작 시각 기록 🔴
 
       // 첫 마디 녹음 시작
       await _startMeasureRecording();
