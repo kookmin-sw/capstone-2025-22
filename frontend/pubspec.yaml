@@ -60,8 +60,9 @@ dependencies:
   firebase_core: ^2.24.2
   flutter_launcher_icons: ^0.14.3
   flutter_markdown: ^0.6.18
-  showcaseview:
+  showcaseview: # 코치마크
     path: lib/showcaseview
+  shared_preferences: ^2.0.15
 
 dev_dependencies:
   flutter_test:

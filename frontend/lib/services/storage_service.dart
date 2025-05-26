@@ -8,3 +8,14 @@ Future<bool> isStorageEmpty() async {
   final allKeys = await storage.readAll();
   return allKeys.isEmpty;
 }
+
+// 코치마크 최초 실행 여부 조회 (없으면 false 반환)
+Future<bool> hasShownCoachMark() async {
+  String? value = await storage.read(key: 'musicsheet_coachmark_shown');
+  return value == 'true';
+}
+
+// 코치마크 실행 완료 여부 저장
+Future<void> setShownCoachMark() async {
+  await storage.write(key: 'musicsheet_coachmark_shown', value: 'true');
+}

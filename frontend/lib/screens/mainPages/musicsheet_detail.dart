@@ -12,6 +12,7 @@ import 'package:flutter/services.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:showcaseview/showcaseview.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class MusicsheetDetail extends StatefulWidget {
   final String songID; // 노래 ID
@@ -38,6 +39,8 @@ class _MusicsheetDetailState extends State<MusicsheetDetail> {
   final GlobalKey _tableKey = GlobalKey();
   final GlobalKey _sheetKey = GlobalKey();
 
+  final bool _showCoachMark = false;
+
   @override
   void initState() {
     super.initState();
@@ -45,13 +48,27 @@ class _MusicsheetDetailState extends State<MusicsheetDetail> {
     createDetailList();
     _fetchSheetXml();
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ShowCaseWidget.of(context).startShowCase([
-        _chartKey,
-        _tableKey,
-        _sheetKey,
-      ]);
-    });
+    // 최초 1회만 코치마크 실행
+    _checkCoachMark();
+  }
+
+  Future<void> _checkCoachMark() async {
+    // flutter_secure_storage를 이용해 플래그 읽기
+    String? shown = await storage.read(key: 'musicsheet_coachmark_shown');
+
+    if (shown != 'true') {
+      // 최초 실행이므로 코치마크 실행
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ShowCaseWidget.of(context).startShowCase([
+          _chartKey,
+          _tableKey,
+          _sheetKey,
+        ]);
+      });
+
+      // 실행 후 플래그 저장
+      await storage.write(key: 'musicsheet_coachmark_shown', value: 'true');
+    }
   }
 
   // 로컬에 저장된 sheetInfo의 프리뷰용 fullSheetImage 가져오기
