@@ -122,8 +122,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    double bottomPadding = MediaQuery.of(context).padding.bottom;
-
     return SafeArea(
       child: Scaffold(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -135,69 +133,66 @@ class _LoginScreenState extends State<LoginScreen> {
             constraints: BoxConstraints(
               minHeight: MediaQuery.of(context).size.height,
             ),
-            child: Padding(
-              padding: EdgeInsets.only(bottom: bottomPadding),
-              child: Center(
-                child: Stack(
-                  children: [
-                    Padding(
-                      padding: EdgeInsets.symmetric(vertical: 25.h),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Container(
-                            alignment: Alignment.center,
-                            child: Image.asset(
-                              "assets/images/appLogo.png",
-                              height: 85.h,
-                            ),
+            child: Center(
+              child: Stack(
+                children: [
+                  Padding(
+                    padding: EdgeInsets.symmetric(vertical: 40.h),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Container(
+                          alignment: Alignment.center,
+                          child: Image.asset(
+                            "assets/images/appLogo.png",
+                            height: MediaQuery.of(context).size.height * 0.17,
                           ),
-                          SizedBox(height: 30.h),
-                          SizedBox(
-                            width: 170.w, // 입력 필드의 최대 너비 설정
-                            child: Column(
-                              children: [
-                                buildTextField(
-                                  // 아이디 입력 필드
-                                  controller: _emailController,
-                                  hint: '아이디(이메일)',
-                                  obscureText: false, // 가려지지 않음
-                                  suffixIcon: null,
+                        ),
+                        SizedBox(height: 30.h),
+                        SizedBox(
+                          width: 170.w, // 입력 필드의 최대 너비 설정
+                          child: Column(
+                            children: [
+                              buildTextField(
+                                // 아이디 입력 필드
+                                controller: _emailController,
+                                hint: '아이디(이메일)',
+                                obscureText: false, // 가려지지 않음
+                                suffixIcon: null,
+                              ),
+                              SizedBox(height: 10.h),
+                              buildTextField(
+                                // 비밀번호 입력 필드
+                                controller: _passwordController,
+                                hint: '비밀번호',
+                                obscureText:
+                                    !_isPasswordVisible, // 비밀번호 보기 상태 기능 활성화
+                                suffixIcon: IconButton(
+                                  // 눈 모양 아이콘 클릭하면 비밀번호 보이게 함
+                                  icon: Icon(_isPasswordVisible
+                                      ? Icons.visibility
+                                      : Icons.visibility_off),
+                                  onPressed: () {
+                                    // 아이콘 클릭할 때마다 상태 변경
+                                    setState(() => _isPasswordVisible =
+                                        !_isPasswordVisible);
+                                  },
                                 ),
-                                SizedBox(height: 10.h),
-                                buildTextField(
-                                  // 비밀번호 입력 필드
-                                  controller: _passwordController,
-                                  hint: '비밀번호',
-                                  obscureText:
-                                      !_isPasswordVisible, // 비밀번호 보기 상태 기능 활성화
-                                  suffixIcon: IconButton(
-                                    // 눈 모양 아이콘 클릭하면 비밀번호 보이게 함
-                                    icon: Icon(_isPasswordVisible
-                                        ? Icons.visibility
-                                        : Icons.visibility_off),
-                                    onPressed: () {
-                                      // 아이콘 클릭할 때마다 상태 변경
-                                      setState(() => _isPasswordVisible =
-                                          !_isPasswordVisible);
-                                    },
-                                  ),
-                                ),
-                                if (_errorMessage != null) _buildErrorMessage(),
-                                SizedBox(height: 20.h),
-                                _isLoading
-                                    ? const CircularProgressIndicator() // 로딩 중이면 로딩스피너 표시
-                                    : _buildLoginButton(), // _isLoading이 false이면 로그인 버튼 활성화
-                                _buildBottomLinks(),
-                              ],
-                            ),
+                              ),
+                              if (_errorMessage != null) _buildErrorMessage(),
+                              SizedBox(height: 20.h),
+                              _isLoading
+                                  ? const CircularProgressIndicator() // 로딩 중이면 로딩스피너 표시
+                                  : _buildLoginButton(), // _isLoading이 false이면 로그인 버튼 활성화
+                              _buildBottomLinks(),
+                            ],
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
           ),

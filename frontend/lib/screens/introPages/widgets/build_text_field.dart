@@ -18,29 +18,33 @@ class buildTextField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return TextField(
-      controller: controller, // 입력한 값을 가져오는 컨트롤러
-      obscureText: obscureText, // true이면 값을 .로 표시(비밀번호 필드)
-      decoration: InputDecoration(
-        hintText: hint,
-        hintStyle: TextStyle(fontSize: 5.5.sp),
-        filled: true,
-        fillColor: Colors.white, // 배경색 흰색으로 설정
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12.0), // 테두리를 둥글게 설정
+    return SizedBox(
+      height: MediaQuery.of(context).size.height * 0.12,
+      child: TextField(
+        controller: controller, // 입력한 값을 가져오는 컨트롤러
+        obscureText: obscureText, // true이면 값을 .로 표시(비밀번호 필드)
+        textAlignVertical: TextAlignVertical.center, // 세로 중앙 정렬 추가
+        decoration: InputDecoration(
+          hintText: hint,
+          hintStyle: TextStyle(fontSize: 5.5.sp),
+          filled: true,
+          fillColor: Colors.white, // 배경색 흰색으로 설정
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12.0), // 테두리를 둥글게 설정
+          ),
+          enabledBorder: OutlineInputBorder(
+            // 입력 필드가 선택되지 않았을 때 표시되는 테두리 스타일
+            borderRadius: BorderRadius.circular(12.0),
+            borderSide: BorderSide(color: Colors.grey.shade400), // 기본 테두리 색
+          ),
+          focusedBorder: OutlineInputBorder(
+            // 입력 필드가 focus 받았을 때 표시되는 테두리 스타일
+            borderRadius: BorderRadius.circular(12.0),
+            borderSide:
+                BorderSide(color: Color(0xFF424242), width: 2.0), // 포커스 시 테두리 색
+          ),
+          suffixIcon: suffixIcon, // 비밀번호 보기 or 숨기기 아이콘 추가
         ),
-        enabledBorder: OutlineInputBorder(
-          // 입력 필드가 선택되지 않았을 때 표시되는 테두리 스타일
-          borderRadius: BorderRadius.circular(12.0),
-          borderSide: BorderSide(color: Colors.grey.shade400), // 기본 테두리 색
-        ),
-        focusedBorder: OutlineInputBorder(
-          // 입력 필드가 focus 받았을 때 표시되는 테두리 스타일
-          borderRadius: BorderRadius.circular(12.0),
-          borderSide:
-              BorderSide(color: Color(0xFF424242), width: 2.0), // 포커스 시 테두리 색
-        ),
-        suffixIcon: suffixIcon, // 비밀번호 보기 or 숨기기 아이콘 추가
       ),
     );
   }
