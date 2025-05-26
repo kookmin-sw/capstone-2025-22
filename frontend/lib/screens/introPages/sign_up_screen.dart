@@ -539,8 +539,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   SizedBox(height: 45.h),
                   SizedBox(
                     // 제출 버튼
-                    width: 340.h,
-                    height: 70.h,
+                    width: MediaQuery.of(context).size.width * 0.3,
+                    height: MediaQuery.of(context).size.height *
+                        0.15, // 예: 화면 높이의 10%
                     child: ButtonForm(
                       btnName: "제출",
                       buttonColor: Color(0xFF424242),
@@ -554,7 +555,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       errMessage,
                       style: TextStyle(
                         color: Colors.red,
-                        fontSize: 4.8.sp,
+                        fontSize: 6.sp,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -715,7 +716,7 @@ class ButtonForm extends StatelessWidget {
         child: Text(
           btnName,
           style: TextStyle(
-            fontSize: 5.5.sp,
+            fontSize: (btnName == "제출") ? 7.sp : 6.sp,
             color: isTextBlack ? Colors.black : Colors.white,
           ),
         ),
