@@ -42,7 +42,11 @@ class introPageHeader extends StatelessWidget {
         ),
         Center(
           child: Padding(
-            padding: EdgeInsets.only(top: title == "회원가입" ? 30.h : 80.h),
+            padding: EdgeInsets.only(
+              top: title == "회원가입"
+                  ? MediaQuery.of(context).size.height * 0.07
+                  : MediaQuery.of(context).size.height * 0.14,
+            ),
             child: Text(
               title,
               style: TextStyle(
