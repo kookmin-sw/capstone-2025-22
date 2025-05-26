@@ -161,7 +161,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 obscureText: false, // 가려지지 않음
                                 suffixIcon: null,
                               ),
-                              SizedBox(height: 10.h),
+                              SizedBox(height: 5.h),
                               buildTextField(
                                 // 비밀번호 입력 필드
                                 controller: _passwordController,
