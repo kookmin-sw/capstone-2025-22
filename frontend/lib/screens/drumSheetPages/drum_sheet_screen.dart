@@ -970,7 +970,7 @@ class _SheetListScreenState extends State<SheetListScreen> {
                                 borderRadius: BorderRadius.circular(12),
                                 boxShadow: const [
                                   BoxShadow(
-                                    color: const Color(0xFFd9d9d9),
+                                    color: Color(0xFFd9d9d9),
                                     blurRadius: 4,
                                     offset: Offset(0, 4),
                                   ),
@@ -1000,6 +1000,15 @@ class _SheetListScreenState extends State<SheetListScreen> {
                     final iconColor = _iconColorMap[sheet.color] ??
                         Colors.black.withOpacity(0.4);
 
+                    // 날짜 선택
+                    DateTime? dateToShow;
+                    if (_selectedSort == SortOption.date) {
+                      dateToShow = sheet.createdDate;
+                    } else if (_selectedSort == SortOption.name ||
+                        _selectedSort == SortOption.recentPractice) {
+                      dateToShow = sheet.lastPracticedDate;
+                    }
+
                     return GestureDetector(
                       onTap: () {
                         if (_isSelectionMode) {
@@ -1010,7 +1019,11 @@ class _SheetListScreenState extends State<SheetListScreen> {
                       },
                       child: Stack(
                         children: [
-                          SheetCard(sheet: sheet, iconColor: iconColor),
+                          SheetCard(
+                            sheet: sheet,
+                            iconColor: iconColor,
+                            displayDate: dateToShow,
+                          ),
                           if (_isSelectionMode)
                             Positioned(
                               bottom: 105.h,
@@ -1046,7 +1059,7 @@ class _SheetListScreenState extends State<SheetListScreen> {
                         ],
                       ),
                     );
-                  }).toList(),
+                  }),
                 ],
               ),
             ),
