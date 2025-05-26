@@ -447,42 +447,37 @@ class _MusicsheetDetailState extends State<MusicsheetDetail> {
                                     ),
                                   ],
                                 ),
-                                child: Showcase(
-                                  key: _sheetKey,
-                                  description: "이곳에서 연습 결과 악보를 확인할 수 있어요.",
-                                  child: ClipRRect(
-                                    borderRadius: BorderRadius.circular(9),
-                                    child: Stack(
-                                      fit: StackFit.expand,
-                                      children: [
-                                        // 악보 프리뷰 이미지 - Todo : 이미지 안 떠서 사이즈 제대로 설정 못함
-                                        if (previewBytes != null)
-                                          Positioned(
-                                            top: 40.h,
-                                            left: 10.w,
-                                            right: 10.w,
-                                            bottom: 20.h,
-                                            child: Image.memory(previewBytes!,
-                                                fit: BoxFit.cover),
-                                          ),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(9),
+                                  child: Stack(
+                                    fit: StackFit.expand,
+                                    children: [
+                                      // 악보 프리뷰 이미지 - Todo : 이미지 안 떠서 사이즈 제대로 설정 못함
+                                      if (previewBytes != null)
+                                        Positioned(
+                                          top: 40.h,
+                                          left: 10.w,
+                                          right: 10.w,
+                                          bottom: 20.h,
+                                          child: Image.memory(previewBytes!,
+                                              fit: BoxFit.cover),
+                                        ),
 
-                                        if (previewBytes == null)
-                                          Center(
-                                              child:
-                                                  CircularProgressIndicator()),
-                                        // 블러 오버레이
-                                        Positioned.fill(
-                                          child: BackdropFilter(
-                                            filter: ImageFilter.blur(
-                                                sigmaX: 2, sigmaY: 2),
-                                            child: Container(
-                                              color:
-                                                  Colors.white.withOpacity(0.3),
-                                            ),
+                                      if (previewBytes == null)
+                                        Center(
+                                            child: CircularProgressIndicator()),
+                                      // 블러 오버레이
+                                      Positioned.fill(
+                                        child: BackdropFilter(
+                                          filter: ImageFilter.blur(
+                                              sigmaX: 2, sigmaY: 2),
+                                          child: Container(
+                                            color:
+                                                Colors.white.withOpacity(0.3),
                                           ),
                                         ),
-                                      ],
-                                    ),
+                                      ),
+                                    ],
                                   ),
                                 ),
                               ),
@@ -491,49 +486,56 @@ class _MusicsheetDetailState extends State<MusicsheetDetail> {
                                 top: MediaQuery.of(context).size.height * 0.755,
                                 right:
                                     MediaQuery.of(context).size.height * 0.013,
-                                child: IconButton(
-                                  onPressed: () async {
-                                    if (_selectedPracticeId == null ||
-                                        _xmlDataString == null) return;
+                                child: Showcase(
+                                  key: _sheetKey,
+                                  description: "이 버튼을 누르면 연습 결과 악보를 확인할 수 있어요.",
+                                  child: IconButton(
+                                    onPressed: () async {
+                                      if (_selectedPracticeId == null ||
+                                          _xmlDataString == null) return;
 
-                                    final BuildContext localContext = context;
-                                    try {
-                                      final detail = await fetchPracticeDetail(
-                                          _selectedPracticeId!);
-                                      if (!mounted) return;
+                                      final BuildContext localContext = context;
+                                      try {
+                                        final detail =
+                                            await fetchPracticeDetail(
+                                                _selectedPracticeId!);
+                                        if (!mounted) return;
 
-                                      final rawInfo = detail['practiceInfo']
-                                          as List<dynamic>;
-                                      final practiceInfo = rawInfo
-                                          .map((e) => Map<String, dynamic>.from(
-                                              e as Map))
-                                          .toList();
+                                        final rawInfo = detail['practiceInfo']
+                                            as List<dynamic>;
+                                        final practiceInfo = rawInfo
+                                            .map((e) =>
+                                                Map<String, dynamic>.from(
+                                                    e as Map))
+                                            .toList();
 
-                                      // measureNumber 오름차순 정렬
-                                      practiceInfo.sort((a, b) {
-                                        final ma = int.parse(
-                                            a['measureNumber'] as String);
-                                        final mb = int.parse(
-                                            b['measureNumber'] as String);
-                                        return ma.compareTo(mb);
-                                      });
+                                        // measureNumber 오름차순 정렬
+                                        practiceInfo.sort((a, b) {
+                                          final ma = int.parse(
+                                              a['measureNumber'] as String);
+                                          final mb = int.parse(
+                                              b['measureNumber'] as String);
+                                          return ma.compareTo(mb);
+                                        });
 
-                                      openMusicSheet(
-                                        context: localContext,
-                                        xmlDataString: _xmlDataString!,
-                                        practiceInfo: practiceInfo,
-                                        isPatternMode: false,
-                                      );
-                                    } catch (e) {
-                                      if (!mounted) return;
-                                      ScaffoldMessenger.of(localContext)
-                                          .showSnackBar(
-                                        SnackBar(content: Text('상세 로딩 실패: $e')),
-                                      );
-                                    }
-                                  },
-                                  icon: FaIcon(FontAwesomeIcons.expand,
-                                      size: 9.sp, color: Color(0xffD97D6C)),
+                                        openMusicSheet(
+                                          context: localContext,
+                                          xmlDataString: _xmlDataString!,
+                                          practiceInfo: practiceInfo,
+                                          isPatternMode: false,
+                                        );
+                                      } catch (e) {
+                                        if (!mounted) return;
+                                        ScaffoldMessenger.of(localContext)
+                                            .showSnackBar(
+                                          SnackBar(
+                                              content: Text('상세 로딩 실패: $e')),
+                                        );
+                                      }
+                                    },
+                                    icon: FaIcon(FontAwesomeIcons.expand,
+                                        size: 9.sp, color: Color(0xffD97D6C)),
+                                  ),
                                 ),
                               ),
                             ],
@@ -552,18 +554,18 @@ class _MusicsheetDetailState extends State<MusicsheetDetail> {
   }
 
   Widget _buildScoreTable() {
-    return Stack(
-      // 표와 헤더 겹치기 - 헤더 두께 조정을 위해
-      children: [
-        Positioned.fill(
-          top: 20.h,
-          child: Scrollbar(
-            thumbVisibility: true, // 항상 스크롤바 보이기
-            thickness: 8, // 스크롤바 두께 조정
-            radius: Radius.circular(10), // 스크롤바 끝부분 둥글게 처리
-            child: Showcase(
-              key: _tableKey,
-              description: "여기서 연습 날짜별 점수를 확인할 수 있어요.",
+    return Showcase(
+      key: _tableKey,
+      description: "여기서 연습 날짜별 점수를 확인할 수 있어요.",
+      child: Stack(
+        // 표와 헤더 겹치기 - 헤더 두께 조정을 위해
+        children: [
+          Positioned.fill(
+            top: 20.h,
+            child: Scrollbar(
+              thumbVisibility: true, // 항상 스크롤바 보이기
+              thickness: 8, // 스크롤바 두께 조정
+              radius: Radius.circular(10), // 스크롤바 끝부분 둥글게 처리
               child: ListView.builder(
                 itemCount: practiceList.length,
                 padding: EdgeInsets.only(top: 13.h),
@@ -572,7 +574,6 @@ class _MusicsheetDetailState extends State<MusicsheetDetail> {
                 itemBuilder: (context, index) {
                   final item = practiceList[index];
                   final isSelected = item['practiceId'] == _selectedPracticeId;
-
                   return GestureDetector(
                     onTap: () {
                       setState(() {
@@ -581,44 +582,44 @@ class _MusicsheetDetailState extends State<MusicsheetDetail> {
                       _onRowTap(_selectedPracticeId!);
                     },
                     child: Container(
-                        padding: EdgeInsets.symmetric(vertical: 15.h),
-                        decoration: BoxDecoration(
-                          color: isSelected
-                              ? Colors.grey.shade100 // 선택된 색
-                              : Colors.white,
-                          border: Border(
-                            bottom: BorderSide(
-                                color: Colors.grey.shade300, width: 1),
-                          ),
+                      padding: EdgeInsets.symmetric(vertical: 15.h),
+                      decoration: BoxDecoration(
+                        color: isSelected
+                            ? Colors.grey.shade100 // 선택된 색
+                            : Colors.white,
+                        border: Border(
+                          bottom:
+                              BorderSide(color: Colors.grey.shade300, width: 1),
                         ),
-                        child: Row(
-                          children: [
-                            _buildListCell(item["연습 날짜"]!, flex: 1),
-                            _buildListCell(item["점수"]!,
-                                flex: 1, isCenter: true),
-                          ],
-                        )),
+                      ),
+                      child: Row(
+                        children: [
+                          _buildListCell(item["연습 날짜"]!, flex: 1),
+                          _buildListCell(item["점수"]!, flex: 1, isCenter: true),
+                        ],
+                      ),
+                    ),
                   );
                 },
               ),
             ),
           ),
-        ),
-        Container(
-          // 표 헤더
-          height: 35.h,
-          decoration: BoxDecoration(
-            color: Color(0xffD97D6C),
-            borderRadius: BorderRadius.vertical(top: Radius.circular(10)),
+          Container(
+            // 표 헤더
+            height: 35.h,
+            decoration: BoxDecoration(
+              color: Color(0xffD97D6C),
+              borderRadius: BorderRadius.vertical(top: Radius.circular(10)),
+            ),
+            child: Row(
+              children: [
+                _buildListHeaderCell("연습 날짜", flex: 1),
+                _buildListHeaderCell("점수", flex: 1, isCenter: true),
+              ],
+            ),
           ),
-          child: Row(
-            children: [
-              _buildListHeaderCell("연습 날짜", flex: 1),
-              _buildListHeaderCell("점수", flex: 1, isCenter: true),
-            ],
-          ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
