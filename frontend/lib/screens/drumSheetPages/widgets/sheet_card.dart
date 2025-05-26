@@ -5,8 +5,14 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 class SheetCard extends StatelessWidget {
   final Sheet sheet;
   final Color iconColor;
+  final DateTime? displayDate;
 
-  const SheetCard({super.key, required this.sheet, required this.iconColor});
+  const SheetCard({
+    super.key,
+    required this.sheet,
+    required this.iconColor,
+    this.displayDate,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -25,7 +31,7 @@ class SheetCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(12),
                     boxShadow: const [
                       BoxShadow(
-                        color: const Color(0xFFd9d9d9),
+                        color: Color(0xFFd9d9d9),
                         blurRadius: 4,
                         offset: Offset(0, 4),
                       ),
@@ -71,7 +77,9 @@ class SheetCard extends StatelessWidget {
           ),
         ),
         Text(
-          '${sheet.createdDate.year}.${sheet.createdDate.month.toString().padLeft(2, '0')}.${sheet.createdDate.day.toString().padLeft(2, '0')}',
+          displayDate != null
+              ? '${displayDate!.year}.${displayDate!.month.toString().padLeft(2, '0')}.${displayDate!.day.toString().padLeft(2, '0')}'
+              : '',
           style: TextStyle(fontSize: 4.5.sp, color: const Color(0xffA2A2A2)),
           textAlign: TextAlign.center,
         ),
