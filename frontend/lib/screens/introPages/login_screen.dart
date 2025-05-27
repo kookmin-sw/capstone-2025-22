@@ -82,7 +82,9 @@ class _LoginScreenState extends State<LoginScreen> {
         // 페이지 하단에 환영 메시지 출력
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('${userInfo['body']['nickname']}님 환영합니다.')),
+            SnackBar(
+                content: Text(
+                    '${utf8.decode(userInfo['body']['nickname'].toString().codeUnits)}님 환영합니다.')),
           );
         }
 
