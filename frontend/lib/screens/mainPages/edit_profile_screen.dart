@@ -60,8 +60,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   /// Secure Storage 또는 api로부터 데이터 불러와 UI 업데이트
   Future<void> _loadUserData() async {
     email = await storage.read(key: 'user_email');
-    nickName = await storage.read(key: 'user_name');
     accessToken = await storage.read(key: 'access_token');
+
+    var response = await getHTTP('/users/email', {"email": email});
+    nickName = response['body']['nickname'];
 
     // UI 업데이트
     setState(() {
@@ -271,43 +273,49 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       key: 'user_name',
       value: userData['nickname'],
     );
+    print("사용자 정보 저장 완료: ${userData['nickname']}");
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       resizeToAvoidBottomInset: true,
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor, // 공유된 테마 사용
-      body: SingleChildScrollView(
-        physics: const NeverScrollableScrollPhysics(),
-        child: Padding(
-          padding: EdgeInsets.all(35.h),
-          child: Stack(children: [
-            Positioned(
-              child: IconButton(
-                  onPressed: Navigator.of(context).pop,
-                  icon: Icon(
-                    Icons.arrow_back_ios,
-                    size: 14.sp,
-                    color: Color(0xff646464),
-                  )),
-            ),
-            Padding(
-              padding: EdgeInsets.all(25.h),
-              child: Center(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      body: Stack(
+        children: [
+          Padding(
+            padding:
+                EdgeInsets.only(top: MediaQuery.of(context).padding.top + 10.h),
+            child: SingleChildScrollView(
+              child: Container(
+                height: MediaQuery.of(context).size.height,
+                alignment: Alignment.center,
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     _buildProfileImage(),
-                    SizedBox(height: 15.h),
+                    SizedBox(
+                        height: MediaQuery.of(context).size.height * 0.025),
                     _buildUserInfoForm(),
                     _buildUpdateButton(),
                   ],
                 ),
               ),
             ),
-          ]),
-        ),
+          ),
+          Positioned(
+            top: MediaQuery.of(context).padding.top + 25.h,
+            left: 13.w,
+            child: IconButton(
+              onPressed: () => Navigator.of(context).pop(),
+              icon: Icon(
+                Icons.arrow_back_ios,
+                size: 14.sp,
+                color: Color(0xff646464),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -320,7 +328,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       children: [
         CircleAvatar(
           // 원형 프로필 이미지
-          radius: 80.h, // 원형 프로필 이미지 크기
+          radius: MediaQuery.of(context).size.height * 0.13, // 원형 프로필 이미지 크기
           backgroundImage: _profileImage != null
               ? FileImage(_profileImage!)
               : (_profileImageBytes != null && _profileImageBytes!.isNotEmpty)
@@ -354,14 +362,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   /// 사용자 정보 입력 폼 (아이디, 닉네임, 중복확인 버튼)
   Widget _buildUserInfoForm() {
     return SizedBox(
-      width: 190.w, // 전체 입력 폼의 너비 설정
+      width: MediaQuery.of(context).size.width * 0.55, // 전체 입력 폼의 너비 설정
       child: Column(
         children: [
           // 테이블 형식의 입력 필드 (아이디 & 닉네임)
           _buildUserTable(),
           // 중복된 닉네임 경고 메시지
           _buildErrorMessage(),
-          SizedBox(height: 20.h),
+          SizedBox(height: 5.h),
         ],
       ),
     );
@@ -394,19 +402,20 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         Padding(
           padding: EdgeInsets.only(right: 5.w, bottom: 18.h),
           child: TextField(
-            readOnly: true, // 아이디는 수정 불가능
+            readOnly: true,
             controller: _emailController,
+            style: TextStyle(fontSize: 5.5.sp), // 폰트 크기
             decoration: InputDecoration(
               enabledBorder: const UnderlineInputBorder(
-                borderSide: BorderSide(color: Colors.grey), // 비활성 상태일 때 밑줄 색상
+                borderSide: BorderSide(color: Colors.grey),
               ),
               focusedBorder: const UnderlineInputBorder(
-                borderSide: BorderSide(color: Colors.grey), // 활성 상태일 때 밑줄 색상
+                borderSide: BorderSide(color: Colors.grey),
               ),
             ),
           ),
         ),
-        const SizedBox(), // 세 번째 열 빈 공간 유지
+        const SizedBox(),
       ],
     );
   }
@@ -421,28 +430,29 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         Padding(
           padding: EdgeInsets.only(right: 5.w),
           child: TextField(
-            controller: _nicknameController, // 닉네임 입력 필드
+            controller: _nicknameController,
+            style: TextStyle(fontSize: 5.5.sp), // 폰트 크기
             decoration: InputDecoration(
-              hintText: nickName, // 기존 닉네임 표시
-              hintStyle: const TextStyle(color: Colors.grey), // 힌트 텍스트 색상
+              hintText: nickName,
+              hintStyle: TextStyle(color: Colors.grey, fontSize: 4.5.sp),
               enabledBorder: const UnderlineInputBorder(
-                borderSide: BorderSide(color: Colors.grey), // 비활성 상태 밑줄 색상
+                borderSide: BorderSide(color: Colors.grey),
               ),
               focusedBorder: const UnderlineInputBorder(
-                borderSide: BorderSide(color: Colors.black), // 활성 상태 밑줄 색상
+                borderSide: BorderSide(color: Colors.black),
               ),
               suffixIcon: IconButton(
-                icon: const Icon(Icons.close, color: Colors.grey), // x 버튼
+                icon: const Icon(Icons.close, color: Colors.grey),
                 onPressed: () {
                   setState(() {
-                    _nicknameController.clear(); // 입력된 닉네임 삭제
+                    _nicknameController.clear();
                     _message = "닉네임을 입력하세요.";
                     _messageColor = Colors.red;
                   });
                 },
               ),
             ),
-            onChanged: (text) => setState(() {}), // 텍스트 변경 시 UI 갱신
+            onChanged: (text) => setState(() {}),
           ),
         ),
         Padding(
@@ -450,13 +460,15 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           child: ElevatedButton(
             style: ElevatedButton.styleFrom(
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12.0), // 버튼 모서리 둥글게
+                borderRadius: BorderRadius.circular(12.0),
               ),
-              backgroundColor: const Color(0xFFCF8A7A), // 버튼 색상
-              foregroundColor: Colors.white, // 버튼 글자색
-              padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 18.h),
+              backgroundColor: const Color(0xFFCF8A7A),
+              foregroundColor: Colors.white,
+              padding: EdgeInsets.symmetric(
+                  horizontal: 6.sp,
+                  vertical: MediaQuery.of(context).size.height * 0.035),
             ),
-            onPressed: _checkNickname, // 중복 확인 버튼 클릭 시 실행
+            onPressed: _checkNickname,
             child: const Text("중복확인"),
           ),
         ),
@@ -481,7 +493,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   /// 회원정보 수정 버튼
   Widget _buildUpdateButton() {
     return SizedBox(
-      width: 120.w, // 버튼의 너비
+      width: MediaQuery.of(context).size.width * 0.3, // 버튼의 너비
+      height: MediaQuery.of(context).size.height * 0.125, // 버튼의 높이
       child: ElevatedButton(
         style: ElevatedButton.styleFrom(
           shape: RoundedRectangleBorder(
@@ -496,7 +509,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             _isModified ? _updateUserProfile : null, // 변경된 정보가 있을 때만 버튼 활성화
         child: Text(
           '회원정보 수정',
-          style: TextStyle(fontSize: 5.5.sp, color: Colors.white),
+          style: TextStyle(fontSize: 6.sp, color: Colors.white),
         ),
       ),
     );

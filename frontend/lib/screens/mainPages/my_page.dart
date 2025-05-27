@@ -236,7 +236,10 @@ class _MyPageState extends State<MyPage> {
   // 프로필 섹션
   Widget _buildProfileSection() {
     return Container(
-      padding: EdgeInsets.symmetric(vertical: 15.h, horizontal: 8.w),
+      padding: EdgeInsets.symmetric(
+        vertical: MediaQuery.of(context).size.height * 0.04,
+        horizontal: MediaQuery.of(context).size.width * 0.03,
+      ),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(10),
@@ -252,17 +255,16 @@ class _MyPageState extends State<MyPage> {
       child: Row(
         children: [
           SizedBox(
-            height: 100.h,
             child: (profileImage == null)
                 ? CircleAvatar(
                     // 프로필 이미지
-                    radius: 40,
+                    radius: MediaQuery.of(context).size.height * 0.09,
                     backgroundColor: Colors.grey[300],
                     child: Icon(Icons.person, size: 60, color: Colors.white),
                   )
                 : CircleAvatar(
                     // 프로필 이미지 - 사진 처리
-                    radius: 40,
+                    radius: MediaQuery.of(context).size.height * 0.085,
                     backgroundColor: Colors.grey[300],
                     backgroundImage: MemoryImage(
                         Uint8List.fromList(base64Decode(profileImage!))),
@@ -358,14 +360,17 @@ class _MyPageState extends State<MyPage> {
             color: Color(0xffD97D6C),
             borderRadius: BorderRadius.vertical(top: Radius.circular(10)),
           ),
-          child: Row(
-            children: [
-              // 테이블 헤더
-              _buildListHeaderCell("악보명", flex: 4),
-              _buildListHeaderCell("마지막 연습 날짜", flex: 2),
-              _buildListHeaderCell("최고 점수", flex: 2),
-              _buildListHeaderCell("상세 기록", flex: 2),
-            ],
+          child: SizedBox(
+            height: MediaQuery.of(context).size.height * 0.05,
+            child: Row(
+              children: [
+                // 테이블 헤더
+                _buildListHeaderCell("악보명", flex: 4),
+                _buildListHeaderCell("마지막 연습 날짜", flex: 2),
+                _buildListHeaderCell("최고 점수", flex: 2),
+                _buildListHeaderCell("상세 기록", flex: 2),
+              ],
+            ),
           ),
         ),
         Expanded(
@@ -379,6 +384,7 @@ class _MyPageState extends State<MyPage> {
               var item = sheetMusicData[sheetMusicData.length - 1 - index];
 
               return Container(
+                height: MediaQuery.of(context).size.height * 0.15,
                 // 테이블 셀
                 padding: EdgeInsets.symmetric(vertical: 14.h),
                 decoration: BoxDecoration(
@@ -435,7 +441,10 @@ Widget _buildListHeaderCell(String text, {int flex = 1}) {
       child: Center(
         child: Text(
           text,
-          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+          style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+              fontSize: 6.5.sp),
         ),
       ),
     ),
@@ -467,8 +476,8 @@ Widget modalBtn(BuildContext context, String text, Color backgroundColor,
     bool isTextblack) {
   // 모달 버튼
   return Container(
-    width: 50.w,
-    height: 58.h,
+    width: MediaQuery.of(context).size.width * 0.16,
+    height: MediaQuery.of(context).size.height * 0.13,
     alignment: Alignment.center,
     decoration: BoxDecoration(
       color: backgroundColor,
@@ -477,7 +486,7 @@ Widget modalBtn(BuildContext context, String text, Color backgroundColor,
     child: Text(text,
         style: TextStyle(
             color: isTextblack ? Colors.black : Colors.white,
-            fontSize: 5.3.sp,
+            fontSize: 6.sp,
             fontWeight: FontWeight.w500)),
   );
 }
@@ -491,11 +500,14 @@ void openModal(
     builder: (context) => AlertDialog(
       alignment: Alignment.center,
       insetPadding: EdgeInsets.zero,
-      contentPadding: EdgeInsets.only(top: 20.h, bottom: 20.h),
+      contentPadding: EdgeInsets.symmetric(
+          vertical: MediaQuery.of(context).size.height * 0.02),
       backgroundColor: Colors.white,
-      content: SizedBox(
-        width: 115.w,
-        height: 150.h,
+      content: Padding(
+        padding: EdgeInsets.symmetric(
+          horizontal: MediaQuery.of(context).size.width * 0.01,
+          vertical: MediaQuery.of(context).size.height * 0.02,
+        ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           mainAxisSize: MainAxisSize.min,
@@ -507,12 +519,12 @@ void openModal(
               '로그아웃 하시겠습니까?',
               textAlign: TextAlign.center,
               style: TextStyle(
-                fontSize: 6.8.sp,
+                fontSize: 7.sp,
                 color: Color(0xFF646464),
                 fontWeight: FontWeight.w600,
               ),
             ),
-            SizedBox(height: 30.h),
+            SizedBox(height: MediaQuery.of(context).size.height * 0.08),
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [

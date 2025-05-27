@@ -60,11 +60,12 @@ class _PracticeResultPPState extends State<PracticeResultPP> {
                         ),
                         Padding(
                           // 결과창 padding
-                          padding: EdgeInsets.symmetric(
+                          padding: EdgeInsets.only(
                             // padding으로 사이즈 조절
-                            vertical: MediaQuery.of(context).size.height * 0.08,
-                            horizontal:
-                                MediaQuery.of(context).size.width * 0.12,
+                            top: MediaQuery.of(context).size.height * 0.02,
+                            bottom: MediaQuery.of(context).size.height * 0.08,
+                            left: MediaQuery.of(context).size.width * 0.12,
+                            right: MediaQuery.of(context).size.width * 0.12,
                           ),
                           child: Container(
                             // 결과창 container
@@ -346,7 +347,10 @@ class _PracticeResultPPState extends State<PracticeResultPP> {
                                               if (!lvCleared)
                                                 Container(
                                                   width: double.infinity,
-                                                  height: 70.h,
+                                                  height: MediaQuery.of(context)
+                                                          .size
+                                                          .height *
+                                                      0.15,
                                                   decoration: BoxDecoration(
                                                     color: Colors.black26,
                                                     borderRadius:
@@ -407,7 +411,7 @@ class ButtonForm extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 70.h,
+      height: MediaQuery.of(context).size.height * 0.15,
       width: width,
       child: Stack(
         children: [
@@ -467,8 +471,8 @@ Widget modalBtn(BuildContext context, String text, Color backgroundColor,
     bool isTextblack) {
   // 모달 버튼
   return Container(
-    width: 55.w,
-    height: 60.h,
+    width: MediaQuery.of(context).size.width * 0.15,
+    height: MediaQuery.of(context).size.height * 0.12,
     alignment: Alignment.center,
     decoration: BoxDecoration(
       color: backgroundColor,
@@ -494,62 +498,66 @@ void openModal(
       insetPadding: EdgeInsets.zero,
       contentPadding: EdgeInsets.only(top: 20.h, bottom: 10.h),
       backgroundColor: Colors.white,
-      content: SizedBox(
-        width: 120.w,
-        height: 150.h,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            SizedBox(
-              height: 15,
-            ),
-            Text(
-              '다시 시작하시겠습니까?',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 7.sp,
-                color: Color(0xFF4A4A4A),
-                fontWeight: FontWeight.w600,
+      content: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxWidth: 300.w, // 최대너비 제한
+        ),
+        child: SizedBox(
+          width: MediaQuery.of(context).size.width * 0.32,
+          height: MediaQuery.of(context).size.height * 0.3,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SizedBox(
+                height: 15,
               ),
-            ),
-            SizedBox(height: 20.h),
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextButton(
-                  style: TextButton.styleFrom(
-                    padding: EdgeInsets.zero,
-                    minimumSize: Size(0, 0),
-                  ),
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
-                  child: modalBtn(
-                      context, '취소', Color.fromARGB(255, 205, 203, 202), true),
+              Text(
+                '다시 시작하시겠습니까?',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 7.sp,
+                  color: Color(0xFF4A4A4A),
+                  fontWeight: FontWeight.w600,
                 ),
-                SizedBox(width: 3.w),
-                TextButton(
-                  style: TextButton.styleFrom(
-                    padding: EdgeInsets.zero,
-                    minimumSize: Size(0, 0),
+              ),
+              SizedBox(height: 20.h),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextButton(
+                    style: TextButton.styleFrom(
+                      padding: EdgeInsets.zero,
+                      minimumSize: Size(0, 0),
+                    ),
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                    child: modalBtn(context, '취소',
+                        Color.fromARGB(255, 205, 203, 202), true),
                   ),
-                  onPressed: () {
-                    // 다시하기 처리
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => PatternFillScreen(
-                          index: idx,
+                  SizedBox(width: 3.w),
+                  TextButton(
+                    style: TextButton.styleFrom(
+                      padding: EdgeInsets.zero,
+                      minimumSize: Size(0, 0),
+                    ),
+                    onPressed: () {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => PatternFillScreen(
+                            index: idx,
+                          ),
                         ),
-                      ),
-                    );
-                  },
-                  child: modalBtn(context, '확인', Color(0xffD97D6C), false),
-                ),
-              ],
-            ),
-          ],
+                      );
+                    },
+                    child: modalBtn(context, '확인', Color(0xffD97D6C), false),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     ),

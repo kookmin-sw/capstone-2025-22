@@ -18,10 +18,12 @@ class CompleteDialog extends StatelessWidget {
       backgroundColor: Colors.white,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       child: Container(
-        width: 110.w,
-        height: 170.h,
+        width: MediaQuery.of(context).size.width * 0.28,
+        height: MediaQuery.of(context).size.height * 0.35,
         child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 20.h, vertical: 30.h),
+          padding: EdgeInsets.symmetric(
+              horizontal: MediaQuery.of(context).size.width * 0.02,
+              vertical: 30.h),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.stretch,

@@ -111,31 +111,32 @@ class _PatternFillMainState extends State<PatternFillMain> {
   }
 
   void openModal(BuildContext context, int index) {
-    // 모달 열기
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        alignment: Alignment.center,
-        insetPadding: EdgeInsets.symmetric(horizontal: 0, vertical: 0),
-        backgroundColor: Colors.white,
-        content: SizedBox(
-          width: 105.w,
-          height: 165.h,
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: EdgeInsets.zero,
+        child: Container(
+          width: MediaQuery.of(context).size.width * 0.3,
+          margin: EdgeInsets.symmetric(horizontal: 0.w),
+          padding: EdgeInsets.all(20.h),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(30),
+          ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Padding(
-                padding: EdgeInsets.only(top: 15.h, bottom: 0),
-                child: Text(
-                  'Basic Pattern $index',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 7.5.sp,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF4A4A4A),
-                  ),
+              Text(
+                'Basic Pattern $index',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 7.5.sp,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF4A4A4A),
                 ),
               ),
+              SizedBox(height: 10.h),
               Text(
                 '연습을 시작하시겠습니까?',
                 textAlign: TextAlign.center,
@@ -144,36 +145,70 @@ class _PatternFillMainState extends State<PatternFillMain> {
                   color: Color(0xFF4A4A4A),
                 ),
               ),
-              SizedBox(height: 23.h),
+              SizedBox(height: 20.h),
               Row(
-                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  TextButton(
-                    style: TextButton.styleFrom(
-                      padding: EdgeInsets.zero,
-                      minimumSize: Size(0, 0),
+                  Flexible(
+                    child: SizedBox(
+                      height: MediaQuery.of(context).size.height * 0.11,
+                      width: MediaQuery.of(context).size.width * 0.15,
+                      child: TextButton(
+                        style: TextButton.styleFrom(
+                          padding: EdgeInsets.zero,
+                          minimumSize: Size(0, 0),
+                          backgroundColor: Color.fromARGB(255, 205, 203, 202),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(15),
+                          ),
+                        ),
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                        },
+                        child: Text(
+                          '취소',
+                          style: TextStyle(
+                            color: Colors.black,
+                            fontSize: 5.5.sp,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
                     ),
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                    },
-                    child: modalBtn(context, '취소',
-                        Color.fromARGB(255, 205, 203, 202), true),
                   ),
                   SizedBox(width: 5.w),
-                  TextButton(
-                    style: TextButton.styleFrom(
-                      padding: EdgeInsets.zero,
-                      minimumSize: Size(0, 0),
-                    ),
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (context) => PatternFillScreen(index: index),
+                  Flexible(
+                    child: SizedBox(
+                      height: MediaQuery.of(context).size.height * 0.11,
+                      width: MediaQuery.of(context).size.width * 0.15,
+                      child: TextButton(
+                        style: TextButton.styleFrom(
+                          padding: EdgeInsets.zero,
+                          minimumSize: Size(0, 0),
+                          backgroundColor: Color(0xffD97D6C),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(15),
+                          ),
                         ),
-                      );
-                    },
-                    child: modalBtn(context, '확인', Color(0xffD97D6C), false),
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  PatternFillScreen(index: index),
+                            ),
+                          );
+                        },
+                        child: Text(
+                          '확인',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 5.5.sp,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ),
                   ),
                 ],
               ),
