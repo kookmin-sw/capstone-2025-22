@@ -28,7 +28,7 @@ class NavigationPanel extends StatelessWidget {
 
     // 아이템 및 마진을 균등 분배
     double itemTotalHeight = availableHeight / itemCount;
-    double verticalMargin = itemTotalHeight * 0.045; // 마진 비율 (10%)
+    double verticalMargin = itemTotalHeight * 0.035; // 마진 비율 (10%)
     double itemHeight = itemTotalHeight - (2 * verticalMargin); // 아이템 높이
 
     // 마지막 아이템 아래에 여백을 추가 (safe area padding)
@@ -46,26 +46,31 @@ class NavigationPanel extends StatelessWidget {
                 color: Colors.black26, blurRadius: 10, offset: Offset(3, 0))
           ],
         ),
-        child: Column(
-          children: [
-            SizedBox(height: MediaQuery.of(context).padding.top + 30.h),
-            Container(
-              alignment: Alignment.center,
-              child: Image.asset('assets/images/appLogo.png'),
-              height: screenHeight * 0.11, // 로고 높이 비율로
-            ),
-            SizedBox(height: 10.h),
-            _navItem(FaIcon(FontAwesomeIcons.drum), "드럼 기초", 0, itemHeight,
-                verticalMargin),
-            _navItem(FaIcon(FontAwesomeIcons.handsClapping), "메트로놈", 1,
-                itemHeight, verticalMargin),
-            _navItem(FaIcon(FontAwesomeIcons.music), "패턴 및 필인 연습", 2,
-                itemHeight, verticalMargin),
-            _navItem(Icon(Icons.queue_music_rounded, size: 13.sp), "악보 연습", 3,
-                itemHeight, verticalMargin),
-            _navItem(FaIcon(FontAwesomeIcons.circleUser), "마이페이지", 4,
-                itemHeight, lastItemBottomMargin),
-          ],
+        child: Padding(
+          padding: EdgeInsets.symmetric(
+              vertical: MediaQuery.of(context).size.height * 0.01,
+              horizontal: MediaQuery.of(context).size.width * 0.003),
+          child: Column(
+            children: [
+              SizedBox(height: MediaQuery.of(context).padding.top + 30.h),
+              Container(
+                alignment: Alignment.center,
+                child: Image.asset('assets/images/appLogo.png'),
+                height: screenHeight * 0.11, // 로고 높이 비율로
+              ),
+              SizedBox(height: 10.h),
+              _navItem(FaIcon(FontAwesomeIcons.drum), "드럼 기초", 0, itemHeight,
+                  verticalMargin),
+              _navItem(FaIcon(FontAwesomeIcons.handsClapping), "메트로놈", 1,
+                  itemHeight, verticalMargin),
+              _navItem(FaIcon(FontAwesomeIcons.music), "패턴 및 필인 연습", 2,
+                  itemHeight, verticalMargin),
+              _navItem(Icon(Icons.queue_music_rounded, size: 13.sp), "악보 연습", 3,
+                  itemHeight, verticalMargin),
+              _navItem(FaIcon(FontAwesomeIcons.circleUser), "마이페이지", 4,
+                  itemHeight, lastItemBottomMargin),
+            ],
+          ),
         ),
       ),
     );
