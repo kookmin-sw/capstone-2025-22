@@ -13,11 +13,32 @@ class NavigationPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    double screenHeight = MediaQuery.of(context).size.height;
+    double bottomPadding = MediaQuery.of(context).padding.bottom;
+
+    // 상단 로고 및 마진
+    double headerHeight = 35.h + (screenHeight * 0.11) + 10.h; // 로고 높이를 비율로
+    double otherHeights = headerHeight + bottomPadding;
+
+    // 전체 아이템+마진 영역 높이
+    double availableHeight = screenHeight - otherHeights;
+
+    // 아이템 개수
+    int itemCount = 5;
+
+    // 아이템 및 마진을 균등 분배
+    double itemTotalHeight = availableHeight / itemCount;
+    double verticalMargin = itemTotalHeight * 0.045; // 마진 비율 (10%)
+    double itemHeight = itemTotalHeight - (2 * verticalMargin); // 아이템 높이
+
+    // 마지막 아이템 아래에 여백을 추가 (safe area padding)
+    double lastItemBottomMargin = verticalMargin + bottomPadding;
+
     return SingleChildScrollView(
       physics: const NeverScrollableScrollPhysics(),
       child: Container(
-        width: 105.w, // 네비게이션 바 고정 크기
-        height: 100.sh, // 네비게이션 바 고정 크기
+        width: 105.w,
+        height: screenHeight + bottomPadding, // SafeArea까지 포함
         decoration: BoxDecoration(
           color: Colors.white,
           boxShadow: [
@@ -26,79 +47,75 @@ class NavigationPanel extends StatelessWidget {
           ],
         ),
         child: Column(
-          // 네비게이션 바 메뉴
           children: [
-            SizedBox(height: 35.h),
+            SizedBox(height: MediaQuery.of(context).padding.top + 30.h),
             Container(
               alignment: Alignment.center,
               child: Image.asset('assets/images/appLogo.png'),
-              height: 55.h,
+              height: screenHeight * 0.11, // 로고 높이 비율로
             ),
-            SizedBox(
-              height: 10.h,
-            ),
-            // 네비게이션 바 메뉴 아이템
-            _navItem(FaIcon(FontAwesomeIcons.drum), "드럼 기초", 0),
-            _navItem(FaIcon(FontAwesomeIcons.handsClapping), "메트로놈", 1),
-            _navItem(FaIcon(FontAwesomeIcons.music), "패턴 및 필인 연습", 2),
-            _navItem(
-              Icon(Icons.queue_music_rounded, size: 13.sp),
-              "악보 연습",
-              3,
-            ),
-            _navItem(FaIcon(FontAwesomeIcons.circleUser), "마이페이지", 4),
+            SizedBox(height: 10.h),
+            _navItem(FaIcon(FontAwesomeIcons.drum), "드럼 기초", 0, itemHeight,
+                verticalMargin),
+            _navItem(FaIcon(FontAwesomeIcons.handsClapping), "메트로놈", 1,
+                itemHeight, verticalMargin),
+            _navItem(FaIcon(FontAwesomeIcons.music), "패턴 및 필인 연습", 2,
+                itemHeight, verticalMargin),
+            _navItem(Icon(Icons.queue_music_rounded, size: 13.sp), "악보 연습", 3,
+                itemHeight, verticalMargin),
+            _navItem(FaIcon(FontAwesomeIcons.circleUser), "마이페이지", 4,
+                itemHeight, lastItemBottomMargin),
           ],
         ),
       ),
     );
   }
 
-  // 네비게이션 바 메뉴 아이템 위젯 - 아이콘, 타이틀, 인덱스
-  Widget _navItem(Widget icon, String title, int index) {
+  Widget _navItem(Widget icon, String title, int index, double itemHeight,
+      double verticalMargin) {
     bool isSelected = selectedIndex == index;
 
     return GestureDetector(
       onTap: () => onItemSelected(index),
       child: Stack(
         children: [
-          // 강조 바 - 선택되었을 때
           if (isSelected)
             Positioned(
-              left: 3.w, // 왼쪽으로 좀 더 빼줌
-              top: 5.h, // 위쪽 정렬 맞춤
-              bottom: 4.h, // 아래쪽 정렬 맞춤
+              left: 3.w,
+              top: 5.h,
+              bottom: 4.h,
               child: Container(
-                width: 2.8.w, // 강조 바 두께
+                width: 2.8.w,
                 decoration: BoxDecoration(
-                  color: Color.fromARGB(255, 195, 112, 97), // 강조 바 색상
-                  borderRadius: BorderRadius.circular(10), // 둥글게 처리
+                  color: Color.fromARGB(255, 195, 112, 97),
+                  borderRadius: BorderRadius.circular(10),
                 ),
               ),
             ),
-
-          // 네비게이션 버튼 박스
           Container(
             padding: EdgeInsets.symmetric(horizontal: 20.h, vertical: 6.w),
-            margin:
-                EdgeInsets.only(top: 5.h, bottom: 5.h, left: 9.w, right: 4.w),
+            margin: EdgeInsets.only(
+                top: verticalMargin,
+                bottom: verticalMargin,
+                left: 9.w,
+                right: 4.w),
             decoration: BoxDecoration(
               color: isSelected
                   ? Color.fromARGB(255, 249, 231, 227)
-                  : Colors.transparent, // 선택된 아이템 배경색
+                  : Colors.transparent,
               borderRadius: BorderRadius.circular(10),
               boxShadow: isSelected
                   ? [
                       BoxShadow(
-                        color: Colors.black26, // 그림자 색상
-                        blurRadius: 5, // 흐림 정도
-                        spreadRadius: 0.5, // 퍼짐 정도
-                        offset: Offset(0, 4), // 그림자 조정
+                        color: Colors.black26,
+                        blurRadius: 5,
+                        spreadRadius: 0.5,
+                        offset: Offset(0, 4),
                       ),
                     ]
                   : [],
             ),
             child: Row(
-              // 네비게이션 버튼 아이콘, 타이틀
               children: [
                 SizedBox(width: 2.w),
                 IconTheme(
