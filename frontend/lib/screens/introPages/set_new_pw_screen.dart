@@ -52,7 +52,6 @@ class _SetNewPwScreenState extends State<SetNewPwScreen> {
         resizeToAvoidBottomInset: true,
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         body: SingleChildScrollView(
-          physics: const NeverScrollableScrollPhysics(),
           child: Center(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
@@ -77,92 +76,99 @@ class _SetNewPwScreenState extends State<SetNewPwScreen> {
                     key: _formKey,
                     child: Column(
                       children: [
-                        TextFormField(
-                          controller: _passwordController,
-                          obscureText: !_isPasswordVisible,
-                          validator: _validatePassword,
+                        SizedBox(
+                          height: MediaQuery.of(context).size.height * 0.13,
+                          child: TextFormField(
+                            controller: _passwordController,
+                            obscureText: !_isPasswordVisible,
+                            validator: _validatePassword,
 
-                          // build_text_field에 있던 속성 가져옴
-                          decoration: InputDecoration(
-                            hintText: '새 비밀번호',
-                            hintStyle: TextStyle(fontSize: 5.5.sp),
-                            filled: true,
-                            fillColor: Colors.white,
-                            border: OutlineInputBorder(
-                              borderRadius:
-                                  BorderRadius.circular(12.0), // 테두리를 둥글게 설정
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12.0),
-                              borderSide: BorderSide(
-                                  color: Colors.grey.shade400), // 기본 테두리 색
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12.0),
-                              borderSide: BorderSide(
-                                  color: Color(0xFF424242),
-                                  width: 2.0), // 포커스 시 테두리 색
-                            ),
-                            suffixIcon: Padding(
-                              padding: EdgeInsets.only(right: 4.w),
-                              child: IconButton(
-                                icon: Icon(
-                                  _isPasswordVisible
-                                      ? Icons.visibility
-                                      : Icons.visibility_off,
+                            // build_text_field에 있던 속성 가져옴
+                            decoration: InputDecoration(
+                              hintText: '새 비밀번호',
+                              hintStyle: TextStyle(fontSize: 5.5.sp),
+                              filled: true,
+                              fillColor: Colors.white,
+                              border: OutlineInputBorder(
+                                borderRadius:
+                                    BorderRadius.circular(12.0), // 테두리를 둥글게 설정
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12.0),
+                                borderSide: BorderSide(
+                                    color: Colors.grey.shade400), // 기본 테두리 색
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12.0),
+                                borderSide: BorderSide(
+                                    color: Color(0xFF424242),
+                                    width: 2.0), // 포커스 시 테두리 색
+                              ),
+                              suffixIcon: Padding(
+                                padding: EdgeInsets.only(right: 4.w),
+                                child: IconButton(
+                                  icon: Icon(
+                                    _isPasswordVisible
+                                        ? Icons.visibility
+                                        : Icons.visibility_off,
+                                  ),
+                                  onPressed: () {
+                                    setState(
+                                      () {
+                                        _isPasswordVisible =
+                                            !_isPasswordVisible;
+                                      },
+                                    );
+                                  },
                                 ),
-                                onPressed: () {
-                                  setState(
-                                    () {
-                                      _isPasswordVisible = !_isPasswordVisible;
-                                    },
-                                  );
-                                },
                               ),
                             ),
                           ),
                         ),
-                        SizedBox(height: 25.h),
-                        TextFormField(
-                          controller: _confirmPasswordController,
-                          obscureText: !_isConfirmPasswordVisible,
-                          validator: _validateConfirmPassword,
-                          decoration: InputDecoration(
-                            hintText: '새 비밀번호 확인',
-                            hintStyle: TextStyle(fontSize: 5.5.sp),
-                            filled: true,
-                            fillColor: Colors.white,
-                            border: OutlineInputBorder(
-                              borderRadius:
-                                  BorderRadius.circular(12.0), // 테두리를 둥글게 설정
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12.0),
-                              borderSide: BorderSide(
-                                  color: Colors.grey.shade400), // 기본 테두리 색
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12.0),
-                              borderSide: BorderSide(
-                                  color: Color(0xFF424242),
-                                  width: 2.0), // 포커스 시 테두리 색
-                            ),
-                            suffixIcon: Padding(
-                              padding: EdgeInsets.only(right: 4.w),
-                              child: IconButton(
-                                icon: Icon(
-                                  _isConfirmPasswordVisible
-                                      ? Icons.visibility
-                                      : Icons.visibility_off,
+                        SizedBox(height: 10.h),
+                        SizedBox(
+                          height: MediaQuery.of(context).size.height * 0.13,
+                          child: TextFormField(
+                            controller: _confirmPasswordController,
+                            obscureText: !_isConfirmPasswordVisible,
+                            validator: _validateConfirmPassword,
+                            decoration: InputDecoration(
+                              hintText: '새 비밀번호 확인',
+                              hintStyle: TextStyle(fontSize: 5.5.sp),
+                              filled: true,
+                              fillColor: Colors.white,
+                              border: OutlineInputBorder(
+                                borderRadius:
+                                    BorderRadius.circular(12.0), // 테두리를 둥글게 설정
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12.0),
+                                borderSide: BorderSide(
+                                    color: Colors.grey.shade400), // 기본 테두리 색
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12.0),
+                                borderSide: BorderSide(
+                                    color: Color(0xFF424242),
+                                    width: 2.0), // 포커스 시 테두리 색
+                              ),
+                              suffixIcon: Padding(
+                                padding: EdgeInsets.only(right: 4.w),
+                                child: IconButton(
+                                  icon: Icon(
+                                    _isConfirmPasswordVisible
+                                        ? Icons.visibility
+                                        : Icons.visibility_off,
+                                  ),
+                                  onPressed: () {
+                                    setState(
+                                      () {
+                                        _isConfirmPasswordVisible =
+                                            !_isConfirmPasswordVisible;
+                                      },
+                                    );
+                                  },
                                 ),
-                                onPressed: () {
-                                  setState(
-                                    () {
-                                      _isConfirmPasswordVisible =
-                                          !_isConfirmPasswordVisible;
-                                    },
-                                  );
-                                },
                               ),
                             ),
                           ),
@@ -173,7 +179,8 @@ class _SetNewPwScreenState extends State<SetNewPwScreen> {
                 ),
                 SizedBox(height: 30.h),
                 SizedBox(
-                    width: 135.w,
+                    width: MediaQuery.of(context).size.width * 0.3,
+                    height: MediaQuery.of(context).size.height * 0.15,
                     child: ElevatedButton(
                       onPressed: () async {
                         if (_formKey.currentState!.validate()) {
@@ -222,7 +229,7 @@ class _SetNewPwScreenState extends State<SetNewPwScreen> {
                       child: Text(
                         '비밀번호 변경',
                         style: TextStyle(
-                          fontSize: 6.sp,
+                          fontSize: 7.sp,
                           color: Color(0xffffffff),
                         ),
                       ),
