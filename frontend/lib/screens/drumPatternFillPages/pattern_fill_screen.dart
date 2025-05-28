@@ -66,6 +66,7 @@ class _CountdownPageState extends State<CountdownPage>
   bool _isPlaying = false;
   bool _showPracticeMessage = false;
   bool _playbackComplete = false; // 연주 상태 완료 추적
+  bool _showResultButton = false; // 결과 버튼 표시 여부
   double _currentPosition = 0.0;
   double _totalDuration = 0.0;
   String _currentSpeed = '1.0x';
@@ -137,6 +138,7 @@ class _CountdownPageState extends State<CountdownPage>
                     playbackController.currentDuration >=
                         playbackController.totalDuration) {
                   _playbackComplete = true;
+                  _showResultButton = true;
                   _currentPosition = _totalDuration;
                 }
               });
@@ -360,7 +362,7 @@ class _CountdownPageState extends State<CountdownPage>
     _overlayController.forward();
 
     // 1초 후 메시지 숨기기
-    await Future.delayed(const Duration(milliseconds: 1000));
+    await Future.delayed(const Duration(milliseconds: 2000));
 
     if (!mounted) return;
     _overlayController.reverse().then((_) {
@@ -549,25 +551,11 @@ class _CountdownPageState extends State<CountdownPage>
     }).toList();
   }
 
-  // 최종 채점 결과 적용 및 결과 화면 이동
+  // 최종 채점 결과 적용
   void _applyGradingResults() {
     print("✅ 1차 채점 완료: measureNumbers = "
         "${_beatGradingResults.map((m) => m['measureNumber']).toList()}");
     final initialBeatScore = computeScoreFrom1stGrading(_beatGradingResults);
-
-    // 2초 딜레이 후 결과창으로 이동
-    Future.delayed(const Duration(seconds: 2), () {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(
-          builder: (_) => PracticeResultPP(
-            idx: widget.index,
-            score: initialBeatScore,
-            xmlDataString: decodedXml,
-            practiceInfo: practiceInfo,
-          ),
-        ),
-      );
-    });
   }
 
   void _onWsGradingMessage(Map<String, dynamic> msg) {
@@ -623,232 +611,287 @@ class _CountdownPageState extends State<CountdownPage>
                 // 상단 영역: 홈 버튼 + 제목 + 속도 변경 버튼
                 Padding(
                   padding:
-                      EdgeInsets.symmetric(horizontal: 26.w, vertical: 10.h),
+                      EdgeInsets.symmetric(horizontal: 20.w, vertical: 10.h),
                   child: SizedBox(
                     height: 70.h,
-                    child: Row(children: [
-                      SizedBox(
-                        width: 20.w,
-                        height: 30.h,
-                        child: Center(
-                          child:
-                              // 홈 버튼
-                              IconButton(
-                            padding: EdgeInsets.zero,
-                            constraints: const BoxConstraints(),
-                            iconSize: 12.sp,
-                            icon: const Icon(Icons.home_filled,
-                                color: Color(0xff646464)),
-                            onPressed: () {
-                              // Show the confirmation dialog
-                              showDialog(
-                                context: context,
-                                builder: (context) => ConfirmationDialog(
-                                  message: "메인으로 이동하시겠습니까?",
-                                  onConfirm: () {
-                                    Navigator.of(context).pushAndRemoveUntil(
-                                      MaterialPageRoute(
-                                          builder: (_) =>
-                                              const NavigationScreens(
-                                                firstSelectedIndex: 2,
-                                              )),
-                                      (route) => false, // 모든 이전 라우트를 제거
-                                    );
-                                    if (_isPlaying) _audioPlayer.stop();
-                                    final drumRecordingState =
-                                        _drumRecordingKey.currentState;
-                                    if (drumRecordingState != null &&
-                                        drumRecordingState.isRecording) {
-                                      drumRecordingState.stopRecording();
-                                    }
-                                    _playerStateSubscription?.cancel();
-                                    _playerCompleteSubscription?.cancel();
-                                    _practiceMessageTimer?.cancel();
-                                    _positionUpdateTimer?.cancel();
+                    child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          SizedBox(
+                            width: 25.w,
+                            height: 64.h,
+                            child: Center(
+                              child:
+                                  // 홈 버튼
+                                  IconButton(
+                                padding: EdgeInsets.zero,
+                                constraints: const BoxConstraints(),
+                                iconSize: 12.sp,
+                                icon: const Icon(Icons.home_filled,
+                                    color: Color(0xff646464)),
+                                onPressed: () {
+                                  // Show the confirmation dialog
+                                  showDialog(
+                                    context: context,
+                                    builder: (context) => ConfirmationDialog(
+                                      message: "메인으로 이동하시겠습니까?",
+                                      onConfirm: () {
+                                        Navigator.of(context)
+                                            .pushAndRemoveUntil(
+                                          MaterialPageRoute(
+                                              builder: (_) =>
+                                                  const NavigationScreens(
+                                                    firstSelectedIndex: 2,
+                                                  )),
+                                          (route) => false, // 모든 이전 라우트를 제거
+                                        );
+                                        if (_isPlaying) _audioPlayer.stop();
+                                        final drumRecordingState =
+                                            _drumRecordingKey.currentState;
+                                        if (drumRecordingState != null &&
+                                            drumRecordingState.isRecording) {
+                                          drumRecordingState.stopRecording();
+                                        }
+                                        _playerStateSubscription?.cancel();
+                                        _playerCompleteSubscription?.cancel();
+                                        _practiceMessageTimer?.cancel();
+                                        _positionUpdateTimer?.cancel();
 
-                                    WidgetsBinding.instance
-                                        .addPostFrameCallback((_) {
-                                      if (!mounted) return;
-                                      final navigationScreensState =
-                                          context.findAncestorStateOfType<
-                                              NavigationScreensState>();
-                                      if (navigationScreensState != null &&
-                                          navigationScreensState.mounted) {
-                                        navigationScreensState.setState(() {
-                                          navigationScreensState.selectedIndex =
-                                              2;
+                                        WidgetsBinding.instance
+                                            .addPostFrameCallback((_) {
+                                          if (!mounted) return;
+                                          final navigationScreensState =
+                                              context.findAncestorStateOfType<
+                                                  NavigationScreensState>();
+                                          if (navigationScreensState != null &&
+                                              navigationScreensState.mounted) {
+                                            navigationScreensState.setState(() {
+                                              navigationScreensState
+                                                  .selectedIndex = 2;
+                                            });
+                                          }
+                                          if (Navigator.canPop(context)) {
+                                            Navigator.of(context).pop();
+                                          }
                                         });
-                                      }
-                                      if (Navigator.canPop(context)) {
+                                      },
+                                      onCancel: () {
+                                        // Close the dialog if user cancels
                                         Navigator.of(context).pop();
-                                      }
-                                    });
-                                  },
-                                  onCancel: () {
-                                    // Close the dialog if user cancels
-                                    Navigator.of(context).pop();
-                                  },
-                                ),
-                              );
-                            },
+                                      },
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
                           ),
-                        ),
-                      ),
 
-                      // 타이틀 Container
-                      Expanded(
-                        child: Center(
-                          child: InnerShadow(
-                            shadowColor:
-                                const Color.fromARGB(255, 238, 159, 145)
-                                    .withValues(alpha: 0.5),
-                            blur: 6,
-                            offset: Offset(0, 0),
-                            borderRadius: BorderRadius.circular(30),
-                            child: Builder(builder: (context) {
-                              final screenW = MediaQuery.of(context).size.width;
-                              return Container(
-                                constraints:
-                                    BoxConstraints(maxWidth: screenW * 0.45),
-                                height: 64.h,
-                                padding: EdgeInsets.symmetric(horizontal: 28.w),
-                                alignment: Alignment.center,
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFC76A59),
-                                  borderRadius: BorderRadius.circular(30),
-                                  border: Border.all(
-                                    color: const Color(0xFFB95D4C), // 테두리 색
-                                    width: 4,
-                                  ),
-                                ),
-                                child: Stack(
-                                  alignment: Alignment.center,
-                                  children: [
-                                    // 아래: 테두리용 텍스트
-                                    Text(
-                                      'Basic Pattern ${widget.index}',
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: TextStyle(
-                                        fontSize: 11.sp,
-                                        fontWeight: FontWeight.bold,
-                                        foreground: Paint()
-                                          ..style = PaintingStyle.stroke
-                                          ..strokeWidth = 5
-                                          ..color =
-                                              const Color(0xFFB95D4C), // 테두리 색
+                          // 타이틀 Container
+                          Expanded(
+                            child: Center(
+                              child: InnerShadow(
+                                shadowColor:
+                                    const Color.fromARGB(255, 238, 159, 145)
+                                        .withValues(alpha: 0.5),
+                                blur: 6,
+                                offset: Offset(0, 0),
+                                borderRadius: BorderRadius.circular(30),
+                                child: Builder(builder: (context) {
+                                  final screenW =
+                                      MediaQuery.of(context).size.width;
+                                  return Container(
+                                    constraints: BoxConstraints(
+                                        maxWidth: screenW * 0.45),
+                                    height: 64.h,
+                                    padding:
+                                        EdgeInsets.symmetric(horizontal: 28.w),
+                                    alignment: Alignment.center,
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFC76A59),
+                                      borderRadius: BorderRadius.circular(30),
+                                      border: Border.all(
+                                        color: const Color(0xFFB95D4C), // 테두리 색
+                                        width: 4,
                                       ),
                                     ),
-                                    // 위: 흰색 채우기 텍스트
-                                    Text(
-                                      'Basic Pattern ${widget.index}',
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: TextStyle(
-                                        fontSize: 11.sp,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.white, // 내부 색
+                                    child: Stack(
+                                      alignment: Alignment.center,
+                                      children: [
+                                        // 아래: 테두리용 텍스트
+                                        Text(
+                                          'Basic Pattern ${widget.index}',
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: TextStyle(
+                                            fontSize: 10.sp,
+                                            fontWeight: FontWeight.bold,
+                                            foreground: Paint()
+                                              ..style = PaintingStyle.stroke
+                                              ..strokeWidth = 5
+                                              ..color = const Color(
+                                                  0xFFB95D4C), // 테두리 색
+                                          ),
+                                        ),
+                                        // 위: 흰색 채우기 텍스트
+                                        Text(
+                                          'Basic Pattern ${widget.index}',
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: TextStyle(
+                                            fontSize: 10.sp,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.white, // 내부 색
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                }),
+                              ),
+                            ),
+                          ),
+                          _showResultButton
+                              ? SizedBox(
+                                  width: 25.w,
+                                  height: 64.h,
+                                  child: Center(
+                                    child: IconButton(
+                                      icon: Icon(Icons.arrow_forward_rounded,
+                                          color: Color(0xffD97D6C)),
+                                      iconSize: 15.sp, // 기존 배속 텍스트와 비슷한 크기
+                                      tooltip: "결과 보기",
+                                      padding: EdgeInsets.zero, // 기존과 통일
+                                      constraints:
+                                          const BoxConstraints(), // 기존과 통일
+                                      onPressed: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (_) => PracticeResultPP(
+                                              idx: widget.index,
+                                              score: computeScoreFrom1stGrading(
+                                                  _beatGradingResults),
+                                              xmlDataString: decodedXml,
+                                              practiceInfo: practiceInfo,
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                  ),
+                                )
+                              :
+                              // 오른쪽 상단: 재생 속도 조정 버튼
+                              MenuAnchor(
+                                  style: MenuStyle(
+                                    alignment: Alignment.bottomLeft,
+                                    shadowColor: WidgetStatePropertyAll(
+                                        Colors.transparent),
+                                    padding:
+                                        WidgetStatePropertyAll(EdgeInsets.zero),
+                                    backgroundColor: WidgetStatePropertyAll(
+                                        Colors.transparent),
+                                  ),
+                                  menuChildren: [
+                                    ConstrainedBox(
+                                      constraints:
+                                          BoxConstraints(maxWidth: 500.w),
+                                      child: Container(
+                                        margin: const EdgeInsets.fromLTRB(
+                                            0, 10, 30, 0),
+                                        padding: EdgeInsets.symmetric(
+                                            horizontal: 12.w, vertical: 12.h),
+                                        decoration: BoxDecoration(
+                                          color: Colors.white,
+                                          borderRadius:
+                                              BorderRadius.circular(18),
+                                          border: Border.all(
+                                              color: const Color(0xFFDFDFDF),
+                                              width: 2),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: Colors.black
+                                                  .withOpacity(0.08),
+                                              blurRadius: 6,
+                                              offset: Offset(0, 4),
+                                            ),
+                                          ],
+                                        ),
+                                        child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children:
+                                                [0.5, 1.0, 1.5, 2.0].map((s) {
+                                              final label =
+                                                  '${s.toStringAsFixed(1)}x';
+                                              final isSelected =
+                                                  playbackController.speed == s;
+                                              return Padding(
+                                                padding: EdgeInsets.only(
+                                                    left: 15,
+                                                    right: s == 2.0 ? 0 : 15),
+                                                child: GestureDetector(
+                                                  onTap: () {
+                                                    // 재생 중일 때는 배속 변경 못하도록 함
+                                                    if (!playbackController
+                                                        .isPlaying) {
+                                                      // OSMD(악보) 재생 속도 변경
+                                                      playbackController
+                                                          .setSpeed(s);
+                                                      // 오디오 재생 속도 변경
+                                                      _audioPlayer
+                                                          .setPlaybackRate(s);
+                                                      setState(() {
+                                                        _currentSpeed = label;
+                                                      });
+                                                    }
+                                                    _speedMenuController
+                                                        .close();
+                                                  },
+                                                  child: Text(
+                                                    label,
+                                                    style: TextStyle(
+                                                      fontSize: 9.sp,
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      color: isSelected
+                                                          ? const Color(
+                                                              0xffD97D6C)
+                                                          : const Color(
+                                                              0xff646464),
+                                                    ),
+                                                  ),
+                                                ),
+                                              );
+                                            }).toList()),
                                       ),
                                     ),
                                   ],
-                                ),
-                              );
-                            }),
-                          ),
-                        ),
-                      ),
-
-                      // 오른쪽 상단: 재생 속도 조정 버튼
-                      MenuAnchor(
-                        style: MenuStyle(
-                          alignment: Alignment.bottomLeft,
-                          shadowColor:
-                              WidgetStatePropertyAll(Colors.transparent),
-                          padding: WidgetStatePropertyAll(EdgeInsets.zero),
-                          backgroundColor:
-                              WidgetStatePropertyAll(Colors.transparent),
-                        ),
-                        menuChildren: [
-                          ConstrainedBox(
-                            constraints: BoxConstraints(maxWidth: 500.w),
-                            child: Container(
-                              margin: const EdgeInsets.fromLTRB(0, 10, 20, 0),
-                              padding: EdgeInsets.symmetric(
-                                  horizontal: 18.w, vertical: 12.h),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(18),
-                                border: Border.all(
-                                    color: const Color(0xFFDFDFDF), width: 2),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withOpacity(0.08),
-                                    blurRadius: 6,
-                                    offset: Offset(0, 4),
-                                  ),
-                                ],
-                              ),
-                              child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [0.5, 1.0, 1.5, 2.0].map((s) {
-                                    final label = '${s.toStringAsFixed(1)}x';
-                                    final isSelected =
-                                        playbackController.speed == s;
-                                    return Padding(
-                                      padding: EdgeInsets.only(
-                                          left: 15, right: s == 2.0 ? 0 : 15),
-                                      child: GestureDetector(
-                                        onTap: () {
-                                          // 재생 중일 때는 배속 변경 못하도록 함
-                                          if (!playbackController.isPlaying) {
-                                            // OSMD(악보) 재생 속도 변경
-                                            playbackController.setSpeed(s);
-                                            // 오디오 재생 속도 변경
-                                            _audioPlayer.setPlaybackRate(s);
-                                            setState(() {
-                                              _currentSpeed = label;
-                                            });
-                                          }
-                                          _speedMenuController.close();
-                                        },
-                                        child: Text(
-                                          label,
-                                          style: TextStyle(
-                                            fontSize: 9.sp,
-                                            fontWeight: FontWeight.bold,
-                                            color: isSelected
-                                                ? const Color(0xffD97D6C)
-                                                : const Color(0xff646464),
+                                  builder: (context, controller, child) {
+                                    _speedMenuController = controller;
+                                    return GestureDetector(
+                                      onTap: () => controller.toggle(),
+                                      child: SizedBox(
+                                        width: 25.w,
+                                        height: 64.h,
+                                        child: Center(
+                                          child: Text(
+                                            _currentSpeed,
+                                            style: TextStyle(
+                                              color: Color(0xFF646464),
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 10.sp,
+                                              height: 1.15, // 살짝 올리면 x가 항상 포함됨
+                                              fontFeatures: [
+                                                FontFeature.tabularFigures()
+                                              ],
+                                            ),
                                           ),
                                         ),
                                       ),
                                     );
-                                  }).toList()),
-                            ),
-                          ),
-                        ],
-                        builder: (context, controller, child) {
-                          _speedMenuController = controller;
-                          return GestureDetector(
-                            onTap: () => controller.toggle(),
-                            child: SizedBox(
-                              width: 20.w,
-                              height: 40.h,
-                              child: Center(
-                                child: Text(
-                                  _currentSpeed,
-                                  style: TextStyle(
-                                    color: Color(0xFF646464),
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 10.sp,
-                                  ),
+                                  },
                                 ),
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                    ]),
+                        ]),
                   ),
                 ),
 
@@ -1006,6 +1049,7 @@ class _CountdownPageState extends State<CountdownPage>
                                           ?.stopRecording();
                                       setState(() {
                                         _playbackComplete = false;
+                                        _showResultButton = false;
                                         _currentPosition = 0.0;
                                         _detectedOnsets = [];
                                       });
@@ -1092,7 +1136,7 @@ class _CountdownPageState extends State<CountdownPage>
             FadeTransition(
               opacity: _overlayAnimation,
               child: Container(
-                color: Colors.black.withValues(alpha: 0.9),
+                color: Colors.black.withOpacity(0.8),
                 alignment: Alignment.center,
                 child: Padding(
                   padding: EdgeInsets.symmetric(horizontal: 24.w),
