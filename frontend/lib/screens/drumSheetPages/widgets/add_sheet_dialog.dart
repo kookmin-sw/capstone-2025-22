@@ -92,7 +92,7 @@ class _AddSheetDialogState extends State<AddSheetDialog> {
       ),
       child: SingleChildScrollView(
         child: Container(
-          width: 120.w,
+          width: MediaQuery.of(context).size.width * 0.35,
           padding: EdgeInsets.symmetric(horizontal: 5.w, vertical: 20.h),
           decoration: BoxDecoration(
             color: Colors.white,
@@ -145,7 +145,8 @@ class _AddSheetDialogState extends State<AddSheetDialog> {
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFFD97D6C),
-                    minimumSize: Size(60.w, 50.h),
+                    minimumSize: Size(MediaQuery.of(context).size.width * 0.18,
+                        MediaQuery.of(context).size.height * 0.13),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -361,12 +362,12 @@ class _AddSheetDialogState extends State<AddSheetDialog> {
     required String nextText,
   }) {
     return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 12.h),
+      padding: EdgeInsets.symmetric(horizontal: 5.h),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           SizedBox(
-            width: 48.w,
+            width: MediaQuery.of(context).size.width * 0.15,
             child: TextButton(
               onPressed: onPrevious,
               style: TextButton.styleFrom(
@@ -387,7 +388,8 @@ class _AddSheetDialogState extends State<AddSheetDialog> {
             ),
           ),
           SizedBox(
-            width: 48.w,
+            width: MediaQuery.of(context).size.width * 0.15,
+            height: MediaQuery.of(context).size.height * 0.12,
             child: TextButton(
               onPressed: onNext,
               style: TextButton.styleFrom(
