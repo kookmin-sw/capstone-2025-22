@@ -34,7 +34,7 @@ class PracticeResultMS extends StatefulWidget {
 }
 
 class _PracticeResultMSState extends State<PracticeResultMS> {
-  late int score = widget.score; // 점수
+  late int score = 80; // widget.score; // 점수
   late bool isPerfect = (score == 100); // 퍼펙트 여부
   late String musicTitle = widget.musicTitle; // 제목
   late String musicArtist = widget.musicArtist; // 아티스트
@@ -125,12 +125,15 @@ class _PracticeResultMSState extends State<PracticeResultMS> {
                         ),
                         Padding(
                           // 결과창 padding
-                          padding: EdgeInsets.symmetric(
+                          padding: EdgeInsets.only(
                             // padding으로 사이즈 조절
-                            vertical:
-                                MediaQuery.of(context).size.height * 0.065,
-                            horizontal: isPerfect
-                                ? MediaQuery.of(context).size.width * 0.08
+                            top: MediaQuery.of(context).size.height * 0.01,
+                            bottom: MediaQuery.of(context).size.height * 0.1,
+                            left: isPerfect
+                                ? MediaQuery.of(context).size.width * 0.1
+                                : MediaQuery.of(context).size.width * 0.1,
+                            right: isPerfect
+                                ? MediaQuery.of(context).size.width * 0.1
                                 : MediaQuery.of(context).size.width * 0.1,
                           ),
                           child: Container(
@@ -164,9 +167,20 @@ class _PracticeResultMSState extends State<PracticeResultMS> {
                                   ),
                                 ),
                                 Padding(
-                                  padding: EdgeInsets.symmetric(
-                                      vertical: 30.h,
-                                      horizontal: (isPerfect) ? 5.w : 20.w),
+                                  padding: EdgeInsets.only(
+                                      top: MediaQuery.of(context).size.height *
+                                          0.03,
+                                      bottom:
+                                          MediaQuery.of(context).size.height *
+                                              0.05,
+                                      left: (isPerfect)
+                                          ? MediaQuery.of(context).size.width *
+                                              0.03
+                                          : 20.w,
+                                      right: (isPerfect)
+                                          ? MediaQuery.of(context).size.width *
+                                              0.03
+                                          : 20.w),
                                   child: Column(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     // 결과창 내부 요소들
@@ -178,13 +192,18 @@ class _PracticeResultMSState extends State<PracticeResultMS> {
                                         children: [
                                           Padding(
                                             padding: EdgeInsets.only(
-                                                left: isPerfect ? 0 : 10.w),
+                                                left: isPerfect
+                                                    ? MediaQuery.of(context)
+                                                            .size
+                                                            .width *
+                                                        0.03
+                                                    : 10.w),
                                             child: Column(
                                               // 성공 여부 텍스트
                                               children: [
                                                 SizedBox(
                                                   child: linedText(
-                                                      "[1차 채점]\n$musicTitle",
+                                                      "$musicTitle",
                                                       12.sp,
                                                       Colors.black
                                                           .withOpacity(0.3),
@@ -209,7 +228,7 @@ class _PracticeResultMSState extends State<PracticeResultMS> {
                                               padding: EdgeInsets.symmetric(
                                                   vertical: 10.h,
                                                   horizontal: ((isPerfect)
-                                                      ? 15.w
+                                                      ? 20.w
                                                       : 35.w)),
                                               child: Column(children: [
                                                 linedText(
@@ -362,7 +381,7 @@ class ButtonForm extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 70.h,
+      height: MediaQuery.of(context).size.height * 0.15,
       width: width,
       child: Stack(
         children: [
@@ -387,8 +406,8 @@ class ButtonForm extends StatelessWidget {
                         size: 11.sp,
                         color: Colors.white,
                       ),
-                    if (btnIcon != null) SizedBox(width: 5.w),
-                    linedText(btnName, 7.5.sp, borderColor, Colors.white, 4.8),
+                    if (btnIcon != null) SizedBox(width: 15),
+                    linedText("$btnName", 7.sp, borderColor, Colors.white, 4.8),
                   ],
                 ),
               ),
@@ -422,8 +441,8 @@ Widget modalBtn(BuildContext context, String text, Color backgroundColor,
     bool isTextblack) {
   // 모달 버튼
   return Container(
-    width: 43.w,
-    height: 60.h,
+    width: MediaQuery.of(context).size.width * 0.15,
+    height: MediaQuery.of(context).size.height * 0.15,
     alignment: Alignment.center,
     decoration: BoxDecoration(
       color: backgroundColor,
@@ -450,11 +469,13 @@ void openModal(
     builder: (context) => AlertDialog(
       alignment: Alignment.center,
       insetPadding: EdgeInsets.zero,
-      contentPadding: EdgeInsets.only(top: 20.h, bottom: 10.h),
+      contentPadding: EdgeInsets.symmetric(
+          horizontal: MediaQuery.of(context).size.height * 0.02,
+          vertical: MediaQuery.of(context).size.height * 0.03),
       backgroundColor: Colors.white,
       content: SizedBox(
-        width: 150.h,
-        height: 150.h,
+        width: MediaQuery.of(context).size.width * 0.32,
+        height: MediaQuery.of(context).size.height * 0.34,
         child: Column(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           mainAxisSize: MainAxisSize.min,
