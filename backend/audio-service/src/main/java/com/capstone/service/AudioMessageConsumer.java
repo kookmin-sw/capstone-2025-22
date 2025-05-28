@@ -56,6 +56,10 @@ public class AudioMessageConsumer {
 
     private Mono<OnsetMeasureData> getDrumPredictionList(OnsetMeasureData onsetMeasureData, String base64Audio){
         OnsetResponseDto onsetResponse = onsetMeasureData.getOnsetResponse();
+        if(onsetResponse.getOnsets().isEmpty()) {
+            onsetMeasureData.setDrumPredictResponse(DrumPredictResponse.builder().build());
+            return Mono.just(onsetMeasureData);
+        }
         DrumPredictRequest drumPredictRequest = DrumPredictRequest.builder()
                 .audio_base64(base64Audio)
                 .onsets(onsetResponse.getOnsets()).build();
@@ -88,6 +92,21 @@ public class AudioMessageConsumer {
                         .map(measureInfo -> OnsetMeasureData.builder()
                                 .onsetResponse(onset)
                                 .measureInfo(measureInfo)))
+                .map(onsetMeasureDataBuilder -> {
+                    OnsetResponseDto onsetResponse = onsetMeasureDataBuilder.build().getOnsetResponse();
+                    List<String> onsets = onsetResponse.getOnsets();
+                    if(audioMessageDto.getMeasureNumber().equals("1")) {
+                        for(int i=0; i<onsets.size(); i++) {
+                            String onsetString = onsets.get(i);
+                            double processedOnsetDouble = Double.parseDouble(onsetString) + 0.4;
+                            if(processedOnsetDouble < 0) processedOnsetDouble = 0.0;
+                            onsets.set(i, Double.toString(processedOnsetDouble));
+                        }
+                        onsetResponse.setOnsets(onsets);
+                        onsetMeasureDataBuilder.onsetResponse(onsetResponse);
+                    }
+                    return onsetMeasureDataBuilder;
+                })
                 .map(onsetMeasureDataBuilder -> { // get the onset match result and send it to the client
                     double weight = (double) 60 / audioMessageDto.getBpm();
                     return getOnsetResultAndSendToUser(onsetMeasureDataBuilder.build(), audioMessageDto.getMeasureNumber(), audioMessageDto.getEmail(), audioMessageDto.getIdentifier(), weight);
