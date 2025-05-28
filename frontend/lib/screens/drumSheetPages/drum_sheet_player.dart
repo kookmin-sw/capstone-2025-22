@@ -44,7 +44,8 @@ class DrumSheetPlayer extends StatefulWidget {
   State<DrumSheetPlayer> createState() => _DrumSheetPlayerState();
 }
 
-class _DrumSheetPlayerState extends State<DrumSheetPlayer> {
+class _DrumSheetPlayerState extends State<DrumSheetPlayer>
+    with SingleTickerProviderStateMixin {
   // ===== 컨트롤러 및 서비스 =====
   late PlaybackController playbackController;
   late OSMDService osmdService;
@@ -196,62 +197,80 @@ class _DrumSheetPlayerState extends State<DrumSheetPlayer> {
 
   void _initializePlaybackController() {
     final imageHeight = MediaQuery.of(context).size.height * 0.27;
-    playbackController = PlaybackController(imageHeight: imageHeight)
-      // 진행 업데이트 콜백
-      ..onProgressUpdate = (progress) {
-        setState(() {});
-      }
-      // 재생 상태 변경 콜백
-      ..onPlaybackStateChange = (isPlaying) async {
-        // setState(() {});
-        // if (isPlaying) {
-        //   // 연주 시작 시 identifier 요청
-        //   final identifier = await fetchPracticeIdentifier();
-        //   if (identifier != null) {
-        //     if (_drumRecordingKey.currentState?.isRecording == true) {
-        //       _drumRecordingKey.currentState?.resumeRecording();
-        //     } else {
-        //       _drumRecordingKey.currentState?.startRecording();
-        //     }
-        //   }
-        // } else {
-        //   _drumRecordingKey.currentState?.pauseRecording();
-        // }
-        setState(() {});
-      }
-      // 카운트다운 업데이트 콜백
-      ..onCountdownUpdate = (count) {
-        setState(() {});
-      }
-      // 페이지 변경 콜백
-      ..onPageChange = (page) async {
-        setState(() {});
-      }
-      // 커서 이동 콜백
-      ..onCursorMove = (cursor) {
-        if (!playbackController.isPlaying) return;
-        // OSMD 0-based → 화면/채점용 1-based 변환
-        final newMeasure = cursor.measureNumber + 1;
+    playbackController =
+        PlaybackController(vsync: this, imageHeight: imageHeight)
+          // 진행 업데이트 콜백
+          ..onProgressUpdate = (progress) {
+            setState(() {});
+          }
+          // 재생 상태 변경 콜백
+          ..onPlaybackStateChange = (isPlaying) async {
+            // setState(() {});
+            // if (isPlaying) {
+            //   // 연주 시작 시 identifier 요청
+            //   final identifier = await fetchPracticeIdentifier();
+            //   if (identifier != null) {
+            //     if (_drumRecordingKey.currentState?.isRecording == true) {
+            //       _drumRecordingKey.currentState?.resumeRecording();
+            //     } else {
+            //       _drumRecordingKey.currentState?.startRecording();
+            //     }
+            //   }
+            // } else {
+            //   _drumRecordingKey.currentState?.pauseRecording();
+            // }
+            setState(() {});
+          }
+          // 카운트다운 업데이트 콜백
+          ..onCountdownUpdate = (count) {
+            setState(() {});
+          }
+          // 페이지 변경 콜백
+          ..onPageChange = (page) async {
+            setState(() {});
+          }
+          // 커서 이동 콜백
+          ..onCursorMove = (cursor) {
+            if (!playbackController.isPlaying) return;
+            // OSMD 0-based → 화면/채점용 1-based 변환
+            final newMeasure = cursor.measureNumber + 1;
 
-        // 마디 번호가 바뀔 때만 업데이트
-        if (newMeasure != _currentMeasureOneBased) {
-          setState(() {
-            _currentMeasureOneBased = newMeasure;
-          });
-        }
-      }
-      // 마디 변경 시 녹음 처리 콜백 추가
-      ..onMeasureChange = (measureNumber) {
-        if (_drumRecordingKey.currentState != null) {
-          // 현재 마디가 마지막 마디인지 확인
-          final isLastMeasure = measureNumber == _totalMeasures - 1;
-          // 마디별 녹음 데이터 전송
-          _drumRecordingKey.currentState?.sendMeasureData(
-            measureNumber: measureNumber + 1, // 1-based로 변환
-            isLastMeasure: isLastMeasure,
-          );
-        }
-      };
+            // 마디 번호가 바뀔 때만 업데이트
+            if (newMeasure != _currentMeasureOneBased) {
+              setState(() {
+                _currentMeasureOneBased = newMeasure;
+              });
+            }
+          }
+          // 마디 변경 시 녹음 처리 콜백 추가
+          ..onMeasureChange = (measureNumber) {
+            if (_drumRecordingKey.currentState != null) {
+              // 현재 마디가 마지막 마디인지 확인
+              final isLastMeasure = measureNumber == _totalMeasures - 1;
+              // 마디별 녹음 데이터 전송
+              _drumRecordingKey.currentState?.sendMeasureData(
+                measureNumber: measureNumber + 1, // 1-based로 변환
+                isLastMeasure: isLastMeasure,
+              );
+            }
+          }
+          ..onPlaybackComplete = (lastMeasureOneBased) {
+            // 재생이 완전히 끝났을 때 결과창으로 이동
+            final initialBeatScore =
+                computeScoreFrom1stGrading(_beatGradingResults);
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(
+                builder: (_) => PracticeResultMS(
+                  sheetId: widget.sheetId,
+                  musicTitle: widget.title,
+                  musicArtist: widget.artist,
+                  score: initialBeatScore,
+                  xmlDataString: xmlDataString,
+                  practiceInfo: practiceInfo,
+                ),
+              ),
+            );
+          };
   }
 
   // XML 데이터를 백엔드에서 로드

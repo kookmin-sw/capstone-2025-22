@@ -4,9 +4,11 @@ import 'package:capstone_2025/models/sheet_info.dart';
 import 'package:flutter/foundation.dart';
 import '../../models/cursor.dart';
 import './cursor_controller.dart';
+import 'package:flutter/scheduler.dart';
 
 class PlaybackController {
   CursorController? _cursorController; // 커서 이동 관리
+  late final Ticker _ticker;
   SheetInfo? sheetInfo;
 
   // 재생 상태 및 타이머
@@ -16,7 +18,6 @@ class PlaybackController {
   int countdown = 3; // 카운트다운 초 수
   DateTime? playbackStartTime; // 재생 시작 시간
   Timer? countdownTimer; // 카운트다운용 타이머
-  Timer? progressTimer; // 재생 중 진행 관리 타이머
 
   // 재생 진행도
   Duration totalDuration = Duration.zero; // 전체 재생 시간
@@ -57,13 +58,17 @@ class PlaybackController {
   // 채점 관리
   late int totalMeasures;
 
-  PlaybackController({required this.imageHeight}); // 생성자에 imageHeight 추가
+  PlaybackController({
+    required TickerProvider vsync,
+    required this.imageHeight,
+  }) {
+    _ticker = vsync.createTicker(_onTick);
+  }
 
   void loadSheetInfo(SheetInfo? info) {
     if (info == null) return;
     sheetInfo = info;
     fullCursorList = sheetInfo!.cursorList;
-    print('📊 Loaded full cursor list: ${fullCursorList.length} cursors');
     lineImages = sheetInfo!.lineImages;
 
     calculateTotalDurationFromCursorList(sheetInfo!.bpm.toDouble());
@@ -82,7 +87,6 @@ class PlaybackController {
     nextLineImage = lineImages.length > 1 ? lineImages[1] : null;
   }
 
-  /// 커서가 이동할 때마다 호출됩니다.
   void _handleCursorMove(Cursor cursor) {
     // 0) 페이지가 바뀔 때마다, 이전 마디의 회색 커서를 모두 지우고
     if (cursor.lineIndex != currentPage) {
@@ -100,7 +104,7 @@ class PlaybackController {
           : null;
       onPageChange?.call(currentPage);
     }
-    onCursorMove?.call(cursor); // 테스트 용 호출 (나중에 지우기)
+    onCursorMove?.call(cursor);
   }
 
   void updateCursorWidget(Cursor cursor) {
@@ -133,26 +137,39 @@ class PlaybackController {
   }
 
   void startPlayback() async {
-    if (lineImages.isEmpty) return; // 줄 이미지가 없는 경우 방어
+    if (lineImages.isEmpty) return; // 줄 이미지가 없는 경우
+    if (isPlaying) return; // 이미 재생 중이면 중복 방지
 
     // 현재 재생 상태를 유지하기 위해 실제 재생 시작된 시간을 기록
     playbackStartTime = DateTime.now().subtract(Duration(
       milliseconds: (currentDuration.inMilliseconds / speed).round(),
     ));
-
-    // 진행 업데이트를 위한 타이머 재설정 (기존 타이머 중지 후 새로 시작, 재생 속도 반영)
-    progressTimer?.cancel();
-    progressTimer = Timer.periodic(
-        Duration(milliseconds: (33 ~/ speed).clamp(1, 100)), _onProgressTick);
-    // _cursorController?.start();
+    // Ticker 시작
+    _ticker.start();
     isPlaying = true;
-    onPlaybackStateChange?.call(isPlaying);
+    onPlaybackStateChange?.call(true);
+  }
+
+  Cursor getAdjustedCursor(double beatTs) {
+    // 1) 마지막 커서 이후에도 마지막 커서를 보여줌
+    if (fullCursorList.isEmpty) return Cursor.createEmpty();
+    if (beatTs >= fullCursorList.last.ts) return fullCursorList.last;
+
+    // 2) 만약에 다음 커서가 '다음 마디 첫 음표'이고,
+    // 현재 beatTs가 그 구간에 못 미쳤다면 이전 커서를 유지
+    for (int i = 0; i < fullCursorList.length - 1; i++) {
+      if (fullCursorList[i].ts <= beatTs && beatTs < fullCursorList[i + 1].ts) {
+        return fullCursorList[i];
+      }
+    }
+    // 혹시라도 못찾으면 첫번째 커서 반환 (이론상 발생X)
+    return fullCursorList.first;
   }
 
   // Timer 콜백 : 재생 시간 업데이트 + 줄 이동 관리
-  void _onProgressTick(Timer timer) async {
+  void _onTick(Duration elapsed) {
     if (!isPlaying || playbackStartTime == null) {
-      timer.cancel(); // 재생 중 아니거나 시작시간 없으면 타이머 종료
+      _ticker.stop();
       return;
     }
 
@@ -178,14 +195,14 @@ class PlaybackController {
         }
       }
 
-      // 1) 재생된 초(sec) 계산
+      // beatTs 계산 정보
       final playedSeconds = currentDuration.inMilliseconds / 1000.0;
-      // 2) beat 단위로 환산 (BPM/60)
       final beatTs = playedSeconds * (sheetInfo!.bpm / 60.0);
-      // 3) 단일 타이머 소스에서 커서 위치 가져오기
-      final cursor = _cursorController!.getCursorAtBeat(beatTs);
 
-      // 마디 변경 감지 로직
+      // 커서 위치와 마디 정보
+      final cursor = _cursorController!.getAdjustedCursorAtBeat(beatTs);
+
+      // 마디 변경 감지
       final newMeasureNumber = cursor.measureNumber;
       if (newMeasureNumber != _currentMeasureNumber) {
         print(
@@ -194,7 +211,7 @@ class PlaybackController {
         onMeasureChange?.call(newMeasureNumber);
       }
 
-      // 4) 중복 호출 방지용 인덱스
+      // 중복 호출 방지용 인덱스
       final newIndex = cursor.measureNumber * 100 + (cursor.ts * 100).toInt();
       if (newIndex != _lastCursorIndex) {
         _lastCursorIndex = newIndex;
@@ -208,14 +225,14 @@ class PlaybackController {
         return;
       }
     } catch (e) {
-      debugPrint("Error in _onProgressTick: $e");
-      timer.cancel();
+      debugPrint("Error in _onTick: $e");
+      _ticker.stop();
       stopPlayback();
     }
   }
 
   void stopPlayback() {
-    progressTimer?.cancel(); // 재생 진행 타이머 중지
+    _ticker.stop(); // Ticker 중지
     _cursorController?.stop(); // 커서 이동 타이머 중지
     isPlaying = false;
     onPlaybackStateChange?.call(isPlaying);
@@ -320,7 +337,7 @@ class PlaybackController {
 
   void dispose() {
     countdownTimer?.cancel();
-    progressTimer?.cancel();
+    _ticker.dispose();
     _cursorController?.dispose();
   }
 

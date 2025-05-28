@@ -46,50 +46,30 @@ class CursorController {
     final deltaBeats = nextTS - prevTS; // 두 커서 사이 박자 수 차이
 
     final msPerBeat = 60000 / bpm; // 1박자당 걸리는 시간 (ms)
-    final delayMs = (deltaBeats * msPerBeat / speed).ceil();
-
-    _timer = Timer(Duration(milliseconds: delayMs), () {
+    final exactMs = deltaBeats * msPerBeat / speed;
+    final delay =
+        Duration(microseconds: (exactMs * 1000).round()); // 123456.7 μs → 반올림
+    _timer = Timer(delay, () {
       _currentIndex++;
-      onCursorMove(cursorList[_currentIndex]); // 커서 이동
+      onCursorMove(cursorList[_currentIndex]);
 
-      // 마지막 음표면 더 이상 예약하지 않고 종료
       if (_currentIndex < cursorList.length - 1) {
         _scheduleNextStep();
       }
     });
   }
 
-  Cursor getCursorAtBeat(double beatTs) {
-    // 범위 밖 처리
-    if (beatTs <= cursorList.first.ts) return cursorList.first;
+  Cursor getAdjustedCursorAtBeat(double beatTs) {
+    if (cursorList.isEmpty) return Cursor.createEmpty();
     if (beatTs >= cursorList.last.ts) return cursorList.last;
 
-    // 이진 탐색으로 beatTs 에 가장 가까운 두 인덱스(lo, hi) 찾기
-    int lo = 0, hi = cursorList.length - 1;
-    while (hi - lo > 1) {
-      final mid = (lo + hi) >> 1;
-      if (cursorList[mid].ts <= beatTs) {
-        lo = mid;
-      } else {
-        hi = mid;
+    for (int i = 0; i < cursorList.length - 1; i++) {
+      if (cursorList[i].ts <= beatTs && beatTs < cursorList[i + 1].ts) {
+        return cursorList[i];
       }
     }
-
-    // lo, hi 두 포인트 사이를 비율 보간
-    final a = cursorList[lo];
-    final b = cursorList[hi];
-    final segment = b.ts - a.ts;
-    final t = segment > 0 ? (beatTs - a.ts) / segment : 0.0;
-    return a.copyWith(
-      x: a.x + (b.x - a.x) * t,
-      y: a.y + (b.y - a.y) * t,
-      xRatio: (a.xRatio != null && b.xRatio != null)
-          ? a.xRatio! + (b.xRatio! - a.xRatio!) * t
-          : null,
-      yRatio: (a.yRatio != null && b.yRatio != null)
-          ? a.yRatio! + (b.yRatio! - a.yRatio!) * t
-          : null,
-    );
+    // 만약 못 찾으면 (이론상 발생X), 첫 커서 반환
+    return cursorList.first;
   }
 
   //  일시정지

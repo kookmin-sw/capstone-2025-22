@@ -388,7 +388,7 @@ class _MyPageState extends State<MyPage> {
                 // 테이블 셀
                 padding: EdgeInsets.symmetric(vertical: 14.h),
                 decoration: BoxDecoration(
-                  color: index.isEven ? Colors.white : Colors.grey.shade100,
+                  color: Colors.white,
                   border: Border(
                       bottom: BorderSide(
                           color: Colors.grey.shade300, width: 0.5.w)),

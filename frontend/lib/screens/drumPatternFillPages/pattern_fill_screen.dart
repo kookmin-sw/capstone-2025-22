@@ -51,7 +51,7 @@ class CountdownPage extends StatefulWidget {
 }
 
 class _CountdownPageState extends State<CountdownPage>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
 // ===== 악보 및 XML 관련 변수 =====
   late String xmlDataString;
   int _beatsPerMeasure = 4;
@@ -118,41 +118,46 @@ class _CountdownPageState extends State<CountdownPage>
     super.didChangeDependencies();
     if (!_isControllerInitialized) {
       final imageHeight = MediaQuery.of(context).size.height * 0.27;
-      playbackController = PlaybackController(imageHeight: imageHeight)
-        ..onProgressUpdate = (progress) {
-          setState(() {
-            _currentPosition = progress * _totalDuration;
-          });
-        }
-        ..onPlaybackStateChange = (isPlaying) {
-          setState(() {
-            _isPlaying = isPlaying;
-            // 재생이 멈추고, 끝까지 도달했으면 완료 플래그 세팅
-            if (!isPlaying &&
-                playbackController.currentDuration >=
-                    playbackController.totalDuration) {
-              _playbackComplete = true;
-              _currentPosition = _totalDuration;
+      playbackController =
+          PlaybackController(vsync: this, imageHeight: imageHeight)
+            ..onCursorMove = (cursor) {
+              // 화면에 커서가 움직일 때, setState 혹은 상태 업데이트
+              setState(() {});
             }
-          });
-        }
-        ..onCountdownUpdate = (count) {
-          setState(() {});
-          if (count == 0) {
-            // ────── 사용자 녹음 직전 식별자 요청 ──────
-            fetchPracticeIdentifier().then((id) {
-              if (id != null) {
-                // 식별자 수신 완료 후 녹음 시작
-                _drumRecordingKey.currentState?.startRecording();
-              } else {
-                // 실패 시 에러 표시
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('연주 식별자 요청에 실패했습니다.')),
-                );
+            ..onProgressUpdate = (progress) {
+              setState(() {
+                _currentPosition = progress * _totalDuration;
+              });
+            }
+            ..onPlaybackStateChange = (isPlaying) {
+              setState(() {
+                _isPlaying = isPlaying;
+                // 재생이 멈추고, 끝까지 도달했으면 완료 플래그 세팅
+                if (!isPlaying &&
+                    playbackController.currentDuration >=
+                        playbackController.totalDuration) {
+                  _playbackComplete = true;
+                  _currentPosition = _totalDuration;
+                }
+              });
+            }
+            ..onCountdownUpdate = (count) {
+              setState(() {});
+              if (count == 0) {
+                // ────── 사용자 녹음 직전 식별자 요청 ──────
+                fetchPracticeIdentifier().then((id) {
+                  if (id != null) {
+                    // 식별자 수신 완료 후 녹음 시작
+                    _drumRecordingKey.currentState?.startRecording();
+                  } else {
+                    // 실패 시 에러 표시
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('연주 식별자 요청에 실패했습니다.')),
+                    );
+                  }
+                });
               }
-            });
-          }
-        };
+            };
       _isControllerInitialized = true;
     }
   }

@@ -30,9 +30,6 @@ Future<void> openMusicSheet({
             initialUrlRequest: URLRequest(
               url: WebUri('http://localhost:8081/index.html'),
             ),
-            onConsoleMessage: (controller, consoleMessage) {
-              print("🖥️ [WebView Console] ${consoleMessage.message}");
-            },
             onWebViewCreated: (ctrl) async {
               // XML 전송 핸들러
               ctrl.addJavaScriptHandler(

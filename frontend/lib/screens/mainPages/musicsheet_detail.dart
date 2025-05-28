@@ -200,9 +200,9 @@ class _MusicsheetDetailState extends State<MusicsheetDetail> {
           BoxShadow(
             // 그래프 그림자 추가
             color: Colors.black.withOpacity(0.2),
-            blurRadius: 5,
+            blurRadius: 3,
             spreadRadius: 1.5,
-            offset: Offset(2, 2),
+            offset: Offset(0, 0),
           ),
         ],
       ),
@@ -405,14 +405,6 @@ class _MusicsheetDetailState extends State<MusicsheetDetail> {
                                 decoration: BoxDecoration(
                                   color: Colors.white,
                                   borderRadius: BorderRadius.circular(9),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black.withOpacity(0.2),
-                                      blurRadius: 5,
-                                      spreadRadius: 1.5,
-                                      offset: Offset(2, 2),
-                                    ),
-                                  ],
                                 ),
                                 child: _buildGraph(),
                               ),
@@ -428,9 +420,9 @@ class _MusicsheetDetailState extends State<MusicsheetDetail> {
                                   boxShadow: [
                                     BoxShadow(
                                       color: Colors.black.withOpacity(0.2),
-                                      blurRadius: 5,
+                                      blurRadius: 3,
                                       spreadRadius: 1.5,
-                                      offset: Offset(2, 2),
+                                      offset: Offset(0, 0),
                                     ),
                                   ],
                                 ),
@@ -460,7 +452,7 @@ class _MusicsheetDetailState extends State<MusicsheetDetail> {
                                       color: Colors.black.withOpacity(0.2),
                                       blurRadius: 3,
                                       spreadRadius: 1.5,
-                                      offset: Offset(2, 2),
+                                      offset: Offset(0, 0),
                                     ),
                                   ],
                                 ),
@@ -602,7 +594,7 @@ class _MusicsheetDetailState extends State<MusicsheetDetail> {
                       padding: EdgeInsets.symmetric(vertical: 15.h),
                       decoration: BoxDecoration(
                         color: isSelected
-                            ? Colors.grey.shade100 // 선택된 색
+                            ? Colors.grey.shade200 // 선택된 색
                             : Colors.white,
                         border: Border(
                           bottom:
