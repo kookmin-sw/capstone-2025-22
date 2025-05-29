@@ -80,6 +80,9 @@ class _DrumSheetPlayerState extends State<DrumSheetPlayer>
   List<Cursor> missedNotes = [];
   final List<Map<String, dynamic>> _beatGradingResults = [];
 
+  late double imageHeight =
+      MediaQuery.of(context).size.height * 0.27; // 악보 이미지 영역 높이
+
   @override
   void initState() {
     super.initState();
@@ -196,7 +199,6 @@ class _DrumSheetPlayerState extends State<DrumSheetPlayer>
   }
 
   void _initializePlaybackController() {
-    final imageHeight = MediaQuery.of(context).size.height * 0.27;
     playbackController =
         PlaybackController(vsync: this, imageHeight: imageHeight)
           // 진행 업데이트 콜백
@@ -377,7 +379,7 @@ class _DrumSheetPlayerState extends State<DrumSheetPlayer>
 
   // 최종 채점 결과 적용 및 결과 화면 이동
   void _applyGradingResults() {
-    print("✅ 1차 채점 완료: measureNumbers = "
+    print("1차 채점 완료: measureNumbers = "
         "${_beatGradingResults.map((m) => m['measureNumber']).toList()}");
     final initialBeatScore = computeScoreFrom1stGrading(_beatGradingResults);
 
@@ -447,7 +449,6 @@ class _DrumSheetPlayerState extends State<DrumSheetPlayer>
 
   @override
   Widget build(BuildContext context) {
-    final imageHeight = 150.h; // 악보 이미지 영역 높이
     if (playbackController.sheetInfo == null) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -467,9 +468,9 @@ class _DrumSheetPlayerState extends State<DrumSheetPlayer>
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        // 🎵 상단 컨트롤 바 (홈버튼, 제목, 재생, 속도)
+                        // 상단 컨트롤 바 (홈버튼, 제목, 재생, 속도)
                         SizedBox(
-                          height: 60.h,
+                          height: MediaQuery.of(context).size.height * 0.15,
                           child: Stack(
                             children: [
                               Row(
@@ -566,15 +567,20 @@ class _DrumSheetPlayerState extends State<DrumSheetPlayer>
                                       );
                                     },
                                     child: Icon(Icons.home,
-                                        size: 10.sp, color: Color(0xff646464)),
+                                        size: 15.sp, color: Color(0xff646464)),
                                   ),
                                   SizedBox(width: 10.w),
                                   Expanded(
                                     child: Container(
-                                      constraints:
-                                          BoxConstraints(maxWidth: 400.w),
                                       padding: EdgeInsets.symmetric(
-                                          horizontal: 10.w, vertical: 15.h),
+                                          horizontal: MediaQuery.of(context)
+                                                  .size
+                                                  .width *
+                                              0.02,
+                                          vertical: MediaQuery.of(context)
+                                                  .size
+                                                  .height *
+                                              0.035),
                                       decoration: BoxDecoration(
                                         color: Colors.white,
                                         borderRadius: BorderRadius.circular(18),
@@ -597,7 +603,14 @@ class _DrumSheetPlayerState extends State<DrumSheetPlayer>
                                       SizedBox(width: 30.w),
                                       Container(
                                         padding: EdgeInsets.symmetric(
-                                            horizontal: 10.w, vertical: 12.h),
+                                            horizontal: MediaQuery.of(context)
+                                                    .size
+                                                    .width *
+                                                0.02,
+                                            vertical: MediaQuery.of(context)
+                                                    .size
+                                                    .height *
+                                                0.035),
                                         decoration: BoxDecoration(
                                           color: Colors.white,
                                           borderRadius:
@@ -722,8 +735,14 @@ class _DrumSheetPlayerState extends State<DrumSheetPlayer>
                                   },
                                   child: playbackController.isPlaying
                                       ? Container(
-                                          width: 60.w,
-                                          height: 60.h,
+                                          width: MediaQuery.of(context)
+                                                  .size
+                                                  .width *
+                                              0.055,
+                                          height: MediaQuery.of(context)
+                                                  .size
+                                                  .height *
+                                              0.2,
                                           decoration: BoxDecoration(
                                             shape: BoxShape.circle,
                                             color: Colors.white,
@@ -736,8 +755,14 @@ class _DrumSheetPlayerState extends State<DrumSheetPlayer>
                                               color: Color(0xffD97D6C)),
                                         )
                                       : Container(
-                                          width: 60.w,
-                                          height: 60.h,
+                                          width: MediaQuery.of(context)
+                                                  .size
+                                                  .width *
+                                              0.055,
+                                          height: MediaQuery.of(context)
+                                                  .size
+                                                  .height *
+                                              0.2,
                                           decoration: const BoxDecoration(
                                             shape: BoxShape.circle,
                                             color: Color(0xffD97D6C),
@@ -863,7 +888,7 @@ class _DrumSheetPlayerState extends State<DrumSheetPlayer>
                           ),
                         ),
 
-                        // 📊 진행 바 + 시간 Row
+                        // 진행 바 + 시간 Row
                         Padding(
                           padding: EdgeInsets.fromLTRB(50.w, 0, 50.w, 15.h),
                           child: Row(
@@ -880,7 +905,8 @@ class _DrumSheetPlayerState extends State<DrumSheetPlayer>
                               // 진행 바
                               Expanded(
                                 child: Container(
-                                  height: 10.h,
+                                  height:
+                                      MediaQuery.of(context).size.height * 0.02,
                                   decoration: BoxDecoration(
                                     color: Colors.white,
                                     boxShadow: [

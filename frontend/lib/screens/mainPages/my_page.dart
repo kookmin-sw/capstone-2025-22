@@ -386,7 +386,6 @@ class _MyPageState extends State<MyPage> {
               return Container(
                 height: MediaQuery.of(context).size.height * 0.15,
                 // 테이블 셀
-                padding: EdgeInsets.symmetric(vertical: 14.h),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   border: Border(
