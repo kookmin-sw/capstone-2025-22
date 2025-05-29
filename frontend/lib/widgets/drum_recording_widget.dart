@@ -4,7 +4,6 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:xml/xml.dart';
 import 'package:logger/logger.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter_sound/flutter_sound.dart' as fs;
@@ -94,7 +93,7 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
   Timer? _recordingTimer;
   StreamSubscription<fs.RecordingDisposition>? _recorderSubscription;
 
-  // 온셋 감지 및 딜레이 측정을 위한 변수 🔴
+  // 온셋 감지 및 딜레이 측정을 위한 변수
   bool firstBufferReceived = false; // 첫 오디오 버퍼 수신 여부
   DateTime? firstBufferTime; // 첫 오디오 버퍼 수신 시각
   DateTime? recordingStartTime; // 녹음 시작 시각
@@ -129,18 +128,11 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
     _overlayAnimation =
         Tween<double>(begin: 0.0, end: 1.0).animate(_overlayController);
 
-    // 데이터 초기화
-    // _parseMusicXML();
-    // _initializeData().then((_) {
-    //   _isRecorderReady = true;
-    //   print('[InitState] ✅ recorder ready');
-    // });
-
     _initializeAll().then((_) {
       _isRecorderReady = true;
-      print('[InitState] ✅ recorder ready');
+      print('녹음기 준비됨');
 
-      // 녹음기가 준비되면 오디오 데이터 수신 리스너 등록 🔴
+      // 녹음기가 준비되면 오디오 데이터 수신 리스너 등록
       if (_recorder != null) {
         _setupAudioDataListener();
       }
@@ -152,7 +144,7 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
     widget.playbackController.onPlaybackComplete = _handlePlaybackComplete;
   }
 
-  // 오디오 데이터 수신 리스너 등록 함수 🔴
+  // 오디오 데이터 수신 리스너 등록 함수
   void _setupAudioDataListener() {
     firstBufferReceived = false;
 
@@ -202,7 +194,7 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
     });
   }
 
-  /// 간단 샘플 온셋 감지 함수 (실제 신호 분석 로직 대체 필요) 🔴
+  /// 간단 샘플 온셋 감지 함수 (실제 신호 분석 로직 대체 필요)
   Duration detectOnset(fs.RecordingDisposition event, DateTime now) {
     if (recordingStartTime != null) {
       return now.difference(recordingStartTime!);
@@ -226,36 +218,6 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
     }
   }
 
-  // static const _mediaScanChannel = MethodChannel('media_scanner');
-
-  // [디버깅용] Future<void> _saveToPublicDownloadAndScan() async {
-  //   // 1) 모든 파일 접근 권한 요청 (Android 11+)
-  //   if (!await Permission.manageExternalStorage.request().isGranted) {
-  //     print('⚠️ 모든 파일 접근 권한 거부됨');
-  //     return;
-  //   }
-
-  //   // 2) public Download/DrumRecordings 폴더 준비
-  //   final publicDir = Directory('/storage/emulated/0/Download/DrumRecordings');
-  //   if (!await publicDir.exists()) {
-  //     await publicDir.create(recursive: true);
-  //   }
-
-  //   // 3) 복사
-  //   final ts = DateTime.now().millisecondsSinceEpoch;
-  //   final dest = '${publicDir.path}/drum_recording_$ts.aac';
-  //   await File(_recordingPath!).copy(dest);
-  //   print('✅ 공용 Download에 저장: $dest');
-
-  //   // 4) MediaStore에 스캔 요청
-  //   try {
-  //     await _mediaScanChannel.invokeMethod('scanFile', {'path': dest});
-  //     print('▶ MediaScanner scanFile 호출됨');
-  //   } catch (e) {
-  //     print('❌ MediaScanner 호출 실패: $e');
-  //   }
-  // }
-
   Future<void> _initializeData() async {
     print('[InitData] ▶️ 시작');
     if (_isDisposed) return;
@@ -269,35 +231,6 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
 
     // WebSocket 연결 설정
     await _setupWebSocket();
-  }
-
-  /// Android 11+ “모든 파일 접근” 권한 요청
-  Future<bool> _requestManageAllFiles() async {
-    // 이미 허용된 상태라면 바로 true
-    if (await Permission.manageExternalStorage.isGranted) {
-      return true;
-    }
-
-    // 권한 요청
-    final status = await Permission.manageExternalStorage.request();
-    if (status.isGranted) {
-      return true;
-    }
-
-    // 사용자가 거부하거나 영구 거부(PermanentlyDenied) 상태라면
-    // 직접 설정 화면으로 유도
-    if (status.isDenied || status.isPermanentlyDenied) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('설정 > 권한에서 “모든 파일 접근”을 허용해 주세요.'),
-          action: SnackBarAction(
-            label: '설정 열기',
-            onPressed: () => openAppSettings(),
-          ),
-        ),
-      );
-    }
-    return false;
   }
 
   Future<void> _initRecorder() async {
@@ -391,17 +324,16 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
   // 구독
   void _subscribeToTopic() {
     if (_isDisposed || _stompClient == null) return;
-    print('🛰️ [구독 경로]=/topic/onset/$_userEmail/$_identifier');
 
     _stompUnsubscribe = _stompClient!.subscribe(
       destination: '/topic/onset/$_userEmail/$_identifier', // 구독 경로
       callback: (frame) {
-        print('🛰️ [RAW FRAME] headers=${frame.headers}, body=${frame.body}');
+        print(
+            '[WebSocket 데이터 수신 완료] headers=${frame.headers}, body=${frame.body}');
         if (_isDisposed) return;
 
         if (frame.body != null) {
           final response = json.decode(frame.body!);
-          print('📦 WebSocket 데이터 수신 완료: $response');
 
           if (response.containsKey('onsets')) {
             if (!_isDisposed) {
@@ -620,7 +552,7 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
     });
   }
 
-  /// 오디오 녹음 시작 시각 기록 🔴
+  /// 오디오 녹음 시작 시각 기록
   void _recordingStarted() {
     recordingStartTime = DateTime.now();
     firstBufferReceived = false;
@@ -659,7 +591,7 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
         recordingStatusMessage = '녹음이 시작되었습니다.';
       });
 
-      _recordingStarted(); // 녹음 시작 시각 기록 🔴
+      _recordingStarted(); // 녹음 시작 시각 기록
 
       // 첫 마디 녹음 시작
       await _startMeasureRecording();
@@ -689,9 +621,6 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
           recordingStatusMessage = '녹음이 중지되었습니다.';
         });
       }
-      // [디버깅용]
-      // await _saveRecordingLocally();
-      // await _saveToPublicDownloadAndScan(); // 공용 Download 폴더
 
       // 부모 위젯에 결과 전달
       if (widget.onRecordingComplete != null && !_isDisposed) {
@@ -732,28 +661,24 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
     }
   }
 
-// 마디 단위 처리
+  // 마디 단위 처리
   Future<void> _processCurrentMeasure() async {
     if (!isRecording || _isDisposed || _recorder == null) return;
 
     try {
-      // 현재 녹음 중지
       if (_recorder!.isRecording) {
         await _recorder!.stopRecorder();
-        print(
-            '🎙️ 마디 ${_currentMeasure + 1} 녹음 중지 시각: ${DateTime.now().toIso8601String()}');
+        final stopTime = DateTime.now();
+        print('🎙️ 마디 ${_currentMeasure + 1} 녹음 중지 시각: $stopTime');
       }
 
-      // 녹음 데이터 전송
       await _sendRecordingData();
       print('📤 마디 ${_currentMeasure + 1} 녹음 데이터 전송 완료: ${DateTime.now()}');
       widget.onMeasureUpdate?.call(_currentMeasure + 1, _totalMeasures);
 
-      // 다음 마디 녹음 시작 (첫 마디가 아닌 경우에만)
       if (_currentMeasure < _totalMeasures - 1) {
         _currentMeasure++;
         if (_currentMeasure > 0) {
-          // 첫 마디가 아닌 경우에만 녹음 시작
           await _startMeasureRecording();
         }
       }
@@ -765,14 +690,12 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
     }
   }
 
-// 마디 녹음 시작
+  // 마디 녹음 시작
   Future<void> _startMeasureRecording() async {
     if (_isDisposed || _recorder == null) return;
 
     try {
       widget.onMeasureUpdate?.call(_currentMeasure + 1, _totalMeasures);
-      print(
-          '🎙️ 마디 ${_currentMeasure + 1} 녹음 시작 at ${DateTime.now().toIso8601String()}');
 
       await _recorder!.startRecorder(
         toFile: _recordingPath,
@@ -781,6 +704,11 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
         numChannels: 1,
         bitRate: 16000,
       );
+
+      // 녹음 실제 시작 시각 기록 — startRecorder가 완료된 바로 직후!
+      recordingStartTime = DateTime.now();
+      firstBufferReceived = false;
+      print("🎙️ 마디 ${_currentMeasure + 1} 실제 녹음 시작 시각: $recordingStartTime");
 
       widget.onMeasureUpdate?.call(_currentMeasure + 1, _totalMeasures);
 
@@ -949,33 +877,6 @@ class DrumRecordingWidgetState extends State<DrumRecordingWidget>
 
     print('✅ DrumRecordingWidget: 마디 정보 업데이트 완료');
   }
-
-  // /// [디버깅용] 녹음된 aac 파일을 외부 저장소(Downloads/DrumRecordings)로 복사 저장
-  // Future<void> _saveRecordingLocally() async {
-  //   print('▶ _saveRecordingLocally 실행됨');
-  //   if (_recordingPath == null) return;
-
-  //   // 앱 전용 외부 저장소 경로
-  //   final extDir = await getExternalStorageDirectory();
-  //   print('▶ extDir.path: ${extDir?.path}');
-  //   final saveDir = Directory('${extDir!.path}/DrumRecordings');
-  //   if (!await saveDir.exists()) {
-  //     await saveDir.create(recursive: true);
-  //     print('▶ 폴더 생성됨: ${saveDir.path}');
-  //   }
-
-  //   final timestamp = DateTime.now().millisecondsSinceEpoch;
-  //   final newPath = '${saveDir.path}/drum_recording_$timestamp.aac';
-  //   try {
-  //     await File(_recordingPath!).copy(newPath);
-  //     print('✅ 녹음 파일 로컬 저장 완료: $newPath');
-  //     ScaffoldMessenger.of(context).showSnackBar(
-  //       SnackBar(content: Text('녹음 파일이 저장되었습니다:\n$newPath')),
-  //     );
-  //   } catch (e) {
-  //     print('❌ 파일 저장 중 오류: $e');
-  //   }
-  // }
 
   /// 모든 리소스를 안전하게 정리하는 메서드
   void cleanupResources() async {
