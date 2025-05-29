@@ -144,6 +144,21 @@ public class AudioMessageConsumer {
                         .map(measureInfo -> OnsetMeasureData.builder()
                                 .onsetResponse(onset)
                                 .measureInfo(measureInfo)))
+                .map(onsetMeasureDataBuilder -> {
+                    OnsetResponseDto onsetResponse = onsetMeasureDataBuilder.build().getOnsetResponse();
+                    List<String> onsets = onsetResponse.getOnsets();
+                    if(patternMessageDto.getMeasureNumber().equals("1")) {
+                        for(int i=0; i<onsets.size(); i++) {
+                            String onsetString = onsets.get(i);
+                            double processedOnsetDouble = Double.parseDouble(onsetString) + 0.4;
+                            if(processedOnsetDouble < 0) processedOnsetDouble = 0.0;
+                            onsets.set(i, Double.toString(processedOnsetDouble));
+                        }
+                        onsetResponse.setOnsets(onsets);
+                        onsetMeasureDataBuilder.onsetResponse(onsetResponse);
+                    }
+                    return onsetMeasureDataBuilder;
+                })
                 .map(onsetMeasureDataBuilder -> { // get the onset match result and send it to the client
                     double weight = (double) 60 / patternMessageDto.getBpm();
                     return getOnsetResultAndSendToUser(onsetMeasureDataBuilder.build(), patternMessageDto.getMeasureNumber(), patternMessageDto.getEmail(), patternMessageDto.getIdentifier(), weight);
