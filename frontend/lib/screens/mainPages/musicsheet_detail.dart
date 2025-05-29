@@ -347,11 +347,7 @@ class _MusicsheetDetailState extends State<MusicsheetDetail> {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Padding(
-        padding: EdgeInsets.only(
-          left: 8.w,
-          right: 8.w,
-          top: 20.h,
-        ),
+        padding: EdgeInsets.only(left: 9.w, right: 8.w, top: 20.h, bottom: 5.h),
         child: Column(
           children: [
             SizedBox(
@@ -363,7 +359,7 @@ class _MusicsheetDetailState extends State<MusicsheetDetail> {
                     onTap: () => Navigator.pop(context),
                     child: FaIcon(
                       FontAwesomeIcons.chevronLeft,
-                      size: 9.sp,
+                      size: 10.sp,
                       color: Color(0xff646464),
                     ),
                   ),
@@ -456,95 +452,105 @@ class _MusicsheetDetailState extends State<MusicsheetDetail> {
                                     ),
                                   ],
                                 ),
-                                child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(9),
-                                  child: Stack(
-                                    fit: StackFit.expand,
-                                    children: [
-                                      // 악보 프리뷰 이미지 - Todo : 이미지 안 떠서 사이즈 제대로 설정 못함
-                                      if (previewBytes != null)
-                                        Positioned(
-                                          top: 40.h,
-                                          left: 10.w,
-                                          right: 10.w,
-                                          bottom: 20.h,
-                                          child: Image.memory(previewBytes!,
-                                              fit: BoxFit.cover),
-                                        ),
-
-                                      if (previewBytes == null)
-                                        Center(
-                                            child: CircularProgressIndicator()),
-                                      // 블러 오버레이
-                                      Positioned.fill(
-                                        child: BackdropFilter(
-                                          filter: ImageFilter.blur(
-                                              sigmaX: 2, sigmaY: 2),
-                                          child: Container(
-                                            color:
-                                                Colors.white.withOpacity(0.3),
+                                child: Stack(
+                                  children: [
+                                    ClipRRect(
+                                      borderRadius: BorderRadius.circular(9),
+                                      child: Stack(
+                                        fit: StackFit.expand,
+                                        children: [
+                                          // 악보 프리뷰 이미지
+                                          if (previewBytes != null)
+                                            Positioned(
+                                              top: 40.h,
+                                              left: 10.w,
+                                              right: 10.w,
+                                              bottom: 20.h,
+                                              child: Image.memory(previewBytes!,
+                                                  fit: BoxFit.cover),
+                                            ),
+                                          if (previewBytes == null)
+                                            Center(
+                                                child:
+                                                    CircularProgressIndicator()),
+                                          // 블러 오버레이
+                                          Positioned.fill(
+                                            child: BackdropFilter(
+                                              filter: ImageFilter.blur(
+                                                  sigmaX: 2, sigmaY: 2),
+                                              child: Container(
+                                                color: Colors.white
+                                                    .withOpacity(0.3),
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    // 아이콘 버튼을 Container 내부 기준으로 위치 (Align 사용)
+                                    Align(
+                                      alignment: Alignment.bottomRight,
+                                      child: Padding(
+                                        padding: EdgeInsets.all(8),
+                                        child: Showcase(
+                                          key: _sheetKey,
+                                          description:
+                                              "이 버튼을 누르면 연습 결과 악보를 확인할 수 있어요.",
+                                          child: IconButton(
+                                            onPressed: () async {
+                                              if (_selectedPracticeId == null ||
+                                                  _xmlDataString == null)
+                                                return;
+                                              final BuildContext localContext =
+                                                  context;
+                                              try {
+                                                final detail =
+                                                    await fetchPracticeDetail(
+                                                        _selectedPracticeId!);
+                                                if (!mounted) return;
+                                                final rawInfo =
+                                                    detail['practiceInfo']
+                                                        as List<dynamic>;
+                                                final practiceInfo = rawInfo
+                                                    .map((e) => Map<String,
+                                                        dynamic>.from(e as Map))
+                                                    .toList();
+                                                practiceInfo.sort((a, b) {
+                                                  final ma = int.parse(
+                                                      a['measureNumber']
+                                                          as String);
+                                                  final mb = int.parse(
+                                                      b['measureNumber']
+                                                          as String);
+                                                  return ma.compareTo(mb);
+                                                });
+                                                openMusicSheet(
+                                                  context: localContext,
+                                                  xmlDataString:
+                                                      _xmlDataString!,
+                                                  practiceInfo: practiceInfo,
+                                                  isPatternMode: false,
+                                                );
+                                              } catch (e) {
+                                                if (!mounted) return;
+                                                ScaffoldMessenger.of(
+                                                        localContext)
+                                                    .showSnackBar(
+                                                  SnackBar(
+                                                      content:
+                                                          Text('상세 로딩 실패: $e')),
+                                                );
+                                              }
+                                            },
+                                            icon: FaIcon(
+                                                FontAwesomeIcons.expand,
+                                                size: 11.sp,
+                                                color: Color(0xffD97D6C)),
                                           ),
                                         ),
                                       ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                              Positioned(
-                                // 악보 확대 버튼
-                                top: MediaQuery.of(context).size.height * 0.755,
-                                right:
-                                    MediaQuery.of(context).size.height * 0.013,
-                                child: Showcase(
-                                  key: _sheetKey,
-                                  description: "이 버튼을 누르면 연습 결과 악보를 확인할 수 있어요.",
-                                  child: IconButton(
-                                    onPressed: () async {
-                                      if (_selectedPracticeId == null ||
-                                          _xmlDataString == null) return;
-
-                                      final BuildContext localContext = context;
-                                      try {
-                                        final detail =
-                                            await fetchPracticeDetail(
-                                                _selectedPracticeId!);
-                                        if (!mounted) return;
-
-                                        final rawInfo = detail['practiceInfo']
-                                            as List<dynamic>;
-                                        final practiceInfo = rawInfo
-                                            .map((e) =>
-                                                Map<String, dynamic>.from(
-                                                    e as Map))
-                                            .toList();
-
-                                        // measureNumber 오름차순 정렬
-                                        practiceInfo.sort((a, b) {
-                                          final ma = int.parse(
-                                              a['measureNumber'] as String);
-                                          final mb = int.parse(
-                                              b['measureNumber'] as String);
-                                          return ma.compareTo(mb);
-                                        });
-
-                                        openMusicSheet(
-                                          context: localContext,
-                                          xmlDataString: _xmlDataString!,
-                                          practiceInfo: practiceInfo,
-                                          isPatternMode: false,
-                                        );
-                                      } catch (e) {
-                                        if (!mounted) return;
-                                        ScaffoldMessenger.of(localContext)
-                                            .showSnackBar(
-                                          SnackBar(
-                                              content: Text('상세 로딩 실패: $e')),
-                                        );
-                                      }
-                                    },
-                                    icon: FaIcon(FontAwesomeIcons.expand,
-                                        size: 9.sp, color: Color(0xffD97D6C)),
-                                  ),
+                                    ),
+                                  ],
                                 ),
                               ),
                             ],
