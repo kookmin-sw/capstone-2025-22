@@ -525,12 +525,12 @@ class _MusicsheetDetailState extends State<MusicsheetDetail> {
                                                   return ma.compareTo(mb);
                                                 });
                                                 openMusicSheet(
-                                                  context: localContext,
-                                                  xmlDataString:
-                                                      _xmlDataString!,
-                                                  practiceInfo: practiceInfo,
-                                                  isPatternMode: false,
-                                                );
+                                                    context: localContext,
+                                                    xmlDataString:
+                                                        _xmlDataString!,
+                                                    practiceInfo: practiceInfo,
+                                                    isPatternMode: false,
+                                                    isResultPage: false);
                                               } catch (e) {
                                                 if (!mounted) return;
                                                 ScaffoldMessenger.of(
