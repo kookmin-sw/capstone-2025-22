@@ -21,4 +21,11 @@ public class PatternEventListener {
     public void handleCreatePatternEvent(PatternCreateEvent event){
         patternManageService.savePattern(event.patternCreateDto, event.sheetFile, event.patternWav);
     }
+
+    @Async
+    @EventListener
+    @Transactional
+    public void handleUpdatePatternEvent(PatternUpdateEvent event){
+        patternManageService.updatePatternInfo(event.patternId, event.patternUpdateDto, event.sheetFile, event.patternWav);
+    }
 }
