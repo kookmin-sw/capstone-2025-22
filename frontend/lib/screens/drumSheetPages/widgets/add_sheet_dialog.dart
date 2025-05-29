@@ -157,7 +157,7 @@ class _AddSheetDialogState extends State<AddSheetDialog> {
                     style: TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.w600,
-                      fontSize: 5.5.sp,
+                      fontSize: 6.sp,
                     ),
                   ),
                 ),
@@ -368,9 +368,9 @@ class _AddSheetDialogState extends State<AddSheetDialog> {
         children: [
           SizedBox(
             width: MediaQuery.of(context).size.width * 0.15,
-            child: TextButton(
+            child: ElevatedButton(
               onPressed: onPrevious,
-              style: TextButton.styleFrom(
+              style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFFF5F5F5),
                 padding: EdgeInsets.symmetric(vertical: 17.h),
                 shape: RoundedRectangleBorder(
@@ -390,9 +390,9 @@ class _AddSheetDialogState extends State<AddSheetDialog> {
           SizedBox(
             width: MediaQuery.of(context).size.width * 0.15,
             height: MediaQuery.of(context).size.height * 0.12,
-            child: TextButton(
+            child: ElevatedButton(
               onPressed: onNext,
-              style: TextButton.styleFrom(
+              style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFFD97D6C),
                 padding: EdgeInsets.symmetric(vertical: 17.h),
                 shape: RoundedRectangleBorder(

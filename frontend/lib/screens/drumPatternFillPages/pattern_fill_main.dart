@@ -122,7 +122,7 @@ class _PatternFillMainState extends State<PatternFillMain> {
           padding: EdgeInsets.all(20.h),
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(30),
+            borderRadius: BorderRadius.circular(16),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -153,13 +153,13 @@ class _PatternFillMainState extends State<PatternFillMain> {
                     child: SizedBox(
                       height: MediaQuery.of(context).size.height * 0.11,
                       width: MediaQuery.of(context).size.width * 0.15,
-                      child: TextButton(
-                        style: TextButton.styleFrom(
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
                           padding: EdgeInsets.zero,
                           minimumSize: Size(0, 0),
-                          backgroundColor: Color.fromARGB(255, 205, 203, 202),
+                          backgroundColor: Color(0xFFF2F2F2),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(15),
+                            borderRadius: BorderRadius.circular(12),
                           ),
                         ),
                         onPressed: () {
@@ -168,9 +168,9 @@ class _PatternFillMainState extends State<PatternFillMain> {
                         child: Text(
                           '취소',
                           style: TextStyle(
-                            color: Colors.black,
+                            color: Color(0xFF646464),
                             fontSize: 5.5.sp,
-                            fontWeight: FontWeight.w500,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
                       ),
@@ -181,13 +181,13 @@ class _PatternFillMainState extends State<PatternFillMain> {
                     child: SizedBox(
                       height: MediaQuery.of(context).size.height * 0.11,
                       width: MediaQuery.of(context).size.width * 0.15,
-                      child: TextButton(
-                        style: TextButton.styleFrom(
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
                           padding: EdgeInsets.zero,
                           minimumSize: Size(0, 0),
                           backgroundColor: Color(0xffD97D6C),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(15),
+                            borderRadius: BorderRadius.circular(12),
                           ),
                         ),
                         onPressed: () {
@@ -204,7 +204,7 @@ class _PatternFillMainState extends State<PatternFillMain> {
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: 5.5.sp,
-                            fontWeight: FontWeight.w500,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
                       ),
