@@ -496,24 +496,21 @@ void openModal(
   // 모달 열기
   showDialog(
     context: context,
-    builder: (context) => AlertDialog(
-      alignment: Alignment.center,
-      insetPadding: EdgeInsets.zero,
-      contentPadding: EdgeInsets.symmetric(
-          vertical: MediaQuery.of(context).size.height * 0.02),
+    builder: (context) => Dialog(
       backgroundColor: Colors.white,
-      content: Padding(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Container(
+        width: MediaQuery.of(context).size.width * 0.3,
         padding: EdgeInsets.symmetric(
           horizontal: MediaQuery.of(context).size.width * 0.01,
-          vertical: MediaQuery.of(context).size.height * 0.02,
+          vertical: MediaQuery.of(context).size.height * 0.04,
         ),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
           mainAxisSize: MainAxisSize.min,
           children: [
-            SizedBox(
-              height: 15.h,
-            ),
+            SizedBox(height: 15.h),
             Text(
               '로그아웃 하시겠습니까?',
               textAlign: TextAlign.center,
@@ -523,43 +520,74 @@ void openModal(
                 fontWeight: FontWeight.w600,
               ),
             ),
-            SizedBox(height: MediaQuery.of(context).size.height * 0.08),
+            SizedBox(height: MediaQuery.of(context).size.height * 0.06),
             Row(
-              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                TextButton(
-                  style: TextButton.styleFrom(
-                    padding: EdgeInsets.zero,
-                    minimumSize: Size(0, 0),
+                SizedBox(
+                  width: MediaQuery.of(context).size.width * 0.13,
+                  height: MediaQuery.of(context).size.height * 0.1,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Color(0xFFF2F2F2),
+                      elevation: 2,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      padding: EdgeInsets.zero,
+                      minimumSize: Size(0, 0),
+                    ),
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                    child: Text(
+                      '취소',
+                      style: TextStyle(
+                        color: Color(0xFF646464),
+                        fontSize: 5.5.sp,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
-                  child: modalBtn(
-                      context, '취소', Color.fromARGB(255, 205, 203, 202), true),
                 ),
                 SizedBox(width: 5.w),
-                TextButton(
-                  style: TextButton.styleFrom(
-                    padding: EdgeInsets.zero,
-                    minimumSize: Size(0, 0),
-                  ),
-                  onPressed: () async {
-                    String? accessToken =
-                        await storage.read(key: 'access_token');
+                SizedBox(
+                  width: MediaQuery.of(context).size.width * 0.13,
+                  height: MediaQuery.of(context).size.height * 0.1,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Color(0xFFD97D6C),
+                      elevation: 2,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      padding: EdgeInsets.zero,
+                      minimumSize: Size(0, 0),
+                    ),
+                    onPressed: () async {
+                      String? accessToken =
+                          await storage.read(key: 'access_token');
 
-                    // 로그아웃 처리
-                    storage.deleteAll();
-                    getHTTP('/auth/signout', {}, reqHeader: {
-                      'authorization': accessToken ?? "",
-                    });
-                    Navigator.pushAndRemoveUntil(
-                      context,
-                      MaterialPageRoute(builder: (_) => const MyApp()),
-                      (route) => false,
-                    );
-                  },
-                  child: modalBtn(context, '확인', Color(0xffD97D6C), false),
+                      // 로그아웃 처리
+                      storage.deleteAll();
+                      getHTTP('/auth/signout', {}, reqHeader: {
+                        'authorization': accessToken ?? "",
+                      });
+                      Navigator.pushAndRemoveUntil(
+                        context,
+                        MaterialPageRoute(builder: (_) => const MyApp()),
+                        (route) => false,
+                      );
+                    },
+                    child: Text(
+                      '확인',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 5.5.sp,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
                 ),
               ],
             ),

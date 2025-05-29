@@ -245,49 +245,140 @@ class _SheetListScreenState extends State<SheetListScreen> {
       context: context,
       barrierDismissible: true,
       builder: (context) {
-        return AlertDialog(
-          title: const Text('악보 이름 수정'),
-          content: TextField(
-            controller: controller,
-            decoration: const InputDecoration(
-              hintText: '새 이름을 입력하세요',
+        return Dialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Container(
+            width: MediaQuery.of(context).size.width * 0.35,
+            padding: EdgeInsets.symmetric(horizontal: 5.w, vertical: 20.h),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  '악보명을 입력해주세요.',
+                  style: TextStyle(
+                    fontSize: 6.sp,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF646464),
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                SizedBox(height: 24.h),
+                Container(
+                  decoration: BoxDecoration(
+                    border: Border.all(color: const Color(0xFFBEBEBE)),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: TextField(
+                    controller: controller,
+                    keyboardType: TextInputType.text,
+                    textInputAction: TextInputAction.done,
+                    decoration: InputDecoration(
+                      hintText: '악보명',
+                      hintStyle: TextStyle(
+                        color: Colors.black45,
+                        fontSize: 5.sp,
+                      ),
+                      contentPadding:
+                          EdgeInsets.symmetric(horizontal: 8.w, vertical: 12.h),
+                      border: InputBorder.none,
+                    ),
+                  ),
+                ),
+                SizedBox(height: 25.h),
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 5.h),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      SizedBox(
+                        width: MediaQuery.of(context).size.width * 0.15,
+                        child: ElevatedButton(
+                          onPressed: () => Navigator.of(context).pop(),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFFF5F5F5),
+                            padding: EdgeInsets.symmetric(vertical: 17.h),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                          child: Text(
+                            '취소',
+                            style: TextStyle(
+                              color: const Color(0xFF646464),
+                              fontSize: 6.sp,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                      SizedBox(
+                        width: MediaQuery.of(context).size.width * 0.15,
+                        height: MediaQuery.of(context).size.height * 0.12,
+                        child: ElevatedButton(
+                          onPressed: controller.text.isNotEmpty
+                              ? () async {
+                                  var requestBody = {
+                                    'email': userEmail,
+                                    "color":
+                                        '#${sheet.color.value.toRadixString(16).padLeft(8, '0').substring(2).toUpperCase()}',
+                                    "name": controller.text,
+                                  };
+                                  var response = await putHTTP(
+                                      "/sheets/${sheet.sheetId}/name",
+                                      {},
+                                      requestBody,
+                                      reqHeader: {
+                                        "Authorization": 'Bearer $accessToken',
+                                      });
+                                  if (response['errMessage'] == null) {
+                                    setState(() {
+                                      sheet.title = controller.text;
+                                      _isSelectionMode = false;
+                                      _isAllSelected = false;
+                                      for (var s in _sheets) {
+                                        s.isSelected = false;
+                                      }
+                                    });
+                                  } else {
+                                    print(response['errMessage']);
+                                  }
+                                  Navigator.of(context).pop();
+                                }
+                              : null,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFFD97D6C),
+                            padding: EdgeInsets.symmetric(vertical: 17.h),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            disabledBackgroundColor:
+                                const Color.fromARGB(255, 136, 135, 135)
+                                    .withOpacity(0.5),
+                          ),
+                          child: Text(
+                            '저장',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 6.sp,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('취소'),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                var requestBody = {
-                  'email': userEmail,
-                  "color":
-                      '#${sheet.color.value.toRadixString(16).padLeft(8, '0').substring(2).toUpperCase()}',
-                  "name": controller.text,
-                };
-                var response = await putHTTP(
-                    "/sheets/${sheet.sheetId}/name", {}, requestBody,
-                    reqHeader: {
-                      "Authorization": 'Bearer $accessToken',
-                    });
-                if (response['errMessage'] == null) {
-                  setState(() {
-                    sheet.title = controller.text;
-                    _isSelectionMode = false;
-                    _isAllSelected = false;
-                    for (var s in _sheets) {
-                      s.isSelected = false;
-                    }
-                  });
-                } else {
-                  print(response['errMessage']);
-                }
-                Navigator.of(context).pop();
-              },
-              child: const Text('저장'),
-            ),
-          ],
         );
       },
     );
@@ -542,7 +633,7 @@ class _SheetListScreenState extends State<SheetListScreen> {
                       color: Color(0xFF646464),
                     ),
                   ),
-                  SizedBox(height: 30.h),
+                  SizedBox(height: 20.h),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [

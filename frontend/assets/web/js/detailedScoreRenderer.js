@@ -70,10 +70,7 @@ window.renderDetailedScore = async function(xmlText, practiceInfo, options = {})
 
       // 대표 노트 리스트 (그룹당 첫번째 노트만)
       const notesInMeasure = timeEntries.map(([t, group]) => group[0]);
-
-      console.log(
-        `▶ measure #${result.measureNumber}: FR=${fr.length}, SR=${sr.length}, actualNotes=${notesInMeasure.length}`
-      );
+      
       // 3) 순서대로 색 덮어쓰기
       notesInMeasure.forEach((repNote, i) => {
         let color = options.colorDefault || "#000";
