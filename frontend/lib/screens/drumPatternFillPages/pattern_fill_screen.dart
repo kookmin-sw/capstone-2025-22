@@ -756,15 +756,15 @@ class _CountdownPageState extends State<CountdownPage>
                                   height: 64.h,
                                   child: Center(
                                     child: IconButton(
-                                      icon: Icon(Icons.arrow_forward_rounded,
-                                          color: Color(0xffD97D6C)),
-                                      iconSize: 15.sp, // 기존 배속 텍스트와 비슷한 크기
+                                      icon: Icon(Icons.content_paste_go,
+                                          color: Color(0xff646464)),
+                                      iconSize: 15.sp,
                                       tooltip: "결과 보기",
                                       padding: EdgeInsets.zero, // 기존과 통일
                                       constraints:
                                           const BoxConstraints(), // 기존과 통일
                                       onPressed: () {
-                                        Navigator.push(
+                                        Navigator.pushReplacement(
                                           context,
                                           MaterialPageRoute(
                                             builder: (_) => PracticeResultPP(

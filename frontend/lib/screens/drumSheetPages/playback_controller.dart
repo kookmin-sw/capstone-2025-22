@@ -73,13 +73,10 @@ class PlaybackController {
 
     calculateTotalDurationFromCursorList(sheetInfo!.bpm.toDouble());
 
-    // 전체 리스트로 한 번만 컨트롤러 생성
-    _cursorController?.dispose();
     _cursorController = CursorController(
       cursorList: fullCursorList,
       bpm: sheetInfo!.bpm.toDouble(),
       speed: speed,
-      onCursorMove: _handleCursorMove,
     );
 
     currentPage = 0;
@@ -202,6 +199,9 @@ class PlaybackController {
       // 커서 위치와 마디 정보
       final cursor = _cursorController!.getAdjustedCursorAtBeat(beatTs);
 
+      // 위치 UI에 반영
+      updateCursorWidget(cursor);
+
       // 마디 변경 감지
       final newMeasureNumber = cursor.measureNumber;
       if (newMeasureNumber != _currentMeasureNumber) {
@@ -211,11 +211,14 @@ class PlaybackController {
         onMeasureChange?.call(newMeasureNumber);
       }
 
-      // 중복 호출 방지용 인덱스
-      final newIndex = cursor.measureNumber * 100 + (cursor.ts * 100).toInt();
-      if (newIndex != _lastCursorIndex) {
-        _lastCursorIndex = newIndex;
-        _handleCursorMove(cursor);
+      // 줄(lineIndex) 변경 감지
+      if (cursor.lineIndex != currentPage) {
+        currentPage = cursor.lineIndex;
+        currentLineImage = lineImages[currentPage];
+        nextLineImage = (currentPage + 1 < lineImages.length)
+            ? lineImages[currentPage + 1]
+            : null;
+        onPageChange?.call(currentPage);
       }
 
       // 전체 재생 완료 여부 체크
@@ -233,7 +236,6 @@ class PlaybackController {
 
   void stopPlayback() {
     _ticker.stop(); // Ticker 중지
-    _cursorController?.stop(); // 커서 이동 타이머 중지
     isPlaying = false;
     onPlaybackStateChange?.call(isPlaying);
 
@@ -265,16 +267,12 @@ class PlaybackController {
     onProgressUpdate?.call(currentProgress); // 진행바 0으로 초기화
     onPageChange?.call(currentPage); // 화면 줄 이동 콜백
 
-    // 5) 커서 컨트롤러 위치만 초기화 (재시작은 하지 않음)
-    _cursorController?.stop();
     if (fullCursorList.isNotEmpty) {
       updateCursorWidget(fullCursorList.first);
     }
   }
 
   void showCountdownAndStart() {
-    _cursorController?.stop();
-
     isCountingDown = true;
     countdown = 3;
     onCountdownUpdate?.call(countdown);
@@ -329,8 +327,6 @@ class PlaybackController {
     // 1) speed 값만 업데이트
     speed = newSpeed;
     calculateTotalDurationFromCursorList(sheetInfo!.bpm.toDouble());
-    _cursorController?.setSpeed(newSpeed);
-
     // 2) UI 리빌드용 콜백 (선택)
     onPlaybackStateChange?.call(isPlaying);
   }
@@ -338,7 +334,6 @@ class PlaybackController {
   void dispose() {
     countdownTimer?.cancel();
     _ticker.dispose();
-    _cursorController?.dispose();
   }
 
   void addMissedNotesCursor({

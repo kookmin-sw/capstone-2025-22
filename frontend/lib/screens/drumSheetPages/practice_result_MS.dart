@@ -34,7 +34,7 @@ class PracticeResultMS extends StatefulWidget {
 }
 
 class _PracticeResultMSState extends State<PracticeResultMS> {
-  late int score = 80; // widget.score; // 점수
+  late int score = widget.score; // 점수
   late bool isPerfect = (score == 100); // 퍼펙트 여부
   late String musicTitle = widget.musicTitle; // 제목
   late String musicArtist = widget.musicArtist; // 아티스트
