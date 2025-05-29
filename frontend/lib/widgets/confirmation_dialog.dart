@@ -1,4 +1,6 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class ConfirmationDialog extends StatelessWidget {
   final String message;
@@ -15,13 +17,15 @@ class ConfirmationDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Dialog(
-      insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
       backgroundColor: Colors.white,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       child: Container(
-        // AddSheetDialog과 동일한 고정 너비 설정
-        width: 330,
-        padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 24),
+        padding: EdgeInsets.only(
+          top: MediaQuery.of(context).size.height * 0.07,
+          bottom: MediaQuery.of(context).size.height * 0.05,
+          left: MediaQuery.of(context).size.width * 0.02,
+          right: MediaQuery.of(context).size.width * 0.02,
+        ),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(20),
@@ -31,54 +35,58 @@ class ConfirmationDialog extends StatelessWidget {
           children: [
             Text(
               message,
-              style: const TextStyle(
-                fontSize: 18,
+              style: TextStyle(
+                fontSize: 6.5.sp,
                 fontWeight: FontWeight.w600,
                 color: Color(0xff646464),
               ),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 24),
+            SizedBox(height: 30.h),
             Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Expanded(
+                Flexible(
                   child: GestureDetector(
                     onTap: onCancel,
                     child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      height: MediaQuery.of(context).size.height * 0.13,
+                      width: MediaQuery.of(context).size.width * 0.12,
                       decoration: BoxDecoration(
                         color: const Color(0xFFF2F1F3),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       alignment: Alignment.center,
-                      child: const Text(
+                      child: Text(
                         "취소",
                         style: TextStyle(
                           color: Color(0xFF646464),
-                          fontWeight: FontWeight.w400,
-                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                          fontSize: 6.sp,
                         ),
                       ),
                     ),
                   ),
                 ),
                 const SizedBox(width: 12),
-                Expanded(
+                Flexible(
                   child: GestureDetector(
                     onTap: onConfirm,
                     child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      height: MediaQuery.of(context).size.height * 0.13,
+                      width: MediaQuery.of(context).size.width * 0.12,
                       decoration: BoxDecoration(
                         color: const Color(0xFFD97D6C),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       alignment: Alignment.center,
-                      child: const Text(
+                      child: Text(
                         "확인",
                         style: TextStyle(
                           color: Colors.white,
-                          fontWeight: FontWeight.w400,
-                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                          fontSize: 6.sp,
                         ),
                       ),
                     ),
