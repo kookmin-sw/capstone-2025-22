@@ -498,6 +498,9 @@ void openModal(
       insetPadding: EdgeInsets.zero,
       contentPadding: EdgeInsets.only(top: 20.h, bottom: 10.h),
       backgroundColor: Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
       content: ConstrainedBox(
         constraints: BoxConstraints(
           maxWidth: 300.w, // 최대너비 제한
@@ -510,7 +513,7 @@ void openModal(
             mainAxisSize: MainAxisSize.min,
             children: [
               SizedBox(
-                height: 15,
+                height: 15.h,
               ),
               Text(
                 '다시 시작하시겠습니까?',
@@ -521,26 +524,37 @@ void openModal(
                   fontWeight: FontWeight.w600,
                 ),
               ),
-              SizedBox(height: 20.h),
+              SizedBox(height: 10.h),
               Row(
-                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  TextButton(
-                    style: TextButton.styleFrom(
-                      padding: EdgeInsets.zero,
-                      minimumSize: Size(0, 0),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFF2F2F2),
+                      minimumSize: Size(50.w, 60.h),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
                     onPressed: () {
                       Navigator.of(context).pop();
                     },
-                    child: modalBtn(context, '취소',
-                        Color.fromARGB(255, 205, 203, 202), true),
+                    child: const Text(
+                      '취소',
+                      style: TextStyle(
+                        color: Color(0xFF646464),
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
                   SizedBox(width: 3.w),
-                  TextButton(
-                    style: TextButton.styleFrom(
-                      padding: EdgeInsets.zero,
-                      minimumSize: Size(0, 0),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFD97D6C),
+                      minimumSize: Size(50.w, 60.h),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
                     onPressed: () {
                       Navigator.pushReplacement(
@@ -552,7 +566,13 @@ void openModal(
                         ),
                       );
                     },
-                    child: modalBtn(context, '확인', Color(0xffD97D6C), false),
+                    child: const Text(
+                      '확인',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
                 ],
               ),

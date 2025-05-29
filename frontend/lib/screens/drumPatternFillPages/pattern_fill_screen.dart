@@ -945,18 +945,27 @@ class _CountdownPageState extends State<CountdownPage>
                                     playbackController.isPlaying ||
                                     playbackController.currentDuration >=
                                         playbackController.totalDuration)
-                                  CursorWidget(
-                                    cursor: playbackController.currentCursor,
-                                    imageWidth: boxW,
-                                    height: boxH,
+                                  ValueListenableBuilder<Cursor>(
+                                    valueListenable:
+                                        playbackController.cursorNotifier,
+                                    builder: (context, cursor, _) {
+                                      return CursorWidget(
+                                        cursor:
+                                            playbackController.currentCursor,
+                                        imageWidth: boxW,
+                                        height: boxH,
+                                      );
+                                    },
                                   ),
                                 // 악보 이미지
                                 if (playbackController.currentLineImage != null)
                                   Image.memory(
-                                    width: boxW,
-                                    height: boxH * 1.5,
+                                    // width: boxW,
+                                    // height: boxH * 1.5,
+                                    // playbackController.currentLineImage!,
+                                    // fit: BoxFit.fill,
                                     playbackController.currentLineImage!,
-                                    fit: BoxFit.fill,
+                                    fit: BoxFit.cover,
                                     alignment: Alignment.topCenter,
                                   ),
                               ],

@@ -18,7 +18,7 @@ class ConfirmationDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     return Dialog(
       backgroundColor: Colors.white,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Container(
         padding: EdgeInsets.only(
           top: MediaQuery.of(context).size.height * 0.07,
@@ -28,7 +28,7 @@ class ConfirmationDialog extends StatelessWidget {
         ),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(16),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -36,58 +36,60 @@ class ConfirmationDialog extends StatelessWidget {
             Text(
               message,
               style: TextStyle(
-                fontSize: 6.5.sp,
+                fontSize: 5.5.sp,
                 fontWeight: FontWeight.w600,
                 color: Color(0xff646464),
               ),
               textAlign: TextAlign.center,
             ),
-            SizedBox(height: 30.h),
+            SizedBox(height: 27.h),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Flexible(
-                  child: GestureDetector(
-                    onTap: onCancel,
-                    child: Container(
-                      height: MediaQuery.of(context).size.height * 0.13,
-                      width: MediaQuery.of(context).size.width * 0.12,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF2F1F3),
+                SizedBox(
+                  width: 40.w,
+                  height: 55.h,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFF2F2F2),
+                      elevation: 2,
+                      shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      alignment: Alignment.center,
-                      child: Text(
-                        "취소",
-                        style: TextStyle(
-                          color: Color(0xFF646464),
-                          fontWeight: FontWeight.w500,
-                          fontSize: 6.sp,
-                        ),
+                      padding: EdgeInsets.zero,
+                    ),
+                    onPressed: onCancel,
+                    child: Text(
+                      "취소",
+                      style: TextStyle(
+                        color: Color(0xFF646464),
+                        fontWeight: FontWeight.bold,
+                        fontSize: 5.5.sp,
                       ),
                     ),
                   ),
                 ),
-                const SizedBox(width: 12),
-                Flexible(
-                  child: GestureDetector(
-                    onTap: onConfirm,
-                    child: Container(
-                      height: MediaQuery.of(context).size.height * 0.13,
-                      width: MediaQuery.of(context).size.width * 0.12,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFD97D6C),
+                SizedBox(width: 6.w),
+                SizedBox(
+                  width: 40.w,
+                  height: 55.h,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFD97D6C),
+                      elevation: 2,
+                      shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      alignment: Alignment.center,
-                      child: Text(
-                        "확인",
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w500,
-                          fontSize: 6.sp,
-                        ),
+                      padding: EdgeInsets.zero,
+                    ),
+                    onPressed: onConfirm,
+                    child: Text(
+                      "확인",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 5.5.sp,
                       ),
                     ),
                   ),

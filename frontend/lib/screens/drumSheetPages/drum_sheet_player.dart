@@ -671,42 +671,34 @@ class _DrumSheetPlayerState extends State<DrumSheetPlayer>
                                                   size: 10.sp,
                                                   color: Color(0xff646464)),
                                             ),
-                                            ...[
-                                              0.5,
-                                              1.0,
-                                              1.5,
-                                              2.0
-                                            ].map((s) => Padding(
-                                                  padding: EdgeInsets.only(
-                                                      left: 6.5.w,
-                                                      right:
-                                                          s == 2.0 ? 0 : 5.w),
-                                                  child: GestureDetector(
-                                                    onTap: () {
-                                                      // 재생 중일 때는 배속 변경 못하도록 함
-                                                      if (!playbackController
-                                                          .isPlaying) {
-                                                        playbackController
-                                                            .setSpeed(s);
-                                                      }
-                                                    },
-                                                    child: Text(
-                                                      '${s}x',
-                                                      style: TextStyle(
-                                                        fontSize: 7.sp,
-                                                        fontWeight:
-                                                            FontWeight.bold,
-                                                        color: playbackController
-                                                                    .speed ==
-                                                                s
-                                                            ? const Color(
-                                                                0xffD97D6C)
-                                                            : const Color(
-                                                                0xff646464),
+                                            ...[0.5, 1.0, 1.5, 2.0]
+                                                .map((s) => Row(children: [
+                                                      SizedBox(width: 11.w),
+                                                      GestureDetector(
+                                                        onTap: () {
+                                                          if (!playbackController
+                                                              .isPlaying) {
+                                                            playbackController
+                                                                .setSpeed(s);
+                                                          }
+                                                        },
+                                                        child: Text(
+                                                          '${s}x',
+                                                          style: TextStyle(
+                                                            fontSize: 7.sp,
+                                                            fontWeight:
+                                                                FontWeight.bold,
+                                                            color: playbackController
+                                                                        .speed ==
+                                                                    s
+                                                                ? const Color(
+                                                                    0xffD97D6C)
+                                                                : const Color(
+                                                                    0xff646464),
+                                                          ),
+                                                        ),
                                                       ),
-                                                    ),
-                                                  ),
-                                                )),
+                                                    ])),
                                           ],
                                         ),
                                       ),
@@ -803,6 +795,7 @@ class _DrumSheetPlayerState extends State<DrumSheetPlayer>
                                       final displayWidth = constraints.maxWidth;
                                       return Stack(
                                         children: [
+                                          // 마디별 오답 커서(회색)
                                           for (final missed
                                               in playbackController
                                                   .missedCursors
@@ -829,11 +822,17 @@ class _DrumSheetPlayerState extends State<DrumSheetPlayer>
                                                       .currentDuration >=
                                                   playbackController
                                                       .totalDuration)
-                                            CursorWidget(
-                                              cursor: playbackController
-                                                  .currentCursor,
-                                              imageWidth: displayWidth,
-                                              height: imageHeight,
+                                            ValueListenableBuilder<Cursor>(
+                                              valueListenable:
+                                                  playbackController
+                                                      .cursorNotifier,
+                                              builder: (context, cursor, _) {
+                                                return CursorWidget(
+                                                  cursor: cursor,
+                                                  imageWidth: displayWidth,
+                                                  height: imageHeight,
+                                                );
+                                              },
                                             ),
                                           if (playbackController
                                                   .currentLineImage !=

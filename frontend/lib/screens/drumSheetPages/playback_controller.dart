@@ -9,6 +9,8 @@ import 'package:flutter/scheduler.dart';
 class PlaybackController {
   CursorController? _cursorController; // 커서 이동 관리
   late final Ticker _ticker;
+  final ValueNotifier<Cursor> cursorNotifier =
+      ValueNotifier(Cursor.createEmpty());
   SheetInfo? sheetInfo;
 
   // 재생 상태 및 타이머
@@ -84,26 +86,6 @@ class PlaybackController {
     nextLineImage = lineImages.length > 1 ? lineImages[1] : null;
   }
 
-  void _handleCursorMove(Cursor cursor) {
-    // 0) 페이지가 바뀔 때마다, 이전 마디의 회색 커서를 모두 지우고
-    if (cursor.lineIndex != currentPage) {
-      missedCursors.clear();
-    }
-    // 1) 위치 업데이트
-    updateCursorWidget(cursor);
-
-    // 2) 줄이 바뀌면 이미지 교체
-    if (cursor.lineIndex != currentPage) {
-      currentPage = cursor.lineIndex;
-      currentLineImage = lineImages[currentPage];
-      nextLineImage = (currentPage + 1 < lineImages.length)
-          ? lineImages[currentPage + 1]
-          : null;
-      onPageChange?.call(currentPage);
-    }
-    onCursorMove?.call(cursor);
-  }
-
   void updateCursorWidget(Cursor cursor) {
     if (canvasWidth == null || lineImages.isEmpty) return;
 
@@ -126,6 +108,7 @@ class PlaybackController {
       y: adjustedY,
     );
     currentCursor = adjustedCursor;
+    cursorNotifier.value = adjustedCursor;
   }
 
   // 전체 재생 시간 세팅 (진행바 계산, 재생 완료 판별용)
@@ -198,6 +181,9 @@ class PlaybackController {
 
       // 커서 위치와 마디 정보
       final cursor = _cursorController!.getAdjustedCursorAtBeat(beatTs);
+      if (cursor.ts == currentCursor.ts &&
+          cursor.x == currentCursor.x &&
+          cursor.y == currentCursor.y) return;
 
       // 위치 UI에 반영
       updateCursorWidget(cursor);
@@ -213,6 +199,7 @@ class PlaybackController {
 
       // 줄(lineIndex) 변경 감지
       if (cursor.lineIndex != currentPage) {
+        missedCursors.clear();
         currentPage = cursor.lineIndex;
         currentLineImage = lineImages[currentPage];
         nextLineImage = (currentPage + 1 < lineImages.length)
